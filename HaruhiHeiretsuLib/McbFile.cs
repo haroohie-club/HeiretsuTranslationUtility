@@ -36,40 +36,37 @@ namespace HaruhiHeiretsuLib
             int i = 0;
             var fileLocations = new Dictionary<int, int>();
 
-            List<(string, List<IArchiveFileInfo>)> allSubFiles = (await Task.WhenAll(ArchiveFiles.Select(f => GetSubFiles(f)))).ToList();
-            List<(string, string, IArchiveFileInfo)> allStringFiles = (await Task.WhenAll(allSubFiles
-                .SelectMany(p => p.Item2.Select(f => GetStringFilesFromSubFile(p.Item1, f)))))
-                .Where(f => !string.IsNullOrEmpty(f.Item1)).ToList();
+            foreach (var file in ArchiveFiles)
+            {
+                using Stream fileStream = await file.GetFileData();
+
+                BlnSub blnSub = new BlnSub();
+                List<IArchiveFileInfo> subFiles = (List<IArchiveFileInfo>)blnSub.Load(fileStream);
+
+                int j = 0;
+                foreach (var subFile in subFiles)
+                {
+                    using Stream subFileStream = await subFile.GetFileData();
+
+                    byte[] data = new byte[subFileStream.Length];
+                    subFileStream.Read(data, 0, 10);
+
+                    if (data.Length > 0)
+                    {
+                        string idBytes = Encoding.ASCII.GetString(data);
+                        if (idBytes.Contains("SCRIPT"))
+                        {
+                            fileLocations.Add(i, j);
+                            Console.WriteLine($"File {j} in file {i} is a string file: {subFile.FilePath}");
+                        }
+                    }
+                    j++;
+                }
+                Console.WriteLine($"Finished searching {j} files in file {i}");
+                i++;
+            }
 
             return fileLocations;
-        }
-
-        private async Task<(string, List<IArchiveFileInfo>)> GetSubFiles(IArchiveFileInfo file)
-        {
-            using Stream fileStream = await file.GetFileData();
-
-            BlnSub blnSub = new BlnSub();
-            return ($"{file.FilePath}", (List<IArchiveFileInfo>)blnSub.Load(fileStream));
-        }
-
-        private async Task<(string, string, IArchiveFileInfo)> GetStringFilesFromSubFile(string parentFileName, IArchiveFileInfo file)
-        {
-            var stringFiles = new List<IArchiveFileInfo>();
-            using Stream subFileStream = await file.GetFileData();
-
-            byte[] data = new byte[subFileStream.Length];
-            subFileStream.Read(data, 0, 10);
-
-            string idBytes = Encoding.ASCII.GetString(data);
-            if (idBytes.Contains("SCRIPT"))
-            {
-                Console.WriteLine($"File {file.FilePath} in file {parentFileName} is a string file");
-                return (parentFileName, $"{file.FilePath}", file);
-            }
-            else
-            {
-                return ("", "", file);
-            }
         }
     }
 }
