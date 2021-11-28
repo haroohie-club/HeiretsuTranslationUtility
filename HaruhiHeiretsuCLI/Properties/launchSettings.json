@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "HaruhiHeiretsuCLI": {
+      "commandName": "Project",
+      "commandLineArgs": "-f \"C:\\Users\\Trash\\PortableApps\\WiiHacking\\Suzumiya Haruhi no Heiretsu\\Extracted\\DATA\\files\\mcb0.bln\""
+    }
+  }
+}
