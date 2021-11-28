@@ -1,6 +1,8 @@
 ﻿using HaruhiHeiretsuLib;
 using Mono.Options;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuCLI
@@ -14,7 +16,6 @@ namespace HaruhiHeiretsuCLI
 
         static void Main(string[] args)
         {
-
             Mode mode = Mode.FIND_STRINGS;
             string file = "";
 
@@ -48,7 +49,12 @@ namespace HaruhiHeiretsuCLI
 
             if (mode == Mode.FIND_STRINGS)
             {
-                await mcb.FindStringFiles();
+                List<(int, int)> stringFileLocations = await mcb.FindStringFiles();
+                using StreamWriter fs = File.CreateText("string_file_locations.csv");
+                foreach ((int file, int subFile) in stringFileLocations)
+                {
+                    fs.WriteLine($"{file},{subFile}");
+                }
             }
         }
     }

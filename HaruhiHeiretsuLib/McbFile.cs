@@ -31,10 +31,10 @@ namespace HaruhiHeiretsuLib
             BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);
         }
 
-        public async Task<Dictionary<int, int>> FindStringFiles()
+        public async Task<List<(int, int)>> FindStringFiles()
         {
             int i = 0;
-            var fileLocations = new Dictionary<int, int>();
+            var fileLocations = new List<(int, int)>();
 
             foreach (var file in ArchiveFiles)
             {
@@ -56,7 +56,7 @@ namespace HaruhiHeiretsuLib
                         string idBytes = Encoding.ASCII.GetString(data);
                         if (idBytes.Contains("SCRIPT"))
                         {
-                            fileLocations.Add(i, j);
+                            fileLocations.Add((i, j));
                             Console.WriteLine($"File {j} in file {i} is a string file: {subFile.FilePath}");
                         }
                     }
