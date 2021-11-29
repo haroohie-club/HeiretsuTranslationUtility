@@ -31,7 +31,7 @@ namespace HaruhiHeiretsuCLI
                 { "search=", s => search = s },
                 { "find-strings", m => mode = Mode.FIND_STRINGS },
                 { "string-search", m => mode = Mode.STRING_SEARCH },
-                { "extract-files", m => mode = Mode.EXTRACT_STRING_FILES },
+                { "extract-string-files", m => mode = Mode.EXTRACT_STRING_FILES },
             };
 
             options.Parse(args);

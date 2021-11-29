@@ -10,4 +10,10 @@
     <ProjectReference Include="..\HaruhiHeiretsuLib\HaruhiHeiretsuLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="string_file_locations.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

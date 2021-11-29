@@ -8,6 +8,8 @@ namespace HaruhiHeiretsuLib
 {
     public class ScriptFile
     {
+        public const string VOICE_REGEX = @"V\d{3}\w{7}(?<characterCode>[A-Z]{3})";
+
         public bool Edited = false;
         public (int parent, int child) Location { get; set; }
         public List<byte> Data { get; set; }
@@ -84,11 +86,16 @@ namespace HaruhiHeiretsuLib
                             intsToRead++;
                         }
 
-                        var match = Regex.Match(line, @"V\d{3}\w{7}(?<characterCode>[A-Z]{3})");
+                        if (lines.Count == 120)
+                        {
+                            Console.WriteLine("Here");
+                        }
+
+                        var match = Regex.Match(line, VOICE_REGEX);
                         if (match.Success)
                         {
                             (int offset, string line) mostRecentLine = lines.Last();
-                            if (Regex.IsMatch(lastLine, @"^(\w\d{1,2})+$"))
+                            if (Regex.IsMatch(mostRecentLine.line, @"^(\w\d{1,2})+$") && !Regex.IsMatch(lines[^2].line, @"^(\w\d{1,2})+$"))
                             {
                                 mostRecentLine = lines[^2];
                             }
