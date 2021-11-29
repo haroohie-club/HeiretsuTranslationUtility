@@ -1,7 +1,8 @@
 {
   "profiles": {
     "HaruhiHeiretsuCLI": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "--string-search -f \"C:\\Users\\Trash\\PortableApps\\WiiHacking\\Suzumiya Haruhi no Heiretsu\\Extracted\\DATA\\files\\mcb0.bln\" --search \"ポイントしながら\""
     }
   }
 }

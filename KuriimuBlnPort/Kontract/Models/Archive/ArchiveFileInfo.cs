@@ -98,6 +98,15 @@ namespace Kontract.Models.Archive
             return UsesCompression ? Task.Run(GetDecompressedStream) : Task.FromResult(GetBaseStream());
         }
 
+        public virtual byte[] GetFileDataBytes()
+        {
+            Stream stream = UsesCompression ? _decompressedStream.Value : FileData;
+            byte[] bytes = new byte[stream.Length];
+            stream.Read(bytes, 0, (int)stream.Length);
+
+            return bytes;
+        }
+
         /// <inheritdoc />
         public virtual void SetFileData(Stream fileData)
         {

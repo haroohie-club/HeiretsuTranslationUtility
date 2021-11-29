@@ -6,4 +6,8 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\HaruhiHeiretsuLib\HaruhiHeiretsuLib.csproj" />
+  </ItemGroup>
+
 </Project>

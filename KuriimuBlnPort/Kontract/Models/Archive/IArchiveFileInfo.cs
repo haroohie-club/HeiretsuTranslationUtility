@@ -53,6 +53,12 @@ namespace Kontract.Models.Archive
         Task<Stream> GetFileData(ITemporaryStreamProvider temporaryStreamProvider = null, IProgressContext progress = null);
 
         /// <summary>
+        /// Gets the (decompressed) file data as a byte array.
+        /// </summary>
+        /// <returns>A byte array of the file data.</returns>
+        byte[] GetFileDataBytes();
+
+        /// <summary>
         /// Sets the file data for this file info.
         /// </summary>
         /// <param name="fileData">The new file data for this file info.</param>

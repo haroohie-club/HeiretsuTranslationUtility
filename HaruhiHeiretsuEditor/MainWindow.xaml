@@ -6,7 +6,41 @@
         xmlns:local="clr-namespace:HaruhiHeiretsuEditor"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-
-    </Grid>
+    <StackPanel>
+        <Menu>
+            <MenuItem Header="File">
+                <MenuItem x:Name="menuOpenMcb" Header="Open MCB" Click="MenuOpenMcb_Click" />
+            </MenuItem>
+        </Menu>
+        <TabControl x:Name="mainTabControl">
+            <TabItem Header="Events">
+                <Grid Height="387">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="99*"/>
+                        <ColumnDefinition Width="695*"/>
+                    </Grid.ColumnDefinitions>
+                    <ToolBar x:Name="eventsToolBar" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="1043" Grid.ColumnSpan="2">
+                        <Button x:Name="exportEventsFileButton" Content="Export" HorizontalAlignment="Left" />
+                        <Button x:Name="importEventsFileButton" Content="Import" HorizontalAlignment="Left" />
+                        <Button x:Name="exportStringsEventsFileButton" Content="Export Strings" HorizontalAlignment="Left" />
+                        <Button x:Name="importStringsEventsFileButton" Content="Import Strings" HorizontalAlignment="Left" />
+                        <Button x:Name="exportAllStringsEventsFileButton" Content="Export All Strings" HorizontalAlignment="Left" />
+                        <Button x:Name="importAllStringsEventsFileButton" Content="Import All Strings" HorizontalAlignment="Left" />
+                    </ToolBar>
+                    <ListBox x:Name="scriptsListBox" Margin="0,30,521,0" Grid.ColumnSpan="2" MaxHeight="355" SelectionChanged="ScriptsListBox_SelectionChanged" />
+                    <StackPanel Grid.Column="1" Margin="175,30,0,0">
+                        <TabControl>
+                            <TabItem Header="Dialogue">
+                                <ScrollViewer x:Name="eventEditScrollViewer"  Grid.Column="1" Height="350" >
+                                    <DockPanel>
+                                        <StackPanel x:Name="scriptEditStackPanel"/>
+                                    </DockPanel>
+                                </ScrollViewer>
+                            </TabItem>
+                        </TabControl>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </StackPanel>
 </Window>

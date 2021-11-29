@@ -42,6 +42,41 @@ namespace plugin_shade.Archives
             return result;
         }
 
+        public IArchiveFileInfo GetFile(Stream input, int fileIndex)
+        {
+            using var br = new BinaryReaderX(input, true);
+            IArchiveFileInfo result = null;
+
+
+            int index = 0;
+            while (br.BaseStream.Position < input.Length)
+            {
+                var sample = br.ReadInt32();
+                if (sample == 0x7FFF)
+                    break;
+
+                br.BaseStream.Position -= 4;
+                var entry = br.ReadType<BlnSubEntry>();
+
+                if (entry.size == 0)
+                    break;
+                
+                if (index == fileIndex)
+                {
+                    var stream = new SubStream(input, br.BaseStream.Position, entry.size);
+                    result = CreateAfi(stream, index++, entry);
+                    break;
+                }
+                else
+                {
+                    index++;
+                    br.BaseStream.Position += entry.size;
+                }
+            }
+
+            return result;
+        }
+
         public void Save(Stream output, IList<IArchiveFileInfo> files)
         {
             // Write files
