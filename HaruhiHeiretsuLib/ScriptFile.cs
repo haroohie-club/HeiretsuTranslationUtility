@@ -15,6 +15,7 @@ namespace HaruhiHeiretsuLib
         public List<byte> Data { get; set; }
         public List<DialogueLine> DialogueLines { get; set; } = new List<DialogueLine>();
 
+        public bool IsScript { get; set; } = true;
         public int ScriptInt { get; set; }
         public int RoomInt { get; set; }
         public int TimeInt { get; set; }
@@ -33,12 +34,13 @@ namespace HaruhiHeiretsuLib
 
             if (!Encoding.GetEncoding("Shift-JIS").GetString(Data.ToArray()).Contains("SCRIPT"))
             {
+                IsScript = false;
                 var matches = Regex.Matches(Encoding.ASCII.GetString(Data.ToArray()), @"V\d{3}\w{7}(?<characterCode>[A-Z]{3})");
                 foreach (Match match in matches)
                 {
                     Speaker speaker = DialogueLine.GetSpeaker(match.Groups[1].Value);
                     string line = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(match.Index + 32).TakeWhile(b => b != 0x00).ToArray());
-                    DialogueLines.Add(new DialogueLine { Offset = match.Index, Line = line, Speaker = speaker });
+                    DialogueLines.Add(new DialogueLine { Offset = match.Index + 32, Line = line, Speaker = speaker });
                 }
             }
             else
@@ -114,6 +116,30 @@ namespace HaruhiHeiretsuLib
                     lastLine = line;
                     i += length;
                 }
+            }
+        }
+
+        public void EditDialogue(int index, string newLine)
+        {
+            Edited = true;
+            string oldLine = DialogueLines[index].Line;
+            DialogueLines[index].Line = newLine;
+            int oldLength = Encoding.GetEncoding("Shift-JIS").GetByteCount(oldLine);
+            byte[] newLineData = Encoding.GetEncoding("Shift-JIS").GetBytes(newLine);
+
+            if (IsScript)
+            {
+                Data.RemoveRange(DialogueLines[index].Offset, oldLength);
+                Data.InsertRange(DialogueLines[index].Offset, newLineData);
+                for (int i = index + 1; i < DialogueLines.Count; i++)
+                {
+                    DialogueLines[i].Offset += newLineData.Length - oldLength;
+                }
+            }
+            else
+            {
+                Data.RemoveRange(DialogueLines[index].Offset, newLineData.Length);
+                Data.InsertRange(DialogueLines[index].Offset, newLineData);
             }
         }
 

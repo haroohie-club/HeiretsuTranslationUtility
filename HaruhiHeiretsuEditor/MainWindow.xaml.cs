@@ -45,6 +45,18 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        private void MenuSaveMcb_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "MCB0|mcb0.bln"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                _mcb.Save(saveFileDialog.FileName, saveFileDialog.FileName.Replace("0", "1")).GetAwaiter().GetResult();
+            }
+        }
+
         private void ScriptsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             scriptEditStackPanel.Children.Clear();
@@ -52,14 +64,23 @@ namespace HaruhiHeiretsuEditor
             if (scriptsListBox.SelectedIndex >= 0)
             {
                 var selectedFile = (ScriptFile)scriptsListBox.SelectedItem;
-                foreach (DialogueLine dialogueLine in selectedFile.DialogueLines)
+                for (int i = 0; i < selectedFile.DialogueLines.Count; i++)
                 {
                     var dialogueStackPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                    dialogueStackPanel.Children.Add(new TextBlock { Text = dialogueLine.Speaker.ToString() });
-                    dialogueStackPanel.Children.Add(new TextBox { Text = dialogueLine.Line });
+                    dialogueStackPanel.Children.Add(new TextBlock { Text = selectedFile.DialogueLines[i].Speaker.ToString() });
+                    DialogueTextBox dialogueTextBox = new() { Text = selectedFile.DialogueLines[i].Line, AcceptsReturn = true, ScriptFile = selectedFile, DialogueLineIndex = i };
+                    dialogueTextBox.TextChanged += DialogueTextBox_TextChanged;
+                    dialogueStackPanel.Children.Add(dialogueTextBox);
                     scriptEditStackPanel.Children.Add(dialogueStackPanel);
                 }
             }
+        }
+
+        private void DialogueTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            DialogueTextBox dialogueTextBox = (DialogueTextBox)sender;
+
+            dialogueTextBox.ScriptFile.EditDialogue(dialogueTextBox.DialogueLineIndex, dialogueTextBox.Text);
         }
     }
 }

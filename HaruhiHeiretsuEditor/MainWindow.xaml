@@ -10,6 +10,7 @@
         <Menu>
             <MenuItem Header="File">
                 <MenuItem x:Name="menuOpenMcb" Header="Open MCB" Click="MenuOpenMcb_Click" />
+                <MenuItem x:Name="menuSaveMcb" Header="Save MCB" Click="MenuSaveMcb_Click" />
             </MenuItem>
         </Menu>
         <TabControl x:Name="mainTabControl">

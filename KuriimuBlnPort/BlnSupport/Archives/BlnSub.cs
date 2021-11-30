@@ -77,10 +77,10 @@ namespace plugin_shade.Archives
             return result;
         }
 
-        public void Save(Stream output, IList<IArchiveFileInfo> files)
+        public void Save(Stream output, IList<IArchiveFileInfo> files, bool leaveOpen = false)
         {
             // Write files
-            using var bw = new BinaryWriterX(output);
+            using var bw = new BinaryWriterX(output, leaveOpen: leaveOpen);
             foreach (var file in files.Cast<BlnSubArchiveFileInfo>())
             {
                 var startOffset = output.Position;

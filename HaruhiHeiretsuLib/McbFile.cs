@@ -27,8 +27,24 @@ namespace HaruhiHeiretsuLib
             ArchiveFiles = (List<IArchiveFileInfo>)BlnFile.Load(_indexFileStream, _dataFileStream);
         }
 
-        public void Save(string indexFile, string dataFile)
+        public async Task Save(string indexFile, string dataFile)
         {
+            foreach (ScriptFile scriptFile in ScriptFiles)
+            {
+                if (scriptFile.Edited)
+                {
+                    using Stream archiveStream = await ArchiveFiles[scriptFile.Location.parent].GetFileData();
+                    BlnSub blnSub = new BlnSub();
+                    List<IArchiveFileInfo> blnSubFiles = (List<IArchiveFileInfo>)blnSub.Load(archiveStream);
+                    MemoryStream childFileStream = new MemoryStream(scriptFile.Data.ToArray());
+                    blnSubFiles[scriptFile.Location.child].SetFileData(childFileStream);
+
+                    MemoryStream parentFileStream = new MemoryStream();
+                    blnSub.Save(parentFileStream, blnSubFiles, leaveOpen: true);
+                    ArchiveFiles[scriptFile.Location.parent].SetFileData(parentFileStream);
+                }
+            }
+
             using FileStream indexFileStream = File.OpenWrite(indexFile);
             using FileStream dataFileStream = File.OpenWrite(dataFile);
             BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);
@@ -46,9 +62,9 @@ namespace HaruhiHeiretsuLib
                 int parentLoc = int.Parse(lineSplit[0]);
                 int childLoc = int.Parse(lineSplit[1]);
 
-                using Stream fileStream = ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
+                using Stream archiveStream = ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
                 BlnSub blnSub = new BlnSub();
-                IArchiveFileInfo blnSubFile = blnSub.GetFile(fileStream, childLoc);
+                IArchiveFileInfo blnSubFile = blnSub.GetFile(archiveStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
