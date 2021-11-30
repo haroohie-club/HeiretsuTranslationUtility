@@ -2,7 +2,7 @@
   "profiles": {
     "HaruhiHeiretsuCLI": {
       "commandName": "Project",
-      "commandLineArgs": "--extract-string-files -f \"C:\\Users\\User\\PortableApps\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\mcb0.bln\" -o \"C:\\Users\\User\\PortableApps\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\files\""
+      "commandLineArgs": "--extract-sge-files -f \"C:\\Users\\User\\PortableApps\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\mcb0.bln\" -o \"sge_files\""
     }
   }
 }

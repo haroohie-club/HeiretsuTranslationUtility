@@ -91,7 +91,7 @@ namespace HaruhiHeiretsuLib
         {
             var fileLocations = new List<(int, int)>();
 
-            for (int i = 0; i < ArchiveFiles.Count; i++)
+            for (int i = 75; i < ArchiveFiles.Count; i++)
             {
                 using Stream fileStream = await ArchiveFiles[i].GetFileData();
 

@@ -86,11 +86,6 @@ namespace HaruhiHeiretsuLib
                             intsToRead++;
                         }
 
-                        if (lines.Count == 120)
-                        {
-                            Console.WriteLine("Here");
-                        }
-
                         var match = Regex.Match(line, VOICE_REGEX);
                         if (match.Success)
                         {
@@ -99,12 +94,16 @@ namespace HaruhiHeiretsuLib
                             {
                                 mostRecentLine = lines[^2];
                             }
-                            DialogueLines.Add(new DialogueLine
+                            if (!Regex.IsMatch(mostRecentLine.line, VOICE_REGEX))
                             {
-                                Line = mostRecentLine.line,
-                                Offset = mostRecentLine.offset,
-                                Speaker = DialogueLine.GetSpeaker(match.Groups["characterCode"].Value)
-                            });
+                                DialogueLines.Add(new DialogueLine
+                                {
+                                    Line = mostRecentLine.line,
+                                    Offset = mostRecentLine.offset,
+                                    Speaker = DialogueLine.GetSpeaker(match.Groups["characterCode"].Value)
+                                });
+                            }
+                            lines.Add((i, line));
                         }
                         else
                         {
@@ -142,23 +141,23 @@ namespace HaruhiHeiretsuLib
                 case "ANN":
                     return Speaker.ANN;
                 case "CAP":
-                    return Speaker.CAP;
+                    return Speaker.CAPTAIN;
                 case "CRF":
-                    return Speaker.CRF;
+                    return Speaker.CREW_F;
                 case "CRM":
-                    return Speaker.CRM;
+                    return Speaker.CREW_M;
                 case "GF1":
-                    return Speaker.GF1;
+                    return Speaker.GUEST_F1;
                 case "GF2":
-                    return Speaker.GF2;
+                    return Speaker.GUEST_F2;
                 case "GF3":
-                    return Speaker.GF3;
+                    return Speaker.GUEST_F3;
                 case "GM1":
-                    return Speaker.GM1;
+                    return Speaker.GUEST_M1;
                 case "GM2":
-                    return Speaker.GM2;
+                    return Speaker.GUEST_M2;
                 case "GM3":
-                    return Speaker.GM3;
+                    return Speaker.GUEST_M3;
                 case "HRH":
                     return Speaker.HARUHI;
                 case "KZM":
@@ -168,7 +167,7 @@ namespace HaruhiHeiretsuLib
                 case "KYN":
                     return Speaker.KYON;
                 case "KY2":
-                    return Speaker.KY2;
+                    return Speaker.KYON2;
                 case "MKT":
                     return Speaker.MIKOTO;
                 case "MKR":
@@ -178,11 +177,11 @@ namespace HaruhiHeiretsuLib
                 case "NGT":
                     return Speaker.NAGATO;
                 case "NG2":
-                    return Speaker.NG2;
+                    return Speaker.NAGATO2;
                 case "SIS":
                     return Speaker.KYON_SIS;
                 case "TAI":
-                    return Speaker.TAI;
+                    return Speaker.TAIICHI;
                 case "TAN":
                     return Speaker.TANIGUCHI;
                 case "TRY":
@@ -196,27 +195,27 @@ namespace HaruhiHeiretsuLib
     public enum Speaker
     {
         ANN,
-        CAP,
-        CRF,
-        CRM,
-        GF1,
-        GF2,
-        GF3,
-        GM1,
-        GM2,
-        GM3,
+        CAPTAIN,
+        CREW_F,
+        CREW_M,
+        GUEST_F1,
+        GUEST_F2,
+        GUEST_F3,
+        GUEST_M1,
+        GUEST_M2,
+        GUEST_M3,
         HARUHI,
         KOIZUMI,
         KUNIKIDA,
         KYON,
-        KY2,
+        KYON2,
         MIKOTO,
         MIKURU,
         MONOLOGUE,
         NAGATO,
-        NG2,
+        NAGATO2,
         KYON_SIS,
-        TAI,
+        TAIICHI,
         TANIGUCHI,
         TSURYA,
         UNKNOWN,
