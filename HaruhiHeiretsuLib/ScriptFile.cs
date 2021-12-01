@@ -10,10 +10,10 @@ namespace HaruhiHeiretsuLib
     {
         public const string VOICE_REGEX = @"V\d{3}\w{7}(?<characterCode>[A-Z]{3})";
 
-        public bool Edited = false;
+        public bool Edited { get; set; } = false;
         public (int parent, int child) Location { get; set; }
         public List<byte> Data { get; set; }
-        public List<DialogueLine> DialogueLines { get; set; } = new List<DialogueLine>();
+        public List<DialogueLine> DialogueLines { get; set; } = new();
 
         public bool IsScript { get; set; } = true;
         public int ScriptInt { get; set; }
@@ -47,7 +47,7 @@ namespace HaruhiHeiretsuLib
             {
                 int intsToRead = 0;
                 string lastLine = "";
-                var lines = new List<(int offset, string line)>();
+                List<(int offset, string line)> lines = new();
 
                 for (int i = 0; i < Data.Count;)
                 {
@@ -69,6 +69,8 @@ namespace HaruhiHeiretsuLib
                             case 1:
                                 TimeInt = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
                                 break;
+                            default:
+                                break;
                         }
 
                         intsToRead--;
@@ -83,12 +85,12 @@ namespace HaruhiHeiretsuLib
                         line = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(i + 4).Take(length).ToArray());
                         length += 5;
 
-                        if (line == "SCRIPT" || line == "ROOM" || line == "TIME")
+                        if (line is "SCRIPT" or "ROOM" or "TIME")
                         {
                             intsToRead++;
                         }
 
-                        var match = Regex.Match(line, VOICE_REGEX);
+                        Match match = Regex.Match(line, VOICE_REGEX);
                         if (match.Success)
                         {
                             (int offset, string line) mostRecentLine = lines.Last();

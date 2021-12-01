@@ -42,6 +42,30 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
+            <TabItem Header="Graphics">
+                <Grid Height="387">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="99*"/>
+                        <ColumnDefinition Width="695*"/>
+                    </Grid.ColumnDefinitions>
+                    <ToolBar x:Name="graphicsToolBar" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="1043" Grid.ColumnSpan="2">
+                        <Button x:Name="openGrpFileButton" Content="Open GRP" HorizontalAlignment="Left" Click="OpenGrpFileButton_Click" />
+                        <Button x:Name="openSingleGraphicsFileButton" Content="Open File" HorizontalAlignment="Left" Click="OpenSingleGraphicsFileButton_Click" />
+                    </ToolBar>
+                    <ListBox x:Name="graphicsListBox" Margin="0,30,521,0" Grid.ColumnSpan="2" MaxHeight="355" SelectionChanged="GraphicsListBox_SelectionChanged" />
+                    <StackPanel Grid.Column="1" Margin="175,30,0,0">
+                        <TabControl>
+                            <TabItem Header="Graphics">
+                                <ScrollViewer x:Name="graphicsEditScrollViewer"  Grid.Column="1" Height="350" >
+                                    <DockPanel>
+                                        <StackPanel x:Name="graphicsEditStackPanel"/>
+                                    </DockPanel>
+                                </ScrollViewer>
+                            </TabItem>
+                        </TabControl>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
         </TabControl>
     </StackPanel>
 </Window>

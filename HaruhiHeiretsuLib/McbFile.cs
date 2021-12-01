@@ -14,7 +14,7 @@ namespace HaruhiHeiretsuLib
     {
         public Bln BlnFile { get; set; } = new Bln();
         public List<IArchiveFileInfo> ArchiveFiles { get; set; }
-        public List<ScriptFile> ScriptFiles { get; set; } = new List<ScriptFile>();
+        public List<ScriptFile> ScriptFiles { get; set; } = new();
 
         private FileStream _indexFileStream { get; set; }
         private FileStream _dataFileStream { get; set; }
@@ -34,12 +34,12 @@ namespace HaruhiHeiretsuLib
                 if (scriptFile.Edited)
                 {
                     using Stream archiveStream = await ArchiveFiles[scriptFile.Location.parent].GetFileData();
-                    BlnSub blnSub = new BlnSub();
+                    BlnSub blnSub = new();
                     List<IArchiveFileInfo> blnSubFiles = (List<IArchiveFileInfo>)blnSub.Load(archiveStream);
-                    MemoryStream childFileStream = new MemoryStream(scriptFile.Data.ToArray());
+                    MemoryStream childFileStream = new(scriptFile.Data.ToArray());
                     blnSubFiles[scriptFile.Location.child].SetFileData(childFileStream);
 
-                    MemoryStream parentFileStream = new MemoryStream();
+                    MemoryStream parentFileStream = new();
                     blnSub.Save(parentFileStream, blnSubFiles, leaveOpen: true);
                     ArchiveFiles[scriptFile.Location.parent].SetFileData(parentFileStream);
                 }
@@ -63,7 +63,7 @@ namespace HaruhiHeiretsuLib
                 int childLoc = int.Parse(lineSplit[1]);
 
                 using Stream archiveStream = ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
-                BlnSub blnSub = new BlnSub();
+                BlnSub blnSub = new();
                 IArchiveFileInfo blnSubFile = blnSub.GetFile(archiveStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
@@ -74,13 +74,13 @@ namespace HaruhiHeiretsuLib
 
         public async Task<List<(int, int)>> FindStringFiles()
         {
-            var fileLocations = new List<(int, int)>();
+            List<(int, int)> fileLocations = new();
 
             for (int i = 75; i < ArchiveFiles.Count; i++)
             {
                 using Stream fileStream = await ArchiveFiles[i].GetFileData();
 
-                BlnSub blnSub = new BlnSub();
+                BlnSub blnSub = new();
                 List<IArchiveFileInfo> subFiles = (List<IArchiveFileInfo>)blnSub.Load(fileStream);
 
                 for (int j = 0; j < subFiles.Count; j++)
@@ -93,7 +93,7 @@ namespace HaruhiHeiretsuLib
                         if (Regex.IsMatch(idBytes, @"V\d{3}\w{7}(?<characterCode>[A-Z]{3})"))
                         {
                             fileLocations.Add((i, j));
-                            Console.WriteLine($"File {j} in file {i} contains voiced lines");
+                            Console.WriteLine($"File {j} in archive {i} contains voiced lines");
                         }
                     }
                 }
@@ -105,13 +105,13 @@ namespace HaruhiHeiretsuLib
 
         public async Task<List<(int, int)>> FindStringInFiles(string search)
         {
-            var fileLocations = new List<(int, int)>();
+            List<(int, int)> fileLocations = new();
 
             for (int i = 75; i < ArchiveFiles.Count; i++)
             {
                 using Stream fileStream = await ArchiveFiles[i].GetFileData();
 
-                BlnSub blnSub = new BlnSub();
+                BlnSub blnSub = new();
                 List<IArchiveFileInfo> subFiles = (List<IArchiveFileInfo>)blnSub.Load(fileStream);
 
                 for (int j = 0; j < subFiles.Count; j++)
@@ -124,7 +124,42 @@ namespace HaruhiHeiretsuLib
                         if (Regex.IsMatch(idBytes, search))
                         {
                             fileLocations.Add((i, j));
-                            Console.WriteLine($"File {j} in file {i} contains string '{search}'");
+                            Console.WriteLine($"File {j} in archive {i} contains string '{search}'");
+                        }
+                    }
+                }
+                Console.WriteLine($"Finished searching {subFiles.Count} files in file {i}");
+            }
+
+            return fileLocations;
+        }
+
+        public async Task<List<(int, int)>> CheckHexInIdentifier(byte[] search)
+        {
+            List<(int, int)> fileLocations = new();
+
+            for (int i = 0; i < ArchiveFiles.Count; i++)
+            {
+                using Stream fileStream = await ArchiveFiles[i].GetFileData();
+
+                BlnSub blnSub = new();
+                List<IArchiveFileInfo> subFiles = (List<IArchiveFileInfo>)blnSub.Load(fileStream);
+
+                for (int j = 0; j < subFiles.Count; j++)
+                {
+                    byte[] data = subFiles[j].GetFileDataBytes();
+
+                    if (data.Length > 0)
+                    {
+                        bool match = true;
+                        for (int k = 0; match && k < search.Length && k < data.Length; k++)
+                        {
+                            match = match && (data[k] == search[k]);
+                        }
+                        if (match)
+                        {
+                            fileLocations.Add((i, j));
+                            Console.WriteLine($"File {j} in archive {i} begins with sequence '{string.Join(' ', search.Select(b => $"{b:X2}"))}'");
                         }
                     }
                 }

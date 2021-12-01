@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -24,6 +25,7 @@ namespace HaruhiHeiretsuEditor
     public partial class MainWindow : Window
     {
         private McbFile _mcb;
+        private ArchiveFile<GraphicsFile> _grpFile;
 
         public MainWindow()
         {
@@ -81,6 +83,52 @@ namespace HaruhiHeiretsuEditor
             DialogueTextBox dialogueTextBox = (DialogueTextBox)sender;
 
             dialogueTextBox.ScriptFile.EditDialogue(dialogueTextBox.DialogueLineIndex, dialogueTextBox.Text);
+        }
+
+        private void OpenGrpFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "GRP.BIN|grp*.bin"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                _grpFile = ArchiveFile<GraphicsFile>.FromFile(openFileDialog.FileName);
+                graphicsListBox.ItemsSource = _grpFile.Files;
+                graphicsListBox.Items.Refresh();
+            }
+        }
+
+        private void OpenSingleGraphicsFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "BIN file|*.bin"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                graphicsEditStackPanel.Children.Clear();
+                GraphicsFile graphicsFile = new();
+                graphicsFile.Initialize(File.ReadAllBytes(openFileDialog.FileName), 0);
+                graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(graphicsFile.GetImage()), MaxWidth = graphicsFile.Width });
+            }
+        }
+
+        private void GraphicsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            graphicsEditStackPanel.Children.Clear();
+            if (graphicsListBox.SelectedIndex >= 0)
+            {
+                GraphicsFile selectedFile = (GraphicsFile)graphicsListBox.SelectedItem;
+                if (selectedFile.FileType == GraphicsFile.GraphicsFileType.SGE)
+                {
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes" });
+                }
+                if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TYPE_20AF30)
+                {
+                    graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedFile.GetImage()), MaxWidth = selectedFile.Width });
+                }
+            }
         }
     }
 }

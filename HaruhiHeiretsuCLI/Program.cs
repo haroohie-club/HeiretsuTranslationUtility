@@ -16,9 +16,11 @@ namespace HaruhiHeiretsuCLI
         public enum Mode
         {
             HELP,
+            EXTRACT_LIST_OF_FILES,
             EXTRACT_SGE_FILES,
             EXTRACT_STRING_FILES,
             FIND_STRINGS,
+            HEX_SEARCH,
             STRING_SEARCH,
         }
 
@@ -30,18 +32,21 @@ namespace HaruhiHeiretsuCLI
         public static async Task MainAsync( string[] args)
         {
             Mode mode = Mode.HELP;
-            string file = "", output = "", search = "";
+            string file = "", output = "", search = "", fileList = "";
 
             OptionSet options = new()
             {
                 "Usage: HaruhiHeiretsuCLI -f MCB_FILE",
                 { "f|file=", f => file = f },
                 { "o|output=", o => output = o },
-                { "search=", s => search = s },
+                { "s|search=", s => search = s },
+                { "l|file-list=", l => fileList = l },
+                { "hex-search", m => mode = Mode.HEX_SEARCH },
                 { "find-strings", m => mode = Mode.FIND_STRINGS },
                 { "string-search", m => mode = Mode.STRING_SEARCH },
                 { "extract-sge-files", m => mode = Mode.EXTRACT_SGE_FILES },
                 { "extract-string-files", m => mode = Mode.EXTRACT_STRING_FILES },
+                { "extract-list-of-files", m => mode = Mode.EXTRACT_LIST_OF_FILES },
                 { "h|help", m => mode = Mode.HELP },
             };
 
@@ -67,17 +72,30 @@ namespace HaruhiHeiretsuCLI
 
             McbFile mcb = new(indexFile, dataFile);
 
-            if (mode == Mode.EXTRACT_SGE_FILES)
+            if (mode == Mode.EXTRACT_LIST_OF_FILES)
+            {
+                ExtractListOfFiles(mcb, output, fileList);
+            }
+            else if (mode == Mode.EXTRACT_SGE_FILES)
             {
                 await ExtractSgeFiles(mcb, output);
             }
             else if (mode == Mode.EXTRACT_STRING_FILES)
             {
-                ExtractStringFiles(mcb, output);
+                ExtractListOfFiles(mcb, output);
             }
             else if (mode == Mode.FIND_STRINGS)
             {
                 await FindStrings(mcb);
+            }
+            else if (mode == Mode.HEX_SEARCH)
+            {
+                List<byte> searchBytes = new();
+                for (int i = 0; i < search.Length; i += 2)
+                {
+                    searchBytes.Add(byte.Parse(search.Substring(i, 2), System.Globalization.NumberStyles.HexNumber));
+                }
+                await HexSearch(mcb, searchBytes.ToArray());
             }
             else if (mode == Mode.STRING_SEARCH)
             {
@@ -95,9 +113,14 @@ namespace HaruhiHeiretsuCLI
             }
         }
 
-        public static void ExtractStringFiles(McbFile mcb, string outputDirectory)
+        public static void ExtractListOfFiles(McbFile mcb, string outputDirectory, string locationsFile = "string_file_locations.csv")
         {
-            string stringFileLocations = File.ReadAllText("string_file_locations.csv");
+            if (!Directory.Exists(outputDirectory))
+            {
+                Directory.CreateDirectory(outputDirectory);
+            }
+
+            string stringFileLocations = File.ReadAllText(locationsFile);
             foreach (string line in stringFileLocations.Split("\r\n"))
             {
                 if (string.IsNullOrEmpty(line))
@@ -163,7 +186,22 @@ namespace HaruhiHeiretsuCLI
 
         public static async Task StringSearch(McbFile mcb, string search)
         {
-            await mcb.FindStringInFiles(search);
+            List<(int, int)> fileLocations = await mcb.FindStringInFiles(search);
+            using StreamWriter fs = File.CreateText("search_result_locations.csv");
+            foreach ((int file, int subFile) in fileLocations)
+            {
+                fs.WriteLine($"{file},{subFile}");
+            }
+        }
+
+        public static async Task HexSearch(McbFile mcb, byte[] search)
+        {
+            List<(int, int)> fileLocations = await mcb.CheckHexInIdentifier(search);
+            using StreamWriter fs = File.CreateText("search_result_locations.csv");
+            foreach ((int file, int subFile) in fileLocations)
+            {
+                fs.WriteLine($"{file},{subFile}");
+            }
         }
     }
 }
