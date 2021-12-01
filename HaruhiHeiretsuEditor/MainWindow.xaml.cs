@@ -26,6 +26,7 @@ namespace HaruhiHeiretsuEditor
     {
         private McbFile _mcb;
         private ArchiveFile<GraphicsFile> _grpFile;
+        private GraphicsFile _loadedGraphicsFile;
 
         public MainWindow()
         {
@@ -111,12 +112,14 @@ namespace HaruhiHeiretsuEditor
                 GraphicsFile graphicsFile = new();
                 graphicsFile.Initialize(File.ReadAllBytes(openFileDialog.FileName), 0);
                 graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(graphicsFile.GetImage()), MaxWidth = graphicsFile.Width });
+                _loadedGraphicsFile = graphicsFile;
             }
         }
 
         private void GraphicsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             graphicsEditStackPanel.Children.Clear();
+            _loadedGraphicsFile = null;
             if (graphicsListBox.SelectedIndex >= 0)
             {
                 GraphicsFile selectedFile = (GraphicsFile)graphicsListBox.SelectedItem;
@@ -127,6 +130,23 @@ namespace HaruhiHeiretsuEditor
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TYPE_20AF30)
                 {
                     graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedFile.GetImage()), MaxWidth = selectedFile.Width });
+                    _loadedGraphicsFile = selectedFile;
+                }
+            }
+        }
+
+        private void SaveImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_loadedGraphicsFile is not null)
+            {
+                SaveFileDialog saveFileDialog = new()
+                {
+                    Filter = "BMP file|*.bmp"
+                };
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    Bitmap bitmap = _loadedGraphicsFile.GetImage();
+                    bitmap.Save(saveFileDialog.FileName, System.Drawing.Imaging.ImageFormat.Bmp);
                 }
             }
         }

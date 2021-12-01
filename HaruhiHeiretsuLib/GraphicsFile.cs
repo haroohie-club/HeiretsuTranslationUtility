@@ -56,6 +56,7 @@ namespace HaruhiHeiretsuLib
                 switch (Mode)
                 {
                     case ImageMode.RGBA32:
+
                         for (int h = 0; h < Height; h += 4)
                         {
                             for (int w = 0; w < Width; w += 4)
@@ -64,10 +65,15 @@ namespace HaruhiHeiretsuLib
                                 {
                                     for (int bw = 0; bw < 4; bw++)
                                     {
-                                        Color color = Color.FromArgb(Data[h * Width * 4 + w * 8 + bw * 2 + bh * 8 + DataPointer],
-                                            Data[h * Width * 4 + w * 8 + bw * 2 + bh * 8 + 1 + DataPointer],
-                                            Data[h * Width * 4 + w * 8 + bw * 2 + bh * 8 + 16 + DataPointer],
-                                            Data[h * Width * 4 + w * 8 + bw * 2 + bh * 8 + 17 + DataPointer]);
+                                        if (h * Width * 4 + w * 16 + bw * 2 + bh * 8 + 17 + DataPointer >= Data.Count || w + bw >= Width || h + bh >= Height)
+                                        {
+                                            break;
+                                        }
+                                        Color color = Color.FromArgb(
+                                            Data[h * Width * 4 + w * 16 + bw * 2 + bh * 8 + DataPointer],
+                                            Data[h * Width * 4 + w * 16 + bw * 2 + bh * 8 + 1 + DataPointer],
+                                            Data[h * Width * 4 + w * 16 + bw * 2 + bh * 8 + 16 + DataPointer],
+                                            Data[h * Width * 4 + w * 16 + bw * 2 + bh * 8 + 17 + DataPointer]);
 
                                         bitmap.SetPixel(w + bw, h + bh, color);
                                     }

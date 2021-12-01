@@ -51,6 +51,7 @@
                     <ToolBar x:Name="graphicsToolBar" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="1043" Grid.ColumnSpan="2">
                         <Button x:Name="openGrpFileButton" Content="Open GRP" HorizontalAlignment="Left" Click="OpenGrpFileButton_Click" />
                         <Button x:Name="openSingleGraphicsFileButton" Content="Open File" HorizontalAlignment="Left" Click="OpenSingleGraphicsFileButton_Click" />
+                        <Button x:Name="saveImageButton" Content="Save Image" HorizontalAlignment="Left" Click="SaveImageButton_Click" />
                     </ToolBar>
                     <ListBox x:Name="graphicsListBox" Margin="0,30,521,0" Grid.ColumnSpan="2" MaxHeight="355" SelectionChanged="GraphicsListBox_SelectionChanged" />
                     <StackPanel Grid.Column="1" Margin="175,30,0,0">
