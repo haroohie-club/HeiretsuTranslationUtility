@@ -19,8 +19,8 @@ namespace HaruhiHeiretsuLib
 
         public int NumCommandsOffset { get; set; }
         public short NumCommands { get; set; }
-        public int UnknownShort2Offset { get; set; }
-        public short UnknownShort2 { get; set; }
+        public int UI2MultiplierOffset { get; set; }
+        public short UI2Multiplier { get; set; }
         public int DialogueEndOffset { get; set; }
         public int DialogueEnd { get; set; }
         public int UnknownInt2Offset { get; set; }
@@ -70,8 +70,8 @@ namespace HaruhiHeiretsuLib
                                 length = 2;
                                 break;
                             case 3:
-                                UnknownShort2 = BitConverter.ToInt16(Data.Skip(i).Take(2).Reverse().ToArray());
-                                UnknownShort2Offset = i;
+                                UI2Multiplier = BitConverter.ToInt16(Data.Skip(i).Take(2).Reverse().ToArray());
+                                UI2MultiplierOffset = i;
                                 length = 2;
                                 break;
                             case 2:
@@ -154,7 +154,7 @@ namespace HaruhiHeiretsuLib
                 Data.RemoveRange(DialogueEndOffset, 4);
                 Data.InsertRange(DialogueEndOffset, BitConverter.GetBytes(DialogueEnd).Reverse());
 
-                UnknownInt2 += lengthDifference;
+                UnknownInt2 = DialogueEnd + 8 * UI2Multiplier;
                 Data.RemoveRange(UnknownInt2Offset, 4);
                 Data.InsertRange(UnknownInt2Offset, BitConverter.GetBytes(UnknownInt2).Reverse());
 

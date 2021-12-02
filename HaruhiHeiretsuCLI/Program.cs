@@ -16,6 +16,7 @@ namespace HaruhiHeiretsuCLI
         public enum Mode
         {
             HELP,
+            EXTRACT_ARCHIVE,
             EXTRACT_LIST_OF_FILES,
             EXTRACT_SGE_FILES,
             EXTRACT_STRING_FILES,
@@ -33,6 +34,7 @@ namespace HaruhiHeiretsuCLI
         {
             Mode mode = Mode.HELP;
             string file = "", output = "", search = "", fileList = "";
+            int archiveIndex = 0;
 
             OptionSet options = new()
             {
@@ -41,12 +43,14 @@ namespace HaruhiHeiretsuCLI
                 { "o|output=", o => output = o },
                 { "s|search=", s => search = s },
                 { "l|file-list=", l => fileList = l },
+                { "i|archive-index=", i => archiveIndex = int.Parse(i) },
+                { "extract-archive", m => mode = Mode.EXTRACT_ARCHIVE },
+                { "extract-list-of-files", m => mode = Mode.EXTRACT_LIST_OF_FILES },
+                { "extract-sge-files", m => mode = Mode.EXTRACT_SGE_FILES },
+                { "extract-string-files", m => mode = Mode.EXTRACT_STRING_FILES },
                 { "hex-search", m => mode = Mode.HEX_SEARCH },
                 { "find-strings", m => mode = Mode.FIND_STRINGS },
                 { "string-search", m => mode = Mode.STRING_SEARCH },
-                { "extract-sge-files", m => mode = Mode.EXTRACT_SGE_FILES },
-                { "extract-string-files", m => mode = Mode.EXTRACT_STRING_FILES },
-                { "extract-list-of-files", m => mode = Mode.EXTRACT_LIST_OF_FILES },
                 { "h|help", m => mode = Mode.HELP },
             };
 
@@ -72,7 +76,11 @@ namespace HaruhiHeiretsuCLI
 
             McbFile mcb = new(indexFile, dataFile);
 
-            if (mode == Mode.EXTRACT_LIST_OF_FILES)
+            if (mode == Mode.EXTRACT_ARCHIVE)
+            {
+                await ExtractArchive(mcb, output, archiveIndex);
+            }
+            else if (mode == Mode.EXTRACT_LIST_OF_FILES)
             {
                 ExtractListOfFiles(mcb, output, fileList);
             }
@@ -110,6 +118,23 @@ namespace HaruhiHeiretsuCLI
             foreach ((int file, int subFile) in stringFileLocations)
             {
                 fs.WriteLine($"{file},{subFile}");
+            }
+        }
+
+        public static async Task ExtractArchive(McbFile mcb, string outputDirectory, int archive)
+        {
+            if (!Directory.Exists(outputDirectory))
+            {
+                Directory.CreateDirectory(outputDirectory);
+            }
+
+            using Stream archiveStream = await mcb.ArchiveFiles[archive].GetFileData();
+            BlnSub blnSub = new();
+            List<IArchiveFileInfo> blnSubFiles = (List<IArchiveFileInfo>)blnSub.Load(archiveStream);
+
+            for (int i = 0; i < blnSubFiles.Count; i++)
+            {
+                File.WriteAllBytes(Path.Combine(outputDirectory, $"{i:D3}.bin"), blnSubFiles[i].GetFileDataBytes());
             }
         }
 
