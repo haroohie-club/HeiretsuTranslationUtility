@@ -16,9 +16,15 @@ namespace HaruhiHeiretsuLib
         public List<DialogueLine> DialogueLines { get; set; } = new();
 
         public bool IsScript { get; set; } = true;
-        public int ScriptInt { get; set; }
-        public int RoomInt { get; set; }
-        public int TimeInt { get; set; }
+
+        public int NumCommandsOffset { get; set; }
+        public short NumCommands { get; set; }
+        public int UnknownShort2Offset { get; set; }
+        public short UnknownShort2 { get; set; }
+        public int DialogueEndOffset { get; set; }
+        public int DialogueEnd { get; set; }
+        public int UnknownInt2Offset { get; set; }
+        public int UnknownInt2 { get; set; }
 
         public ScriptFile(int parent, int child, byte[] data)
         {
@@ -45,7 +51,7 @@ namespace HaruhiHeiretsuLib
             }
             else
             {
-                int intsToRead = 0;
+                int numsToRead = 4;
                 string lastLine = "";
                 List<(int offset, string line)> lines = new();
 
@@ -53,27 +59,36 @@ namespace HaruhiHeiretsuLib
                 {
                     int length = 0;
                     string line = "";
-                    if (lastLine == "TIME" && intsToRead > 0)
+                    if (lastLine == "TIME" && numsToRead > 0)
                     {
                         line = "TIME";
-                        length = 4;
-
-                        switch (intsToRead)
+                        switch (numsToRead)
                         {
+                            case 4:
+                                NumCommands = BitConverter.ToInt16(Data.Skip(i).Take(2).Reverse().ToArray());
+                                NumCommandsOffset = i;
+                                length = 2;
+                                break;
                             case 3:
-                                ScriptInt = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
+                                UnknownShort2 = BitConverter.ToInt16(Data.Skip(i).Take(2).Reverse().ToArray());
+                                UnknownShort2Offset = i;
+                                length = 2;
                                 break;
                             case 2:
-                                RoomInt = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
+                                DialogueEnd = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
+                                DialogueEndOffset = i;
+                                length = 4;
                                 break;
                             case 1:
-                                TimeInt = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
+                                UnknownInt2 = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
+                                UnknownInt2Offset = i;
+                                length = 4;
                                 break;
                             default:
                                 break;
                         }
 
-                        intsToRead--;
+                        numsToRead--;
                     }
                     else
                     {
@@ -84,11 +99,6 @@ namespace HaruhiHeiretsuLib
                         }
                         line = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(i + 4).Take(length).ToArray());
                         length += 5;
-
-                        if (line is "SCRIPT" or "ROOM" or "TIME")
-                        {
-                            intsToRead++;
-                        }
 
                         Match match = Regex.Match(line, VOICE_REGEX);
                         if (match.Success)
@@ -131,11 +141,26 @@ namespace HaruhiHeiretsuLib
 
             if (IsScript)
             {
-                Data.RemoveRange(DialogueLines[index].Offset, oldLength);
-                Data.InsertRange(DialogueLines[index].Offset, newLineData);
+                List<byte> newLineDataIncludingLength = new();
+                newLineDataIncludingLength.AddRange(BitConverter.GetBytes(newLineData.Length + 1).Reverse());
+                newLineDataIncludingLength.AddRange(newLineData);
+
+                Data.RemoveRange(DialogueLines[index].Offset, oldLength + 4);
+                Data.InsertRange(DialogueLines[index].Offset, newLineDataIncludingLength);
+
+                int lengthDifference = newLineData.Length - oldLength;
+
+                DialogueEnd += lengthDifference;
+                Data.RemoveRange(DialogueEndOffset, 4);
+                Data.InsertRange(DialogueEndOffset, BitConverter.GetBytes(DialogueEnd).Reverse());
+
+                UnknownInt2 += lengthDifference;
+                Data.RemoveRange(UnknownInt2Offset, 4);
+                Data.InsertRange(UnknownInt2Offset, BitConverter.GetBytes(UnknownInt2).Reverse());
+
                 for (int i = index + 1; i < DialogueLines.Count; i++)
                 {
-                    DialogueLines[i].Offset += newLineData.Length - oldLength;
+                    DialogueLines[i].Offset += lengthDifference;
                 }
             }
             else

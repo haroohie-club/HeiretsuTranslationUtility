@@ -60,6 +60,22 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        private void ExportEventsFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (scriptsListBox.SelectedIndex >= 0)
+            {
+                SaveFileDialog saveFileDialog = new()
+                {
+                    Filter = "BIN file|*.bin"
+                };
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    var selectedFile = (ScriptFile)scriptsListBox.SelectedItem;
+                    File.WriteAllBytes(saveFileDialog.FileName, selectedFile.Data.ToArray());
+                }                
+            }
+        }
+
         private void ScriptsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             scriptEditStackPanel.Children.Clear();
