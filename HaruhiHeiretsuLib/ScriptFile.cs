@@ -19,12 +19,16 @@ namespace HaruhiHeiretsuLib
 
         public int NumCommandsOffset { get; set; }
         public short NumCommands { get; set; }
-        public int UI2MultiplierOffset { get; set; }
-        public short UI2Multiplier { get; set; }
+        public int NumShortPointersOffset { get; set; }
+        public short NumShortPointers { get; set; }
         public int DialogueEndOffset { get; set; }
         public int DialogueEnd { get; set; }
-        public int UnknownInt2Offset { get; set; }
-        public int UnknownInt2 { get; set; }
+        public int ShortPointersEndOffset { get; set; }
+        public int ShortPointersEnd { get; set; }
+
+        public List<ushort> ShortPointers { get; set; } = new();
+        public List<ushort> UnknownShorts { get; set; } = new();
+        public List<int> UnknownInts { get; set; } = new();
 
         public ScriptFile(int parent, int child, byte[] data)
         {
@@ -70,8 +74,8 @@ namespace HaruhiHeiretsuLib
                                 length = 2;
                                 break;
                             case 3:
-                                UI2Multiplier = BitConverter.ToInt16(Data.Skip(i).Take(2).Reverse().ToArray());
-                                UI2MultiplierOffset = i;
+                                NumShortPointers = BitConverter.ToInt16(Data.Skip(i).Take(2).Reverse().ToArray());
+                                NumShortPointersOffset = i;
                                 length = 2;
                                 break;
                             case 2:
@@ -80,8 +84,8 @@ namespace HaruhiHeiretsuLib
                                 length = 4;
                                 break;
                             case 1:
-                                UnknownInt2 = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
-                                UnknownInt2Offset = i;
+                                ShortPointersEnd = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
+                                ShortPointersEndOffset = i;
                                 length = 4;
                                 break;
                             default:
@@ -128,6 +132,30 @@ namespace HaruhiHeiretsuLib
                     lastLine = line;
                     i += length;
                 }
+
+                for (int i = DialogueEnd; i < ShortPointersEnd;)
+                {
+                    for (int j = 3; j >= 0; j--)
+                    {
+                        switch (j)
+                        {
+                            case 3:
+                                ShortPointers.Add(BitConverter.ToUInt16(Data.Skip(i).Take(2).Reverse().ToArray()));
+                                i += 2;
+                                break;
+
+                            case 2:
+                                UnknownShorts.Add(BitConverter.ToUInt16(Data.Skip(i).Take(2).Reverse().ToArray()));
+                                i += 2;
+                                break;
+
+                            case 1:
+                                UnknownInts.Add(BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray()));
+                                i += 4;
+                                break;
+                        }
+                    }
+                }
             }
         }
 
@@ -154,9 +182,14 @@ namespace HaruhiHeiretsuLib
                 Data.RemoveRange(DialogueEndOffset, 4);
                 Data.InsertRange(DialogueEndOffset, BitConverter.GetBytes(DialogueEnd).Reverse());
 
-                UnknownInt2 = DialogueEnd + 8 * UI2Multiplier;
-                Data.RemoveRange(UnknownInt2Offset, 4);
-                Data.InsertRange(UnknownInt2Offset, BitConverter.GetBytes(UnknownInt2).Reverse());
+                ShortPointersEnd = DialogueEnd + 8 * NumShortPointers;
+                Data.RemoveRange(ShortPointersEndOffset, 4);
+                Data.InsertRange(ShortPointersEndOffset, BitConverter.GetBytes(ShortPointersEnd).Reverse());
+
+                for (int i = 0; i < ShortPointers.Count; i++)
+                {
+                    ShortPointers[i] += (ushort)lengthDifference;
+                }
 
                 for (int i = index + 1; i < DialogueLines.Count; i++)
                 {
