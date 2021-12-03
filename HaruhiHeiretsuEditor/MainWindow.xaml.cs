@@ -42,9 +42,10 @@ namespace HaruhiHeiretsuEditor
             if (openFileDialog.ShowDialog() == true)
             {
                 _mcb = new McbFile(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
-                string stringFileLocations = File.ReadAllText("string_file_locations.csv");
-                _mcb.LoadScriptFiles(stringFileLocations);
+                _mcb.LoadScriptFiles(File.ReadAllText("string_file_locations.csv"));
+                _mcb.Load20AF30GraphicsFiles(File.ReadAllText("graphics_20AF30_locations.csv"));
                 scriptsListBox.ItemsSource = _mcb.ScriptFiles;
+                graphicsListBox.ItemsSource = _mcb.Graphics20AF30Files;
             }
         }
 

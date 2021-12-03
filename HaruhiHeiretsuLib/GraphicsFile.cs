@@ -11,6 +11,8 @@ namespace HaruhiHeiretsuLib
 {
     public class GraphicsFile : FileInArchive
     {
+        public (int parent, int child) Location { get; set; } = (-1, -1);
+
         public GraphicsFileType FileType { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
@@ -24,9 +26,9 @@ namespace HaruhiHeiretsuLib
         {
         }
 
-        public override void Initialize(byte[] compressedData, int offset)
+        public override void Initialize(byte[] decompressedData, int offset)
         {
-            Data = compressedData.ToList();
+            Data = decompressedData.ToList();
             Offset = offset;
             if (Encoding.ASCII.GetString(Data.Take(3).ToArray()) == "SGE")
             {
@@ -240,9 +242,21 @@ namespace HaruhiHeiretsuLib
             return null;
         }
 
+        public void Set20AF30Image(Bitmap image)
+        {
+
+        }
+
         public override string ToString()
         {
-            return $"{Index:X3} {Index:D4} 0x{Offset:X8}";
+            if (Location != (-1, -1))
+            {
+                return $"{Location.parent},{Location.child}";
+            }
+            else
+            {
+                return $"{Index:X3} {Index:D4} 0x{Offset:X8}";
+            }
         }
 
         public enum GraphicsFileType

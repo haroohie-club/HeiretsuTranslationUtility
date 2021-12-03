@@ -16,7 +16,7 @@ namespace HaruhiHeiretsuLib
         public byte[] CompressedData { get; set; }
         public bool Edited { get; set; } = false;
 
-        public virtual void Initialize(byte[] compressedData, int offset)
+        public virtual void Initialize(byte[] decompressedData, int offset)
         {
         }
         public virtual byte[] GetBytes()

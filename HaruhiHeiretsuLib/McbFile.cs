@@ -15,6 +15,7 @@ namespace HaruhiHeiretsuLib
         public Bln BlnFile { get; set; } = new Bln();
         public List<IArchiveFileInfo> ArchiveFiles { get; set; }
         public List<ScriptFile> ScriptFiles { get; set; } = new();
+        public List<GraphicsFile> Graphics20AF30Files { get; set; } = new();
 
         private FileStream _indexFileStream { get; set; }
         private FileStream _dataFileStream { get; set; }
@@ -69,6 +70,30 @@ namespace HaruhiHeiretsuLib
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
                 ScriptFiles.Add(new ScriptFile(parentLoc, childLoc, subFileData));
+            }
+        }
+
+        public void Load20AF30GraphicsFiles(string graphicsFilesLocations)
+        {
+            foreach (string line in graphicsFilesLocations.Split("\r\n"))
+            {
+                if (string.IsNullOrEmpty(line))
+                {
+                    continue;
+                }
+                string[] lineSplit = line.Split(',');
+                int parentLoc = int.Parse(lineSplit[0]);
+                int childLoc = int.Parse(lineSplit[1]);
+
+                using Stream archiveStream = ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
+                BlnSub blnSub = new();
+                IArchiveFileInfo blnSubFile = blnSub.GetFile(archiveStream, childLoc);
+
+                byte[] subFileData = blnSubFile.GetFileDataBytes();
+
+                GraphicsFile graphicsFile = new() { Location = (parentLoc, childLoc) };
+                graphicsFile.Initialize(subFileData, 0);
+                Graphics20AF30Files.Add(graphicsFile);
             }
         }
 
