@@ -127,6 +127,7 @@ namespace HaruhiHeiretsuEditor
                 graphicsEditStackPanel.Children.Clear();
                 GraphicsFile graphicsFile = new();
                 graphicsFile.Initialize(File.ReadAllBytes(openFileDialog.FileName), 0);
+                graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {graphicsFile.Mode}", Background = System.Windows.Media.Brushes.White });
                 graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(graphicsFile.GetImage()), MaxWidth = graphicsFile.Width });
                 _loadedGraphicsFile = graphicsFile;
             }
@@ -145,6 +146,8 @@ namespace HaruhiHeiretsuEditor
                 }
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TYPE_20AF30)
                 {
+                    graphicsEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {selectedFile.Mode}", Background = System.Windows.Media.Brushes.White });
                     graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedFile.GetImage()), MaxWidth = selectedFile.Width });
                     _loadedGraphicsFile = selectedFile;
                 }
