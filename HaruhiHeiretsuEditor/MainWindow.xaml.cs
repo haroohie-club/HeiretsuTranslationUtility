@@ -43,9 +43,9 @@ namespace HaruhiHeiretsuEditor
             {
                 _mcb = new McbFile(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
                 _mcb.LoadScriptFiles(File.ReadAllText("string_file_locations.csv"));
-                _mcb.Load20AF30GraphicsFiles(File.ReadAllText("graphics_20AF30_locations.csv"));
+                //_mcb.Load20AF30GraphicsFiles(File.ReadAllText("graphics_20AF30_locations.csv"));
                 scriptsListBox.ItemsSource = _mcb.ScriptFiles;
-                graphicsListBox.ItemsSource = _mcb.Graphics20AF30Files;
+                //graphicsListBox.ItemsSource = _mcb.Graphics20AF30Files;
             }
         }
 
@@ -86,7 +86,7 @@ namespace HaruhiHeiretsuEditor
                 var selectedFile = (ScriptFile)scriptsListBox.SelectedItem;
                 for (int i = 0; i < selectedFile.DialogueLines.Count; i++)
                 {
-                    var dialogueStackPanel = new StackPanel { Orientation = Orientation.Horizontal };
+                    StackPanel dialogueStackPanel = new() { Orientation = Orientation.Horizontal };
                     dialogueStackPanel.Children.Add(new TextBlock { Text = selectedFile.DialogueLines[i].Speaker.ToString() });
                     DialogueTextBox dialogueTextBox = new() { Text = selectedFile.DialogueLines[i].Line, AcceptsReturn = true, ScriptFile = selectedFile, DialogueLineIndex = i };
                     dialogueTextBox.TextChanged += DialogueTextBox_TextChanged;

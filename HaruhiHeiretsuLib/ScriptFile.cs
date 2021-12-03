@@ -26,9 +26,10 @@ namespace HaruhiHeiretsuLib
         public int ShortPointersEndOffset { get; set; }
         public int ShortPointersEnd { get; set; }
 
-        public List<ushort> ShortPointers { get; set; } = new();
-        public List<ushort> UnknownShorts { get; set; } = new();
-        public List<int> UnknownInts { get; set; } = new();
+        public List<int> PostCommandOffsets { get; set; } = new();
+        public List<ushort> UnknownShorts1 { get; set; } = new();
+        public List<ushort> UnknownShorts2 { get; set; } = new();
+        public List<int> PostCommandPointers { get; set; } = new();
 
         public ScriptFile(int parent, int child, byte[] data)
         {
@@ -135,22 +136,23 @@ namespace HaruhiHeiretsuLib
 
                 for (int i = DialogueEnd; i < ShortPointersEnd;)
                 {
+                    PostCommandOffsets.Add(i);
                     for (int j = 3; j >= 0; j--)
                     {
                         switch (j)
                         {
                             case 3:
-                                ShortPointers.Add(BitConverter.ToUInt16(Data.Skip(i).Take(2).Reverse().ToArray()));
+                                UnknownShorts1.Add(BitConverter.ToUInt16(Data.Skip(i).Take(2).Reverse().ToArray()));
                                 i += 2;
                                 break;
 
                             case 2:
-                                UnknownShorts.Add(BitConverter.ToUInt16(Data.Skip(i).Take(2).Reverse().ToArray()));
+                                UnknownShorts2.Add(BitConverter.ToUInt16(Data.Skip(i).Take(2).Reverse().ToArray()));
                                 i += 2;
                                 break;
 
                             case 1:
-                                UnknownInts.Add(BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray()));
+                                PostCommandPointers.Add(BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray()));
                                 i += 4;
                                 break;
                         }
@@ -186,9 +188,17 @@ namespace HaruhiHeiretsuLib
                 Data.RemoveRange(ShortPointersEndOffset, 4);
                 Data.InsertRange(ShortPointersEndOffset, BitConverter.GetBytes(ShortPointersEnd).Reverse());
 
-                for (int i = 0; i < ShortPointers.Count; i++)
+                for (int i = 0; i < UnknownShorts1.Count; i++)
                 {
-                    ShortPointers[i] += (ushort)lengthDifference;
+                    PostCommandOffsets[i] += lengthDifference;
+                    PostCommandPointers[i] += lengthDifference;
+                    List<byte> postCommandsInsertionList = new();
+                    postCommandsInsertionList.AddRange(BitConverter.GetBytes(UnknownShorts1[i]).Reverse());
+                    postCommandsInsertionList.AddRange(BitConverter.GetBytes(UnknownShorts2[i]).Reverse());
+                    postCommandsInsertionList.AddRange(BitConverter.GetBytes(PostCommandPointers[i]).Reverse());
+
+                    Data.RemoveRange(PostCommandOffsets[i], 8);
+                    Data.InsertRange(PostCommandOffsets[i], postCommandsInsertionList);
                 }
 
                 for (int i = index + 1; i < DialogueLines.Count; i++)
