@@ -117,6 +117,18 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        private void SaveGrpFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "GRP.BIN|grp*.bin"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllBytes(saveFileDialog.FileName, _grpFile.GetBytes());
+            }
+        }
+
         private void OpenSingleGraphicsFileButton_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new()
@@ -167,6 +179,24 @@ namespace HaruhiHeiretsuEditor
                 {
                     Bitmap bitmap = _loadedGraphicsFile.GetImage();
                     bitmap.Save(saveFileDialog.FileName, System.Drawing.Imaging.ImageFormat.Png);
+                }
+            }
+        }
+
+        private void ImportImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_loadedGraphicsFile is not null)
+            {
+                OpenFileDialog openFileDialog = new()
+                {
+                    Filter = "PNG file|*.png"
+                };
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    _loadedGraphicsFile.Set20AF30Image(new Bitmap(openFileDialog.FileName));
+                    graphicsEditStackPanel.Children.Clear();
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {_loadedGraphicsFile.Mode}", Background = System.Windows.Media.Brushes.White });
+                    graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(_loadedGraphicsFile.GetImage()), MaxWidth = _loadedGraphicsFile.Width });
                 }
             }
         }

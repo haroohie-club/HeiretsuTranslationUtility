@@ -46,6 +46,22 @@ namespace HaruhiHeiretsuLib
                 }
             }
 
+            foreach (GraphicsFile graphicsFile in Graphics20AF30Files)
+            {
+                if (graphicsFile.Edited)
+                {
+                    using Stream archiveStream = await ArchiveFiles[graphicsFile.Location.parent].GetFileData();
+                    BlnSub blnSub = new();
+                    List<IArchiveFileInfo> blnSubFiles = (List<IArchiveFileInfo>)blnSub.Load(archiveStream);
+                    MemoryStream childFileStream = new(graphicsFile.Data.ToArray());
+                    blnSubFiles[graphicsFile.Location.child].SetFileData(childFileStream);
+
+                    MemoryStream parentFileStream = new();
+                    blnSub.Save(parentFileStream, blnSubFiles, leaveOpen: true);
+                    ArchiveFiles[graphicsFile.Location.parent].SetFileData(parentFileStream);
+                }
+            }
+
             using FileStream indexFileStream = File.OpenWrite(indexFile);
             using FileStream dataFileStream = File.OpenWrite(dataFile);
             BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);

@@ -242,9 +242,46 @@ namespace HaruhiHeiretsuLib
             return null;
         }
 
-        public void Set20AF30Image(Bitmap image)
+        public void Set20AF30Image(Bitmap bitmap)
         {
+            Edited = true;
+            switch (Mode)
+            {
+                case ImageMode.RGBA8:
+                    int rgba8HeightMod = (4 - (Height % 4)) == 4 ? 0 : 4 - (Height % 4);
+                    for (int y = 0; y < Height + rgba8HeightMod; y += 4)
+                    {
+                        int widthMod = (4 - (Width % 4)) == 4 ? 0 : 4 - (Width % 4);
+                        for (int x = 0; x < Width + widthMod; x += 4)
+                        {
+                            for (int row = 0; row < 4; row++)
+                            {
+                                for (int col = 0; col < 4; col++)
+                                {
+                                    int index = y * (Width + widthMod) * 4 + x * 16 + col * 2 + row * 8 + DataPointer;
+                                    if (index + 33 >= Data.Count || x + col >= Width || y + row >= Height)
+                                    {
+                                        continue;
+                                    }
 
+
+                                    Color color = bitmap.GetPixel(x + col, y + row);
+
+                                    Data[index] = color.A;
+                                    Data[index + 1] = color.R;
+                                    Data[index + 32] = color.G;
+                                    Data[index + 33] = color.B;
+                                }
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        public override byte[] GetBytes()
+        {
+            return Data.ToArray();
         }
 
         public override string ToString()
