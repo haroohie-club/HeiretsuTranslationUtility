@@ -160,12 +160,12 @@ namespace HaruhiHeiretsuEditor
             {
                 SaveFileDialog saveFileDialog = new()
                 {
-                    Filter = "BMP file|*.bmp"
+                    Filter = "PNG file|*.png"
                 };
                 if (saveFileDialog.ShowDialog() == true)
                 {
                     Bitmap bitmap = _loadedGraphicsFile.GetImage();
-                    bitmap.Save(saveFileDialog.FileName, System.Drawing.Imaging.ImageFormat.Bmp);
+                    bitmap.Save(saveFileDialog.FileName, System.Drawing.Imaging.ImageFormat.Png);
                 }
             }
         }
