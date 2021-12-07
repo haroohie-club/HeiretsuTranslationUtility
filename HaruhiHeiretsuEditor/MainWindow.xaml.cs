@@ -76,6 +76,18 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        private void SaveScrFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "SCR.BIN|scr*.bin"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllBytes(saveFileDialog.FileName, _scrFile.GetBytes());
+            }
+        }
+
         private void ExportEventsFileButton_Click(object sender, RoutedEventArgs e)
         {
             if (scriptsListBox.SelectedIndex >= 0)

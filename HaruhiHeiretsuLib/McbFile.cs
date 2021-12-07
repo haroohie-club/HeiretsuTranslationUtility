@@ -85,8 +85,8 @@ namespace HaruhiHeiretsuLib
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
-                // hardcoding the two chokuretsu-style script files, gomen nasai
-                if (parentLoc == 0 && (childLoc == 58 || childLoc == 70))
+                // archive 0 contains a lot of chokuretsu-style script files
+                if (parentLoc == 0)
                 {
                     ChokuretsuEventFile eventFile = new();
                     eventFile.Initialize(subFileData);
@@ -159,7 +159,7 @@ namespace HaruhiHeiretsuLib
         {
             List<(int, int)> fileLocations = new();
 
-            for (int i = 75; i < ArchiveFiles.Count; i++)
+            for (int i = 0; i < ArchiveFiles.Count; i++)
             {
                 using Stream fileStream = await ArchiveFiles[i].GetFileData();
 

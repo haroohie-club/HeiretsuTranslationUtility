@@ -398,12 +398,13 @@ namespace HaruhiHeiretsuLib
 
             for (int i = 0; i < EndPointerPointers.Count; i++)
             {
+                byte[] lineData = Data.Skip(EndPointerPointers[i]).TakeWhile(b => b != 0x00).ToArray();
                 DialogueLines.Add(new DialogueLine
                 {
-                    Line = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(EndPointerPointers[i]).TakeWhile(b => b != 0x00).ToArray()),
+                    Line = Encoding.GetEncoding("Shift-JIS").GetString(lineData),
                     Offset = EndPointerPointers[i],
                     Speaker = Speaker.ANNOUNCEMENT,
-                    NumPaddingZeroes = 4 - (Length % 4),
+                    NumPaddingZeroes = 4 - (lineData.Length % 4),
             });
             }
         }
