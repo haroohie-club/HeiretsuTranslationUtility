@@ -34,13 +34,13 @@ namespace HaruhiHeiretsuLib
             {
                 FileType = GraphicsFileType.SGE;
             }
-            if (Data[0] == 0x00 && Data[1] == 0x20 && Data[2] == 0xAF && Data[3] == 0x30)
+            if (Data.Take(4).SequenceEqual(new byte[] { 0x00, 0x20, 0xAF, 0x30 }))
             {
                 FileType = GraphicsFileType.TYPE_20AF30;
                 PointerPointer = BitConverter.ToInt32(Data.Skip(0x08).Take(4).Reverse().ToArray());
                 SizePointer = BitConverter.ToInt32(Data.Skip(PointerPointer).Take(4).Reverse().ToArray());
-                Height = BitConverter.ToInt16(Data.Skip(SizePointer).Take(2).Reverse().ToArray());
-                Width = BitConverter.ToInt16(Data.Skip(SizePointer + 2).Take(2).Reverse().ToArray());
+                Height = BitConverter.ToUInt16(Data.Skip(SizePointer).Take(2).Reverse().ToArray());
+                Width = BitConverter.ToUInt16(Data.Skip(SizePointer + 2).Take(2).Reverse().ToArray());
                 Mode = (ImageMode)BitConverter.ToInt32(Data.Skip(SizePointer + 4).Take(4).Reverse().ToArray());
                 DataPointer = BitConverter.ToInt32(Data.Skip(SizePointer + 8).Take(4).Reverse().ToArray());
             }

@@ -69,7 +69,7 @@ namespace HaruhiHeiretsuLib
 
         public void LoadScriptFiles(string stringFileLocations)
         {
-            foreach (string line in stringFileLocations.Split("\r\n"))
+            foreach (string line in stringFileLocations.Replace("\r\n", "\n").Split("\n"))
             {
                 if (string.IsNullOrEmpty(line))
                 {

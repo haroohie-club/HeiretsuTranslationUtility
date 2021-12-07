@@ -27,6 +27,7 @@ namespace HaruhiHeiretsuEditor
         private McbFile _mcb;
         private ArchiveFile<GraphicsFile> _grpFile;
         private ArchiveFile<ScriptFile> _scrFile;
+        private DolFile _dolFile;
         private GraphicsFile _loadedGraphicsFile;
 
         public MainWindow()
@@ -177,6 +178,21 @@ namespace HaruhiHeiretsuEditor
                 graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {graphicsFile.Mode}", Background = System.Windows.Media.Brushes.White });
                 graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(graphicsFile.GetImage()), MaxWidth = graphicsFile.Width });
                 _loadedGraphicsFile = graphicsFile;
+            }
+        }
+
+        private void OpenDolGraphicsFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "haruhi.dol|haruhi.dol"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                graphicsEditStackPanel.Children.Clear();
+                _dolFile = new(File.ReadAllBytes(openFileDialog.FileName));
+                graphicsListBox.ItemsSource = _dolFile.GraphicsFiles;
+                graphicsListBox.Items.Refresh();
             }
         }
 

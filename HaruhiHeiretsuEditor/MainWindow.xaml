@@ -60,6 +60,7 @@
                         <Button x:Name="openGrpFileButton" Content="Open GRP" HorizontalAlignment="Left" Click="OpenGrpFileButton_Click" />
                         <Button x:Name="saveGrpFileButton" Content="Save GRP" HorizontalAlignment="Left" Click="SaveGrpFileButton_Click" />
                         <Button x:Name="openSingleGraphicsFileButton" Content="Open File" HorizontalAlignment="Left" Click="OpenSingleGraphicsFileButton_Click" />
+                        <Button x:Name="openDolGraphicsFileButton" Content="Open DOL" HorizontalAlignment="Left" Click="OpenDolGraphicsFileButton_Click" />
                         <Button x:Name="saveImageButton" Content="Save Image" HorizontalAlignment="Left" Click="SaveImageButton_Click" />
                         <Button x:Name="importImageButton" Content="Import Image" HorizontalAlignment="Left" Click="ImportImageButton_Click" />
                     </ToolBar>
