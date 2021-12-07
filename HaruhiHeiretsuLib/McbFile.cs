@@ -85,7 +85,18 @@ namespace HaruhiHeiretsuLib
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
-                ScriptFiles.Add(new ScriptFile(parentLoc, childLoc, subFileData));
+                // hardcoding the two chokuretsu-style script files, gomen nasai
+                if (parentLoc == 0 && (childLoc == 58 || childLoc == 70))
+                {
+                    ChokuretsuEventFile eventFile = new();
+                    eventFile.Initialize(subFileData);
+                    eventFile.Location = (parentLoc, childLoc);
+                    ScriptFiles.Add(eventFile);
+                }
+                else
+                {
+                    ScriptFiles.Add(new ScriptFile(parentLoc, childLoc, subFileData));
+                }
             }
         }
 

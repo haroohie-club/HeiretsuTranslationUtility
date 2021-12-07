@@ -35,6 +35,17 @@ namespace HaruhiHeiretsuLib
             return (((x & 0xFFFFFFFFfL) + (y & 0xFFFFFFFFL)) & 0x1000000000) > 0;
         }
 
+        public static bool BytesInARowLessThan(this IEnumerable<byte> sequence, int numBytesInARowLessThan, byte targetByte)
+        {
+            for (int i = 0; i < sequence.Count() - numBytesInARowLessThan; i++)
+            {
+                if (sequence.Skip(i).TakeWhile(b => b == targetByte).Count() > numBytesInARowLessThan)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
         public static byte[] CompressData(byte[] decompressedData)
         {
             // nonsense hack to deal with a rare edge case where the last byte of a file could get dropped

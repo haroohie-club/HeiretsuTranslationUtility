@@ -26,6 +26,7 @@ namespace HaruhiHeiretsuEditor
     {
         private McbFile _mcb;
         private ArchiveFile<GraphicsFile> _grpFile;
+        private ArchiveFile<ScriptFile> _scrFile;
         private GraphicsFile _loadedGraphicsFile;
 
         public MainWindow()
@@ -61,6 +62,20 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        private void OpenScrFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "SCR.BIN|scr*.bin"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                _scrFile = ArchiveFile<ScriptFile>.FromFile(openFileDialog.FileName);
+                scriptsListBox.ItemsSource = _scrFile.Files;
+                scriptsListBox.Items.Refresh();
+            }
+        }
+
         private void ExportEventsFileButton_Click(object sender, RoutedEventArgs e)
         {
             if (scriptsListBox.SelectedIndex >= 0)
@@ -80,7 +95,14 @@ namespace HaruhiHeiretsuEditor
         private void ScriptsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             scriptEditStackPanel.Children.Clear();
-            scriptEditStackPanel.Children.Add(new TextBlock { Text = $"{_mcb.ScriptFiles.Sum(s => s.DialogueLines.Count)}" });
+            if (_mcb is not null)
+            {
+                scriptEditStackPanel.Children.Add(new TextBlock { Text = $"{_mcb.ScriptFiles.Sum(s => s.DialogueLines.Count)}" });
+            }
+            else if (_scrFile is not null)
+            {
+                scriptEditStackPanel.Children.Add(new TextBlock { Text = $"{_scrFile.Files.Sum(s => s.DialogueLines.Count)}" });
+            }
             if (scriptsListBox.SelectedIndex >= 0)
             {
                 var selectedFile = (ScriptFile)scriptsListBox.SelectedItem;

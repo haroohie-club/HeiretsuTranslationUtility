@@ -81,11 +81,13 @@ namespace HaruhiHeiretsuLib
                 int offset = i;
                 List<byte> fileBytes = new();
                 byte[] nextLine = archiveBytes.Skip(i).Take(0x10).ToArray();
-                for (i += 0x10; !nextLine.All(b => b == 0x00); i += 0x10)
+                // compression means that there won't be more than four repeated bytes, so if we see more than four zeroes we've reached the end of a file
+                for (i += 0x10; nextLine.BytesInARowLessThan(4, 0x00); i += 0x10)
                 {
                     fileBytes.AddRange(nextLine);
                     nextLine = archiveBytes.Skip(i).Take(0x10).ToArray();
                 }
+                fileBytes.AddRange(nextLine);
                 if (fileBytes.Count > 0)
                 {
                     fileBytes.AddRange(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });

@@ -6,14 +6,13 @@ using System.Text.RegularExpressions;
 
 namespace HaruhiHeiretsuLib
 {
-    public class ScriptFile
+    public class ScriptFile : FileInArchive
     {
         public const string VOICE_REGEX = @"V\d{3}\w{7}(?<characterCode>[A-Z]{3})";
 
-        public bool Edited { get; set; } = false;
-        public (int parent, int child) Location { get; set; }
-        public List<byte> Data { get; set; }
+        public (int parent, int child) Location { get; set; } = (-1, -1);
         public List<DialogueLine> DialogueLines { get; set; } = new();
+        public List<string> Commands { get; set; } = new();
 
         public bool IsScript { get; set; } = true;
 
@@ -21,8 +20,8 @@ namespace HaruhiHeiretsuLib
         public short NumCommands { get; set; }
         public int NumShortPointersOffset { get; set; }
         public short NumShortPointers { get; set; }
-        public int DialogueEndOffset { get; set; }
-        public int DialogueEnd { get; set; }
+        public int CommandsEndOffset { get; set; }
+        public int CommandsEnd { get; set; }
         public int ShortPointersEndOffset { get; set; }
         public int ShortPointersEnd { get; set; }
 
@@ -30,14 +29,29 @@ namespace HaruhiHeiretsuLib
         public List<ushort> UnknownShorts1 { get; set; } = new();
         public List<ushort> UnknownShorts2 { get; set; } = new();
         public List<int> PostCommandPointers { get; set; } = new();
+       
 
-        public ScriptFile(int parent, int child, byte[] data)
+        public ScriptFile()
+        {
+        }
+
+        public ScriptFile(int parent, int child, byte[] data, bool chokuretsu = false)
         {
             Location = (parent, child);
             Data = data.ToList();
 
             ParseDialogue();
         }
+
+        public override void Initialize(byte[] decompressedData, int offset)
+        {
+            Offset = offset;
+            Data = decompressedData.ToList();
+
+            ParseDialogue();
+        }
+
+        public override byte[] GetBytes() => Data.ToArray();
 
         public void ParseDialogue()
         {
@@ -80,8 +94,8 @@ namespace HaruhiHeiretsuLib
                                 length = 2;
                                 break;
                             case 2:
-                                DialogueEnd = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
-                                DialogueEndOffset = i;
+                                CommandsEnd = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
+                                CommandsEndOffset = i;
                                 length = 4;
                                 break;
                             case 1:
@@ -130,11 +144,15 @@ namespace HaruhiHeiretsuLib
                         }
                     }
 
+                    Commands.Add(line);
                     lastLine = line;
                     i += length;
                 }
 
-                for (int i = DialogueEnd; i < ShortPointersEnd;)
+                // remove commands that don't count
+                Commands.RemoveRange(0, 7);
+
+                for (int i = CommandsEnd; i < ShortPointersEnd;)
                 {
                     PostCommandOffsets.Add(i);
                     for (int j = 3; j >= 0; j--)
@@ -161,7 +179,7 @@ namespace HaruhiHeiretsuLib
             }
         }
 
-        public void EditDialogue(int index, string newLine)
+        public virtual void EditDialogue(int index, string newLine)
         {
             Edited = true;
             string oldLine = DialogueLines[index].Line;
@@ -180,11 +198,11 @@ namespace HaruhiHeiretsuLib
 
                 int lengthDifference = newLineData.Length - oldLength;
 
-                DialogueEnd += lengthDifference;
-                Data.RemoveRange(DialogueEndOffset, 4);
-                Data.InsertRange(DialogueEndOffset, BitConverter.GetBytes(DialogueEnd).Reverse());
+                CommandsEnd += lengthDifference;
+                Data.RemoveRange(CommandsEndOffset, 4);
+                Data.InsertRange(CommandsEndOffset, BitConverter.GetBytes(CommandsEnd).Reverse());
 
-                ShortPointersEnd = DialogueEnd + 8 * NumShortPointers;
+                ShortPointersEnd = CommandsEnd + 8 * NumShortPointers;
                 Data.RemoveRange(ShortPointersEndOffset, 4);
                 Data.InsertRange(ShortPointersEndOffset, BitConverter.GetBytes(ShortPointersEnd).Reverse());
 
@@ -215,7 +233,14 @@ namespace HaruhiHeiretsuLib
 
         public override string ToString()
         {
-            return $"{Location.parent},{Location.child}";
+            if (Location != (-1, -1))
+            {
+                return $"{Location.parent},{Location.child}";
+            }
+            else
+            {
+                return $"{Index:X3} {Index:D4} 0x{Offset:X8}";
+            }
         }
     }
 
@@ -224,6 +249,8 @@ namespace HaruhiHeiretsuLib
         public string Line { get; set; }
         public Speaker Speaker { get; set; }
         public int Offset { get; set; }
+        public int Length => Encoding.GetEncoding("Shift-JIS").GetByteCount(Line);
+        public int NumPaddingZeroes { get; set; } = 1;
 
         public override string ToString()
         {
@@ -235,7 +262,7 @@ namespace HaruhiHeiretsuLib
             switch (code)
             {
                 case "ANN":
-                    return Speaker.ANN;
+                    return Speaker.ANNOUNCEMENT;
                 case "CAP":
                     return Speaker.CAPTAIN;
                 case "CRF":
@@ -290,7 +317,7 @@ namespace HaruhiHeiretsuLib
 
     public enum Speaker
     {
-        ANN,
+        ANNOUNCEMENT,
         CAPTAIN,
         CREW_F,
         CREW_M,
@@ -315,5 +342,135 @@ namespace HaruhiHeiretsuLib
         TANIGUCHI,
         TSURYA,
         UNKNOWN,
+    }
+
+    public class ChokuretsuEventFile : ScriptFile
+    {
+        public List<int> FrontPointers { get; set; } = new();
+        public int PointerToNumEndPointers { get; set; }
+        public List<int> EndPointers { get; set; } = new();
+        public List<int> EndPointerPointers { get; set; } = new();
+        public string Title { get; set; }
+
+        public Dictionary<int, string> DramatisPersonae { get; set; } = new();
+        public int DialogueSectionPointer { get; set; }
+
+        public ChokuretsuEventFile()
+        {
+        }
+
+        public override void Initialize(byte[] decompressedData, int offset = 0)
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Offset = offset;
+            Data = decompressedData.ToList();
+
+            int numFrontPointers = BitConverter.ToInt32(decompressedData.Take(4).Reverse().ToArray());
+            bool reachedDramatisPersonae = false;
+            for (int i = 0; i < numFrontPointers; i++)
+            {
+                FrontPointers.Add(BitConverter.ToInt32(decompressedData.Skip(0x0C + (0x08 * i)).Take(4).Reverse().ToArray()));
+                uint pointerValue = BitConverter.ToUInt32(decompressedData.Skip(FrontPointers[i]).Take(4).Reverse().ToArray());
+                if (pointerValue > 0x10000000 || pointerValue == 0x8596) // 8596 is 妹 which is a valid character name, sadly lol
+                {
+                    reachedDramatisPersonae = true;
+                    DramatisPersonae.Add(FrontPointers[i],
+                        Encoding.GetEncoding("Shift-JIS").GetString(decompressedData.Skip(FrontPointers[i]).TakeWhile(b => b != 0x00).ToArray()));
+                }
+                else if (reachedDramatisPersonae)
+                {
+                    reachedDramatisPersonae = false;
+                    DialogueSectionPointer = FrontPointers[i];
+                }
+            }
+
+            PointerToNumEndPointers = BitConverter.ToInt32(decompressedData.Skip(4).Take(4).Reverse().ToArray());
+            int numEndPointers = BitConverter.ToInt32(decompressedData.Skip(PointerToNumEndPointers).Take(4).Reverse().ToArray());
+            for (int i = 0; i < numEndPointers; i++)
+            {
+                EndPointers.Add(BitConverter.ToInt32(decompressedData.Skip(PointerToNumEndPointers + (0x04 * (i + 1))).Take(4).Reverse().ToArray()));
+            }
+
+            EndPointerPointers = EndPointers.Select(p => { int x = offset; return BitConverter.ToInt32(decompressedData.Skip(p).Take(4).Reverse().ToArray()); }).ToList();
+
+            int titlePointer = BitConverter.ToInt32(decompressedData.Skip(0x08).Take(4).Reverse().ToArray());
+            Title = Encoding.ASCII.GetString(decompressedData.Skip(titlePointer).TakeWhile(b => b != 0x00).ToArray());
+
+            for (int i = 0; i < EndPointerPointers.Count; i++)
+            {
+                DialogueLines.Add(new DialogueLine
+                {
+                    Line = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(EndPointerPointers[i]).TakeWhile(b => b != 0x00).ToArray()),
+                    Offset = EndPointerPointers[i],
+                    Speaker = Speaker.ANNOUNCEMENT,
+                    NumPaddingZeroes = 4 - (Length % 4),
+            });
+            }
+        }
+
+        public override void EditDialogue(int index, string newLine)
+        {
+            Edited = true;
+            int oldLength = DialogueLines[index].Length + DialogueLines[index].NumPaddingZeroes;
+            DialogueLines[index].Line = newLine;
+            DialogueLines[index].NumPaddingZeroes = 4 - (DialogueLines[index].Length % 4);
+            int lengthDifference = DialogueLines[index].Length + DialogueLines[index].NumPaddingZeroes - oldLength;
+
+            List<byte> toWrite = new();
+            toWrite.AddRange(Encoding.GetEncoding("Shift-JIS").GetBytes(DialogueLines[index].Line));
+            for (int i = 0; i < DialogueLines[index].NumPaddingZeroes; i++)
+            {
+                toWrite.Add(0);
+            }
+
+            Data.RemoveRange(DialogueLines[index].Offset, oldLength);
+            Data.InsertRange(DialogueLines[index].Offset, toWrite);
+
+            ShiftPointers(DialogueLines[index].Offset, lengthDifference);
+        }
+
+        public void ShiftPointers(int shiftLocation, int shiftAmount)
+        {
+            for (int i = 0; i < FrontPointers.Count; i++)
+            {
+                if (FrontPointers[i] > shiftLocation)
+                {
+                    FrontPointers[i] += shiftAmount;
+                    Data.RemoveRange(0x0C + (0x08 * i), 4);
+                    Data.InsertRange(0x0C + (0x08 * i), BitConverter.GetBytes(FrontPointers[i]).Reverse());
+                }
+            }
+            if (PointerToNumEndPointers > shiftLocation)
+            {
+                PointerToNumEndPointers += shiftAmount;
+                Data.RemoveRange(0x04, 4);
+                Data.InsertRange(0x04, BitConverter.GetBytes(PointerToNumEndPointers).Reverse());
+            }
+            for (int i = 0; i < EndPointers.Count; i++)
+            {
+                if (EndPointers[i] > shiftLocation)
+                {
+                    EndPointers[i] += shiftAmount;
+                    Data.RemoveRange(PointerToNumEndPointers + 0x04 * (i + 1), 4);
+                    Data.InsertRange(PointerToNumEndPointers + 0x04 * (i + 1), BitConverter.GetBytes(EndPointers[i]).Reverse());
+                }
+            }
+            for (int i = 0; i < EndPointerPointers.Count; i++)
+            {
+                if (EndPointerPointers[i] > shiftLocation)
+                {
+                    EndPointerPointers[i] += shiftAmount;
+                    Data.RemoveRange(EndPointers[i], 4);
+                    Data.InsertRange(EndPointers[i], BitConverter.GetBytes(EndPointerPointers[i]).Reverse());
+                }
+            }
+            foreach (DialogueLine dialogueLine in DialogueLines)
+            {
+                if (dialogueLine.Offset > shiftLocation)
+                {
+                    dialogueLine.Offset += shiftAmount;
+                }
+            }
+        }
     }
 }
