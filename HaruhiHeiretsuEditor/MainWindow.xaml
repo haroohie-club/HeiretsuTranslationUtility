@@ -79,6 +79,30 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
+            <TabItem Header="Font">
+                <Grid Height="500">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="99*"/>
+                        <ColumnDefinition Width="695*"/>
+                    </Grid.ColumnDefinitions>
+                    <ToolBar x:Name="fontToolBar" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="1043" Grid.ColumnSpan="2">
+                        <Button x:Name="openFontFileButton" Content="Open Font File" HorizontalAlignment="Left" Click="OpenFontFileButton_Click" />
+                        <Button x:Name="saveFontFileButton" Content="Save Font File" HorizontalAlignment="Left" />
+                    </ToolBar>
+                    <ListBox x:Name="fontListBox" Margin="0,30,521,70" Grid.ColumnSpan="2" MaxHeight="355" SelectionChanged="FontListBox_SelectionChanged" />
+                    <StackPanel Grid.Column="1" Margin="175,30,0,0">
+                        <TabControl>
+                            <TabItem Header="Character">
+                                <ScrollViewer x:Name="fontEditScrollViewer"  Grid.Column="1" Height="350" >
+                                    <DockPanel>
+                                        <StackPanel x:Name="fontEditStackPanel"/>
+                                    </DockPanel>
+                                </ScrollViewer>
+                            </TabItem>
+                        </TabControl>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
         </TabControl>
     </StackPanel>
 </Window>

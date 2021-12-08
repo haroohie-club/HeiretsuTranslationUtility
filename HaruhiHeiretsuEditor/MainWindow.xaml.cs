@@ -28,6 +28,7 @@ namespace HaruhiHeiretsuEditor
         private ArchiveFile<GraphicsFile> _grpFile;
         private ArchiveFile<ScriptFile> _scrFile;
         private DolFile _dolFile;
+        private FontFile _fontFile;
         private GraphicsFile _loadedGraphicsFile;
 
         public MainWindow()
@@ -265,6 +266,30 @@ namespace HaruhiHeiretsuEditor
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {_loadedGraphicsFile.Mode}", Background = System.Windows.Media.Brushes.White });
                     graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(_loadedGraphicsFile.GetImage()), MaxWidth = _loadedGraphicsFile.Width });
                 }
+            }
+        }
+
+        private void OpenFontFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "BIN file|*.bin"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                _fontFile = new(File.ReadAllBytes(openFileDialog.FileName));
+                fontListBox.ItemsSource = _fontFile.Characters;
+            }
+        }
+
+        private void FontListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (fontListBox.SelectedIndex >= 0)
+            {
+                Character selectedCharacter = (Character)fontListBox.SelectedItem;
+                fontEditStackPanel.Children.Clear();
+                fontEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
+                fontEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedCharacter.GetImage()), MaxWidth = selectedCharacter.Width });
             }
         }
     }

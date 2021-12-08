@@ -239,6 +239,20 @@ namespace HaruhiHeiretsuLib
                 }
                 return bitmap;
             }
+            else if (FileType == GraphicsFileType.FONT_CHARACTER)
+            {
+                Bitmap bitmap = new(Width, Height);
+                int i = 0;
+                for (int y = 0; y < Height; y++)
+                {
+                    for (int x = 0; x < Width; x++)
+                    {
+                        bitmap.SetPixel(x, y, Color.FromArgb(0xFF, Data[i], Data[i], Data[i]));
+                        i++;
+                    }
+                }
+                return bitmap;
+            }
             return null;
         }
 
@@ -298,6 +312,7 @@ namespace HaruhiHeiretsuLib
 
         public enum GraphicsFileType
         {
+            FONT_CHARACTER,
             SGE,
             TYPE_20AF30,
             UNKNOWN
