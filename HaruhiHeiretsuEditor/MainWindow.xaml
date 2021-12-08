@@ -24,6 +24,7 @@
                         <Button x:Name="openScrFileButton" Content="Open SCR" HorizontalAlignment="Left" Click="OpenScrFileButton_Click" />
                         <Button x:Name="saveScrFileButton" Content="Save SCR" HorizontalAlignment="Left" Click="SaveScrFileButton_Click" />
                         <Button x:Name="exportEventsFileButton" Content="Export" HorizontalAlignment="Left" Click="ExportEventsFileButton_Click" />
+                        <Button x:Name="importEventsFileButton" Content="Import" HorizontalAlignment="Left" Click="ImportEventsFileButton_Click" />
                         <Button x:Name="exportStringsEventsFileButton" Content="Export Strings" HorizontalAlignment="Left" />
                         <Button x:Name="importStringsEventsFileButton" Content="Import Strings" HorizontalAlignment="Left" />
                         <Button x:Name="exportAllStringsEventsFileButton" Content="Export All Strings" HorizontalAlignment="Left" />

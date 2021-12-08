@@ -105,6 +105,23 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        // only works for chokuretsu style ones and only works for the mcb bc i'm lazy
+        private void ImportEventsFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "BIN file|*.bin"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                ChokuretsuEventFile chokuretsuEventFile = new();
+                chokuretsuEventFile.Initialize(File.ReadAllBytes(openFileDialog.FileName));
+                chokuretsuEventFile.Location = _mcb.ScriptFiles[scriptsListBox.SelectedIndex].Location;
+                _mcb.ScriptFiles[scriptsListBox.SelectedIndex] = chokuretsuEventFile;
+                scriptsListBox.Items.Refresh();
+            }
+        }
+
         private void ScriptsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             scriptEditStackPanel.Children.Clear();
