@@ -14,12 +14,12 @@ namespace plugin_shade.Archives
     {
         private byte[] _unkIndexData;
 
-        public IList<IArchiveFileInfo> Load(Stream indexStream, Stream dataStream)
+        public IList<IArchiveFileInfo> Load(Stream indexStream, Stream dataStream, bool leaveOpen = false)
         {
             // Read index entries from mcb0
             var indexEntryCount = PeekMcb0EntryCount(indexStream);
 
-            using var indexBr = new BinaryReaderX(indexStream);
+            using var indexBr = new BinaryReaderX(indexStream, leaveOpen: leaveOpen);
             var indexEntries = indexBr.ReadMultiple<Mcb0Entry>(indexEntryCount);
 
             // Save unknown data from the index file
@@ -40,10 +40,10 @@ namespace plugin_shade.Archives
             return result;
         }
 
-        public void Save(Stream indexOutput, Stream dataOutput, IList<IArchiveFileInfo> files)
+        public void Save(Stream indexOutput, Stream dataOutput, IList<IArchiveFileInfo> files, bool leaveOpen = false)
         {
             // Write files
-            using var indexBw = new BinaryWriterX(indexOutput);
+            using var indexBw = new BinaryWriterX(indexOutput, leaveOpen: leaveOpen);
 
             var offset = 0u;
             foreach (var file in files.Cast<BlnArchiveFileInfo>())
