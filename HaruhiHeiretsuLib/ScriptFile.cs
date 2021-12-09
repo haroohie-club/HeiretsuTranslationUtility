@@ -304,7 +304,7 @@ namespace HaruhiHeiretsuLib
                 case "SIS":
                     return Speaker.KYON_SIS;
                 case "TAI":
-                    return Speaker.TAIICHI;
+                    return Speaker.TAIICHIRO;
                 case "TAN":
                     return Speaker.TANIGUCHI;
                 case "TRY":
