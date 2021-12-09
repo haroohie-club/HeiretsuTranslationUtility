@@ -17,17 +17,15 @@ namespace HaruhiHeiretsuLib
         public List<ScriptFile> ScriptFiles { get; set; } = new();
         public List<GraphicsFile> Graphics20AF30Files { get; set; } = new();
 
-        private string _indexFile;
-        private FileStream _indexFileStream { get; set; }
-        private FileStream _dataFileStream { get; set; }
+        private MemoryStream _indexFileStream;
+        private MemoryStream _dataFileStream;
 
 
         public McbFile(string indexFile, string dataFile)
         {
-            _indexFile = indexFile;
-            _indexFileStream = File.Open(indexFile, FileMode.Open, FileAccess.ReadWrite);
-            _dataFileStream = File.Open(dataFile, FileMode.Open, FileAccess.ReadWrite);
-            ArchiveFiles = (List<IArchiveFileInfo>)BlnFile.Load(_indexFileStream, _dataFileStream, leaveOpen: true);
+            _indexFileStream = new MemoryStream(File.ReadAllBytes(indexFile));
+            _dataFileStream = new MemoryStream(File.ReadAllBytes(dataFile));
+            ArchiveFiles = (List<IArchiveFileInfo>)BlnFile.Load(_indexFileStream, _dataFileStream);
         }
 
         public async Task Save(string indexFile, string dataFile)
@@ -64,16 +62,9 @@ namespace HaruhiHeiretsuLib
                 }
             }
 
-            if (indexFile == _indexFile)
-            {
-                BlnFile.Save(_indexFileStream, _dataFileStream, ArchiveFiles, leaveOpen: true);
-            }
-            else
-            {
-                using FileStream indexFileStream = File.OpenWrite(indexFile);
-                using FileStream dataFileStream = File.OpenWrite(dataFile);
-                BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);
-            }
+            using FileStream indexFileStream = File.OpenWrite(indexFile);
+            using FileStream dataFileStream = File.OpenWrite(dataFile);
+            BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);
         }
 
         public void LoadScriptFiles(string stringFileLocations)

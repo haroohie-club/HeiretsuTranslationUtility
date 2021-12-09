@@ -338,7 +338,7 @@ namespace HaruhiHeiretsuLib
         NAGATO,
         NAGATO2,
         KYON_SIS,
-        TAIICHI,
+        TAIICHIRO,
         TANIGUCHI,
         TSURYA,
         UNKNOWN,
