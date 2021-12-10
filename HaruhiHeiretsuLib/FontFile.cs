@@ -15,7 +15,7 @@ namespace HaruhiHeiretsuLib
         public List<Character> Characters { get; set; } = new();
         public bool Edited { get; set; } = false;
 
-        private static Dictionary<ushort, int> _codepointsToIndexes = new();
+        private Dictionary<ushort, int> _codepointsToIndexes = new();
 
         public FontFile(byte[] data)
         {
@@ -97,6 +97,8 @@ namespace HaruhiHeiretsuLib
     public class Character : GraphicsFile
     {
         public ushort[] Codepoints { get; set; }
+
+        public const int SCALED_WIDTH = 16;
 
         public Character(byte[] data, int index, IEnumerable<ushort> codepoint)
         {

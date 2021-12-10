@@ -319,7 +319,7 @@ namespace HaruhiHeiretsuEditor
                 fontEditStackPanel.Children.Clear();
                 fontEditStackPanel.Children.Add(new TextBlock() { Text = selectedCharacter.GetCodepointsString() });
                 fontEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
-                fontEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedCharacter.GetImage()), MaxWidth = selectedCharacter.Width });
+                fontEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedCharacter.GetImage()), MaxWidth = Character.SCALED_WIDTH });
             }
         }
 

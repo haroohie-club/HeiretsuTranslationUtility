@@ -251,7 +251,11 @@ namespace HaruhiHeiretsuLib
                         i++;
                     }
                 }
-                return bitmap;
+                Bitmap transformedBitmap = new(Character.SCALED_WIDTH, Character.SCALED_WIDTH);
+                using Graphics graphics = Graphics.FromImage(transformedBitmap);
+                graphics.DrawImage(bitmap, 0, 0, Character.SCALED_WIDTH, Character.SCALED_WIDTH);
+                graphics.Flush();
+                return transformedBitmap;
             }
             return null;
         }
@@ -295,13 +299,13 @@ namespace HaruhiHeiretsuLib
 
         public void SetFontCharacterImage(string character, FontFamily font, int fontSize)
         {
-            Bitmap bitmap = new(Width, Height);
-            Rectangle rectangle = new Rectangle(-2, 0, Width, Height);
-            Graphics graphics = Graphics.FromImage(bitmap);
-            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            Bitmap bitmap = new(Character.SCALED_WIDTH, Character.SCALED_WIDTH);
+            Rectangle rectangle = new Rectangle(-2, 0, Character.SCALED_WIDTH, Character.SCALED_WIDTH);
+            using Graphics graphics = Graphics.FromImage(bitmap);
+            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
             graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
             graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
 
             StringFormat format = new()
             {
@@ -313,12 +317,17 @@ namespace HaruhiHeiretsuLib
             graphics.DrawString(character, new Font(font, fontSize, FontStyle.Bold), Brushes.White, rectangle, format);
             graphics.Flush();
 
+            Bitmap scaledBitmap = new(Width, Height);
+            using Graphics scaledGraphics = Graphics.FromImage(scaledBitmap);
+            scaledGraphics.DrawImage(bitmap, 0, 0, Width, Height);
+            scaledGraphics.Flush();
+
             int i = 0;
             for (int y = 0; y < Height; y++)
             {
                 for (int x = 0; x < Width; x++)
                 {
-                    Data[i] = bitmap.GetPixel(x, y).R;
+                    Data[i] = scaledBitmap.GetPixel(x, y).R;
                     i++;
                 }
             }
