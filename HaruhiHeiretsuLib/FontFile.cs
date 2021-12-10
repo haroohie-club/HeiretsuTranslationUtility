@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,17 +9,17 @@ namespace HaruhiHeiretsuLib
 {
     public class FontFile
     {
-        public List<byte> Data { get; set; }
+        public byte[] CompressedData { get; set; }
         public int NumCharacters { get; set; }
-        public List<int> Pointers { get; set; } = new();
+        public List<int> UnknownInts { get; set; } = new();
         public List<Character> Characters { get; set; } = new();
+        public bool Edited { get; set; } = false;
 
         private static Dictionary<ushort, int> _codepointsToIndexes = new();
 
         public FontFile(byte[] data)
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            Data = data.ToList();
             NumCharacters = BitConverter.ToInt32(data.Take(4).ToArray());
 
             for (ushort codepoint = 0x000; codepoint < 0xFFFF; codepoint++)
@@ -28,8 +29,67 @@ namespace HaruhiHeiretsuLib
 
             for (int i = 0; i < NumCharacters; i++)
             {
-                Pointers.Add(BitConverter.ToInt32(data.Skip(4 * (i + 1)).Take(4).ToArray()));
-                Characters.Add(new Character(Helpers.DecompressData(data.Skip(Pointers[i]).ToArray()), Pointers[i], i, _codepointsToIndexes.Where(c => c.Value == i).Select(c => c.Key)));
+                Characters.Add(new Character(Helpers.DecompressData(data.Skip(BitConverter.ToInt32(data.Skip(4 * (i + 1)).Take(4).ToArray())).ToArray()),
+                    i, _codepointsToIndexes.Where(c => c.Value == i).Select(c => c.Key)));
+            }
+
+            for (int i = (NumCharacters + 1) * 4; i < ((NumCharacters + 1) * 4) + 0x40; i += 4)
+            {
+                UnknownInts.Add(BitConverter.ToInt32(data.Skip(i).Take(4).ToArray()));
+            }
+        }
+
+        public byte[] GetBytes()
+        {
+            List<byte> data = new();
+            List<int> pointers = new();
+            pointers.Add(((NumCharacters + 1) * 4) + (UnknownInts.Count * 4));
+
+            data.AddRange(BitConverter.GetBytes(NumCharacters));
+            
+            foreach (Character character in Characters)
+            {
+                List<byte> charData = Helpers.CompressData(character.Data.ToArray()).ToList();
+                charData.Add(0x00);
+                pointers.Add(pointers.Last() + charData.Count);
+                data.AddRange(charData);
+            }
+            pointers.RemoveAt(pointers.Count - 1); // remove pointer to end of file
+            data.InsertRange(4, pointers.SelectMany(p => BitConverter.GetBytes(p)));
+            data.InsertRange((NumCharacters + 1) * 4, UnknownInts.SelectMany(i => BitConverter.GetBytes(i)));
+
+            return data.ToArray();
+        }
+
+        public void OverwriteFont(FontFamily font, int fontSize, char startingChar, char endingChar, Encoding encoding)
+        {
+            Edited = true;
+            List<byte> startingTemp = encoding.GetBytes($"{startingChar}").Reverse().ToList();
+            List<byte> endingTemp = encoding.GetBytes($"{endingChar}").Reverse().ToList();
+            if (startingTemp.Count == 1)
+            {
+                startingTemp.Add(0);
+            }
+            if (endingTemp.Count == 1)
+            {
+                endingTemp.Add(0);
+            }
+            ushort characterSpaceStart = BitConverter.ToUInt16(startingTemp.ToArray());
+            ushort characterSpaceEnd = BitConverter.ToUInt16(endingTemp.ToArray());
+
+            for (ushort i = characterSpaceStart; i <= characterSpaceEnd; i++)
+            {
+                List<byte> codepage = BitConverter.GetBytes(i).Reverse().ToList();
+                if (codepage[0] == 0x00 && codepage.Count > 0 && encoding != Encoding.Unicode)
+                {
+                    codepage.RemoveAt(0);
+                }
+
+                string character = encoding.GetString(codepage.ToArray());
+                if (character.Length > 0)
+                {
+                    Characters.First(c => c.Codepoints.Contains(i)).SetFontCharacterImage(character, font, fontSize);
+                }
             }
         }
     }
@@ -38,11 +98,10 @@ namespace HaruhiHeiretsuLib
     {
         public ushort[] Codepoints { get; set; }
 
-        public Character(byte[] data, int offset, int index, IEnumerable<ushort> codepoint)
+        public Character(byte[] data, int index, IEnumerable<ushort> codepoint)
         {
             Codepoints = codepoint.ToArray();
             Index = index;
-            Offset = offset;
             FileType = GraphicsFileType.FONT_CHARACTER;
             Data = data.ToList();
             Height = 24;

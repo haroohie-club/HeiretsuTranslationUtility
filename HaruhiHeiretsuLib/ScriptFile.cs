@@ -185,7 +185,7 @@ namespace HaruhiHeiretsuLib
             string oldLine = DialogueLines[index].Line;
             DialogueLines[index].Line = newLine;
             int oldLength = Encoding.GetEncoding("Shift-JIS").GetByteCount(oldLine);
-            byte[] newLineData = Encoding.GetEncoding("Shift-JIS").GetBytes(newLine);
+            byte[] newLineData = Encoding.Latin1.GetBytes(newLine);
 
             if (IsScript)
             {

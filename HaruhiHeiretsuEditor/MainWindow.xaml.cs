@@ -47,8 +47,10 @@ namespace HaruhiHeiretsuEditor
                 _mcb = new McbFile(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
                 _mcb.LoadScriptFiles(File.ReadAllText("string_file_locations.csv"));
                 _mcb.Load20AF30GraphicsFiles(File.ReadAllText("graphics_20AF30_locations.csv"));
+                _mcb.LoadFontFile();
                 scriptsListBox.ItemsSource = _mcb.ScriptFiles;
                 graphicsListBox.ItemsSource = _mcb.Graphics20AF30Files;
+                fontListBox.ItemsSource = _mcb.FontFile.Characters;
             }
         }
 
@@ -282,6 +284,33 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        private void SaveFontFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "BIN file|*.bin"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllBytes(saveFileDialog.FileName, _fontFile.GetBytes());
+            }
+        }
+
+        private void ImportFontToMcbButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "BIN file|*.bin"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                byte[] data = File.ReadAllBytes(openFileDialog.FileName);
+                _mcb.FontFile = new(data);
+                _mcb.FontFile.CompressedData = data;
+                fontListBox.ItemsSource = _mcb.FontFile.Characters;
+            }
+        }
+
         private void FontListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (fontListBox.SelectedIndex >= 0)
@@ -291,6 +320,32 @@ namespace HaruhiHeiretsuEditor
                 fontEditStackPanel.Children.Add(new TextBlock() { Text = selectedCharacter.GetCodepointsString() });
                 fontEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
                 fontEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedCharacter.GetImage()), MaxWidth = selectedCharacter.Width });
+            }
+        }
+
+        private void ReplaceFontFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            FontReplacementDialogBox fontReplacementDialogBox = new();
+            if (fontReplacementDialogBox.ShowDialog() == true)
+            {
+                if (_fontFile is not null)
+                {
+                    _fontFile.OverwriteFont(
+                        fontReplacementDialogBox.SelectedFontFamily,
+                        fontReplacementDialogBox.SelectedFontSize,
+                        fontReplacementDialogBox.StartingChar,
+                        fontReplacementDialogBox.EndingChar,
+                        fontReplacementDialogBox.SelectedEncoding);
+                }
+                else if (_mcb is not null)
+                {
+                    _mcb.FontFile.OverwriteFont(
+                        fontReplacementDialogBox.SelectedFontFamily,
+                        fontReplacementDialogBox.SelectedFontSize,
+                        fontReplacementDialogBox.StartingChar,
+                        fontReplacementDialogBox.EndingChar,
+                        fontReplacementDialogBox.SelectedEncoding);
+                }
             }
         }
     }

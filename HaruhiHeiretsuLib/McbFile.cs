@@ -16,6 +16,7 @@ namespace HaruhiHeiretsuLib
         public List<IArchiveFileInfo> ArchiveFiles { get; set; }
         public List<ScriptFile> ScriptFiles { get; set; } = new();
         public List<GraphicsFile> Graphics20AF30Files { get; set; } = new();
+        public FontFile FontFile { get; set; }
 
         private MemoryStream _indexFileStream;
         private MemoryStream _dataFileStream;
@@ -60,6 +61,28 @@ namespace HaruhiHeiretsuLib
                     blnSub.Save(parentFileStream, blnSubFiles, leaveOpen: true);
                     ArchiveFiles[graphicsFile.Location.parent].SetFileData(parentFileStream);
                 }
+            }
+
+            if (FontFile.Edited || FontFile.CompressedData is not null)
+            {
+                byte[] data;
+                if (FontFile.CompressedData is not null)
+                {
+                    data = FontFile.CompressedData;
+                }
+                else
+                {
+                    data = FontFile.GetBytes();
+                }
+                using Stream fontParentStream = await ArchiveFiles[0].GetFileData();
+                BlnSub fontBlnSub = new();
+                List<IArchiveFileInfo> fontParentSubFiles = (List<IArchiveFileInfo>)fontBlnSub.Load(fontParentStream);
+                MemoryStream fontFileStream = new(data);
+                fontParentSubFiles[5].SetFileData(fontFileStream);
+
+                MemoryStream fontParentFileStream = new();
+                fontBlnSub.Save(fontParentFileStream, fontParentSubFiles, leaveOpen: true);
+                ArchiveFiles[0].SetFileData(fontParentFileStream);
             }
 
             using FileStream indexFileStream = File.OpenWrite(indexFile);
@@ -122,6 +145,15 @@ namespace HaruhiHeiretsuLib
                 graphicsFile.Initialize(subFileData, 0);
                 Graphics20AF30Files.Add(graphicsFile);
             }
+        }
+
+        public void LoadFontFile()
+        {
+            using Stream archiveStream = ArchiveFiles[0].GetFileData().GetAwaiter().GetResult();
+            BlnSub blnSub = new();
+            IArchiveFileInfo blnSubFile = blnSub.GetFile(archiveStream, 5);
+
+            FontFile = new FontFile(blnSubFile.GetFileDataBytes());
         }
 
         public async Task<List<(int, int)>> FindStringFiles()

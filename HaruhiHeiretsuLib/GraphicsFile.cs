@@ -293,6 +293,37 @@ namespace HaruhiHeiretsuLib
             }
         }
 
+        public void SetFontCharacterImage(string character, FontFamily font, int fontSize)
+        {
+            Bitmap bitmap = new(Width, Height);
+            Rectangle rectangle = new Rectangle(-2, 0, Width, Height);
+            Graphics graphics = Graphics.FromImage(bitmap);
+            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+            graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+
+            StringFormat format = new()
+            {
+                Alignment = StringAlignment.Near,
+                LineAlignment = StringAlignment.Center
+            };
+
+            graphics.FillRectangle(Brushes.Black, rectangle);
+            graphics.DrawString(character, new Font(font, fontSize, FontStyle.Bold), Brushes.White, rectangle, format);
+            graphics.Flush();
+
+            int i = 0;
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    Data[i] = bitmap.GetPixel(x, y).R;
+                    i++;
+                }
+            }
+        }
+
         public override byte[] GetBytes()
         {
             return Data.ToArray();
