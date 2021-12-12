@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace HaruhiHeiretsuCLI
 {
@@ -21,6 +22,7 @@ namespace HaruhiHeiretsuCLI
             EXTRACT_SGE_FILES,
             EXTRACT_STRING_FILES,
             FIND_STRINGS,
+            GENERATE_PATCH,
             HEX_SEARCH,
             STRING_SEARCH,
         }
@@ -51,6 +53,7 @@ namespace HaruhiHeiretsuCLI
                 { "hex-search", m => mode = Mode.HEX_SEARCH },
                 { "find-strings", m => mode = Mode.FIND_STRINGS },
                 { "string-search", m => mode = Mode.STRING_SEARCH },
+                { "generate-patch", m => mode = Mode.GENERATE_PATCH },
                 { "h|help", m => mode = Mode.HELP },
             };
 
@@ -59,6 +62,11 @@ namespace HaruhiHeiretsuCLI
             if (mode == Mode.HELP)
             {
                 options.WriteOptionDescriptions(Console.Out);
+                return;
+            }
+            else if (mode == Mode.GENERATE_PATCH)
+            {
+                GeneratePatch(output);
                 return;
             }
 
@@ -76,38 +84,44 @@ namespace HaruhiHeiretsuCLI
 
             McbFile mcb = new(indexFile, dataFile);
 
-            if (mode == Mode.EXTRACT_ARCHIVE)
+            switch (mode)
             {
-                await ExtractArchive(mcb, output, archiveIndex);
-            }
-            else if (mode == Mode.EXTRACT_LIST_OF_FILES)
-            {
-                ExtractListOfFiles(mcb, output, fileList);
-            }
-            else if (mode == Mode.EXTRACT_SGE_FILES)
-            {
-                await ExtractSgeFiles(mcb, output);
-            }
-            else if (mode == Mode.EXTRACT_STRING_FILES)
-            {
-                ExtractListOfFiles(mcb, output);
-            }
-            else if (mode == Mode.FIND_STRINGS)
-            {
-                await FindStrings(mcb);
-            }
-            else if (mode == Mode.HEX_SEARCH)
-            {
-                List<byte> searchBytes = new();
-                for (int i = 0; i < search.Length; i += 2)
-                {
-                    searchBytes.Add(byte.Parse(search.Substring(i, 2), System.Globalization.NumberStyles.HexNumber));
-                }
-                await HexSearch(mcb, searchBytes.ToArray());
-            }
-            else if (mode == Mode.STRING_SEARCH)
-            {
-                await StringSearch(mcb, search);
+                case Mode.EXTRACT_ARCHIVE:
+                    await ExtractArchive(mcb, output, archiveIndex);
+                    break;
+
+                case Mode.EXTRACT_LIST_OF_FILES:
+                    ExtractListOfFiles(mcb, output, fileList);
+                    break;
+
+                case Mode.EXTRACT_SGE_FILES:
+                    await ExtractSgeFiles(mcb, output);
+                    break;
+
+                case Mode.EXTRACT_STRING_FILES:
+                    ExtractListOfFiles(mcb, output);
+                    break;
+
+                case Mode.FIND_STRINGS:
+                    await FindStrings(mcb);
+                    break;
+
+                case Mode.HEX_SEARCH:
+                    List<byte> searchBytes = new();
+                    for (int i = 0; i < search.Length; i += 2)
+                    {
+                        searchBytes.Add(byte.Parse(search.Substring(i, 2), System.Globalization.NumberStyles.HexNumber));
+                    }
+                    await HexSearch(mcb, searchBytes.ToArray());
+                    break;
+
+                case Mode.STRING_SEARCH:
+                    await StringSearch(mcb, search);
+                    break;
+
+                default:
+                    options.WriteOptionDescriptions(Console.Out);
+                    break;
             }
         }
 
@@ -227,6 +241,49 @@ namespace HaruhiHeiretsuCLI
             {
                 fs.WriteLine($"{file},{subFile}");
             }
+        }
+
+        public static void GeneratePatch(string outputDir)
+        {
+            Directory.CreateDirectory(outputDir);
+
+            XmlDocument xml = new();
+            XmlElement root = xml.CreateElement("wiidisc");
+            root.SetAttribute("version", "1");
+            xml.AppendChild(root);
+
+            XmlElement id = xml.CreateElement("id");
+            id.SetAttribute("game", "R44J8P");
+            root.AppendChild(id);
+
+            XmlElement options = xml.CreateElement("options");
+            XmlElement section = xml.CreateElement("section");
+            section.SetAttribute("name", "Heiretsu Replacement");
+            XmlElement option = xml.CreateElement("option");
+            option.SetAttribute("name", "Heiretsu Replacement");
+            XmlElement choice = xml.CreateElement("choice");
+            choice.SetAttribute("name", "Enabled");
+            XmlElement choicePatch = xml.CreateElement("patch");
+            choicePatch.SetAttribute("id", "HeiretsuFolder");
+            choice.AppendChild(choicePatch);
+            option.AppendChild(choice);
+            section.AppendChild(option);
+            options.AppendChild(section);
+            root.AppendChild(options);
+
+            XmlElement patch = xml.CreateElement("patch");
+            patch.SetAttribute("id", "HeiretsuFolder");
+            XmlElement folderRecurse = xml.CreateElement("folder");
+            folderRecurse.SetAttribute("external", "/Heiretsu/files");
+            folderRecurse.SetAttribute("recursive", "true");
+            XmlElement folderDisc = xml.CreateElement("folder");
+            folderDisc.SetAttribute("external", "/Heiretsu/files");
+            folderRecurse.SetAttribute("disc", "/");
+            patch.AppendChild(folderRecurse);
+            patch.AppendChild(folderDisc);
+            root.AppendChild(patch);
+
+            xml.Save(Path.Combine(outputDir, "Heiretsu_base.xml"));
         }
     }
 }

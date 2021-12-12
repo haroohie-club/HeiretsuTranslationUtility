@@ -318,7 +318,7 @@ namespace HaruhiHeiretsuEditor
                 Character selectedCharacter = (Character)fontListBox.SelectedItem;
                 fontEditStackPanel.Children.Clear();
                 fontEditStackPanel.Children.Add(new TextBlock() { Text = selectedCharacter.GetCodepointsString() });
-                fontEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
+                fontEditStackPanel.Background = System.Windows.Media.Brushes.Black;
                 fontEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedCharacter.GetImage()), MaxWidth = Character.SCALED_WIDTH });
             }
         }

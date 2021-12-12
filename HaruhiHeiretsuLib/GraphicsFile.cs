@@ -247,7 +247,9 @@ namespace HaruhiHeiretsuLib
                 {
                     for (int x = 0; x < Width; x++)
                     {
-                        bitmap.SetPixel(x, y, Color.FromArgb(0xFF, Data[i], Data[i], Data[i]));
+                        int alpha = ((Data[i] & 0xF0) >> 4) * 0x11;
+                        int grayscale = (Data[i] & 0x0F) * 0x11;
+                        bitmap.SetPixel(x, y, Color.FromArgb(alpha, grayscale, grayscale, grayscale));
                         i++;
                     }
                 }
@@ -300,12 +302,12 @@ namespace HaruhiHeiretsuLib
         public void SetFontCharacterImage(string character, FontFamily font, int fontSize)
         {
             Bitmap bitmap = new(Character.SCALED_WIDTH, Character.SCALED_WIDTH);
-            Rectangle rectangle = new Rectangle(-2, 0, Character.SCALED_WIDTH, Character.SCALED_WIDTH);
+            Rectangle rectangle = new Rectangle(0, 0, Character.SCALED_WIDTH, Character.SCALED_WIDTH);
             using Graphics graphics = Graphics.FromImage(bitmap);
             graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
             graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
             graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixelGridFit;
+            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
 
             StringFormat format = new()
             {
@@ -313,8 +315,9 @@ namespace HaruhiHeiretsuLib
                 LineAlignment = StringAlignment.Center
             };
 
-            graphics.FillRectangle(Brushes.Black, rectangle);
-            graphics.DrawString(character, new Font(font, fontSize, FontStyle.Bold), Brushes.White, rectangle, format);
+            graphics.FillRectangle(Brushes.Transparent, rectangle);
+            graphics.DrawString(character, new Font(font, fontSize), Brushes.White, rectangle, format);
+            graphics.TranslateTransform(-5f, 0);
             graphics.Flush();
 
             Bitmap scaledBitmap = new(Width, Height);
@@ -327,7 +330,7 @@ namespace HaruhiHeiretsuLib
             {
                 for (int x = 0; x < Width; x++)
                 {
-                    Data[i] = scaledBitmap.GetPixel(x, y).R;
+                    Data[i] = (byte)(((scaledBitmap.GetPixel(x, y).A / 0x11) << 4) | (scaledBitmap.GetPixel(x, y).R / 0x11));
                     i++;
                 }
             }
