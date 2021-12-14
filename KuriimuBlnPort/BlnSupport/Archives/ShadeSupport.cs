@@ -120,11 +120,14 @@ namespace plugin_shade.Archives
             long writtenSize = base.SaveFileData(output, compress, progress);
 
             // Pad to % 800
-            long paddedSize = 800 - (writtenSize % 800);
-            byte[] padding = new byte[paddedSize];
-            output.Write(padding, 0, padding.Length);
+            long paddedSize = 0x800 - (writtenSize % 0x800);
+            if (paddedSize != 0x800)
+            {
+                byte[] padding = new byte[paddedSize];
+                output.Write(padding, 0, padding.Length);
 
-            writtenSize += paddedSize;
+                writtenSize += paddedSize;
+            }
 
             // Return padded size as written
             return writtenSize;
