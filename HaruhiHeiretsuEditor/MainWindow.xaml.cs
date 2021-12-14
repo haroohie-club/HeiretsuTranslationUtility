@@ -62,7 +62,14 @@ namespace HaruhiHeiretsuEditor
             };
             if (saveFileDialog.ShowDialog() == true)
             {
-                _mcb.Save(saveFileDialog.FileName, saveFileDialog.FileName.Replace("0", "1")).GetAwaiter().GetResult();
+                try
+                {
+                    _mcb.Save(saveFileDialog.FileName, saveFileDialog.FileName.Replace("0", "1")).GetAwaiter().GetResult();
+                }
+                catch (InvalidOperationException exc)
+                {
+                    MessageBox.Show($"Unable to save mcbs: {exc.Message}");
+                }
             }
         }
 

@@ -98,7 +98,8 @@ namespace HaruhiHeiretsuLib
     {
         public ushort[] Codepoints { get; set; }
 
-        public const int SCALED_WIDTH = 16;
+        public const int SCALED_WIDTH = 18;
+        public const int SCALED_HEIGHT = 16;
 
         public Character(byte[] data, int index, IEnumerable<ushort> codepoint)
         {

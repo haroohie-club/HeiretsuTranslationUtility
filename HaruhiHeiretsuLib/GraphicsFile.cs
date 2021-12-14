@@ -253,9 +253,9 @@ namespace HaruhiHeiretsuLib
                         i++;
                     }
                 }
-                Bitmap transformedBitmap = new(Character.SCALED_WIDTH, Character.SCALED_WIDTH);
+                Bitmap transformedBitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
                 using Graphics graphics = Graphics.FromImage(transformedBitmap);
-                graphics.DrawImage(bitmap, 0, 0, Character.SCALED_WIDTH, Character.SCALED_WIDTH);
+                graphics.DrawImage(bitmap, 0, 0, Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
                 graphics.Flush();
                 return transformedBitmap;
             }
@@ -301,8 +301,8 @@ namespace HaruhiHeiretsuLib
 
         public void SetFontCharacterImage(string character, FontFamily font, int fontSize)
         {
-            Bitmap bitmap = new(Character.SCALED_WIDTH, Character.SCALED_WIDTH);
-            Rectangle rectangle = new Rectangle(0, 0, Character.SCALED_WIDTH, Character.SCALED_WIDTH);
+            Bitmap bitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
+            Rectangle rectangle = new Rectangle(0, 0, Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
             using Graphics graphics = Graphics.FromImage(bitmap);
             graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
             graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
