@@ -176,6 +176,9 @@ namespace HaruhiHeiretsuEditor
                 _grpFile = ArchiveFile<GraphicsFile>.FromFile(openFileDialog.FileName);
                 graphicsListBox.ItemsSource = _grpFile.Files;
                 graphicsListBox.Items.Refresh();
+                _fontFile = new FontFile(_grpFile.Files[0].Data.ToArray());
+                fontListBox.ItemsSource = _fontFile.Characters;
+                fontListBox.Items.Refresh();
             }
         }
 
@@ -187,6 +190,11 @@ namespace HaruhiHeiretsuEditor
             };
             if (saveFileDialog.ShowDialog() == true)
             {
+                if (_fontFile.Edited)
+                {
+                    _grpFile.Files[0].Edited = true;
+                    _grpFile.Files[0].Data = _fontFile.GetBytes().ToList();
+                }
                 File.WriteAllBytes(saveFileDialog.FileName, _grpFile.GetBytes());
             }
         }
