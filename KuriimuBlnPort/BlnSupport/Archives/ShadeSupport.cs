@@ -117,20 +117,14 @@ namespace plugin_shade.Archives
 
         public override long SaveFileData(Stream output, bool compress, IProgressContext progress = null)
         {
-            var writtenSize = base.SaveFileData(output, compress, progress);
+            long writtenSize = base.SaveFileData(output, compress, progress);
 
-            if (writtenSize > OriginalSize)
-                throw new InvalidOperationException("The replaced file cannot be larger than its original.");
+            // Pad to % 800
+            long paddedSize = 800 - (writtenSize % 800);
+            byte[] padding = new byte[paddedSize];
+            output.Write(padding, 0, padding.Length);
 
-            // Pad to original size
-            var paddedSize = OriginalSize - writtenSize;
-            if (paddedSize > 0)
-            {
-                var padding = new byte[paddedSize];
-                output.Write(padding, 0, padding.Length);
-
-                writtenSize += paddedSize;
-            }
+            writtenSize += paddedSize;
 
             // Return padded size as written
             return writtenSize;

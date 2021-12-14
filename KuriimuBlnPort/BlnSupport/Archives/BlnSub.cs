@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,25 +16,29 @@ namespace plugin_shade.Archives
     {
         public IList<IArchiveFileInfo> Load(Stream input)
         {
-            using var br = new BinaryReaderX(input, true);
+            using BinaryReaderX br = new BinaryReaderX(input, true);
 
             // Read files
             var result = new List<IArchiveFileInfo>();
 
-            var index = 0;
+            int index = 0;
             while (br.BaseStream.Position < input.Length)
             {
-                var sample = br.ReadInt32();
+                int sample = br.ReadInt32();
                 if (sample == 0x7FFF)
+                {
                     break;
+                }
 
                 br.BaseStream.Position -= 4;
-                var entry = br.ReadType<BlnSubEntry>();
+                BlnSubEntry entry = br.ReadType<BlnSubEntry>();
 
                 if (entry.size == 0)
+                {
                     break;
+                }
 
-                var stream = new SubStream(input, br.BaseStream.Position, entry.size);
+                SubStream stream = new SubStream(input, br.BaseStream.Position, entry.size);
                 result.Add(CreateAfi(stream, index++, entry));
 
                 br.BaseStream.Position += entry.size;
@@ -51,12 +56,12 @@ namespace plugin_shade.Archives
             int index = 0;
             while (br.BaseStream.Position < input.Length)
             {
-                var sample = br.ReadInt32();
+                int sample = br.ReadInt32();
                 if (sample == 0x7FFF)
                     break;
 
                 br.BaseStream.Position -= 4;
-                var entry = br.ReadType<BlnSubEntry>();
+                BlnSubEntry entry = br.ReadType<BlnSubEntry>();
 
                 if (entry.size == 0)
                     break;
@@ -83,12 +88,13 @@ namespace plugin_shade.Archives
             using var bw = new BinaryWriterX(output, leaveOpen: leaveOpen);
             foreach (var file in files.Cast<BlnSubArchiveFileInfo>())
             {
-                var startOffset = output.Position;
+                long startOffset = output.Position;
                 output.Position += 0xC;
 
-                var writtenSize = file.SaveFileData(output);
+                long writtenSize = file.SaveFileData(output);
 
-                var endOffset = startOffset + writtenSize + 0xC;
+                file.Entry.size = (int)writtenSize;
+                long endOffset = startOffset + writtenSize + 0xC;
                 output.Position = startOffset;
                 bw.WriteType(file.Entry);
 
