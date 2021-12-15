@@ -15,7 +15,7 @@ namespace HaruhiHeiretsuLib
         public Bln BlnFile { get; set; } = new Bln();
         public List<IArchiveFileInfo> ArchiveFiles { get; set; }
         public List<ScriptFile> ScriptFiles { get; set; } = new();
-        public List<GraphicsFile> Graphics20AF30Files { get; set; } = new();
+        public List<GraphicsFile> GraphicsFiles { get; set; } = new();
         public FontFile FontFile { get; set; }
 
         private MemoryStream _indexFileStream;
@@ -47,7 +47,7 @@ namespace HaruhiHeiretsuLib
                 }
             }
 
-            foreach (GraphicsFile graphicsFile in Graphics20AF30Files)
+            foreach (GraphicsFile graphicsFile in GraphicsFiles)
             {
                 if (graphicsFile.Edited)
                 {
@@ -63,7 +63,7 @@ namespace HaruhiHeiretsuLib
                 }
             }
 
-            if (FontFile.Edited || FontFile.CompressedData is not null)
+            if (FontFile is not null && (FontFile.Edited || FontFile.CompressedData is not null))
             {
                 byte[] data;
                 if (FontFile.CompressedData is not null)
@@ -226,12 +226,12 @@ namespace HaruhiHeiretsuLib
             }
         }
 
-        public void Load20AF30GraphicsFiles(string[] graphicsFilesLocations)
+        public void LoadGraphicsFiles(string[] graphicsFilesLocations)
         {
-            Load20AF30GraphicsFiles(string.Join('\n', graphicsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => l.Replace('-', ','))));
+            LoadGraphicsFiles(string.Join('\n', graphicsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
         }
 
-        public void Load20AF30GraphicsFiles(string graphicsFilesLocations)
+        public void LoadGraphicsFiles(string graphicsFilesLocations)
         {
             foreach (string line in graphicsFilesLocations.Replace("\r\n", "\n").Split("\n"))
             {
@@ -251,7 +251,7 @@ namespace HaruhiHeiretsuLib
 
                 GraphicsFile graphicsFile = new() { Location = (parentLoc, childLoc) };
                 graphicsFile.Initialize(subFileData, 0);
-                Graphics20AF30Files.Add(graphicsFile);
+                GraphicsFiles.Add(graphicsFile);
             }
         }
 

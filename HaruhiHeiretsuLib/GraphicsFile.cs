@@ -14,13 +14,17 @@ namespace HaruhiHeiretsuLib
         public (int parent, int child) Location { get; set; } = (-1, -1);
 
         public GraphicsFileType FileType { get; set; }
+
+        // Tile File Properties
         public int Width { get; set; }
         public int Height { get; set; }
         public ImageMode Mode  { get; set; }
-
         public int PointerPointer { get; set; }
         public int SizePointer { get; set; }
         public int DataPointer { get; set; }
+
+        // Map File Properties
+        List<MapComponents> MapComponents { get; set; }
 
         public GraphicsFile()
         {
@@ -34,15 +38,44 @@ namespace HaruhiHeiretsuLib
             {
                 FileType = GraphicsFileType.SGE;
             }
-            if (Data.Take(4).SequenceEqual(new byte[] { 0x00, 0x20, 0xAF, 0x30 }))
+            else if (Data.Take(4).SequenceEqual(new byte[] { 0x00, 0x20, 0xAF, 0x30 }))
             {
-                FileType = GraphicsFileType.TYPE_20AF30;
+                FileType = GraphicsFileType.TILE_20AF30;
                 PointerPointer = BitConverter.ToInt32(Data.Skip(0x08).Take(4).Reverse().ToArray());
                 SizePointer = BitConverter.ToInt32(Data.Skip(PointerPointer).Take(4).Reverse().ToArray());
                 Height = BitConverter.ToUInt16(Data.Skip(SizePointer).Take(2).Reverse().ToArray());
                 Width = BitConverter.ToUInt16(Data.Skip(SizePointer + 2).Take(2).Reverse().ToArray());
                 Mode = (ImageMode)BitConverter.ToInt32(Data.Skip(SizePointer + 4).Take(4).Reverse().ToArray());
                 DataPointer = BitConverter.ToInt32(Data.Skip(SizePointer + 8).Take(4).Reverse().ToArray());
+            }
+            else if (Data.Take(4).SequenceEqual(new byte[] { 0x80, 0x02, 0xE0, 0x01 }))
+            {
+                FileType = GraphicsFileType.MAP;
+                Width = 640;
+                Height = 480;
+                MapComponents = new();
+                for (int i = 8; i < Data.Count; i += 0x1C)
+                {
+                    MapComponents.Add(new MapComponents
+                    {
+                        UnknownShort1 = BitConverter.ToInt16(Data.Skip(i).Take(2).ToArray()),
+                        FileIndex = BitConverter.ToInt16(Data.Skip(i + 0x02).Take(2).ToArray()),
+                        UnknownShort2 = BitConverter.ToInt16(Data.Skip(i + 0x04).Take(2).ToArray()),
+                        CanvasX = BitConverter.ToInt16(Data.Skip(i + 0x06).Take(2).ToArray()),
+                        CanvasY = BitConverter.ToInt16(Data.Skip(i + 0x08).Take(2).ToArray()),
+                        ImageWidth = BitConverter.ToInt16(Data.Skip(i + 0x0A).Take(2).ToArray()),
+                        ImageHeight = BitConverter.ToInt16(Data.Skip(i + 0x0C).Take(2).ToArray()),
+                        ImageX = BitConverter.ToInt16(Data.Skip(i + 0x0E).Take(2).ToArray()),
+                        ImageY = BitConverter.ToInt16(Data.Skip(i + 0x10).Take(2).ToArray()),
+                        CanvasWidth = BitConverter.ToInt16(Data.Skip(i + 0x12).Take(2).ToArray()),
+                        CanvasHeight = BitConverter.ToInt16(Data.Skip(i + 0x14).Take(2).ToArray()),
+                        UnknownShort3 = BitConverter.ToInt16(Data.Skip(i + 0x16).Take(2).ToArray()),
+                        AlphaTint = Data[i + 0x18],
+                        RedTint = Data[i + 0x19],
+                        GreenTint = Data[i + 0x1A],
+                        BlueTint = Data[i + 0x1B],
+                    });
+                }
             }
             else
             {
@@ -52,7 +85,7 @@ namespace HaruhiHeiretsuLib
 
         public Bitmap GetImage()
         {
-            if (FileType == GraphicsFileType.TYPE_20AF30)
+            if (FileType == GraphicsFileType.TILE_20AF30)
             {
                 Bitmap bitmap = new(Width, Height);
 
@@ -262,6 +295,61 @@ namespace HaruhiHeiretsuLib
             return null;
         }
 
+        public Bitmap GetMap(List<GraphicsFile> archiveGraphicsFiles)
+        {
+            if (FileType == GraphicsFileType.MAP)
+            {
+                Bitmap bitmap = new(Width, Height);
+                using Graphics graphics = Graphics.FromImage(bitmap);
+                foreach (MapComponents map in MapComponents)
+                {
+                    Rectangle boundingBox = new Rectangle
+                    {
+                        X = map.ImageX,
+                        Y = map.ImageY,
+                        Width = map.ImageWidth,
+                        Height = map.ImageHeight,
+                    };
+                    try
+                    {
+                        if (map.FileIndex == -1)
+                        {
+                            continue;
+                        }
+                        Bitmap tile = archiveGraphicsFiles[map.FileIndex].GetImage().Clone(boundingBox, System.Drawing.Imaging.PixelFormat.DontCare);
+
+                        for (int x = 0; x < tile.Width; x++)
+                        {
+                            for (int y = 0; y < tile.Height; y++)
+                            {
+                                Color color = tile.GetPixel(x, y);
+                                Color newColor = Color.FromArgb((int)(color.A * map.AlphaTint / 128.0), (int)(color.R * map.RedTint / 128.0), (int)(color.G * map.GreenTint / 128.0), (int)(color.B * map.BlueTint / 128.0));
+                                tile.SetPixel(x, y, newColor);
+                            }
+                        }
+
+                        graphics.DrawImage(tile, new Rectangle
+                        {
+                            X = map.CanvasX,
+                            Y = map.CanvasY,
+                            Width = map.CanvasWidth,
+                            Height = map.CanvasHeight
+                        });
+                    }
+                    catch (OutOfMemoryException)
+                    {
+                        // do nothing
+                    }
+                }
+
+                return bitmap;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public void Set20AF30Image(Bitmap bitmap)
         {
             Edited = true;
@@ -345,19 +433,20 @@ namespace HaruhiHeiretsuLib
         {
             if (Location != (-1, -1))
             {
-                return $"{Location.parent},{Location.child}";
+                return $"{Location.parent},{Location.child} - {FileType}";
             }
             else
             {
-                return $"{Index:X3} {Index:D4} 0x{Offset:X8}";
+                return $"{Index:X3} {Index:D4} 0x{Offset:X8} - {FileType}";
             }
         }
 
         public enum GraphicsFileType
         {
             FONT_CHARACTER,
+            MAP,
             SGE,
-            TYPE_20AF30,
+            TILE_20AF30,
             UNKNOWN
         }
 
@@ -375,5 +464,25 @@ namespace HaruhiHeiretsuLib
             CI14X2 = 0x0A,
             CMPR = 0x0E,
         }
+    }
+
+    public class MapComponents
+    {
+        public short UnknownShort1 { get; set; }
+        public short FileIndex { get; set; }
+        public short UnknownShort2 { get; set; }
+        public short CanvasX { get; set; }
+        public short CanvasY { get; set; }
+        public short ImageWidth { get; set; }
+        public short ImageHeight { get; set; }
+        public short ImageX { get; set; }
+        public short ImageY { get; set; }
+        public short CanvasWidth { get; set; }
+        public short CanvasHeight { get; set; }
+        public short UnknownShort3 { get; set; }
+        public byte AlphaTint { get; set; }
+        public byte RedTint { get; set; }
+        public byte GreenTint { get; set; }
+        public byte BlueTint { get; set; }
     }
 }

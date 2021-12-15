@@ -168,8 +168,8 @@ namespace HaruhiHeiretsuCLI
                     int grpIndex = int.Parse(grpRegex.Match(file).Groups["grpIndex"].Value);
                     grp.Files.First(f => f.Index == grpIndex).Set20AF30Image(bitmap);
 
-                    mcb.Load20AF30GraphicsFiles(file.Split('_'));
-                    foreach (GraphicsFile graphicsFile in mcb.Graphics20AF30Files)
+                    mcb.LoadGraphicsFiles(file.Split('_'));
+                    foreach (GraphicsFile graphicsFile in mcb.GraphicsFiles)
                     {
                         graphicsFile.Set20AF30Image(bitmap);
                     }
@@ -179,8 +179,11 @@ namespace HaruhiHeiretsuCLI
             }
 
             await mcb.Save(Path.Combine(outputFolder, "mcb0.bln"), Path.Combine(outputFolder, "mcb1.bln"));
+            Console.WriteLine("Finished saving MCB");
             File.WriteAllBytes(Path.Combine(outputFolder, "grp.bin"), grp.GetBytes(out Dictionary<int, int> offsetAdjustments));
+            Console.WriteLine("Finished saving GRP");
             await mcb.AdjustOffsets(Path.Combine(outputFolder, "mcb0.bln"), Path.Combine(outputFolder, "mcb1.bln"), "grp.bin", offsetAdjustments);
+            Console.WriteLine("Finished adjusting MCB offsets");
         }
 
         public static async Task FindStrings(McbFile mcb)

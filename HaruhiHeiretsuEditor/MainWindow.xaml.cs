@@ -46,10 +46,10 @@ namespace HaruhiHeiretsuEditor
             {
                 _mcb = new McbFile(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
                 _mcb.LoadScriptFiles(File.ReadAllText("string_file_locations.csv"));
-                _mcb.Load20AF30GraphicsFiles(File.ReadAllText("graphics_20AF30_locations.csv"));
+                _mcb.LoadGraphicsFiles(File.ReadAllText("graphics_locations.csv"));
                 _mcb.LoadFontFile();
                 scriptsListBox.ItemsSource = _mcb.ScriptFiles;
-                graphicsListBox.ItemsSource = _mcb.Graphics20AF30Files;
+                graphicsListBox.ItemsSource = _mcb.GraphicsFiles;
                 fontListBox.ItemsSource = _mcb.FontFile.Characters;
             }
         }
@@ -284,14 +284,22 @@ namespace HaruhiHeiretsuEditor
                 }
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.SGE)
                 {
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes" });
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes", Background = System.Windows.Media.Brushes.White });
                 }
-                if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TYPE_20AF30)
+                else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TILE_20AF30)
                 {
                     graphicsEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {selectedFile.Mode}", Background = System.Windows.Media.Brushes.White });
                     graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedFile.GetImage()), MaxWidth = selectedFile.Width });
                     _loadedGraphicsFile = selectedFile;
+                }
+                else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.MAP)
+                {
+                    graphicsEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"MAP", Background = System.Windows.Media.Brushes.White });
+                    //Dictionary<int, GraphicsFile> archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == selectedFile.Location.parent).ToDictionary(g => g.Location.child);
+                    List<GraphicsFile> archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == selectedFile.Location.parent).ToList();
+                    graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedFile.GetMap(archiveGraphicsFiles)), MaxWidth = selectedFile.Width });
                 }
             }
         }

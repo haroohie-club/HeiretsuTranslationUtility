@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="cp ..\string_file_locations.csv $(OutDir)string_file_locations.csv&#xD;&#xA;cp ..\graphics_20AF30_locations.csv $(OutDir)graphics_20AF30_locations.csv" />
+    <Exec Command="cp ..\string_file_locations.csv $(OutDir)string_file_locations.csv&#xD;&#xA;cp ..\graphics_locations.csv $(OutDir)graphics_locations.csv" />
   </Target>
 
 </Project>

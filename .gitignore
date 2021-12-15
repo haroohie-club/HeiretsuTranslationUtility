@@ -9,6 +9,9 @@ evt.bin
 grp.bin
 scn.bin
 
+# VS Launch Settings
+launchSettings.json
+
 # User-specific files
 *.rsuser
 *.suo
