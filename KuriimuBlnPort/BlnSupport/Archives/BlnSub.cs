@@ -82,7 +82,7 @@ namespace plugin_shade.Archives
             return result;
         }
 
-        public void Save(Stream output, IList<IArchiveFileInfo> files, bool leaveOpen = false)
+        public void Save(Stream output, IList<IArchiveFileInfo> files, int archiveIndexToAdjust = -1, IDictionary<int, int> offsetAdjustments = null, bool leaveOpen = false)
         {
             // Write files
             using var bw = new BinaryWriterX(output, leaveOpen: leaveOpen);
@@ -92,6 +92,11 @@ namespace plugin_shade.Archives
                 output.Position += 0xC;
 
                 long writtenSize = file.SaveFileData(output);
+
+                if (archiveIndexToAdjust == file.Entry.archiveIndex && offsetAdjustments != null)
+                {
+                    file.Entry.archiveOffset = offsetAdjustments[file.Entry.archiveOffset];
+                }
 
                 file.Entry.size = (int)writtenSize;
                 long endOffset = startOffset + writtenSize + 0xC;

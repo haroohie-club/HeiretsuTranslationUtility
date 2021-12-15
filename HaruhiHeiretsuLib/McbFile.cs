@@ -90,6 +90,45 @@ namespace HaruhiHeiretsuLib
             BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);
         }
 
+        public async Task AdjustOffsets(string indexFile, string dataFile, string binArchiveAdjustmentFile)
+        {
+            int archiveIndexToAdjust = -1;
+            Dictionary<int, int> offsetAdjustments = new();
+            string[] archiveAdjustmentFileLines = File.ReadAllLines(binArchiveAdjustmentFile);
+
+            switch (archiveAdjustmentFileLines[0])
+            {
+                case "grp.bin":
+                    archiveIndexToAdjust = 0;
+                    break;
+
+                default:
+                    Console.WriteLine($"Invalid archive loaded: {binArchiveAdjustmentFile}");
+                    return;
+            }
+
+            foreach (string line in archiveAdjustmentFileLines.Skip(1))
+            {
+                string[] adjustments = line.Split(',');
+                offsetAdjustments.Add(int.Parse(adjustments[0]), int.Parse(adjustments[1]));
+            }
+
+            foreach (IArchiveFileInfo archiveFile in ArchiveFiles)
+            {
+                using Stream archiveInputStream = await archiveFile.GetFileData();
+                BlnSub blnSub = new();
+                List<IArchiveFileInfo> blnSubFiles = (List<IArchiveFileInfo>)blnSub.Load(archiveInputStream);
+
+                MemoryStream archiveOutputStream = new();
+                blnSub.Save(archiveOutputStream, blnSubFiles, archiveIndexToAdjust: archiveIndexToAdjust, offsetAdjustments: offsetAdjustments, leaveOpen: true);
+                archiveFile.SetFileData(archiveOutputStream);
+            }
+
+            using FileStream indexFileStream = File.OpenWrite(indexFile);
+            using FileStream dataFileStream = File.OpenWrite(dataFile);
+            BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);
+        }
+
         public void LoadScriptFiles(string stringFileLocations)
         {
             foreach (string line in stringFileLocations.Replace("\r\n", "\n").Split("\n"))

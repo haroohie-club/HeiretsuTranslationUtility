@@ -90,8 +90,6 @@ namespace HaruhiHeiretsuLib
                 fileBytes.AddRange(nextLine);
                 if (fileBytes.Count > 0)
                 {
-                    fileBytes.AddRange(new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
-
                     T file = new();
                     try
                     {
@@ -202,9 +200,11 @@ namespace HaruhiHeiretsuLib
             return offsetComponent | (uint)newLengthComponent;
         }
 
-        public byte[] GetBytes()
+        public byte[] GetBytes(out Dictionary<int, int> offsetAdjustments)
         {
             List<byte> bytes = new();
+            offsetAdjustments = new();
+            offsetAdjustments.Add(Files[0].Offset, Files[0].Offset);
 
             bytes.AddRange(Header);
             for (int i = 0; i < Files.Count; i++)
@@ -228,6 +228,7 @@ namespace HaruhiHeiretsuLib
                 bytes.AddRange(compressedBytes);
                 if (i < Files.Count - 1)
                 {
+                    int originalOffset = Files[i + 1].Offset;
                     int pointerShift = 0;
                     while (bytes.Count % 0x10 != 0)
                     {
@@ -251,6 +252,7 @@ namespace HaruhiHeiretsuLib
                     {
                         bytes.Add(0);
                     }
+                    offsetAdjustments.Add(originalOffset, Files[i + 1].Offset);
                 }
             }
             while (bytes.Count % 0x800 != 0)
