@@ -73,6 +73,30 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        private void MenuAdjustMcb_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mcb is not null)
+            {
+                SaveFileDialog mcbSaveFileDialog = new()
+                {
+                    Filter = "MCB0|mcb0.bln",
+                    Title = "Save MCBs"
+                };
+                if (mcbSaveFileDialog.ShowDialog() == true)
+                {
+                    OpenFileDialog offsetOpenFileDialog = new()
+                    {
+                        Filter = "CSV|*.csv",
+                        Title = "Open Offset Adjustments CSV"
+                    };
+                    if (offsetOpenFileDialog.ShowDialog() == true)
+                    {
+                        _mcb.AdjustOffsets(mcbSaveFileDialog.FileName, mcbSaveFileDialog.FileName.Replace("0", "1"), offsetOpenFileDialog.FileName).GetAwaiter().GetResult();
+                    }
+                }
+            }
+        }
+
         private void OpenScrFileButton_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new()
@@ -95,7 +119,13 @@ namespace HaruhiHeiretsuEditor
             };
             if (saveFileDialog.ShowDialog() == true)
             {
-                File.WriteAllBytes(saveFileDialog.FileName, _scrFile.GetBytes());
+                File.WriteAllBytes(saveFileDialog.FileName, _scrFile.GetBytes(out Dictionary<int, int> offsetAdjustments));
+                string offsetAdjustmentsFile = "scr.bin";
+                foreach(int originalOffset in offsetAdjustments.Keys)
+                {
+                    offsetAdjustmentsFile += $"\n{originalOffset},{offsetAdjustments[originalOffset]}";
+                }
+                File.WriteAllText($"{saveFileDialog.FileName}_offset_adjustments.csv", offsetAdjustmentsFile);
             }
         }
 
@@ -195,7 +225,13 @@ namespace HaruhiHeiretsuEditor
                     _grpFile.Files[0].Edited = true;
                     _grpFile.Files[0].Data = _fontFile.GetBytes().ToList();
                 }
-                File.WriteAllBytes(saveFileDialog.FileName, _grpFile.GetBytes());
+                File.WriteAllBytes(saveFileDialog.FileName, _grpFile.GetBytes(out Dictionary<int, int> offsetAdjustments));
+                string offsetAdjustmentsFile = "grp.bin";
+                foreach (int originalOffset in offsetAdjustments.Keys)
+                {
+                    offsetAdjustmentsFile += $"\n{originalOffset},{offsetAdjustments[originalOffset]}";
+                }
+                File.WriteAllText($"{saveFileDialog.FileName}_offset_adjustments.csv", offsetAdjustmentsFile);
             }
         }
 
@@ -238,6 +274,14 @@ namespace HaruhiHeiretsuEditor
             if (graphicsListBox.SelectedIndex >= 0)
             {
                 GraphicsFile selectedFile = (GraphicsFile)graphicsListBox.SelectedItem;
+                if (_grpFile is not null)
+                {
+                    graphicsEditStackPanel.Children.Add(new TextBlock
+                    {
+                        Text = $"Actual compressed length: {selectedFile.CompressedData.Length:X}; Calculated length: {selectedFile.Length:X}",
+                        Background = System.Windows.Media.Brushes.White
+                    });
+                }
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.SGE)
                 {
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes" });

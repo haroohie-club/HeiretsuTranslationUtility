@@ -258,9 +258,9 @@ namespace HaruhiHeiretsuCLI
 
             XmlElement options = xml.CreateElement("options");
             XmlElement section = xml.CreateElement("section");
-            section.SetAttribute("name", "Heiretsu Replacement");
+            section.SetAttribute("name", "Heiretsu Translation");
             XmlElement option = xml.CreateElement("option");
-            option.SetAttribute("name", "Heiretsu Replacement");
+            option.SetAttribute("name", "Heiretsu Translation");
             XmlElement choice = xml.CreateElement("choice");
             choice.SetAttribute("name", "Enabled");
             XmlElement choicePatch = xml.CreateElement("patch");

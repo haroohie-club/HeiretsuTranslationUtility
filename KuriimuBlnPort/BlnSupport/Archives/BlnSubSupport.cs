@@ -12,6 +12,11 @@ namespace plugin_shade.Archives
     // 0x04 => dat.bin
     // 0x05 => grp.bin?
 
+    // For Suzumiya Haruhi no Heiretsu
+    // 0x00 => grp.bin
+    // 0x01 => dat.bin
+    // 0x02 => scr.bin
+
     public class BlnSubEntry
     {
         public int archiveIndex;    // index to an external bin
