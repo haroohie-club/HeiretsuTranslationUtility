@@ -2,7 +2,7 @@
   "profiles": {
     "HaruhiHeiretsuCLI": {
       "commandName": "Project",
-      "commandLineArgs": "--hex-search -f \"C:\\Users\\User\\PortableApps\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\mcb0.bln\" --search \"0020AF30000000018126442C\""
+      "commandLineArgs": "--export-file-map -m \"C:\\Users\\User\\PortableApps\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\mcb0.bln\" -b \"C:\\Users\\User\\PortableApps\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\dat.bin\" -o \"dat_bin_map.txt\""
     }
   }
 }

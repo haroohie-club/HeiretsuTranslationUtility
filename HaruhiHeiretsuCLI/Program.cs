@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -17,6 +18,7 @@ namespace HaruhiHeiretsuCLI
         public enum Mode
         {
             HELP,
+            EXPORT_FILE_MAP,
             EXTRACT_ARCHIVE,
             EXTRACT_LIST_OF_FILES,
             EXTRACT_SGE_FILES,
@@ -24,6 +26,8 @@ namespace HaruhiHeiretsuCLI
             FIND_STRINGS,
             GENERATE_PATCH,
             HEX_SEARCH,
+            REPLACE_GRAPHICS,
+            REPLACE_STRINGS,
             STRING_SEARCH,
         }
 
@@ -35,26 +39,31 @@ namespace HaruhiHeiretsuCLI
         public static async Task MainAsync( string[] args)
         {
             Mode mode = Mode.HELP;
-            string file = "", output = "", search = "", fileList = "";
+            string mcbFile = "", binFile = "", output = "", search = "", fileList = "", replacementFolder = "";
             int archiveIndex = 0;
 
             OptionSet options = new()
             {
                 "Usage: HaruhiHeiretsuCLI -f MCB_FILE",
-                { "f|file=", f => file = f },
-                { "o|output=", o => output = o },
-                { "s|search=", s => search = s },
-                { "l|file-list=", l => fileList = l },
-                { "i|archive-index=", i => archiveIndex = int.Parse(i) },
-                { "extract-archive", m => mode = Mode.EXTRACT_ARCHIVE },
-                { "extract-list-of-files", m => mode = Mode.EXTRACT_LIST_OF_FILES },
-                { "extract-sge-files", m => mode = Mode.EXTRACT_SGE_FILES },
-                { "extract-string-files", m => mode = Mode.EXTRACT_STRING_FILES },
-                { "hex-search", m => mode = Mode.HEX_SEARCH },
-                { "find-strings", m => mode = Mode.FIND_STRINGS },
-                { "string-search", m => mode = Mode.STRING_SEARCH },
-                { "generate-patch", m => mode = Mode.GENERATE_PATCH },
-                { "h|help", m => mode = Mode.HELP },
+                { "m|mcb-file=", "MCB file (either mcb0.bln or mcb1.bln)", m => mcbFile = m },
+                { "b|bin-file=", "BIN archive file (e.g. grp.bin or scr.bin)", b => binFile = b},
+                { "o|output=", "Output file or directory", o => output = o },
+                { "s|search=", "Query to search for in files", s => search = s },
+                { "l|file-list=", "List of files to use", l => fileList = l },
+                { "i|archive-index=", "Index of archive in mcb to search during search operation", i => archiveIndex = int.Parse(i) },
+                { "r|replacement-folder=", "Folder to pull replacement files from during replacement operation", r => replacementFolder = r },
+                { "export-file-map", "Export a map of all files between a specified bin and the MCB", m => mode = Mode.EXPORT_FILE_MAP },
+                { "extract-archive", "Extract all files in a particular BlnSub archive from the MCB", m => mode = Mode.EXTRACT_ARCHIVE },
+                { "extract-list-of-files", "Extract a list of files from the MCB as specified in -l|--file-list", m => mode = Mode.EXTRACT_LIST_OF_FILES },
+                { "extract-sge-files", "Extract all SGE files from the MCB", m => mode = Mode.EXTRACT_SGE_FILES },
+                { "extract-string-files", "Extract all string files from the MCB", m => mode = Mode.EXTRACT_STRING_FILES },
+                { "hex-search", "Perform a search for a hex string at the beginning of all files in the MCB", m => mode = Mode.HEX_SEARCH },
+                { "find-strings", "Perform a search for script files in the MCB", m => mode = Mode.FIND_STRINGS },
+                { "replace-graphics", "Replace graphics files with PNG files from -r|--replacement-folder in the MCB and grp.bin", m => mode = Mode.REPLACE_GRAPHICS },
+                { "replace-strings", "Replace script file strings with RESX files from -r|--replacement-folder in the MCB and scr.bin", m => mode = Mode.REPLACE_STRINGS },
+                { "string-search", "Perform a search for a string anywhere in all files in the MCB", m => mode = Mode.STRING_SEARCH },
+                { "generate-patch", "Generate the base Riivolution patch", m => mode = Mode.GENERATE_PATCH },
+                { "h|help", "Display help", m => mode = Mode.HELP },
             };
 
             options.Parse(args);
@@ -71,21 +80,39 @@ namespace HaruhiHeiretsuCLI
             }
 
             string indexFile = "", dataFile = "";
-            if (file.Contains("0"))
+            if (mcbFile.Contains("0"))
             {
-                indexFile = file;
-                dataFile = file.Replace("0", "1");
+                indexFile = mcbFile;
+                dataFile = mcbFile.Replace("0", "1");
             }
             else
             {
-                indexFile = file.Replace("1", "0");
-                dataFile = file;
+                indexFile = mcbFile.Replace("1", "0");
+                dataFile = mcbFile;
             }
 
             McbFile mcb = new(indexFile, dataFile);
 
+            ArchiveFile<GraphicsFile> grp = null;
+            ArchiveFile<ScriptFile> scr = null;
+            if (!string.IsNullOrEmpty(binFile))
+            {
+                if (binFile.EndsWith("grp.bin"))
+                {
+                    grp = ArchiveFile<GraphicsFile>.FromFile(binFile);
+                }
+                else if (binFile.EndsWith("scr.bin"))
+                {
+                    scr = ArchiveFile<ScriptFile>.FromFile(binFile);
+                }
+            }
+
             switch (mode)
             {
+                case Mode.EXPORT_FILE_MAP:
+                    await ExportFileMap(mcb, binFile, output);
+                    break;
+
                 case Mode.EXTRACT_ARCHIVE:
                     await ExtractArchive(mcb, output, archiveIndex);
                     break;
@@ -115,6 +142,10 @@ namespace HaruhiHeiretsuCLI
                     await HexSearch(mcb, searchBytes.ToArray());
                     break;
 
+                case Mode.REPLACE_GRAPHICS:
+                    await ReplaceGraphics(mcb, grp, replacementFolder, output);
+                    break;
+
                 case Mode.STRING_SEARCH:
                     await StringSearch(mcb, search);
                     break;
@@ -125,6 +156,33 @@ namespace HaruhiHeiretsuCLI
             }
         }
 
+        public static async Task ReplaceGraphics(McbFile mcb, ArchiveFile<GraphicsFile> grp, string replacementFolder, string outputFolder)
+        {
+            Regex grpRegex = new(@"grp-(?<grpIndex>\d{4})");
+            foreach (string file in Directory.GetFiles(replacementFolder))
+            {
+                if (file.EndsWith("png", StringComparison.OrdinalIgnoreCase))
+                {
+                    var bitmap = new System.Drawing.Bitmap(file);
+
+                    int grpIndex = int.Parse(grpRegex.Match(file).Groups["grpIndex"].Value);
+                    grp.Files.First(f => f.Index == grpIndex).Set20AF30Image(bitmap);
+
+                    mcb.Load20AF30GraphicsFiles(file.Split('_'));
+                    foreach (GraphicsFile graphicsFile in mcb.Graphics20AF30Files)
+                    {
+                        graphicsFile.Set20AF30Image(bitmap);
+                    }
+
+                    Console.WriteLine($"Finished replacing file {file} in MCB & GRP");
+                }
+            }
+
+            await mcb.Save(Path.Combine(outputFolder, "mcb0.bln"), Path.Combine(outputFolder, "mcb1.bln"));
+            File.WriteAllBytes(Path.Combine(outputFolder, "grp.bin"), grp.GetBytes(out Dictionary<int, int> offsetAdjustments));
+            await mcb.AdjustOffsets(Path.Combine(outputFolder, "mcb0.bln"), Path.Combine(outputFolder, "mcb1.bln"), "grp.bin", offsetAdjustments);
+        }
+
         public static async Task FindStrings(McbFile mcb)
         {
             List<(int, int)> stringFileLocations = await mcb.FindStringFiles();
@@ -133,6 +191,26 @@ namespace HaruhiHeiretsuCLI
             {
                 fs.WriteLine($"{file},{subFile}");
             }
+        }
+
+        public static async Task ExportFileMap(McbFile mcb, string binFile, string outputFile)
+        {
+            Dictionary<int, List<(int, int)>> fileMap = await mcb.GetFileMap(binFile);
+            string binIdentifier = Path.GetFileNameWithoutExtension(binFile);
+            List<string> fileNames = new();
+
+            foreach (int binIndex in fileMap.Keys)
+            {
+                string fileName = "";
+                foreach ((int parent, int child) locationPair in fileMap[binIndex])
+                {
+                    fileName += $"{locationPair.parent:D3}-{locationPair.child:D3}_";
+                }
+                fileName += $"{binIdentifier}-{binIndex:D4}";
+                fileNames.Add(fileName);
+            }
+
+            File.WriteAllLines(outputFile, fileNames);
         }
 
         public static async Task ExtractArchive(McbFile mcb, string outputDirectory, int archive)

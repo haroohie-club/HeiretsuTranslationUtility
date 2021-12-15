@@ -92,11 +92,22 @@ namespace HaruhiHeiretsuLib
 
         public async Task AdjustOffsets(string indexFile, string dataFile, string binArchiveAdjustmentFile)
         {
-            int archiveIndexToAdjust = -1;
             Dictionary<int, int> offsetAdjustments = new();
             string[] archiveAdjustmentFileLines = File.ReadAllLines(binArchiveAdjustmentFile);
 
-            switch (archiveAdjustmentFileLines[0])
+            foreach (string line in archiveAdjustmentFileLines.Skip(1))
+            {
+                string[] adjustments = line.Split(',');
+                offsetAdjustments.Add(int.Parse(adjustments[0]), int.Parse(adjustments[1]));
+            }
+
+            await AdjustOffsets(indexFile, dataFile, archiveAdjustmentFileLines[0], offsetAdjustments);
+        }
+
+        public async Task AdjustOffsets(string indexFile, string dataFile, string archiveToAdjust, Dictionary<int, int> offsetAdjustments)
+        {
+            int archiveIndexToAdjust;
+            switch (archiveToAdjust)
             {
                 case "grp.bin":
                     archiveIndexToAdjust = 0;
@@ -111,14 +122,8 @@ namespace HaruhiHeiretsuLib
                     break;
 
                 default:
-                    Console.WriteLine($"Invalid archive loaded: {binArchiveAdjustmentFile}");
+                    Console.WriteLine($"Invalid archive loaded: {archiveToAdjust}");
                     return;
-            }
-
-            foreach (string line in archiveAdjustmentFileLines.Skip(1))
-            {
-                string[] adjustments = line.Split(',');
-                offsetAdjustments.Add(int.Parse(adjustments[0]), int.Parse(adjustments[1]));
             }
 
             foreach (IArchiveFileInfo archiveFile in ArchiveFiles)
@@ -135,6 +140,57 @@ namespace HaruhiHeiretsuLib
             using FileStream indexFileStream = File.OpenWrite(indexFile);
             using FileStream dataFileStream = File.OpenWrite(dataFile);
             BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);
+        }
+
+        public async Task<Dictionary<int, List<(int, int)>>> GetFileMap(string binArchiveFile)
+        {
+            Dictionary<int, List<(int, int)>> fileMap = new();
+            int archiveIndexToSearch;
+            switch (Path.GetFileName(binArchiveFile))
+            {
+                case "grp.bin":
+                    archiveIndexToSearch = 0;
+                    break;
+
+                case "dat.bin":
+                    archiveIndexToSearch = 1;
+                    break;
+
+                case "scr.bin":
+                    archiveIndexToSearch = 2;
+                    break;
+
+                default:
+                    Console.WriteLine($"Invalid archive loaded: {binArchiveFile}");
+                    return fileMap;
+            }
+
+            var binArchive = ArchiveFile<FileInArchive>.FromFile(binArchiveFile);
+
+            for (int i = 0; i < ArchiveFiles.Count; i++)
+            {
+                Stream fileData = await ArchiveFiles[i].GetFileData();
+                BlnSub blnSub = new();
+                List<BlnSubArchiveFileInfo> blnSubAfis = blnSub.Load(fileData).Cast<BlnSubArchiveFileInfo>().ToList();
+                
+                for (int j = 0; j < blnSubAfis.Count; j++)
+                {
+                    if (blnSubAfis[j].Entry.archiveIndex == archiveIndexToSearch)
+                    {
+                        int correspondingBinIndex = binArchive.Files.First(f => f.Offset == blnSubAfis[j].Entry.archiveOffset).Index;
+
+                        if (!fileMap.ContainsKey(correspondingBinIndex))
+                        {
+                            fileMap.Add(correspondingBinIndex, new List<(int, int)>());
+                        }
+
+                        fileMap[correspondingBinIndex].Add((i, j));
+                        Console.WriteLine($"Mapped {correspondingBinIndex:D4} to MCB {i:D3}-{j:D3}");
+                    }
+                }
+            }
+
+            return fileMap;
         }
 
         public void LoadScriptFiles(string stringFileLocations)
@@ -170,9 +226,14 @@ namespace HaruhiHeiretsuLib
             }
         }
 
+        public void Load20AF30GraphicsFiles(string[] graphicsFilesLocations)
+        {
+            Load20AF30GraphicsFiles(string.Join('\n', graphicsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => l.Replace('-', ','))));
+        }
+
         public void Load20AF30GraphicsFiles(string graphicsFilesLocations)
         {
-            foreach (string line in graphicsFilesLocations.Split("\r\n"))
+            foreach (string line in graphicsFilesLocations.Replace("\r\n", "\n").Split("\n"))
             {
                 if (string.IsNullOrEmpty(line))
                 {
