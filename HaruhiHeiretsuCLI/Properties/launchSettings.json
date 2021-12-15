@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "HaruhiHeiretsuCLI": {
-      "commandName": "Project",
-      "commandLineArgs": "--replace-graphics -m \"C:\\Users\\User\\PortableApps\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\mcb0.bln\" -b \"C:\\Users\\User\\PortableApps\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\grp.bin\" -r \"C:\\Users\\User\\source\\repos\\haruhi-heiretsu-tl\\archives\\grp\" -o \"C:\\Users\\User\\source\\repos\\haruhi-heiretsu-tl\\patch\\Heiretsu\\files\""
-    }
-  }
-}
