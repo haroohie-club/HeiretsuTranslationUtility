@@ -102,6 +102,14 @@ namespace HaruhiHeiretsuLib
                     archiveIndexToAdjust = 0;
                     break;
 
+                case "dat.bin":
+                    archiveIndexToAdjust = 1;
+                    break;
+
+                case "scr.bin":
+                    archiveIndexToAdjust = 2;
+                    break;
+
                 default:
                     Console.WriteLine($"Invalid archive loaded: {binArchiveAdjustmentFile}");
                     return;

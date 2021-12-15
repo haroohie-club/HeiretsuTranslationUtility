@@ -14,6 +14,8 @@ namespace plugin_shade.Archives
 
     // For Suzumiya Haruhi no Heiretsu
     // 0x00 => grp.bin
+    // 0x01 => dat.bin
+    // 0x02 => scr.bin
 
     public class BlnSubEntry
     {
