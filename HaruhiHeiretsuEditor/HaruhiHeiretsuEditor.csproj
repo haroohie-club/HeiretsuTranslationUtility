@@ -10,6 +10,13 @@
     <ProjectReference Include="..\HaruhiHeiretsuLib\HaruhiHeiretsuLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Page Update="MapPreviewWindow.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="cp ..\string_file_locations.csv $(OutDir)string_file_locations.csv&#xD;&#xA;cp ..\graphics_locations.csv $(OutDir)graphics_locations.csv" />
   </Target>

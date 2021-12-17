@@ -121,7 +121,7 @@ namespace HaruhiHeiretsuEditor
             {
                 File.WriteAllBytes(saveFileDialog.FileName, _scrFile.GetBytes(out Dictionary<int, int> offsetAdjustments));
                 string offsetAdjustmentsFile = "scr.bin";
-                foreach(int originalOffset in offsetAdjustments.Keys)
+                foreach (int originalOffset in offsetAdjustments.Keys)
                 {
                     offsetAdjustmentsFile += $"\n{originalOffset},{offsetAdjustments[originalOffset]}";
                 }
@@ -141,7 +141,7 @@ namespace HaruhiHeiretsuEditor
                 {
                     var selectedFile = (ScriptFile)scriptsListBox.SelectedItem;
                     File.WriteAllBytes(saveFileDialog.FileName, selectedFile.Data.ToArray());
-                }                
+                }
             }
         }
 
@@ -296,12 +296,103 @@ namespace HaruhiHeiretsuEditor
                 else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.MAP)
                 {
                     graphicsEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"MAP", Background = System.Windows.Media.Brushes.White });
-                    //Dictionary<int, GraphicsFile> archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == selectedFile.Location.parent).ToDictionary(g => g.Location.child);
-                    List<GraphicsFile> archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == selectedFile.Location.parent).ToList();
-                    graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedFile.GetMap(archiveGraphicsFiles)), MaxWidth = selectedFile.Width });
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"MAP: {string.Join(' ', selectedFile.UnknownMapHeaderInt1.Select(b => $"{b:X2}"))}", Background = System.Windows.Media.Brushes.White });
+                    MapButton loadButton = new() { Content = "Load Map", Map = selectedFile };
+                    loadButton.Click += LoadButton_Click;
+
+                    graphicsEditStackPanel.Children.Add(loadButton);
+
+                    Grid grid = new();
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "U1" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "IN" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "U2" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "CX" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "CY" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "CW" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "CH" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "IX" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "IY" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "IW" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "IH" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "U3" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "AT" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "RT" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "GT" });
+                    grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "BT" });
+
+                    grid.RowDefinitions.Add(new RowDefinition() { Name = "labels" });
+                    grid.Children.Add(new TextBlock { Text = "U1" });
+                    grid.Children.Add(new TextBlock { Text = "IN" });
+                    grid.Children.Add(new TextBlock { Text = "U2" });
+                    grid.Children.Add(new TextBlock { Text = "CX" });
+                    grid.Children.Add(new TextBlock { Text = "CY" });
+                    grid.Children.Add(new TextBlock { Text = "CW" });
+                    grid.Children.Add(new TextBlock { Text = "CH" });
+                    grid.Children.Add(new TextBlock { Text = "IX" });
+                    grid.Children.Add(new TextBlock { Text = "IY" });
+                    grid.Children.Add(new TextBlock { Text = "IW" });
+                    grid.Children.Add(new TextBlock { Text = "IH" });
+                    grid.Children.Add(new TextBlock { Text = "U3" });
+                    grid.Children.Add(new TextBlock { Text = "AT" });
+                    grid.Children.Add(new TextBlock { Text = "RT" });
+                    grid.Children.Add(new TextBlock { Text = "GT" });
+                    grid.Children.Add(new TextBlock { Text = "BT" });
+
+                    foreach (MapComponent mapComponent in selectedFile.MapComponents)
+                    {
+                        grid.RowDefinitions.Add(new RowDefinition());
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.UnknownShort1}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.FileIndex}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.UnknownShort2}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.CanvasX}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.CanvasY}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.CanvasWidth}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.CanvasHeight}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.ImageX}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.ImageY}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.ImageWidth}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.ImageHeight}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.UnknownShort3}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.AlphaTint}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.RedTint}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.GreenTint}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.BlueTint}" });
+                    }
+
+                    for (int i = 0; i < grid.Children.Count; i++)
+                    {
+                        Grid.SetRow(grid.Children[i], i / 16);
+                        Grid.SetColumn(grid.Children[i], i % 16);
+                    }
+
+                    graphicsEditStackPanel.Children.Add(grid);
                 }
             }
+        }
+
+        private void LoadButton_Click(object sender, RoutedEventArgs e)
+        {
+            MapButton mapButton = (MapButton)sender;
+            //Dictionary<int, GraphicsFile> archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == selectedFile.Location.parent).ToDictionary(g => g.Location.child);
+            List<GraphicsFile> archiveGraphicsFiles = new();
+            if (mapButton.Map.Location == (58, 57))
+            {
+                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 12)));
+                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 12)));
+                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 42)));
+                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 42)));
+                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (58, 0)));
+                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (58, 55)));
+                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (69, 33)));
+                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 11)));
+                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 26)));
+            }
+            else
+            {
+                archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == mapButton.Map.Location.parent).ToList();
+            }
+            MapPreviewWindow mapPreviewWindow = new(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(mapButton.Map.GetMap(archiveGraphicsFiles)), MaxWidth = mapButton.Map.Width });
+            mapPreviewWindow.Show();
         }
 
         private void SaveImageButton_Click(object sender, RoutedEventArgs e)
@@ -334,6 +425,21 @@ namespace HaruhiHeiretsuEditor
                     graphicsEditStackPanel.Children.Clear();
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {_loadedGraphicsFile.Mode}", Background = System.Windows.Media.Brushes.White });
                     graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(_loadedGraphicsFile.GetImage()), MaxWidth = _loadedGraphicsFile.Width });
+                }
+            }
+        }
+
+        private void ExportGraphicsFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_loadedGraphicsFile is not null)
+            {
+                SaveFileDialog saveFileDialog = new()
+                {
+                    Filter = "BIN file|*.bin"
+                };
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    File.WriteAllBytes(saveFileDialog.FileName, _loadedGraphicsFile.Data.ToArray());
                 }
             }
         }

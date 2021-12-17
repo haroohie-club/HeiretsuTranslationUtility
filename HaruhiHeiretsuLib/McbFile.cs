@@ -326,7 +326,7 @@ namespace HaruhiHeiretsuLib
             return fileLocations;
         }
 
-        public async Task<List<(int, int)>> CheckHexInIdentifier(byte[] search)
+        public async Task<List<(int, int)>> CheckHexInFileAtOffset(byte[] search, int offset)
         {
             List<(int, int)> fileLocations = new();
 
@@ -344,7 +344,7 @@ namespace HaruhiHeiretsuLib
                     if (data.Length > 0)
                     {
                         bool match = true;
-                        for (int k = 0; match && k < search.Length && k < data.Length; k++)
+                        for (int k = offset; match && k < search.Length && k < data.Length; k++)
                         {
                             match = match && (data[k] == search[k]);
                         }

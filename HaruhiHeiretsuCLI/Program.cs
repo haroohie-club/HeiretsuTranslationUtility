@@ -40,7 +40,7 @@ namespace HaruhiHeiretsuCLI
         {
             Mode mode = Mode.HELP;
             string mcbFile = "", binFile = "", output = "", search = "", fileList = "", replacementFolder = "";
-            int archiveIndex = 0;
+            int archiveIndex = 0, offset = 0;
 
             OptionSet options = new()
             {
@@ -49,6 +49,7 @@ namespace HaruhiHeiretsuCLI
                 { "b|bin-file=", "BIN archive file (e.g. grp.bin or scr.bin)", b => binFile = b},
                 { "o|output=", "Output file or directory", o => output = o },
                 { "s|search=", "Query to search for in files", s => search = s },
+                { "p|pointer=", "Offset to start hex search from", p => offset = int.Parse(p, System.Globalization.NumberStyles.HexNumber) },
                 { "l|file-list=", "List of files to use", l => fileList = l },
                 { "i|archive-index=", "Index of archive in mcb to search during search operation", i => archiveIndex = int.Parse(i) },
                 { "r|replacement-folder=", "Folder to pull replacement files from during replacement operation", r => replacementFolder = r },
@@ -139,7 +140,7 @@ namespace HaruhiHeiretsuCLI
                     {
                         searchBytes.Add(byte.Parse(search.Substring(i, 2), System.Globalization.NumberStyles.HexNumber));
                     }
-                    await HexSearch(mcb, searchBytes.ToArray());
+                    await HexSearch(mcb, searchBytes.ToArray(), offset);
                     break;
 
                 case Mode.REPLACE_GRAPHICS:
@@ -314,9 +315,9 @@ namespace HaruhiHeiretsuCLI
             }
         }
 
-        public static async Task HexSearch(McbFile mcb, byte[] search)
+        public static async Task HexSearch(McbFile mcb, byte[] search, int offset)
         {
-            List<(int, int)> fileLocations = await mcb.CheckHexInIdentifier(search);
+            List<(int, int)> fileLocations = await mcb.CheckHexInFileAtOffset(search, offset);
             using StreamWriter fs = File.CreateText("search_result_locations.csv");
             foreach ((int file, int subFile) in fileLocations)
             {

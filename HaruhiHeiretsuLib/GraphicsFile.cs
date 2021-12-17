@@ -24,7 +24,8 @@ namespace HaruhiHeiretsuLib
         public int DataPointer { get; set; }
 
         // Map File Properties
-        List<MapComponents> MapComponents { get; set; }
+        public byte[] UnknownMapHeaderInt1 { get; set; }
+        public List<MapComponent> MapComponents { get; set; }
 
         public GraphicsFile()
         {
@@ -53,10 +54,11 @@ namespace HaruhiHeiretsuLib
                 FileType = GraphicsFileType.MAP;
                 Width = 640;
                 Height = 480;
+                UnknownMapHeaderInt1 = Data.Skip(4).Take(4).ToArray();
                 MapComponents = new();
                 for (int i = 8; i < Data.Count; i += 0x1C)
                 {
-                    MapComponents.Add(new MapComponents
+                    MapComponents.Add(new MapComponent
                     {
                         UnknownShort1 = BitConverter.ToInt16(Data.Skip(i).Take(2).ToArray()),
                         FileIndex = BitConverter.ToInt16(Data.Skip(i + 0x02).Take(2).ToArray()),
@@ -70,10 +72,10 @@ namespace HaruhiHeiretsuLib
                         CanvasWidth = BitConverter.ToInt16(Data.Skip(i + 0x12).Take(2).ToArray()),
                         CanvasHeight = BitConverter.ToInt16(Data.Skip(i + 0x14).Take(2).ToArray()),
                         UnknownShort3 = BitConverter.ToInt16(Data.Skip(i + 0x16).Take(2).ToArray()),
-                        AlphaTint = Data[i + 0x18],
-                        RedTint = Data[i + 0x19],
-                        GreenTint = Data[i + 0x1A],
-                        BlueTint = Data[i + 0x1B],
+                        AlphaTint = Data[i + 0x1B],
+                        RedTint = Data[i + 0x1A],
+                        GreenTint = Data[i + 0x19],
+                        BlueTint = Data[i + 0x18],
                     });
                 }
             }
@@ -301,7 +303,7 @@ namespace HaruhiHeiretsuLib
             {
                 Bitmap bitmap = new(Width, Height);
                 using Graphics graphics = Graphics.FromImage(bitmap);
-                foreach (MapComponents map in MapComponents)
+                foreach (MapComponent map in MapComponents)
                 {
                     Rectangle boundingBox = new Rectangle
                     {
@@ -323,7 +325,7 @@ namespace HaruhiHeiretsuLib
                             for (int y = 0; y < tile.Height; y++)
                             {
                                 Color color = tile.GetPixel(x, y);
-                                Color newColor = Color.FromArgb((int)(color.A * map.AlphaTint / 128.0), (int)(color.R * map.RedTint / 128.0), (int)(color.G * map.GreenTint / 128.0), (int)(color.B * map.BlueTint / 128.0));
+                                Color newColor = Color.FromArgb((int)(color.A * Math.Min(map.AlphaTint, (byte)0x80) / 128.0), (int)(color.R * map.RedTint / 128.0), (int)(color.G * map.GreenTint / 128.0), (int)(color.B * map.BlueTint / 128.0));
                                 tile.SetPixel(x, y, newColor);
                             }
                         }
@@ -466,7 +468,7 @@ namespace HaruhiHeiretsuLib
         }
     }
 
-    public class MapComponents
+    public class MapComponent
     {
         public short UnknownShort1 { get; set; }
         public short FileIndex { get; set; }

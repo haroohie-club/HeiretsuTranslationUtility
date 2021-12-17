@@ -65,6 +65,7 @@
                         <Button x:Name="openDolGraphicsFileButton" Content="Open DOL" HorizontalAlignment="Left" Click="OpenDolGraphicsFileButton_Click" />
                         <Button x:Name="saveImageButton" Content="Save Image" HorizontalAlignment="Left" Click="SaveImageButton_Click" />
                         <Button x:Name="importImageButton" Content="Import Image" HorizontalAlignment="Left" Click="ImportImageButton_Click" />
+                        <Button x:Name="exportGraphicsFileButton" Content="Export" HorizontalAlignment="Left" Click="ExportGraphicsFileButton_Click" />
                     </ToolBar>
                     <ListBox x:Name="graphicsListBox" Margin="0,30,521,70" Grid.ColumnSpan="2" MaxHeight="355" SelectionChanged="GraphicsListBox_SelectionChanged" />
                     <StackPanel Grid.Column="1" Margin="175,30,0,0">
