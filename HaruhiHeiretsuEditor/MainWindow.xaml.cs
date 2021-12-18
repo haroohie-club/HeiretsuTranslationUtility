@@ -27,6 +27,7 @@ namespace HaruhiHeiretsuEditor
         private McbFile _mcb;
         private ArchiveFile<GraphicsFile> _grpFile;
         private ArchiveFile<ScriptFile> _scrFile;
+        private ArchiveFile<DataFile> _datFile;
         private DolFile _dolFile;
         private FontFile _fontFile;
         private GraphicsFile _loadedGraphicsFile;
@@ -65,6 +66,7 @@ namespace HaruhiHeiretsuEditor
                 try
                 {
                     _mcb.Save(saveFileDialog.FileName, saveFileDialog.FileName.Replace("0", "1")).GetAwaiter().GetResult();
+                    MessageBox.Show("Save completed!");
                 }
                 catch (InvalidOperationException exc)
                 {
@@ -126,6 +128,7 @@ namespace HaruhiHeiretsuEditor
                     offsetAdjustmentsFile += $"\n{originalOffset},{offsetAdjustments[originalOffset]}";
                 }
                 File.WriteAllText($"{saveFileDialog.FileName}_offset_adjustments.csv", offsetAdjustmentsFile);
+                MessageBox.Show("Save completed!");
             }
         }
 
@@ -232,6 +235,7 @@ namespace HaruhiHeiretsuEditor
                     offsetAdjustmentsFile += $"\n{originalOffset},{offsetAdjustments[originalOffset]}";
                 }
                 File.WriteAllText($"{saveFileDialog.FileName}_offset_adjustments.csv", offsetAdjustmentsFile);
+                MessageBox.Show("Save completed!");
             }
         }
 
@@ -519,6 +523,79 @@ namespace HaruhiHeiretsuEditor
                         fontReplacementDialogBox.EndingChar,
                         fontReplacementDialogBox.SelectedEncoding);
                 }
+            }
+        }
+
+        private void OpenDataFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "DAT file|dat*.bin"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                _datFile = ArchiveFile<DataFile>.FromFile(openFileDialog.FileName);
+                dataListBox.ItemsSource = _datFile.Files;
+                dataListBox.Items.Refresh();
+            }
+        }
+
+        private void SaveDataFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "DAT file|dat*.bin"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllBytes(saveFileDialog.FileName, _datFile.GetBytes(out Dictionary<int, int> offsetAdjustments));
+                string offsetAdjustmentsFile = "dat.bin";
+                foreach (int originalOffset in offsetAdjustments.Keys)
+                {
+                    offsetAdjustmentsFile += $"\n{originalOffset},{offsetAdjustments[originalOffset]}";
+                }
+                File.WriteAllText($"{saveFileDialog.FileName}_offset_adjustments.csv", offsetAdjustmentsFile);
+                MessageBox.Show("Save completed!");
+            }
+        }
+
+        private void ExportDataFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "BIN file|*.bin"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllBytes(saveFileDialog.FileName, ((DataFile)dataListBox.SelectedItem).GetBytes());
+            }
+        }
+
+        private void ImportDataFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "BIN file|*.bin"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                DataFile newDataFile = new();
+                newDataFile.Initialize(File.ReadAllBytes(openFileDialog.FileName), _datFile.Files[dataListBox.SelectedIndex].Offset);
+                newDataFile.Index = _datFile.Files[dataListBox.SelectedIndex].Index;
+                _datFile.Files[dataListBox.SelectedIndex] = newDataFile;
+                _datFile.Files[dataListBox.SelectedIndex].Edited = true;
+                graphicsListBox.Items.Refresh();
+            }
+        }
+
+        private void DataListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            dataEditStackPanel.Children.Clear();
+            if (dataListBox.SelectedIndex >= 0)
+            {
+                DataFile selectedFile = (DataFile)dataListBox.SelectedItem;
+                dataEditStackPanel.Children.Add(new TextBlock { Text = $"{selectedFile.Data.Count} bytes" });
+                dataEditStackPanel.Children.Add(new TextBlock { Text = $"Actual compressed length: {selectedFile.CompressedData.Length:X}; Calculated length: {selectedFile.Length:X}" });
             }
         }
     }

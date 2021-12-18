@@ -56,7 +56,7 @@ namespace HaruhiHeiretsuLib
                 Height = 480;
                 UnknownMapHeaderInt1 = Data.Skip(4).Take(4).ToArray();
                 MapComponents = new();
-                for (int i = 8; i < Data.Count; i += 0x1C)
+                for (int i = 8; i < Data.Count - 0x1C; i += 0x1C)
                 {
                     MapComponents.Add(new MapComponent
                     {

@@ -107,6 +107,32 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
+            <TabItem Header="Data">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="99*"/>
+                        <ColumnDefinition Width="695*"/>
+                    </Grid.ColumnDefinitions>
+                    <ToolBar x:Name="dataToolBar" HorizontalAlignment="Left" Height="30" VerticalAlignment="Top" Width="1043" Grid.ColumnSpan="2">
+                        <Button x:Name="openDataFileButton" Content="Open" HorizontalAlignment="Left" Click="OpenDataFileButton_Click" />
+                        <Button x:Name="saveDataFileButton" Content="Save" HorizontalAlignment="Left" Click="SaveDataFileButton_Click" />
+                        <Button x:Name="exportDataFileButton" Content="Export" HorizontalAlignment="Left" Click="ExportDataFileButton_Click" />
+                        <Button x:Name="importDataFileButton" Content="Import" HorizontalAlignment="Left" Click="ImportDataFileButton_Click" />
+                    </ToolBar>
+                    <ListBox x:Name="dataListBox" Margin="0,30,521,0" SelectionChanged="DataListBox_SelectionChanged"  Grid.ColumnSpan="2" />
+                    <StackPanel Grid.Column="1" Margin="175,30,0,0">
+                        <TabControl>
+                            <TabItem Header="Data">
+                                <ScrollViewer Grid.Column="1" Height="350" >
+                                    <DockPanel>
+                                        <StackPanel x:Name="dataEditStackPanel"/>
+                                    </DockPanel>
+                                </ScrollViewer>
+                            </TabItem>
+                        </TabControl>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
         </TabControl>
     </StackPanel>
 </Window>

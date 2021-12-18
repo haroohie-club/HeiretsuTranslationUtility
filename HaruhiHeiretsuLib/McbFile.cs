@@ -313,7 +313,7 @@ namespace HaruhiHeiretsuLib
                     if (data.Length > 0)
                     {
                         string idBytes = Encoding.GetEncoding("Shift-JIS").GetString(data);
-                        if (Regex.IsMatch(idBytes, search))
+                        if (Regex.IsMatch(idBytes, search, RegexOptions.IgnoreCase))
                         {
                             fileLocations.Add((i, j));
                             Console.WriteLine($"File {j} in archive {i} contains string '{search}'");
@@ -343,10 +343,10 @@ namespace HaruhiHeiretsuLib
 
                     if (data.Length > 0)
                     {
-                        bool match = true;
-                        for (int k = offset; match && k < search.Length && k < data.Length; k++)
+                        bool match = offset < data.Length;  
+                        for (int k = offset; match && k - offset < search.Length && k < data.Length; k++)
                         {
-                            match = match && (data[k] == search[k]);
+                            match = match && (data[k] == search[k - offset]);
                         }
                         if (match)
                         {

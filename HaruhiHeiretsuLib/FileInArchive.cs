@@ -35,14 +35,14 @@ namespace HaruhiHeiretsuLib
         public static T FromCompressedData(byte[] compressedData, int offset = 0)
         {
             T created = new();
-            try
-            {
+            //try
+            //{
                 created.Initialize(Helpers.DecompressData(compressedData), offset);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Failed to initialize file at offest {offset}: {e.Message}");
-            }
+            //}
+            //catch (Exception e)
+            //{
+            //    Console.WriteLine($"Failed to initialize file at offest {offset}: {e.Message}");
+            //}
             return created;
         }
     }
