@@ -326,7 +326,7 @@ namespace HaruhiHeiretsuLib
             return fileLocations;
         }
 
-        public async Task<List<(int, int)>> CheckHexInFileAtOffset(byte[] search, int offset)
+        public async Task<List<(int, int)>> CheckHexInFile(byte[] search)
         {
             List<(int, int)> fileLocations = new();
 
@@ -343,15 +343,14 @@ namespace HaruhiHeiretsuLib
 
                     if (data.Length > 0)
                     {
-                        bool match = offset < data.Length;  
-                        for (int k = offset; match && k - offset < search.Length && k < data.Length; k++)
+                        for (int k = 0; i < data.Length - search.Length; k++)
                         {
-                            match = match && (data[k] == search[k - offset]);
-                        }
-                        if (match)
-                        {
-                            fileLocations.Add((i, j));
-                            Console.WriteLine($"File {j} in archive {i} begins with sequence '{string.Join(' ', search.Select(b => $"{b:X2}"))}'");
+                            if (data.Skip(k).Take(search.Length).SequenceEqual(search))
+                            {
+                                fileLocations.Add((i, j));
+                                Console.WriteLine($"File {j} in archive {i} contains sequence '{string.Join(' ', search.Select(b => $"{b:X2}"))}'");
+                                break;
+                            }
                         }
                     }
                 }

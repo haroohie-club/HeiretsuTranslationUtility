@@ -299,7 +299,6 @@ namespace HaruhiHeiretsuLib
 
         public SKBitmap GetLayout(List<GraphicsFile> archiveGraphicsFiles)
         {
-            return new SKBitmap();
             if (FileType == GraphicsFileType.LAYOUT)
             {
                 SKBitmap bitmap = new(Width, Height);
