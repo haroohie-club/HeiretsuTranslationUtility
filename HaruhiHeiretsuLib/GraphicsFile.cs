@@ -410,10 +410,12 @@ namespace HaruhiHeiretsuLib
         {
             SKBitmap bitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
             using SKCanvas canvas = new(bitmap);
-            SKPaint paint = new(font) { IsAntialias = true, Color = SKColors.White };
+            SKPaint shadowPaint = new(font) { IsAntialias = true, Color = SKColors.Black };
+            SKPaint mainPaint = new(font) { IsAntialias = true, Color = SKColors.White };
 
             canvas.Clear();
-            canvas.DrawText(character, 0, Character.SCALED_HEIGHT - fontSize / 5, paint);
+            canvas.DrawText(character, 0, Character.SCALED_HEIGHT - fontSize / 5, shadowPaint);
+            canvas.DrawText(character, 2, Character.SCALED_HEIGHT - fontSize / 5, mainPaint);
             canvas.Flush();
 
             SKBitmap scaledBitmap = new(Width, Height);

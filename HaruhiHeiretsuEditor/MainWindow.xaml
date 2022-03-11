@@ -15,7 +15,7 @@
             </MenuItem>
         </Menu>
         <TabControl x:Name="mainTabControl" Height="453">
-            <TabItem Header="Events">
+            <TabItem Header="Scripts">
                 <Grid Height="500">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="99*"/>

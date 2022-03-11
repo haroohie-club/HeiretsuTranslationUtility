@@ -81,8 +81,8 @@ namespace HaruhiHeiretsuLib
                 int offset = i;
                 List<byte> fileBytes = new();
                 byte[] nextLine = archiveBytes.Skip(i).Take(0x10).ToArray();
-                // compression means that there won't be more than four repeated bytes, so if we see more than four zeroes we've reached the end of a file
-                for (i += 0x10; nextLine.BytesInARowLessThan(4, 0x00); i += 0x10)
+                // compression means that there won't be more than three repeated bytes, so if we see more than three zeroes we've reached the end of a file
+                for (i += 0x10; nextLine.BytesInARowLessThan(3, 0x00); i += 0x10)
                 {
                     fileBytes.AddRange(nextLine);
                     nextLine = archiveBytes.Skip(i).Take(0x10).ToArray();
@@ -101,8 +101,16 @@ namespace HaruhiHeiretsuLib
                     }
                     file.Offset = offset;
                     file.MagicInteger = GetMagicInteger(file.Offset);
-                    file.Index = GetFileIndex(file.MagicInteger);
-                    file.Length = GetFileLength(file.MagicInteger);
+                    if (file.MagicInteger == 0)
+                    {
+                        file.Index = -1;
+                        file.Length = -1;
+                    }
+                    else
+                    {
+                        file.Index = GetFileIndex(file.MagicInteger);
+                        file.Length = GetFileLength(file.MagicInteger);
+                    }
                     file.CompressedData = fileBytes.ToArray();
                     Files.Add(file);
                 }
@@ -217,12 +225,15 @@ namespace HaruhiHeiretsuLib
                 else
                 {
                     compressedBytes = Helpers.CompressData(Files[i].GetBytes());
-                    byte[] newMagicalIntegerBytes = BitConverter.GetBytes(GetNewMagicalInteger(Files[i], compressedBytes.Length));
-                    int pointerOffset = FirstHeaderPointerOffset + (Files[i].Index * 4);
-                    for (int j = 0; j < newMagicalIntegerBytes.Length; j++)
+                    if (Files[i].Index >= 0)
                     {
-                        bytes[pointerOffset + j] = newMagicalIntegerBytes[j];
-                        Header[pointerOffset + j] = newMagicalIntegerBytes[j];
+                        byte[] newMagicalIntegerBytes = BitConverter.GetBytes(GetNewMagicalInteger(Files[i], compressedBytes.Length));
+                        int pointerOffset = FirstHeaderPointerOffset + (Files[i].Index * 4);
+                        for (int j = 0; j < newMagicalIntegerBytes.Length; j++)
+                        {
+                            bytes[pointerOffset + j] = newMagicalIntegerBytes[j];
+                            Header[pointerOffset + j] = newMagicalIntegerBytes[j];
+                        }
                     }
                 }
                 bytes.AddRange(compressedBytes);

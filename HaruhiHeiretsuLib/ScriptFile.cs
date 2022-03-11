@@ -183,6 +183,7 @@ namespace HaruhiHeiretsuLib
         {
             Edited = true;
             string oldLine = DialogueLines[index].Line;
+            newLine = newLine.Replace("\r\n", "\n"); // consolidate newlines
             DialogueLines[index].Line = newLine;
             int oldLength = Encoding.GetEncoding("Shift-JIS").GetByteCount(oldLine);
             byte[] newLineData = Encoding.Latin1.GetBytes(newLine);

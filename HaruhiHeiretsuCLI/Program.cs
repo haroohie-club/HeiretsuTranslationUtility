@@ -1,16 +1,6 @@
 ﻿using HaruhiHeiretsuLib;
-using Kontract.Models.Archive;
 using Mono.Options;
-using plugin_shade.Archives;
-using SkiaSharp;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml;
 
 namespace HaruhiHeiretsuCLI
 {
@@ -30,6 +20,7 @@ namespace HaruhiHeiretsuCLI
                 new ExtractStringFilesCommand(),
                 new FindStringsCommand(),
                 new HexSearchCommand(),
+                new ReplaceFontCommand(),
                 new ReplaceGraphicsCommand(),
                 new StringSearchCommand(),
                 new GeneratePatchCommand()

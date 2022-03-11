@@ -78,7 +78,7 @@ namespace HaruhiHeiretsuLib
             ushort characterSpaceEnd = BitConverter.ToUInt16(endingTemp.ToArray());
 
             SKFont skFont;
-            if (font.Contains('\\') || font.Contains('/'))
+            if (font.EndsWith(".ttf") || font.EndsWith(".otf"))
             {
                 skFont = new(SKTypeface.FromFile(font), fontSize);
             }
@@ -108,7 +108,7 @@ namespace HaruhiHeiretsuLib
     {
         public ushort[] Codepoints { get; set; }
 
-        public const int SCALED_WIDTH = 32;
+        public const int SCALED_WIDTH = 36;
         public const int SCALED_HEIGHT = 32;
 
         public Character(byte[] data, int index, IEnumerable<ushort> codepoint)

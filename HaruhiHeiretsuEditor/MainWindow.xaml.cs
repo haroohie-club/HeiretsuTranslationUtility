@@ -5,17 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace HaruhiHeiretsuEditor
 {
@@ -250,8 +242,8 @@ namespace HaruhiHeiretsuEditor
                 graphicsEditStackPanel.Children.Clear();
                 GraphicsFile graphicsFile = new();
                 graphicsFile.Initialize(File.ReadAllBytes(openFileDialog.FileName), 0);
-                graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {graphicsFile.Mode}", Background = System.Windows.Media.Brushes.White });
-                graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(graphicsFile.GetImage()), MaxWidth = graphicsFile.Width });
+                graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {graphicsFile.Mode}", Background = Brushes.White });
+                graphicsEditStackPanel.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(graphicsFile.GetImage()), MaxWidth = graphicsFile.Width });
                 _loadedGraphicsFile = graphicsFile;
             }
         }
@@ -283,24 +275,24 @@ namespace HaruhiHeiretsuEditor
                     graphicsEditStackPanel.Children.Add(new TextBlock
                     {
                         Text = $"Actual compressed length: {selectedFile.CompressedData.Length:X}; Calculated length: {selectedFile.Length:X}",
-                        Background = System.Windows.Media.Brushes.White
+                        Background = Brushes.White
                     });
                 }
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.SGE)
                 {
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes", Background = System.Windows.Media.Brushes.White });
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes", Background = Brushes.White });
                 }
                 else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TILE_20AF30)
                 {
-                    graphicsEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {selectedFile.Mode}", Background = System.Windows.Media.Brushes.White });
-                    graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedFile.GetImage()), MaxWidth = selectedFile.Width });
+                    graphicsEditStackPanel.Background = Brushes.Gray;
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {selectedFile.Mode}", Background = Brushes.White });
+                    graphicsEditStackPanel.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedFile.GetImage()), MaxWidth = selectedFile.Width });
                     _loadedGraphicsFile = selectedFile;
                 }
                 else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.LAYOUT)
                 {
-                    graphicsEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"MAP: {string.Join(' ', selectedFile.UnknownMapHeaderInt1.Select(b => $"{b:X2}"))}", Background = System.Windows.Media.Brushes.White });
+                    graphicsEditStackPanel.Background = Brushes.Gray;
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"MAP: {string.Join(' ', selectedFile.UnknownMapHeaderInt1.Select(b => $"{b:X2}"))}", Background = Brushes.White });
                     MapButton loadButton = new() { Content = "Load Map", Map = selectedFile };
                     loadButton.Click += LoadButton_Click;
 
@@ -395,7 +387,7 @@ namespace HaruhiHeiretsuEditor
             {
                 archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == mapButton.Map.Location.parent).ToList();
             }
-            MapPreviewWindow mapPreviewWindow = new(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(mapButton.Map.GetLayout(archiveGraphicsFiles)), MaxWidth = mapButton.Map.Width });
+            MapPreviewWindow mapPreviewWindow = new(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(mapButton.Map.GetLayout(archiveGraphicsFiles)), MaxWidth = mapButton.Map.Width });
             mapPreviewWindow.Show();
         }
 
@@ -428,8 +420,8 @@ namespace HaruhiHeiretsuEditor
                 {
                     _loadedGraphicsFile.Set20AF30Image(SKBitmap.Decode(openFileDialog.FileName));
                     graphicsEditStackPanel.Children.Clear();
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {_loadedGraphicsFile.Mode}", Background = System.Windows.Media.Brushes.White });
-                    graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(_loadedGraphicsFile.GetImage()), MaxWidth = _loadedGraphicsFile.Width });
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {_loadedGraphicsFile.Mode}", Background = Brushes.White });
+                    graphicsEditStackPanel.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(_loadedGraphicsFile.GetImage()), MaxWidth = _loadedGraphicsFile.Width });
                 }
             }
         }
@@ -496,8 +488,8 @@ namespace HaruhiHeiretsuEditor
                 Character selectedCharacter = (Character)fontListBox.SelectedItem;
                 fontEditStackPanel.Children.Clear();
                 fontEditStackPanel.Children.Add(new TextBlock() { Text = selectedCharacter.GetCodepointsString() });
-                fontEditStackPanel.Background = System.Windows.Media.Brushes.Black;
-                fontEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedCharacter.GetImage()), MaxWidth = Character.SCALED_WIDTH });
+                fontEditStackPanel.Background = Brushes.Gray;
+                fontEditStackPanel.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedCharacter.GetImage()), MaxWidth = Character.SCALED_WIDTH });
             }
         }
 

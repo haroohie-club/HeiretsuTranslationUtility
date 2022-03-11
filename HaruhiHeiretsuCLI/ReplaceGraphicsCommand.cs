@@ -61,11 +61,11 @@ namespace HaruhiHeiretsuCLI
             }
 
             await mcb.Save(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"));
-            Console.WriteLine("Finished saving MCB");
+            CommandSet.Out.WriteLine("Finished saving MCB");
             File.WriteAllBytes(Path.Combine(_outputDir, "grp.bin"), grp.GetBytes(out Dictionary<int, int> offsetAdjustments));
-            Console.WriteLine("Finished saving GRP");
+            CommandSet.Out.WriteLine("Finished saving GRP");
             await mcb.AdjustOffsets(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"), "grp.bin", offsetAdjustments);
-            Console.WriteLine("Finished adjusting MCB offsets");
+            CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
 
             return 0;
         }
