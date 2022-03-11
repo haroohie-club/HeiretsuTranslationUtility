@@ -342,16 +342,16 @@ namespace HaruhiHeiretsuEditor
                     grid.Children.Add(new TextBlock { Text = "GT" });
                     grid.Children.Add(new TextBlock { Text = "BT" });
 
-                    foreach (MapComponent mapComponent in selectedFile.MapComponents)
+                    foreach (LayoutComponent mapComponent in selectedFile.LayoutComponents)
                     {
                         grid.RowDefinitions.Add(new RowDefinition());
                         grid.Children.Add(new TextBox { Text = $"{mapComponent.UnknownShort1}" });
-                        grid.Children.Add(new TextBox { Text = $"{mapComponent.FileIndex}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.RelativeFileIndex}" });
                         grid.Children.Add(new TextBox { Text = $"{mapComponent.UnknownShort2}" });
-                        grid.Children.Add(new TextBox { Text = $"{mapComponent.CanvasX}" });
-                        grid.Children.Add(new TextBox { Text = $"{mapComponent.CanvasY}" });
-                        grid.Children.Add(new TextBox { Text = $"{mapComponent.CanvasWidth}" });
-                        grid.Children.Add(new TextBox { Text = $"{mapComponent.CanvasHeight}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.ScreenX}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.ScreenY}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.ScreenWidth}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.ScreenHeight}" });
                         grid.Children.Add(new TextBox { Text = $"{mapComponent.ImageX}" });
                         grid.Children.Add(new TextBox { Text = $"{mapComponent.ImageY}" });
                         grid.Children.Add(new TextBox { Text = $"{mapComponent.ImageWidth}" });
@@ -395,7 +395,7 @@ namespace HaruhiHeiretsuEditor
             {
                 archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == mapButton.Map.Location.parent).ToList();
             }
-            MapPreviewWindow mapPreviewWindow = new(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(mapButton.Map.GetMap(archiveGraphicsFiles)), MaxWidth = mapButton.Map.Width });
+            MapPreviewWindow mapPreviewWindow = new(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(mapButton.Map.GetLayout(archiveGraphicsFiles)), MaxWidth = mapButton.Map.Width });
             mapPreviewWindow.Show();
         }
 

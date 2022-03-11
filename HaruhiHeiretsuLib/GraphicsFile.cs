@@ -25,7 +25,7 @@ namespace HaruhiHeiretsuLib
 
         // Map File Properties
         public byte[] UnknownMapHeaderInt1 { get; set; }
-        public List<MapComponent> MapComponents { get; set; }
+        public List<LayoutComponent> LayoutComponents { get; set; }
 
         public GraphicsFile()
         {
@@ -55,22 +55,22 @@ namespace HaruhiHeiretsuLib
                 Width = 640;
                 Height = 480;
                 UnknownMapHeaderInt1 = Data.Skip(4).Take(4).ToArray();
-                MapComponents = new();
+                LayoutComponents = new();
                 for (int i = 8; i < Data.Count - 0x1C; i += 0x1C)
                 {
-                    MapComponents.Add(new MapComponent
+                    LayoutComponents.Add(new LayoutComponent
                     {
                         UnknownShort1 = BitConverter.ToInt16(Data.Skip(i).Take(2).ToArray()),
-                        FileIndex = BitConverter.ToInt16(Data.Skip(i + 0x02).Take(2).ToArray()),
+                        RelativeFileIndex = BitConverter.ToInt16(Data.Skip(i + 0x02).Take(2).ToArray()),
                         UnknownShort2 = BitConverter.ToInt16(Data.Skip(i + 0x04).Take(2).ToArray()),
-                        CanvasX = BitConverter.ToInt16(Data.Skip(i + 0x06).Take(2).ToArray()),
-                        CanvasY = BitConverter.ToInt16(Data.Skip(i + 0x08).Take(2).ToArray()),
+                        ScreenX = BitConverter.ToInt16(Data.Skip(i + 0x06).Take(2).ToArray()),
+                        ScreenY = BitConverter.ToInt16(Data.Skip(i + 0x08).Take(2).ToArray()),
                         ImageWidth = BitConverter.ToInt16(Data.Skip(i + 0x0A).Take(2).ToArray()),
                         ImageHeight = BitConverter.ToInt16(Data.Skip(i + 0x0C).Take(2).ToArray()),
                         ImageX = BitConverter.ToInt16(Data.Skip(i + 0x0E).Take(2).ToArray()),
                         ImageY = BitConverter.ToInt16(Data.Skip(i + 0x10).Take(2).ToArray()),
-                        CanvasWidth = BitConverter.ToInt16(Data.Skip(i + 0x12).Take(2).ToArray()),
-                        CanvasHeight = BitConverter.ToInt16(Data.Skip(i + 0x14).Take(2).ToArray()),
+                        ScreenWidth = BitConverter.ToInt16(Data.Skip(i + 0x12).Take(2).ToArray()),
+                        ScreenHeight = BitConverter.ToInt16(Data.Skip(i + 0x14).Take(2).ToArray()),
                         UnknownShort3 = BitConverter.ToInt16(Data.Skip(i + 0x16).Take(2).ToArray()),
                         AlphaTint = Data[i + 0x1B],
                         RedTint = Data[i + 0x1A],
@@ -297,45 +297,56 @@ namespace HaruhiHeiretsuLib
             return null;
         }
 
-        public Bitmap GetMap(List<GraphicsFile> archiveGraphicsFiles)
+        public Bitmap GetLayout(List<GraphicsFile> archiveGraphicsFiles)
         {
             if (FileType == GraphicsFileType.MAP)
             {
                 Bitmap bitmap = new(Width, Height);
                 using Graphics graphics = Graphics.FromImage(bitmap);
-                foreach (MapComponent map in MapComponents)
+                foreach (LayoutComponent layout in LayoutComponents)
                 {
                     Rectangle boundingBox = new Rectangle
                     {
-                        X = map.ImageX,
-                        Y = map.ImageY,
-                        Width = map.ImageWidth,
-                        Height = map.ImageHeight,
+                        X = layout.ImageX,
+                        Y = layout.ImageY,
+                        Width = layout.ImageWidth,
+                        Height = layout.ImageHeight,
                     };
                     try
                     {
-                        if (map.FileIndex == -1)
+                        if (layout.RelativeFileIndex == -1)
                         {
                             continue;
                         }
-                        Bitmap tile = archiveGraphicsFiles[map.FileIndex].GetImage().Clone(boundingBox, System.Drawing.Imaging.PixelFormat.DontCare);
+
+                        int grpIndex = 0;
+                        for (int i = 0; i <= layout.RelativeFileIndex && grpIndex < archiveGraphicsFiles.Count; grpIndex++)
+                        {
+                            if (archiveGraphicsFiles[grpIndex].FileType == GraphicsFileType.TILE_20AF30)
+                            {
+                                i++;
+                            }
+                        }
+                        GraphicsFile grpFile = archiveGraphicsFiles[grpIndex];
+
+                        Bitmap tile = grpFile.GetImage().Clone(boundingBox, System.Drawing.Imaging.PixelFormat.DontCare);
 
                         for (int x = 0; x < tile.Width; x++)
                         {
                             for (int y = 0; y < tile.Height; y++)
                             {
                                 Color color = tile.GetPixel(x, y);
-                                Color newColor = Color.FromArgb((int)(color.A * Math.Min(map.AlphaTint, (byte)0x80) / 128.0), (int)(color.R * map.RedTint / 128.0), (int)(color.G * map.GreenTint / 128.0), (int)(color.B * map.BlueTint / 128.0));
+                                Color newColor = Color.FromArgb((int)(color.A * Math.Min(layout.AlphaTint, (byte)0x80) / 128.0), (int)(color.R * layout.RedTint / 128.0), (int)(color.G * layout.GreenTint / 128.0), (int)(color.B * layout.BlueTint / 128.0));
                                 tile.SetPixel(x, y, newColor);
                             }
                         }
 
                         graphics.DrawImage(tile, new Rectangle
                         {
-                            X = map.CanvasX,
-                            Y = map.CanvasY,
-                            Width = map.CanvasWidth,
-                            Height = map.CanvasHeight
+                            X = layout.ScreenX,
+                            Y = layout.ScreenY,
+                            Width = layout.ScreenWidth,
+                            Height = layout.ScreenHeight
                         });
                     }
                     catch (OutOfMemoryException)
@@ -397,7 +408,7 @@ namespace HaruhiHeiretsuLib
             graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
             graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
             graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
 
             StringFormat format = new()
             {
@@ -468,19 +479,19 @@ namespace HaruhiHeiretsuLib
         }
     }
 
-    public class MapComponent
+    public class LayoutComponent
     {
         public short UnknownShort1 { get; set; }
-        public short FileIndex { get; set; }
+        public short RelativeFileIndex { get; set; }
         public short UnknownShort2 { get; set; }
-        public short CanvasX { get; set; }
-        public short CanvasY { get; set; }
+        public short ScreenX { get; set; }
+        public short ScreenY { get; set; }
         public short ImageWidth { get; set; }
         public short ImageHeight { get; set; }
         public short ImageX { get; set; }
         public short ImageY { get; set; }
-        public short CanvasWidth { get; set; }
-        public short CanvasHeight { get; set; }
+        public short ScreenWidth { get; set; }
+        public short ScreenHeight { get; set; }
         public short UnknownShort3 { get; set; }
         public byte AlphaTint { get; set; }
         public byte RedTint { get; set; }
