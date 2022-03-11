@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using SkiaSharp;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,7 +21,7 @@ namespace HaruhiHeiretsuEditor
     /// </summary>
     public partial class FontReplacementDialogBox : Window
     {
-        public System.Drawing.FontFamily SelectedFontFamily { get; set; }
+        public string SelectedFontFamily { get; set; }
         public int SelectedFontSize { get; set; }
         public Encoding SelectedEncoding { get; set; }
         public char StartingChar { get; set; }
@@ -28,7 +30,7 @@ namespace HaruhiHeiretsuEditor
         public FontReplacementDialogBox()
         {
             InitializeComponent();
-            fontFamilyComboBox.ItemsSource = new System.Drawing.Text.InstalledFontCollection().Families;
+            fontFamilyComboBox.ItemsSource = SKFontManager.Default.FontFamilies;
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -39,7 +41,14 @@ namespace HaruhiHeiretsuEditor
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
-            SelectedFontFamily = (System.Drawing.FontFamily)fontFamilyComboBox.SelectedItem;
+            if (fontFamilyComboBox.SelectedIndex >= 0)
+            {
+                SelectedFontFamily = (string)fontFamilyComboBox.SelectedItem;
+            }
+            else
+            {
+                SelectedFontFamily = fontFileBox.Text;
+            }
             SelectedFontSize = int.Parse(fontSizeTextBox.Text);
             switch (((ComboBoxItem)encodingComboBox.SelectedItem).Tag)
             {
@@ -60,6 +69,18 @@ namespace HaruhiHeiretsuEditor
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
+        }
+
+        private void SelectFontButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "Font file|*.otf;*.ttf"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                fontFileBox.Text = openFileDialog.FileName;
+            }
         }
     }
 }

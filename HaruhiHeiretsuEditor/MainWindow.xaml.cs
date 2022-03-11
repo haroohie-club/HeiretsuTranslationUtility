@@ -1,8 +1,8 @@
 ﻿using HaruhiHeiretsuLib;
 using Microsoft.Win32;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -297,7 +297,7 @@ namespace HaruhiHeiretsuEditor
                     graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedFile.GetImage()), MaxWidth = selectedFile.Width });
                     _loadedGraphicsFile = selectedFile;
                 }
-                else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.MAP)
+                else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.LAYOUT)
                 {
                     graphicsEditStackPanel.Background = System.Windows.Media.Brushes.Gray;
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"MAP: {string.Join(' ', selectedFile.UnknownMapHeaderInt1.Select(b => $"{b:X2}"))}", Background = System.Windows.Media.Brushes.White });
@@ -409,8 +409,9 @@ namespace HaruhiHeiretsuEditor
                 };
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    Bitmap bitmap = _loadedGraphicsFile.GetImage();
-                    bitmap.Save(saveFileDialog.FileName, System.Drawing.Imaging.ImageFormat.Png);
+                    SKBitmap bitmap = _loadedGraphicsFile.GetImage();
+                    using FileStream fs = new(saveFileDialog.FileName, FileMode.Create);
+                    bitmap.Encode(fs, SKEncodedImageFormat.Png, 300);
                 }
             }
         }
@@ -425,7 +426,7 @@ namespace HaruhiHeiretsuEditor
                 };
                 if (openFileDialog.ShowDialog() == true)
                 {
-                    _loadedGraphicsFile.Set20AF30Image(new Bitmap(openFileDialog.FileName));
+                    _loadedGraphicsFile.Set20AF30Image(SKBitmap.Decode(openFileDialog.FileName));
                     graphicsEditStackPanel.Children.Clear();
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {_loadedGraphicsFile.Mode}", Background = System.Windows.Media.Brushes.White });
                     graphicsEditStackPanel.Children.Add(new System.Windows.Controls.Image { Source = GuiHelpers.GetBitmapImageFromBitmap(_loadedGraphicsFile.GetImage()), MaxWidth = _loadedGraphicsFile.Width });

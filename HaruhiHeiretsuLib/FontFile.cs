@@ -1,6 +1,6 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -61,7 +61,7 @@ namespace HaruhiHeiretsuLib
             return data.ToArray();
         }
 
-        public void OverwriteFont(FontFamily font, int fontSize, char startingChar, char endingChar, Encoding encoding)
+        public void OverwriteFont(string font, int fontSize, char startingChar, char endingChar, Encoding encoding)
         {
             Edited = true;
             List<byte> startingTemp = encoding.GetBytes($"{startingChar}").Reverse().ToList();
@@ -77,6 +77,16 @@ namespace HaruhiHeiretsuLib
             ushort characterSpaceStart = BitConverter.ToUInt16(startingTemp.ToArray());
             ushort characterSpaceEnd = BitConverter.ToUInt16(endingTemp.ToArray());
 
+            SKFont skFont;
+            if (font.Contains('\\') || font.Contains('/'))
+            {
+                skFont = new(SKTypeface.FromFile(font), fontSize);
+            }
+            else
+            {
+                skFont = new(SKTypeface.FromFamilyName(font), fontSize);
+            }
+
             for (ushort i = characterSpaceStart; i <= characterSpaceEnd; i++)
             {
                 List<byte> codepage = BitConverter.GetBytes(i).Reverse().ToList();
@@ -88,7 +98,7 @@ namespace HaruhiHeiretsuLib
                 string character = encoding.GetString(codepage.ToArray());
                 if (character.Length > 0)
                 {
-                    Characters.First(c => c.Codepoints.Contains(i)).SetFontCharacterImage(character, font, fontSize);
+                    Characters.First(c => c.Codepoints.Contains(i)).SetFontCharacterImage(character, skFont, fontSize);
                 }
             }
         }
@@ -98,8 +108,8 @@ namespace HaruhiHeiretsuLib
     {
         public ushort[] Codepoints { get; set; }
 
-        public const int SCALED_WIDTH = 18;
-        public const int SCALED_HEIGHT = 16;
+        public const int SCALED_WIDTH = 32;
+        public const int SCALED_HEIGHT = 32;
 
         public Character(byte[] data, int index, IEnumerable<ushort> codepoint)
         {

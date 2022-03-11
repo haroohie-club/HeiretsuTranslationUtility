@@ -2,6 +2,7 @@
 using Kontract.Models.Archive;
 using Mono.Options;
 using plugin_shade.Archives;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -164,7 +165,7 @@ namespace HaruhiHeiretsuCLI
             {
                 if (file.EndsWith("png", StringComparison.OrdinalIgnoreCase))
                 {
-                    var bitmap = new System.Drawing.Bitmap(file);
+                    SKBitmap bitmap = SKBitmap.Decode(file);
 
                     int grpIndex = int.Parse(grpRegex.Match(file).Groups["grpIndex"].Value);
                     grp.Files.First(f => f.Index == grpIndex).Set20AF30Image(bitmap);

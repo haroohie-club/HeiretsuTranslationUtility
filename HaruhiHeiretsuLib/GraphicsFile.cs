@@ -1,8 +1,8 @@
 ﻿using Kanvas;
 using Kontract.Models.Image;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -51,7 +51,7 @@ namespace HaruhiHeiretsuLib
             }
             else if (Data.Take(4).SequenceEqual(new byte[] { 0x80, 0x02, 0xE0, 0x01 }))
             {
-                FileType = GraphicsFileType.MAP;
+                FileType = GraphicsFileType.LAYOUT;
                 Width = 640;
                 Height = 480;
                 UnknownMapHeaderInt1 = Data.Skip(4).Take(4).ToArray();
@@ -85,11 +85,11 @@ namespace HaruhiHeiretsuLib
             }
         }
 
-        public Bitmap GetImage()
+        public SKBitmap GetImage()
         {
             if (FileType == GraphicsFileType.TILE_20AF30)
             {
-                Bitmap bitmap = new(Width, Height);
+                SKBitmap bitmap = new(Width, Height);
 
                 switch (Mode)
                 {
@@ -111,9 +111,9 @@ namespace HaruhiHeiretsuLib
                                         }
 
                                         byte colorByte = Data[ia4Index++];
-                                        int colorComponent = (colorByte & 0x0F) * 0x11;
-                                        int alphaComponent = (colorByte >> 4) * 0x11;
-                                        Color color = Color.FromArgb(alphaComponent, colorComponent, colorComponent, colorComponent);
+                                        byte colorComponent = (byte)((colorByte & 0x0F) * 0x11);
+                                        byte alphaComponent = (byte)((colorByte >> 4) * 0x11);
+                                        SKColor color = new(colorComponent, colorComponent, colorComponent, alphaComponent);
 
                                         bitmap.SetPixel(x + col, y + row, color);
                                     }
@@ -141,9 +141,9 @@ namespace HaruhiHeiretsuLib
 
                                         byte[] colorBytes = Data.Skip(ia8Index).Take(2).ToArray();
                                         ia8Index += 2;
-                                        int colorComponent = colorBytes[1];
-                                        int alphaComponent = colorBytes[0];
-                                        Color color = Color.FromArgb(alphaComponent, colorComponent, colorComponent, colorComponent);
+                                        byte colorComponent = colorBytes[1];
+                                        byte alphaComponent = colorBytes[0];
+                                        SKColor color = new(colorComponent, colorComponent, colorComponent, alphaComponent);
 
                                         bitmap.SetPixel(x + col, y + row, color);
                                     }
@@ -171,14 +171,14 @@ namespace HaruhiHeiretsuLib
                                         ushort colorData = BitConverter.ToUInt16(Data.Skip(rgb5a3Index).Take(2).Reverse().ToArray());
                                         rgb5a3Index += 2;
 
-                                        Color color;
+                                        SKColor color;
                                         if (colorData >> 15 == 0)
                                         {
-                                            color = Color.FromArgb(((colorData >> 12) & 0x07) * 0x20, ((colorData >> 8) & 0x0F) * 0x11, ((colorData >> 4) & 0x0F) * 0x11, (colorData & 0x0F) * 0x11);
+                                            color = new((byte)(((colorData >> 8) & 0x0F) * 0x11), (byte)(((colorData >> 4) & 0x0F) * 0x11), (byte)((colorData & 0x0F) * 0x11), (byte)(((colorData >> 12) & 0x07) * 0x20));
                                         }
                                         else
                                         {
-                                            color = Color.FromArgb(0xFF, ((colorData >> 10) & 0x1F) * 0x08, ((colorData >> 5) & 0x1F) * 0x08, (colorData & 0x1F) * 0x08);
+                                            color = new((byte)(((colorData >> 10) & 0x1F) * 0x08), (byte)(((colorData >> 5) & 0x1F) * 0x08), (byte)((colorData & 0x1F) * 0x08), 0xFF);
                                         }
 
                                         bitmap.SetPixel(x + col, y + row, color);
@@ -204,11 +204,11 @@ namespace HaruhiHeiretsuLib
                                             continue;
                                         }
 
-                                        Color color = Color.FromArgb(
-                                            Data[index],
+                                        SKColor color = new(
                                             Data[index + 1],
                                             Data[index + 32],
-                                            Data[index + 33]);
+                                            Data[index + 33],
+                                            Data[index]);
 
                                         bitmap.SetPixel(x + col, y + row, color);
                                     }
@@ -238,20 +238,20 @@ namespace HaruhiHeiretsuLib
                                             BitConverter.ToUInt16(Data.Skip(cmprIndex).Take(2).Reverse().ToArray()),
                                             BitConverter.ToUInt16(Data.Skip(cmprIndex + 2).Take(2).Reverse().ToArray())
                                         };
-                                        Color[] palette = new Color[4];
+                                        SKColor[] palette = new SKColor[4];
                                         for (int i = 0; i < paletteData.Length; i++)
                                         {
-                                            palette[i] = Color.FromArgb(0xFF, ((paletteData[i] >> 11) & 0x1F) * 0x08, ((paletteData[i] >> 5) & 0x3F) * 0x04, (paletteData[i] & 0x1F) * 0x08);
+                                            palette[i] = new((byte)(((paletteData[i] >> 11) & 0x1F) * 0x08), (byte)(((paletteData[i] >> 5) & 0x3F) * 0x04), (byte)((paletteData[i] & 0x1F) * 0x08), 0xFF);
                                         }
                                         if (paletteData[0] > paletteData[1])
                                         {
-                                            palette[2] = Color.FromArgb(0xFF, (palette[0].R * 2 + palette[1].R) / 3, (palette[0].G * 2 + palette[1].G) / 3, (palette[0].B * 2 + palette[1].B) / 3);
-                                            palette[3] = Color.FromArgb(0xFF, (palette[0].R + palette[1].R * 2) / 3, (palette[0].G + palette[1].G * 2) / 3, (palette[0].B + palette[1].B * 2) / 3);
+                                            palette[2] = new((byte)((palette[0].Red * 2 + palette[1].Red) / 3), (byte)((palette[0].Green * 2 + palette[1].Green) / 3), (byte)((palette[0].Blue * 2 + palette[1].Blue) / 3), 0xFF);
+                                            palette[3] = new((byte)((palette[0].Red + palette[1].Red * 2) / 3), (byte)((palette[0].Green + palette[1].Green * 2) / 3), (byte)((palette[0].Blue + palette[1].Blue * 2) / 3), 0xFF);
                                         }
                                         else
                                         {
-                                            palette[2] = Color.FromArgb(0xFF, (palette[0].R + palette[1].R) / 2, (palette[0].G + palette[1].G) / 2, (palette[0].B + palette[1].B) / 2);
-                                            palette[3] = Color.Transparent;
+                                            palette[2] = new((byte)((palette[0].Red + palette[1].Red) / 2), (byte)((palette[0].Green + palette[1].Green) / 2), (byte)((palette[0].Blue + palette[1].Blue) / 2), 0xFF);
+                                            palette[3] = SKColors.Transparent;
                                         }
                                         cmprIndex += 4;
                                         for (int subRow = 0; subRow < 4; subRow++)
@@ -276,83 +276,90 @@ namespace HaruhiHeiretsuLib
             }
             else if (FileType == GraphicsFileType.FONT_CHARACTER)
             {
-                Bitmap bitmap = new(Width, Height);
+                SKBitmap bitmap = new(Width, Height);
                 int i = 0;
                 for (int y = 0; y < Height; y++)
                 {
                     for (int x = 0; x < Width; x++)
                     {
-                        int alpha = ((Data[i] & 0xF0) >> 4) * 0x11;
-                        int grayscale = (Data[i] & 0x0F) * 0x11;
-                        bitmap.SetPixel(x, y, Color.FromArgb(alpha, grayscale, grayscale, grayscale));
+                        byte alpha = (byte)(((Data[i] & 0xF0) >> 4) * 0x11);
+                        byte grayscale = (byte)((Data[i] & 0x0F) * 0x11);
+                        bitmap.SetPixel(x, y, new(grayscale, grayscale, grayscale, alpha));
                         i++;
                     }
                 }
-                Bitmap transformedBitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
-                using Graphics graphics = Graphics.FromImage(transformedBitmap);
-                graphics.DrawImage(bitmap, 0, 0, Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
-                graphics.Flush();
+                SKBitmap transformedBitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
+                using SKCanvas canvas = new(transformedBitmap);
+                SKRect dest = new(0, 0, transformedBitmap.Width, transformedBitmap.Height);
+                canvas.DrawBitmap(bitmap, dest);
                 return transformedBitmap;
             }
             return null;
         }
 
-        public Bitmap GetLayout(List<GraphicsFile> archiveGraphicsFiles)
+        public SKBitmap GetLayout(List<GraphicsFile> archiveGraphicsFiles)
         {
-            if (FileType == GraphicsFileType.MAP)
+            return new SKBitmap();
+            if (FileType == GraphicsFileType.LAYOUT)
             {
-                Bitmap bitmap = new(Width, Height);
-                using Graphics graphics = Graphics.FromImage(bitmap);
+                SKBitmap bitmap = new(Width, Height);
+                using SKCanvas canvas = new(bitmap);
                 foreach (LayoutComponent layout in LayoutComponents)
                 {
-                    Rectangle boundingBox = new Rectangle
+                    SKRect boundingBox = new()
                     {
-                        X = layout.ImageX,
-                        Y = layout.ImageY,
-                        Width = layout.ImageWidth,
-                        Height = layout.ImageHeight,
+                        Left = layout.ImageX,
+                        Top = layout.ImageY,
+                        Right = layout.ImageX + layout.ImageWidth,
+                        Bottom = layout.ImageY + layout.ImageHeight,
                     };
-                    try
+                    SKRect destination = new()
                     {
-                        if (layout.RelativeFileIndex == -1)
-                        {
-                            continue;
-                        }
+                        Left = layout.ScreenX,
+                        Top = layout.ScreenY,
+                        Right = layout.ScreenX + layout.ScreenWidth,
+                        Bottom = layout.ScreenY + layout.ScreenHeight,
+                    };
 
-                        int grpIndex = 0;
-                        for (int i = 0; i <= layout.RelativeFileIndex && grpIndex < archiveGraphicsFiles.Count; grpIndex++)
-                        {
-                            if (archiveGraphicsFiles[grpIndex].FileType == GraphicsFileType.TILE_20AF30)
-                            {
-                                i++;
-                            }
-                        }
-                        GraphicsFile grpFile = archiveGraphicsFiles[grpIndex];
-
-                        Bitmap tile = grpFile.GetImage().Clone(boundingBox, System.Drawing.Imaging.PixelFormat.DontCare);
-
-                        for (int x = 0; x < tile.Width; x++)
-                        {
-                            for (int y = 0; y < tile.Height; y++)
-                            {
-                                Color color = tile.GetPixel(x, y);
-                                Color newColor = Color.FromArgb((int)(color.A * Math.Min(layout.AlphaTint, (byte)0x80) / 128.0), (int)(color.R * layout.RedTint / 128.0), (int)(color.G * layout.GreenTint / 128.0), (int)(color.B * layout.BlueTint / 128.0));
-                                tile.SetPixel(x, y, newColor);
-                            }
-                        }
-
-                        graphics.DrawImage(tile, new Rectangle
-                        {
-                            X = layout.ScreenX,
-                            Y = layout.ScreenY,
-                            Width = layout.ScreenWidth,
-                            Height = layout.ScreenHeight
-                        });
-                    }
-                    catch (OutOfMemoryException)
+                    if (layout.RelativeFileIndex == -1)
                     {
-                        // do nothing
+                        continue;
                     }
+
+                    int grpIndex = 0;
+                    for (int i = 0; i <= layout.RelativeFileIndex && grpIndex < archiveGraphicsFiles.Count; grpIndex++)
+                    {
+                        if (archiveGraphicsFiles[grpIndex].FileType == GraphicsFileType.TILE_20AF30)
+                        {
+                            i++;
+                        }
+                    }
+                    GraphicsFile grpFile = archiveGraphicsFiles[grpIndex];
+
+                    SKBitmap texture = grpFile.GetImage();
+                    SKBitmap tile = new((int)Math.Abs(boundingBox.Right - boundingBox.Left), (int)Math.Abs(boundingBox.Bottom - boundingBox.Top));
+                    SKCanvas transformCanvas = new(tile);
+                    if (layout.ScreenWidth < 0)
+                    {
+                        transformCanvas.Scale(-1, 1, tile.Width / 2.0f, 0);
+                    }
+                    if (layout.ScreenHeight < 0)
+                    {
+                        transformCanvas.Scale(1, -1, 0, tile.Height / 2.0f);
+                    }
+                    transformCanvas.DrawBitmap(texture, boundingBox, new SKRect(0, 0, tile.Width, tile.Height));
+
+                    for (int x = 0; x < tile.Width; x++)
+                    {
+                        for (int y = 0; y < tile.Height; y++)
+                        {
+                            SKColor color = tile.GetPixel(x, y);
+                            SKColor newColor = new((byte)(color.Red * layout.RedTint / 128.0), (byte)(color.Green * layout.GreenTint / 128.0), (byte)(color.Blue * layout.BlueTint / 128.0), (byte)(color.Alpha * Math.Min(layout.AlphaTint, (byte)0x80) / 128.0));
+                            tile.SetPixel(x, y, newColor);
+                        }
+                    }
+
+                    canvas.DrawBitmap(tile, destination);
                 }
 
                 return bitmap;
@@ -363,7 +370,7 @@ namespace HaruhiHeiretsuLib
             }
         }
 
-        public void Set20AF30Image(Bitmap bitmap)
+        public void Set20AF30Image(SKBitmap bitmap)
         {
             Edited = true;
             switch (Mode)
@@ -386,12 +393,12 @@ namespace HaruhiHeiretsuLib
                                     }
 
 
-                                    Color color = bitmap.GetPixel(x + col, y + row);
+                                    SKColor color = bitmap.GetPixel(x + col, y + row);
 
-                                    Data[index] = color.A;
-                                    Data[index + 1] = color.R;
-                                    Data[index + 32] = color.G;
-                                    Data[index + 33] = color.B;
+                                    Data[index] = color.Alpha;
+                                    Data[index + 1] = color.Red;
+                                    Data[index + 32] = color.Green;
+                                    Data[index + 33] = color.Blue;
                                 }
                             }
                         }
@@ -400,38 +407,27 @@ namespace HaruhiHeiretsuLib
             }
         }
 
-        public void SetFontCharacterImage(string character, FontFamily font, int fontSize)
+        public void SetFontCharacterImage(string character, SKFont font, int fontSize)
         {
-            Bitmap bitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
-            Rectangle rectangle = new Rectangle(0, 0, Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
-            using Graphics graphics = Graphics.FromImage(bitmap);
-            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-            graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-            graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SingleBitPerPixel;
+            SKBitmap bitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
+            using SKCanvas canvas = new(bitmap);
+            SKPaint paint = new(font) { IsAntialias = true, Color = SKColors.White };
 
-            StringFormat format = new()
-            {
-                Alignment = StringAlignment.Near,
-                LineAlignment = StringAlignment.Center
-            };
+            canvas.Clear();
+            canvas.DrawText(character, 0, Character.SCALED_HEIGHT - fontSize / 5, paint);
+            canvas.Flush();
 
-            graphics.FillRectangle(Brushes.Transparent, rectangle);
-            graphics.DrawString(character, new Font(font, fontSize), Brushes.White, rectangle, format);
-            graphics.TranslateTransform(-5f, 0);
-            graphics.Flush();
-
-            Bitmap scaledBitmap = new(Width, Height);
-            using Graphics scaledGraphics = Graphics.FromImage(scaledBitmap);
-            scaledGraphics.DrawImage(bitmap, 0, 0, Width, Height);
-            scaledGraphics.Flush();
+            SKBitmap scaledBitmap = new(Width, Height);
+            using SKCanvas scaledCanvas = new(scaledBitmap);
+            scaledCanvas.DrawBitmap(bitmap, new SKRect(0, 0, Width, Height));
+            scaledCanvas.Flush();
 
             int i = 0;
             for (int y = 0; y < Height; y++)
             {
                 for (int x = 0; x < Width; x++)
                 {
-                    Data[i] = (byte)(((scaledBitmap.GetPixel(x, y).A / 0x11) << 4) | (scaledBitmap.GetPixel(x, y).R / 0x11));
+                    Data[i] = (byte)(((scaledBitmap.GetPixel(x, y).Alpha / 0x11) << 4) | (scaledBitmap.GetPixel(x, y).Red / 0x11));
                     i++;
                 }
             }
@@ -457,7 +453,7 @@ namespace HaruhiHeiretsuLib
         public enum GraphicsFileType
         {
             FONT_CHARACTER,
-            MAP,
+            LAYOUT,
             SGE,
             TILE_20AF30,
             UNKNOWN

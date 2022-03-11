@@ -10,7 +10,7 @@
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Title="Enter language code" Height="223" Width="300"
+        Title="Enter language code" Height="251" Width="300"
         FocusManager.FocusedElement="{Binding ElementName=languageCodeTextBox}">
     <Grid Margin="10">
         <Grid.Resources>
@@ -41,27 +41,32 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Left,Top,Right,Bottom margins-->
         <Label Grid.Column="0" Grid.Row="0">Font Family:</Label>
         <ComboBox Name="fontFamilyComboBox" Grid.Column="1" Grid.Row="0" />
-        <Label Grid.Column="0" Grid.Row="1">Font Size:</Label>
-        <TextBox Name="fontSizeTextBox" Grid.Column="1" Grid.Row="1" />
-        <Label Grid.Column="0" Grid.Row="2">Encoding:</Label>
-        <ComboBox Name="encodingComboBox" Grid.Column="1" Grid.Row="2">
+        <Label Grid.Column="0" Grid.Row="1">Font File:</Label>
+        <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal">
+            <TextBox Name="fontFileBox" Width="100" />
+            <Button Content="Select" Click="SelectFontButton_Click" />
+        </StackPanel>
+        <Label Grid.Column="0" Grid.Row="2">Font Size:</Label>
+        <TextBox Name="fontSizeTextBox" Grid.Column="1" Grid.Row="2" />
+        <Label Grid.Column="0" Grid.Row="3">Encoding:</Label>
+        <ComboBox Name="encodingComboBox" Grid.Column="1" Grid.Row="3">
             <ComboBoxItem Tag="latin1" Content="Latin-1" IsSelected="True" />
             <ComboBoxItem Tag="utf8" Content="UTF-8" />
             <ComboBoxItem Tag="shiftjis" Content="Shift-JIS" />
         </ComboBox>
-        <!--<TextBox Name="encodingTextBox" Grid.Column="1" Grid.Row="2" />-->
-        <Label Grid.Column="0" Grid.Row="3">Starting Character:</Label>
-        <TextBox Name="startingCharacterTextBox" Grid.Column="1" Grid.Row="3" />
-        <Label Grid.Column="0" Grid.Row="4">Ending Character:</Label>
-        <TextBox Name="endingCharacterTextBox" Grid.Column="1" Grid.Row="4" />
+        <Label Grid.Column="0" Grid.Row="4">Starting Character:</Label>
+        <TextBox Name="startingCharacterTextBox" Grid.Column="1" Grid.Row="4" />
+        <Label Grid.Column="0" Grid.Row="5">Ending Character:</Label>
+        <TextBox Name="endingCharacterTextBox" Grid.Column="1" Grid.Row="5" />
 
         <!-- Accept or Cancel -->
-        <StackPanel Grid.Column="1" Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+        <StackPanel Grid.Column="1" Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
             <Button Name="okButton" Click="OkButton_Click" IsDefault="True">OK</Button>
             <Button Name="cancelButton" Click="CancelButton_Click" IsCancel="True">Cancel</Button>
         </StackPanel>
