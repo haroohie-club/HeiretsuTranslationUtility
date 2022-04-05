@@ -50,6 +50,7 @@ namespace HaruhiHeiretsuCLI
                     int grpIndex = int.Parse(grpRegex.Match(file).Groups["grpIndex"].Value);
                     grp.Files.First(f => f.Index == grpIndex).Set20AF30Image(bitmap);
 
+                    mcb.GraphicsFiles.Clear();
                     mcb.LoadGraphicsFiles(file.Split('_'));
                     foreach (GraphicsFile graphicsFile in mcb.GraphicsFiles)
                     {

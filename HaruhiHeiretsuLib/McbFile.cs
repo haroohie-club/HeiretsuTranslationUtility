@@ -160,6 +160,10 @@ namespace HaruhiHeiretsuLib
                     archiveIndexToSearch = 2;
                     break;
 
+                case "evt.bin":
+                    archiveIndexToSearch = 3;
+                    break;
+
                 default:
                     Console.WriteLine($"Invalid archive loaded: {binArchiveFile}");
                     return fileMap;
@@ -343,7 +347,7 @@ namespace HaruhiHeiretsuLib
 
                     if (data.Length > 0)
                     {
-                        for (int k = 0; i < data.Length - search.Length; k++)
+                        for (int k = 0; k < data.Length - search.Length; k++)
                         {
                             if (data.Skip(k).Take(search.Length).SequenceEqual(search))
                             {

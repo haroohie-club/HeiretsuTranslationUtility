@@ -36,7 +36,7 @@ namespace HaruhiHeiretsuCLI
 
         public override int Invoke(IEnumerable<string> arguments)
         {
-            return base.Invoke(arguments);
+            return InvokeAsync(arguments).GetAwaiter().GetResult();
         }
 
         public async Task<int> InvokeAsync(IEnumerable<string> arguments)

@@ -149,30 +149,33 @@ namespace HaruhiHeiretsuLib
                     i += length;
                 }
 
-                // remove commands that don't count
-                Commands.RemoveRange(0, 7);
-
-                for (int i = CommandsEnd; i < ShortPointersEnd;)
+                if (Commands.Count > 7)
                 {
-                    PostCommandOffsets.Add(i);
-                    for (int j = 3; j >= 0; j--)
+                    // remove commands that don't count
+                    Commands.RemoveRange(0, 7);
+
+                    for (int i = CommandsEnd; i < ShortPointersEnd;)
                     {
-                        switch (j)
+                        PostCommandOffsets.Add(i);
+                        for (int j = 3; j >= 0; j--)
                         {
-                            case 3:
-                                UnknownShorts1.Add(BitConverter.ToUInt16(Data.Skip(i).Take(2).Reverse().ToArray()));
-                                i += 2;
-                                break;
+                            switch (j)
+                            {
+                                case 3:
+                                    UnknownShorts1.Add(BitConverter.ToUInt16(Data.Skip(i).Take(2).Reverse().ToArray()));
+                                    i += 2;
+                                    break;
 
-                            case 2:
-                                UnknownShorts2.Add(BitConverter.ToUInt16(Data.Skip(i).Take(2).Reverse().ToArray()));
-                                i += 2;
-                                break;
+                                case 2:
+                                    UnknownShorts2.Add(BitConverter.ToUInt16(Data.Skip(i).Take(2).Reverse().ToArray()));
+                                    i += 2;
+                                    break;
 
-                            case 1:
-                                PostCommandPointers.Add(BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray()));
-                                i += 4;
-                                break;
+                                case 1:
+                                    PostCommandPointers.Add(BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray()));
+                                    i += 4;
+                                    break;
+                            }
                         }
                     }
                 }
