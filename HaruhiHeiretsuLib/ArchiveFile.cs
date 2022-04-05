@@ -28,8 +28,8 @@ namespace HaruhiHeiretsuLib
 
         public static ArchiveFile<T> FromFile(string fileName)
         {
-            byte[] evtBytes = File.ReadAllBytes(fileName);
-            return new ArchiveFile<T>(evtBytes) { FileName = Path.GetFileName(fileName) };
+            byte[] archiveBytes = File.ReadAllBytes(fileName);
+            return new ArchiveFile<T>(archiveBytes) { FileName = Path.GetFileName(fileName) };
         }
 
         public ArchiveFile(byte[] archiveBytes)

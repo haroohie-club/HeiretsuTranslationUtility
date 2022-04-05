@@ -20,8 +20,8 @@ namespace HaruhiHeiretsuCLI
                 new ExtractStringFilesCommand(),
                 new FindStringsCommand(),
                 new HexSearchCommand(),
+                new ReplaceFilesCommand(),
                 new ReplaceFontCommand(),
-                new ReplaceGraphicsCommand(),
                 new StringSearchCommand(),
                 new GeneratePatchCommand()
             };

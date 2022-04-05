@@ -8,6 +8,7 @@ namespace HaruhiHeiretsuLib
 {
     public partial class FileInArchive
     {
+        public (int parent, int child) Location { get; set; } = (-1, -1);
         public uint MagicInteger { get; set; }
         public int Index { get; set; }
         public int Offset { get; set; }
@@ -21,7 +22,7 @@ namespace HaruhiHeiretsuLib
         }
         public virtual byte[] GetBytes()
         {
-            return null;
+            return Data.ToArray();
         }
 
         public FileInArchive()

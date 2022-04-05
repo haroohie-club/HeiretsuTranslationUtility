@@ -7,12 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HaruhiHeiretsuLib
+namespace HaruhiHeiretsuLib.Graphics
 {
     public class GraphicsFile : FileInArchive
     {
-        public (int parent, int child) Location { get; set; } = (-1, -1);
-
         public GraphicsFileType FileType { get; set; }
 
         // Tile File Properties

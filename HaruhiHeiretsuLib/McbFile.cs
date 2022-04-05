@@ -1,4 +1,6 @@
-﻿using Kontract.Models.Archive;
+﻿using HaruhiHeiretsuLib.Graphics;
+using HaruhiHeiretsuLib.Strings;
+using Kontract.Models.Archive;
 using plugin_shade.Archives;
 using System;
 using System.Collections.Generic;
@@ -14,13 +16,21 @@ namespace HaruhiHeiretsuLib
     {
         public Bln BlnFile { get; set; } = new Bln();
         public List<IArchiveFileInfo> ArchiveFiles { get; set; }
-        public List<ScriptFile> ScriptFiles { get; set; } = new();
+        public List<StringsFile> StringsFiles { get; set; } = new();
         public List<GraphicsFile> GraphicsFiles { get; set; } = new();
+        public List<FileInArchive> LoadedFiles { get; set; } = new();
         public FontFile FontFile { get; set; }
 
         private MemoryStream _indexFileStream;
         private MemoryStream _dataFileStream;
 
+        public enum ArchiveIndex
+        {
+            GRP = 0,
+            DAT = 1,
+            SCR = 2,
+            EVT = 3,
+        }
 
         public McbFile(string indexFile, string dataFile)
         {
@@ -31,19 +41,19 @@ namespace HaruhiHeiretsuLib
 
         public async Task Save(string indexFile, string dataFile)
         {
-            foreach (ScriptFile scriptFile in ScriptFiles)
+            foreach (StringsFile stringsFile in StringsFiles)
             {
-                if (scriptFile.Edited)
+                if (stringsFile.Edited)
                 {
-                    using Stream archiveStream = await ArchiveFiles[scriptFile.Location.parent].GetFileData();
+                    using Stream archiveStream = await ArchiveFiles[stringsFile.Location.parent].GetFileData();
                     BlnSub blnSub = new();
                     List<IArchiveFileInfo> blnSubFiles = (List<IArchiveFileInfo>)blnSub.Load(archiveStream);
-                    MemoryStream childFileStream = new(scriptFile.Data.ToArray());
-                    blnSubFiles[scriptFile.Location.child].SetFileData(childFileStream);
+                    MemoryStream childFileStream = new(stringsFile.Data.ToArray());
+                    blnSubFiles[stringsFile.Location.child].SetFileData(childFileStream);
 
                     MemoryStream parentFileStream = new();
                     blnSub.Save(parentFileStream, blnSubFiles, leaveOpen: true);
-                    ArchiveFiles[scriptFile.Location.parent].SetFileData(parentFileStream);
+                    ArchiveFiles[stringsFile.Location.parent].SetFileData(parentFileStream);
                 }
             }
 
@@ -85,6 +95,22 @@ namespace HaruhiHeiretsuLib
                 ArchiveFiles[0].SetFileData(fontParentFileStream);
             }
 
+            foreach (FileInArchive file in LoadedFiles)
+            {
+                if (file.Edited)
+                {
+                    using Stream archiveStream = await ArchiveFiles[file.Location.parent].GetFileData();
+                    BlnSub blnSub = new();
+                    List<IArchiveFileInfo> blnSubFiles = (List<IArchiveFileInfo>)blnSub.Load(archiveStream);
+                    MemoryStream childFileStream = new(file.Data.ToArray());
+                    blnSubFiles[file.Location.child].SetFileData(childFileStream);
+
+                    MemoryStream parentFileStream = new();
+                    blnSub.Save(parentFileStream, blnSubFiles, leaveOpen: true);
+                    ArchiveFiles[file.Location.parent].SetFileData(parentFileStream);
+                }
+            }
+
             using FileStream indexFileStream = File.OpenWrite(indexFile);
             using FileStream dataFileStream = File.OpenWrite(dataFile);
             BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);
@@ -110,15 +136,19 @@ namespace HaruhiHeiretsuLib
             switch (archiveToAdjust)
             {
                 case "grp.bin":
-                    archiveIndexToAdjust = 0;
+                    archiveIndexToAdjust = (int)ArchiveIndex.GRP;
                     break;
 
                 case "dat.bin":
-                    archiveIndexToAdjust = 1;
+                    archiveIndexToAdjust = (int)ArchiveIndex.DAT;
                     break;
 
                 case "scr.bin":
-                    archiveIndexToAdjust = 2;
+                    archiveIndexToAdjust = (int)ArchiveIndex.SCR;
+                    break;
+
+                case "evt.bin":
+                    archiveIndexToAdjust = (int)ArchiveIndex.EVT;
                     break;
 
                 default:
@@ -149,19 +179,19 @@ namespace HaruhiHeiretsuLib
             switch (Path.GetFileName(binArchiveFile))
             {
                 case "grp.bin":
-                    archiveIndexToSearch = 0;
+                    archiveIndexToSearch = (int)ArchiveIndex.GRP;
                     break;
 
                 case "dat.bin":
-                    archiveIndexToSearch = 1;
+                    archiveIndexToSearch = (int)ArchiveIndex.DAT;
                     break;
 
                 case "scr.bin":
-                    archiveIndexToSearch = 2;
+                    archiveIndexToSearch = (int)ArchiveIndex.SCR;
                     break;
 
                 case "evt.bin":
-                    archiveIndexToSearch = 3;
+                    archiveIndexToSearch = (int)ArchiveIndex.EVT;
                     break;
 
                 default:
@@ -197,7 +227,40 @@ namespace HaruhiHeiretsuLib
             return fileMap;
         }
 
-        public void LoadScriptFiles(string stringFileLocations)
+        public void LoadFiles(string[] filesLocations)
+        {
+            LoadFiles(string.Join('\n', filesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
+        }
+
+        public void LoadFiles(string fileLoactions)
+        {
+            foreach (string line in fileLoactions.Replace("\r\n", "\n").Split("\n"))
+            {
+                if (string.IsNullOrEmpty(line))
+                {
+                    continue;
+                }
+
+                string[] lineSplit = line.Split(',');
+                int parentLoc = int.Parse(lineSplit[0]);
+                int childLoc = int.Parse(lineSplit[1]);
+
+                using Stream archiveStream = ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
+                BlnSub blnSub = new();
+                BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, childLoc);
+
+                byte[] subFileData = blnSubFile.GetFileDataBytes();
+
+                LoadedFiles.Add(new FileInArchive() { Data = subFileData.ToList(), Location = (parentLoc, childLoc) });
+            }
+        }
+
+        public void LoadStringsFiles(string[] stringsFilesLocations)
+        {
+            LoadStringsFiles(string.Join('\n', stringsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
+        }
+
+        public void LoadStringsFiles(string stringFileLocations)
         {
             foreach (string line in stringFileLocations.Replace("\r\n", "\n").Split("\n"))
             {
@@ -211,21 +274,24 @@ namespace HaruhiHeiretsuLib
 
                 using Stream archiveStream = ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
                 BlnSub blnSub = new();
-                IArchiveFileInfo blnSubFile = blnSub.GetFile(archiveStream, childLoc);
+                BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
-
-                // archive 0 contains a lot of chokuretsu-style script files
-                if (parentLoc == 0)
+                
+                switch ((ArchiveIndex)blnSubFile.Entry.archiveIndex)
                 {
-                    ChokuretsuStringsFile eventFile = new();
-                    eventFile.Initialize(subFileData);
-                    eventFile.Location = (parentLoc, childLoc);
-                    ScriptFiles.Add(eventFile);
-                }
-                else
-                {
-                    ScriptFiles.Add(new ScriptFile(parentLoc, childLoc, subFileData));
+                    case ArchiveIndex.DAT:
+                        ShadeStringsFile shadeStringsFile = new();
+                        shadeStringsFile.Initialize(subFileData);
+                        shadeStringsFile.Location = (parentLoc, childLoc);
+                        StringsFiles.Add(shadeStringsFile);
+                        break;
+                    case ArchiveIndex.SCR:
+                        StringsFiles.Add(new ScriptFile(parentLoc, childLoc, subFileData));
+                        break;
+                    case ArchiveIndex.EVT:
+                        StringsFiles.Add(new EventFile(parentLoc, childLoc, subFileData));
+                        break;
                 }
             }
         }
@@ -286,7 +352,7 @@ namespace HaruhiHeiretsuLib
                     if (data.Length > 0)
                     {
                         string idBytes = Encoding.ASCII.GetString(data);
-                        if (Regex.IsMatch(idBytes, @"V\d{3}\w{7}(?<characterCode>[A-Z]{3})"))
+                        if (Regex.IsMatch(idBytes, StringsFile.VOICE_REGEX))
                         {
                             fileLocations.Add((i, j));
                             Console.WriteLine($"File {j} in archive {i} contains voiced lines");

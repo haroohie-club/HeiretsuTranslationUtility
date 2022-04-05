@@ -1,4 +1,6 @@
 ﻿using HaruhiHeiretsuLib;
+using HaruhiHeiretsuLib.Graphics;
+using HaruhiHeiretsuLib.Strings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +12,7 @@ namespace HaruhiHeiretsuEditor
 {
     public class DialogueTextBox : TextBox
     {
-        public ScriptFile ScriptFile { get; set; }
+        public StringsFile StringsFile { get; set; }
         public int DialogueLineIndex { get; set; }
     }
 

@@ -1,4 +1,6 @@
 ﻿using HaruhiHeiretsuLib;
+using HaruhiHeiretsuLib.Graphics;
+using HaruhiHeiretsuLib.Strings;
 using Microsoft.Win32;
 using SkiaSharp;
 using System;
@@ -17,9 +19,11 @@ namespace HaruhiHeiretsuEditor
     public partial class MainWindow : Window
     {
         private McbFile _mcb;
+        private ArchiveFile<DataFile> _datFile;
+        private ArchiveFile<ShadeStringsFile> _datStringsFile;
+        private ArchiveFile<EventFile> _evtFile;
         private ArchiveFile<GraphicsFile> _grpFile;
         private ArchiveFile<ScriptFile> _scrFile;
-        private ArchiveFile<DataFile> _datFile;
         private DolFile _dolFile;
         private FontFile _fontFile;
         private GraphicsFile _loadedGraphicsFile;
@@ -38,10 +42,10 @@ namespace HaruhiHeiretsuEditor
             if (openFileDialog.ShowDialog() == true)
             {
                 _mcb = new McbFile(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
-                _mcb.LoadScriptFiles(File.ReadAllText("string_file_locations.csv"));
+                _mcb.LoadStringsFiles(File.ReadAllText("string_file_locations.csv"));
                 _mcb.LoadGraphicsFiles(File.ReadAllText("graphics_locations.csv"));
                 _mcb.LoadFontFile();
-                scriptsListBox.ItemsSource = _mcb.ScriptFiles;
+                scriptsListBox.ItemsSource = _mcb.StringsFiles;
                 graphicsListBox.ItemsSource = _mcb.GraphicsFiles;
                 fontListBox.ItemsSource = _mcb.FontFile.Characters;
             }
@@ -124,6 +128,34 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        private void OpenDatFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "DAT.BIN|dat*.bin"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                _datStringsFile = ArchiveFile<ShadeStringsFile>.FromFile(openFileDialog.FileName);
+                scriptsListBox.ItemsSource = _datStringsFile.Files;
+                scriptsListBox.Items.Refresh();
+            }
+        }
+
+        private void OpenEvtFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "EVT.BIN|evt*.bin"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                _evtFile = ArchiveFile<EventFile>.FromFile(openFileDialog.FileName);
+                scriptsListBox.ItemsSource = _evtFile.Files;
+                scriptsListBox.Items.Refresh();
+            }
+        }
+
         private void ExportEventsFileButton_Click(object sender, RoutedEventArgs e)
         {
             if (scriptsListBox.SelectedIndex >= 0)
@@ -134,7 +166,7 @@ namespace HaruhiHeiretsuEditor
                 };
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    var selectedFile = (ScriptFile)scriptsListBox.SelectedItem;
+                    var selectedFile = (StringsFile)scriptsListBox.SelectedItem;
                     File.WriteAllBytes(saveFileDialog.FileName, selectedFile.Data.ToArray());
                 }
             }
@@ -149,10 +181,10 @@ namespace HaruhiHeiretsuEditor
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                ChokuretsuStringsFile chokuretsuEventFile = new();
-                chokuretsuEventFile.Initialize(File.ReadAllBytes(openFileDialog.FileName));
-                chokuretsuEventFile.Location = _mcb.ScriptFiles[scriptsListBox.SelectedIndex].Location;
-                _mcb.ScriptFiles[scriptsListBox.SelectedIndex] = chokuretsuEventFile;
+                ShadeStringsFile shadeStringsFile = new();
+                shadeStringsFile.Initialize(File.ReadAllBytes(openFileDialog.FileName));
+                shadeStringsFile.Location = _mcb.StringsFiles[scriptsListBox.SelectedIndex].Location;
+                _mcb.StringsFiles[scriptsListBox.SelectedIndex] = shadeStringsFile;
                 scriptsListBox.Items.Refresh();
             }
         }
@@ -162,7 +194,7 @@ namespace HaruhiHeiretsuEditor
             scriptEditStackPanel.Children.Clear();
             if (_mcb is not null)
             {
-                scriptEditStackPanel.Children.Add(new TextBlock { Text = $"{_mcb.ScriptFiles.Sum(s => s.DialogueLines.Count)}" });
+                scriptEditStackPanel.Children.Add(new TextBlock { Text = $"{_mcb.StringsFiles.Sum(s => s.DialogueLines.Count)}" });
             }
             else if (_scrFile is not null)
             {
@@ -170,12 +202,12 @@ namespace HaruhiHeiretsuEditor
             }
             if (scriptsListBox.SelectedIndex >= 0)
             {
-                var selectedFile = (ScriptFile)scriptsListBox.SelectedItem;
+                var selectedFile = (StringsFile)scriptsListBox.SelectedItem;
                 for (int i = 0; i < selectedFile.DialogueLines.Count; i++)
                 {
                     StackPanel dialogueStackPanel = new() { Orientation = Orientation.Horizontal };
                     dialogueStackPanel.Children.Add(new TextBlock { Text = selectedFile.DialogueLines[i].Speaker.ToString() });
-                    DialogueTextBox dialogueTextBox = new() { Text = selectedFile.DialogueLines[i].Line, AcceptsReturn = true, ScriptFile = selectedFile, DialogueLineIndex = i };
+                    DialogueTextBox dialogueTextBox = new() { Text = selectedFile.DialogueLines[i].Line, AcceptsReturn = true, StringsFile = selectedFile, DialogueLineIndex = i };
                     dialogueTextBox.TextChanged += DialogueTextBox_TextChanged;
                     dialogueStackPanel.Children.Add(dialogueTextBox);
                     scriptEditStackPanel.Children.Add(dialogueStackPanel);
@@ -187,7 +219,7 @@ namespace HaruhiHeiretsuEditor
         {
             DialogueTextBox dialogueTextBox = (DialogueTextBox)sender;
 
-            dialogueTextBox.ScriptFile.EditDialogue(dialogueTextBox.DialogueLineIndex, dialogueTextBox.Text);
+            dialogueTextBox.StringsFile.EditDialogue(dialogueTextBox.DialogueLineIndex, dialogueTextBox.Text);
         }
 
         private void OpenGrpFileButton_Click(object sender, RoutedEventArgs e)
