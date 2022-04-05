@@ -348,7 +348,7 @@ namespace HaruhiHeiretsuLib
         UNKNOWN,
     }
 
-    public class ChokuretsuEventFile : ScriptFile
+    public class ChokuretsuStringsFile : ScriptFile
     {
         public List<int> FrontPointers { get; set; } = new();
         public int PointerToNumEndPointers { get; set; }
@@ -359,7 +359,7 @@ namespace HaruhiHeiretsuLib
         public Dictionary<int, string> DramatisPersonae { get; set; } = new();
         public int DialogueSectionPointer { get; set; }
 
-        public ChokuretsuEventFile()
+        public ChokuretsuStringsFile()
         {
         }
 

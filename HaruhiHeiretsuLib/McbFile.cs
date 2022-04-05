@@ -218,7 +218,7 @@ namespace HaruhiHeiretsuLib
                 // archive 0 contains a lot of chokuretsu-style script files
                 if (parentLoc == 0)
                 {
-                    ChokuretsuEventFile eventFile = new();
+                    ChokuretsuStringsFile eventFile = new();
                     eventFile.Initialize(subFileData);
                     eventFile.Location = (parentLoc, childLoc);
                     ScriptFiles.Add(eventFile);

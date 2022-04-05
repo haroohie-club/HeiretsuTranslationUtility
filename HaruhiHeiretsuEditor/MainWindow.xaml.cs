@@ -149,7 +149,7 @@ namespace HaruhiHeiretsuEditor
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                ChokuretsuEventFile chokuretsuEventFile = new();
+                ChokuretsuStringsFile chokuretsuEventFile = new();
                 chokuretsuEventFile.Initialize(File.ReadAllBytes(openFileDialog.FileName));
                 chokuretsuEventFile.Location = _mcb.ScriptFiles[scriptsListBox.SelectedIndex].Location;
                 _mcb.ScriptFiles[scriptsListBox.SelectedIndex] = chokuretsuEventFile;
