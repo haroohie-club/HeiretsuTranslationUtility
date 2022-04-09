@@ -196,10 +196,17 @@ namespace HaruhiHeiretsuEditor
             {
                 scriptEditStackPanel.Children.Add(new TextBlock { Text = $"{_mcb.StringsFiles.Sum(s => s.DialogueLines.Count)}" });
             }
-            else if (_scrFile is not null)
+            else
             {
-                scriptEditStackPanel.Children.Add(new TextBlock { Text = $"{_scrFile.Files.Sum(s => s.DialogueLines.Count)}" });
-            }
+                if (_scrFile is not null)
+                {
+                    scriptEditStackPanel.Children.Add(new TextBlock { Text = $"SCR {_scrFile.Files.Sum(s => s.DialogueLines.Count)}" });
+                }
+                if (_evtFile is not null)
+                {
+                    scriptEditStackPanel.Children.Add(new TextBlock { Text = $"EVT {_evtFile.Files.Where(e => e.Index > 0xB3 || e.Index < 0xB1).Sum(e => e.DialogueLines.Count)}" });
+                }
+            } 
             if (scriptsListBox.SelectedIndex >= 0)
             {
                 var selectedFile = (StringsFile)scriptsListBox.SelectedItem;

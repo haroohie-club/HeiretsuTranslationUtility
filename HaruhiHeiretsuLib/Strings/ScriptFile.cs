@@ -31,9 +31,10 @@ namespace HaruhiHeiretsuLib.Strings
         {
         }
 
-        public ScriptFile(int parent, int child, byte[] data, bool chokuretsu = false)
+        public ScriptFile(int parent, int child, byte[] data, int mcbId = 0)
         {
             Location = (parent, child);
+            McbId = mcbId;
             Data = data.ToList();
 
             ParseDialogue();

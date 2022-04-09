@@ -32,7 +32,7 @@ namespace HaruhiHeiretsuLib.Strings
         {
             if (Location != (-1, -1))
             {
-                return $"{Location.parent},{Location.child}";
+                return $"{(short)McbId:X4},{Location.child}";
             }
             else
             {

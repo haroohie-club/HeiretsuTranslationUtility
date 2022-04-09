@@ -251,7 +251,7 @@ namespace HaruhiHeiretsuLib
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
-                LoadedFiles.Add(new FileInArchive() { Data = subFileData.ToList(), Location = (parentLoc, childLoc) });
+                LoadedFiles.Add(new FileInArchive() { Data = subFileData.ToList(), Location = (parentLoc, childLoc), McbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id });
             }
         }
 
@@ -277,20 +277,23 @@ namespace HaruhiHeiretsuLib
                 BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
-                
+                int mcbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id;
+
+
                 switch ((ArchiveIndex)blnSubFile.Entry.archiveIndex)
                 {
                     case ArchiveIndex.DAT:
                         ShadeStringsFile shadeStringsFile = new();
-                        shadeStringsFile.Initialize(subFileData);
                         shadeStringsFile.Location = (parentLoc, childLoc);
+                        shadeStringsFile.McbId = mcbId;
+                        shadeStringsFile.Initialize(subFileData);
                         StringsFiles.Add(shadeStringsFile);
                         break;
                     case ArchiveIndex.SCR:
-                        StringsFiles.Add(new ScriptFile(parentLoc, childLoc, subFileData));
+                        StringsFiles.Add(new ScriptFile(parentLoc, childLoc, subFileData, mcbId));
                         break;
                     case ArchiveIndex.EVT:
-                        StringsFiles.Add(new EventFile(parentLoc, childLoc, subFileData));
+                        StringsFiles.Add(new EventFile(parentLoc, childLoc, subFileData, mcbId));
                         break;
                 }
             }
@@ -315,12 +318,13 @@ namespace HaruhiHeiretsuLib
 
                 using Stream archiveStream = ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
                 BlnSub blnSub = new();
-                IArchiveFileInfo blnSubFile = blnSub.GetFile(archiveStream, childLoc);
+                BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
-                GraphicsFile graphicsFile = new() { Location = (parentLoc, childLoc) };
+                GraphicsFile graphicsFile = new() { Location = (parentLoc, childLoc), McbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id };
                 graphicsFile.Initialize(subFileData, 0);
+                graphicsFile.Offset = (int)blnSubFile.Offset;
                 GraphicsFiles.Add(graphicsFile);
             }
         }

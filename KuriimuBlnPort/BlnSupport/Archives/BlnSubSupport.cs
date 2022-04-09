@@ -16,6 +16,7 @@ namespace plugin_shade.Archives
     // 0x00 => grp.bin
     // 0x01 => dat.bin
     // 0x02 => scr.bin
+    // 0x03 => evt.bin
 
     public class BlnSubEntry
     {
@@ -27,17 +28,20 @@ namespace plugin_shade.Archives
 
     public class BlnSubArchiveFileInfo : ShadeArchiveFileInfo
     {
+        public long Offset { get; }
         public BlnSubEntry Entry { get; }
 
-        public BlnSubArchiveFileInfo(Stream fileData, string filePath, BlnSubEntry entry) :
+        public BlnSubArchiveFileInfo(Stream fileData, string filePath, BlnSubEntry entry, long offset) :
             base(fileData, filePath)
         {
+            Offset = offset;
             Entry = entry;
         }
 
-        public BlnSubArchiveFileInfo(Stream fileData, string filePath, BlnSubEntry entry, IKompressionConfiguration configuration, long decompressedSize) :
+        public BlnSubArchiveFileInfo(Stream fileData, string filePath, BlnSubEntry entry, IKompressionConfiguration configuration, long decompressedSize, long offset) :
             base(fileData, filePath, configuration, decompressedSize)
         {
+            Offset = offset;
             Entry = entry;
         }
 

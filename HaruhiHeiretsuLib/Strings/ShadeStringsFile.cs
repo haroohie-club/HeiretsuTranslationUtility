@@ -18,12 +18,19 @@ namespace HaruhiHeiretsuLib.Strings
         public Dictionary<int, string> DramatisPersonae { get; set; } = new();
         public int DialogueSectionPointer { get; set; }
 
+        private static int[] ValidIndices = { -1, 1, 7, 11, 17, 27, 31, 37, 53, 55, 57, 69, 81, 85 };
+
         public ShadeStringsFile()
         {
         }
 
         public override void Initialize(byte[] decompressedData, int offset = 0)
         {
+            if ((!ValidIndices.Contains(Index) || offset == 0x800) && (Location.parent < 0 && Location.child < 0))
+            {
+                return;
+            }
+
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             Offset = offset;
             Data = decompressedData.ToList();

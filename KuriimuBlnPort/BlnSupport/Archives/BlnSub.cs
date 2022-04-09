@@ -39,7 +39,7 @@ namespace plugin_shade.Archives
                 }
 
                 SubStream stream = new SubStream(input, br.BaseStream.Position, entry.size);
-                result.Add(CreateAfi(stream, index++, entry));
+                result.Add(CreateAfi(stream, index++, entry, br.BaseStream.Position));
 
                 br.BaseStream.Position += entry.size;
             }
@@ -69,7 +69,7 @@ namespace plugin_shade.Archives
                 if (index == fileIndex)
                 {
                     var stream = new SubStream(input, br.BaseStream.Position, entry.size);
-                    result = CreateAfi(stream, index++, entry);
+                    result = CreateAfi(stream, index++, entry, br.BaseStream.Position);
                     break;
                 }
                 else
@@ -111,16 +111,15 @@ namespace plugin_shade.Archives
             bw.WriteAlignment(0x1000);
         }
 
-        private ArchiveFileInfo CreateAfi(Stream stream, int index, BlnSubEntry entry)
+        private ArchiveFileInfo CreateAfi(Stream stream, int index, BlnSubEntry entry, long offset)
         {
             // Every file not compressed with the headered Spike Chunsoft compression, is compressed headerless
             var compressionMagic = ShadeSupport.PeekInt32LittleEndian(stream);
             if (compressionMagic != 0xa755aafc)
-                return new BlnSubArchiveFileInfo(stream, ShadeSupport.CreateFileName(index, stream, false), entry, Kompression.Implementations.Compressions.ShadeLzHeaderless, ShadeLzHeaderlessDecoder.CalculateDecompressedSize(stream));
+                return new BlnSubArchiveFileInfo(stream, ShadeSupport.CreateFileName(index, stream, false), entry, Kompression.Implementations.Compressions.ShadeLzHeaderless, ShadeLzHeaderlessDecoder.CalculateDecompressedSize(stream), offset);
 
             stream.Position = 0;
-            return new BlnSubArchiveFileInfo(stream, ShadeSupport.CreateFileName(index, stream, true), entry, Kompression.Implementations.Compressions.ShadeLz, ShadeSupport.PeekDecompressedSize(stream));
-
+            return new BlnSubArchiveFileInfo(stream, ShadeSupport.CreateFileName(index, stream, true), entry, Kompression.Implementations.Compressions.ShadeLz, ShadeSupport.PeekDecompressedSize(stream), offset);
         }
 
         

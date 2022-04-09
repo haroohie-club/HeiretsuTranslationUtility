@@ -8,6 +8,7 @@ namespace HaruhiHeiretsuLib
 {
     public partial class FileInArchive
     {
+        public short McbId { get; set; }
         public (int parent, int child) Location { get; set; } = (-1, -1);
         public uint MagicInteger { get; set; }
         public int Index { get; set; }
@@ -33,11 +34,15 @@ namespace HaruhiHeiretsuLib
     public static class FileManager<T>
         where T : FileInArchive, new()
     {
-        public static T FromCompressedData(byte[] compressedData, int offset = 0)
+        public static T FromCompressedData(byte[] compressedData, int offset = 0, uint magicInteger = 0, int index = -1, int length = -1)
         {
             T created = new();
             //try
             //{
+            created.MagicInteger = magicInteger;
+            created.Index = index;
+            created.Length = length;
+            created.Location = (-1, -1);
                 created.Initialize(Helpers.DecompressData(compressedData), offset);
             //}
             //catch (Exception e)

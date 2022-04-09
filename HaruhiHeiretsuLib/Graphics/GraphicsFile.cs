@@ -441,7 +441,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
             if (Location != (-1, -1))
             {
-                return $"{Location.parent},{Location.child} - {FileType}";
+                return $"{(short)McbId:X4},{Location.child} (0x{Offset:X8}) - {FileType}";
             }
             else
             {
