@@ -277,7 +277,7 @@ namespace HaruhiHeiretsuLib
                 BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
-                int mcbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id;
+                short mcbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id;
 
 
                 switch ((ArchiveIndex)blnSubFile.Entry.archiveIndex)
