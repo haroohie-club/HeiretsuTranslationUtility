@@ -39,6 +39,11 @@ namespace HaruhiHeiretsuLib
             ArchiveFiles = (List<IArchiveFileInfo>)BlnFile.Load(_indexFileStream, _dataFileStream);
         }
 
+        public IArchiveFileInfo GetArchive(short id)
+        {
+            return ArchiveFiles.FirstOrDefault(a => ((BlnArchiveFileInfo)a).Entry.id == id);
+        }
+
         public async Task Save(string indexFile, string dataFile)
         {
             foreach (StringsFile stringsFile in StringsFiles)
@@ -172,9 +177,9 @@ namespace HaruhiHeiretsuLib
             BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);
         }
 
-        public async Task<Dictionary<int, List<(int, int)>>> GetFileMap(string binArchiveFile)
+        public async Task<Dictionary<int, List<(short, int)>>> GetFileMap(string binArchiveFile)
         {
-            Dictionary<int, List<(int, int)>> fileMap = new();
+            Dictionary<int, List<(short, int)>> fileMap = new();
             int archiveIndexToSearch;
             switch (Path.GetFileName(binArchiveFile))
             {
@@ -203,6 +208,7 @@ namespace HaruhiHeiretsuLib
 
             for (int i = 0; i < ArchiveFiles.Count; i++)
             {
+                short mcbId = ((BlnArchiveFileInfo)ArchiveFiles[i]).Entry.id;
                 Stream fileData = await ArchiveFiles[i].GetFileData();
                 BlnSub blnSub = new();
                 List<BlnSubArchiveFileInfo> blnSubAfis = blnSub.Load(fileData).Cast<BlnSubArchiveFileInfo>().ToList();
@@ -215,11 +221,11 @@ namespace HaruhiHeiretsuLib
 
                         if (!fileMap.ContainsKey(correspondingBinIndex))
                         {
-                            fileMap.Add(correspondingBinIndex, new List<(int, int)>());
+                            fileMap.Add(correspondingBinIndex, new List<(short, int)>());
                         }
 
-                        fileMap[correspondingBinIndex].Add((i, j));
-                        Console.WriteLine($"Mapped {correspondingBinIndex:D4} to MCB {i:D3}-{j:D3}");
+                        fileMap[correspondingBinIndex].Add((mcbId, j));
+                        Console.WriteLine($"Mapped {correspondingBinIndex:D4} to MCB {mcbId:X4}-{j:D4}");
                     }
                 }
             }
@@ -229,7 +235,7 @@ namespace HaruhiHeiretsuLib
 
         public void LoadFiles(string[] filesLocations)
         {
-            LoadFiles(string.Join('\n', filesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
+            LoadFiles(string.Join('\n', filesLocations.Where(l => Regex.IsMatch(l, @"\w{4}-\d{4}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
         }
 
         public void LoadFiles(string fileLoactions)
@@ -242,22 +248,22 @@ namespace HaruhiHeiretsuLib
                 }
 
                 string[] lineSplit = line.Split(',');
-                int parentLoc = int.Parse(lineSplit[0]);
+                short mcbId = short.Parse(lineSplit[0], System.Globalization.NumberStyles.HexNumber);
                 int childLoc = int.Parse(lineSplit[1]);
 
-                using Stream archiveStream = ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
+                using Stream archiveStream = GetArchive(mcbId).GetFileData().GetAwaiter().GetResult();
                 BlnSub blnSub = new();
                 BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
-                LoadedFiles.Add(new FileInArchive() { Data = subFileData.ToList(), Location = (parentLoc, childLoc), McbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id });
+                LoadedFiles.Add(new FileInArchive() { Data = subFileData.ToList(), Location = (ArchiveFiles.IndexOf(GetArchive(mcbId)), childLoc), McbId = mcbId });
             }
         }
 
         public void LoadStringsFiles(string[] stringsFilesLocations)
         {
-            LoadStringsFiles(string.Join('\n', stringsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
+            LoadStringsFiles(string.Join('\n', stringsFilesLocations.Where(l => Regex.IsMatch(l, @"\w{4}-\d{4}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
         }
 
         public void LoadStringsFiles(string stringFileLocations)
@@ -269,31 +275,30 @@ namespace HaruhiHeiretsuLib
                     continue;
                 }
                 string[] lineSplit = line.Split(',');
-                int parentLoc = int.Parse(lineSplit[0]);
+                short mcbId = short.Parse(lineSplit[0], System.Globalization.NumberStyles.HexNumber);
                 int childLoc = int.Parse(lineSplit[1]);
 
-                using Stream archiveStream = ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
+                using Stream archiveStream = GetArchive(mcbId).GetFileData().GetAwaiter().GetResult();
                 BlnSub blnSub = new();
                 BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
-                short mcbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id;
 
 
                 switch ((ArchiveIndex)blnSubFile.Entry.archiveIndex)
                 {
                     case ArchiveIndex.DAT:
                         ShadeStringsFile shadeStringsFile = new();
-                        shadeStringsFile.Location = (parentLoc, childLoc);
+                        shadeStringsFile.Location = (ArchiveFiles.IndexOf(GetArchive(mcbId)), childLoc);
                         shadeStringsFile.McbId = mcbId;
                         shadeStringsFile.Initialize(subFileData);
                         StringsFiles.Add(shadeStringsFile);
                         break;
                     case ArchiveIndex.SCR:
-                        StringsFiles.Add(new ScriptFile(parentLoc, childLoc, subFileData, mcbId));
+                        StringsFiles.Add(new ScriptFile(ArchiveFiles.IndexOf(GetArchive(mcbId)), childLoc, subFileData, mcbId));
                         break;
                     case ArchiveIndex.EVT:
-                        StringsFiles.Add(new EventFile(parentLoc, childLoc, subFileData, mcbId));
+                        StringsFiles.Add(new EventFile(ArchiveFiles.IndexOf(GetArchive(mcbId)), childLoc, subFileData, mcbId));
                         break;
                 }
             }
@@ -301,7 +306,7 @@ namespace HaruhiHeiretsuLib
 
         public void LoadGraphicsFiles(string[] graphicsFilesLocations)
         {
-            LoadGraphicsFiles(string.Join('\n', graphicsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
+            LoadGraphicsFiles(string.Join('\n', graphicsFilesLocations.Where(l => Regex.IsMatch(l, @"\w{4}-\d{4}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
         }
 
         public void LoadGraphicsFiles(string graphicsFilesLocations)
@@ -313,16 +318,16 @@ namespace HaruhiHeiretsuLib
                     continue;
                 }
                 string[] lineSplit = line.Split(',');
-                int parentLoc = int.Parse(lineSplit[0]);
+                short mcbId = short.Parse(lineSplit[0], System.Globalization.NumberStyles.HexNumber);
                 int childLoc = int.Parse(lineSplit[1]);
 
-                using Stream archiveStream = ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
+                using Stream archiveStream = GetArchive(mcbId).GetFileData().GetAwaiter().GetResult();
                 BlnSub blnSub = new();
                 BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
-                GraphicsFile graphicsFile = new() { Location = (parentLoc, childLoc), McbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id };
+                GraphicsFile graphicsFile = new() { Location = (ArchiveFiles.IndexOf(GetArchive(mcbId)), childLoc), McbId = mcbId };
                 graphicsFile.Initialize(subFileData, 0);
                 graphicsFile.Offset = (int)blnSubFile.Offset;
                 GraphicsFiles.Add(graphicsFile);
@@ -338,12 +343,13 @@ namespace HaruhiHeiretsuLib
             FontFile = new FontFile(blnSubFile.GetFileDataBytes());
         }
 
-        public async Task<List<(int, int)>> FindStringFiles()
+        public async Task<List<(short, int)>> FindStringFiles()
         {
-            List<(int, int)> fileLocations = new();
+            List<(short, int)> fileLocations = new();
 
             for (int i = 75; i < ArchiveFiles.Count; i++)
             {
+                short mcbId = ((BlnArchiveFileInfo)ArchiveFiles[i]).Entry.id;
                 using Stream fileStream = await ArchiveFiles[i].GetFileData();
 
                 BlnSub blnSub = new();
@@ -358,12 +364,12 @@ namespace HaruhiHeiretsuLib
                         string idBytes = Encoding.ASCII.GetString(data);
                         if (Regex.IsMatch(idBytes, StringsFile.VOICE_REGEX))
                         {
-                            fileLocations.Add((i, j));
-                            Console.WriteLine($"File {j} in archive {i} contains voiced lines");
+                            fileLocations.Add((mcbId, j));
+                            Console.WriteLine($"File {j} in archive {mcbId:X4} contains voiced lines");
                         }
                     }
                 }
-                Console.WriteLine($"Finished searching {subFiles.Count} files in file {i}");
+                Console.WriteLine($"Finished searching {subFiles.Count} files in file {mcbId:X4}");
             }
 
             return fileLocations;
@@ -400,12 +406,13 @@ namespace HaruhiHeiretsuLib
             return fileLocations;
         }
 
-        public async Task<List<(int, int)>> CheckHexInFile(byte[] search)
+        public async Task<List<(short, int)>> CheckHexInFile(byte[] search)
         {
-            List<(int, int)> fileLocations = new();
+            List<(short, int)> fileLocations = new();
 
             for (int i = 0; i < ArchiveFiles.Count; i++)
             {
+                short mcbId = ((BlnArchiveFileInfo)ArchiveFiles[i]).Entry.id;
                 using Stream fileStream = await ArchiveFiles[i].GetFileData();
 
                 BlnSub blnSub = new();
@@ -421,14 +428,14 @@ namespace HaruhiHeiretsuLib
                         {
                             if (data.Skip(k).Take(search.Length).SequenceEqual(search))
                             {
-                                fileLocations.Add((i, j));
-                                Console.WriteLine($"File {j} in archive {i} contains sequence '{string.Join(' ', search.Select(b => $"{b:X2}"))}'");
+                                fileLocations.Add((mcbId, j));
+                                Console.WriteLine($"File {j} in archive {mcbId:X4} contains sequence '{string.Join(' ', search.Select(b => $"{b:X2}"))}'");
                                 break;
                             }
                         }
                     }
                 }
-                Console.WriteLine($"Finished searching {subFiles.Count} files in file {i}");
+                Console.WriteLine($"Finished searching {subFiles.Count} files in file {mcbId:X4}");
             }
 
             return fileLocations;

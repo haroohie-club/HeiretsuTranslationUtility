@@ -34,16 +34,16 @@ namespace HaruhiHeiretsuCLI
 
             McbFile mcb = Program.GetMcbFile(_mcb);
 
-            Dictionary<int, List<(int, int)>> fileMap = await mcb.GetFileMap(_binFile);
+            Dictionary<int, List<(short, int)>> fileMap = await mcb.GetFileMap(_binFile);
             string binIdentifier = Path.GetFileNameWithoutExtension(_binFile);
             List<string> fileNames = new();
 
             foreach (int binIndex in fileMap.Keys)
             {
                 string fileName = "";
-                foreach ((int parent, int child) locationPair in fileMap[binIndex])
+                foreach ((short mcbId, int child) locationPair in fileMap[binIndex])
                 {
-                    fileName += $"{locationPair.parent:D3}-{locationPair.child:D3}_";
+                    fileName += $"{locationPair.mcbId:X4}-{locationPair.child:D4}_";
                 }
                 fileName += $"{binIdentifier}-{binIndex:D4}";
                 fileNames.Add(fileName);

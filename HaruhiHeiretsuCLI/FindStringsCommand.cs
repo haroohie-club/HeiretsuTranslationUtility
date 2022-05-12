@@ -31,11 +31,11 @@ namespace HaruhiHeiretsuCLI
             Options.Parse(arguments);
             McbFile mcb = Program.GetMcbFile(_mcb);
 
-            List<(int, int)> stringFileLocations = await mcb.FindStringFiles();
+            List<(short, int)> stringFileLocations = await mcb.FindStringFiles();
             using StreamWriter fs = File.CreateText("string_file_locations.csv");
-            foreach ((int file, int subFile) in stringFileLocations)
+            foreach ((short file, int subFile) in stringFileLocations)
             {
-                fs.WriteLine($"{file},{subFile}");
+                fs.WriteLine($"{file:X4},{subFile:D3}");
             }
 
             return 0;

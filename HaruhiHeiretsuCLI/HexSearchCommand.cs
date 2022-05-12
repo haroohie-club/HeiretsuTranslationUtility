@@ -44,11 +44,11 @@ namespace HaruhiHeiretsuCLI
             Options.Parse(arguments);
             McbFile mcb = Program.GetMcbFile(_mcb);
 
-            List<(int, int)> fileLocations = await mcb.CheckHexInFile(_hexString.ToArray());
+            List<(short, int)> fileLocations = await mcb.CheckHexInFile(_hexString.ToArray());
             using StreamWriter fs = File.CreateText("search_result_locations.csv");
-            foreach ((int file, int subFile) in fileLocations)
+            foreach ((short id, int subFile) in fileLocations)
             {
-                fs.WriteLine($"{file},{subFile}");
+                fs.WriteLine($"{id:X4},{subFile}");
             }
 
             return 0;

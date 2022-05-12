@@ -331,7 +331,21 @@ namespace HaruhiHeiretsuLib.Graphics
                             i++;
                         }
                     }
-                    GraphicsFile grpFile = archiveGraphicsFiles[grpIndex];
+                    GraphicsFile grpFile = new();
+                    int index = 0, relativeIndex = 0;
+                    while (index < archiveGraphicsFiles.Count)
+                    {
+                        if (relativeIndex == layout.RelativeFileIndex)
+                        {
+                            grpFile = archiveGraphicsFiles[index];
+                            break;
+                        }
+                        if (archiveGraphicsFiles[index].FileType == GraphicsFileType.TILE_20AF30)
+                        {
+                            relativeIndex++;
+                        }
+                        index++;
+                    }
 
                     SKBitmap texture = grpFile.GetImage();
                     SKBitmap tile = new((int)Math.Abs(boundingBox.Right - boundingBox.Left), (int)Math.Abs(boundingBox.Bottom - boundingBox.Top));
@@ -441,7 +455,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
             if (Location != (-1, -1))
             {
-                return $"{(short)McbId:X4},{Location.child} (0x{Offset:X8}) - {FileType}";
+                return $"{McbId:X4} ({Location.parent}),{Location.child} (0x{Offset:X8}) - {FileType}";
             }
             else
             {

@@ -5,6 +5,7 @@ using plugin_shade.Archives;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuCLI
@@ -45,17 +46,17 @@ namespace HaruhiHeiretsuCLI
                     continue;
                 }
                 string[] lineSplit = line.Split(',');
-                int parentLoc = int.Parse(lineSplit[0]);
+                short mcbId = short.Parse(lineSplit[0], System.Globalization.NumberStyles.HexNumber);
                 int childLoc = int.Parse(lineSplit[1]);
 
-                using Stream fileStream = mcb.ArchiveFiles[parentLoc].GetFileData().GetAwaiter().GetResult();
+                using Stream fileStream = mcb.GetArchive(mcbId).GetFileData().GetAwaiter().GetResult();
                 BlnSub blnSub = new();
                 IArchiveFileInfo blnSubFile = blnSub.GetFile(fileStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
-                File.WriteAllBytes(Path.Combine(_outputDirectory, $"{parentLoc}-{childLoc}.bin"), subFileData);
-                CommandSet.Out.WriteLine($"Wrote file {parentLoc}-{childLoc}.bin");
+                File.WriteAllBytes(Path.Combine(_outputDirectory, $"{mcbId:X4}-{childLoc:D4}.bin"), subFileData);
+                CommandSet.Out.WriteLine($"Wrote file {mcbId:X4}-{childLoc:D4}.bin");
             }
 
             return 0;

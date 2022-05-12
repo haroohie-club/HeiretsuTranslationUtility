@@ -44,6 +44,7 @@ namespace HaruhiHeiretsuEditor
                 _mcb = new McbFile(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
                 _mcb.LoadStringsFiles(File.ReadAllText("string_file_locations.csv"));
                 _mcb.LoadGraphicsFiles(File.ReadAllText("graphics_locations.csv"));
+                _mcb.GraphicsFiles = _mcb.GraphicsFiles.OrderBy(g => g.Location.parent).ThenBy(g => g.Location.child).ToList();
                 _mcb.LoadFontFile();
                 scriptsListBox.ItemsSource = _mcb.StringsFiles;
                 graphicsListBox.ItemsSource = _mcb.GraphicsFiles;

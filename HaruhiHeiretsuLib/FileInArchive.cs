@@ -39,10 +39,11 @@ namespace HaruhiHeiretsuLib
             T created = new();
             //try
             //{
-            created.MagicInteger = magicInteger;
-            created.Index = index;
-            created.Length = length;
-            created.Location = (-1, -1);
+                created.MagicInteger = magicInteger;
+                created.Index = index;
+                created.Length = length;
+                created.Location = (-1, -1);
+                created.Offset = offset;
                 created.Initialize(Helpers.DecompressData(compressedData), offset);
             //}
             //catch (Exception e)

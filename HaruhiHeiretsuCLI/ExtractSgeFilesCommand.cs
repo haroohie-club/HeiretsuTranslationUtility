@@ -43,6 +43,7 @@ namespace HaruhiHeiretsuCLI
 
             for (int i = 0; i < mcb.ArchiveFiles.Count; i++)
             {
+                short mcbId = ((BlnArchiveFileInfo)mcb.ArchiveFiles[i]).Entry.id;
                 using Stream archiveStream = await mcb.ArchiveFiles[i].GetFileData();
                 BlnSub blnSub = new();
                 List<IArchiveFileInfo> blnSubFiles = (List<IArchiveFileInfo>)blnSub.Load(archiveStream);
@@ -56,9 +57,9 @@ namespace HaruhiHeiretsuCLI
 
                     if (Encoding.ASCII.GetString(initBytes) == "SGE")
                     {
-                        if (!Directory.Exists(Path.Combine(_outputDirectory, $"{i:D3}")))
+                        if (!Directory.Exists(Path.Combine(_outputDirectory, $"{mcbId:X4}")))
                         {
-                            Directory.CreateDirectory(Path.Combine(_outputDirectory, $"{i:D3}"));
+                            Directory.CreateDirectory(Path.Combine(_outputDirectory, $"{mcbId:X4}"));
                         }
 
                         byte[] data = blnSubFiles[j].GetFileDataBytes();
@@ -68,11 +69,11 @@ namespace HaruhiHeiretsuCLI
                             .SkipWhile(b => (b < '0' || b > '9') && (b < 'A' || b > 'Z'))
                             .TakeWhile(b => (b >= '0' && b <= '9') || (b >= 'A' && b <= 'Z') || b == '_').ToArray());
 
-                        File.WriteAllBytes(Path.Combine(_outputDirectory, $"{i:D3}", $"{j:D3}-{name}.sge"), data);
-                        CommandSet.Out.WriteLine($"Extracted SGE file {i:D3}/{j:D3}-{name}.sge");
+                        File.WriteAllBytes(Path.Combine(_outputDirectory, $"{mcbId:X4}", $"{j:D4}-{name}.sge"), data);
+                        CommandSet.Out.WriteLine($"Extracted SGE file {mcbId:X4}/{j:D4}-{name}.sge");
                     }
                 }
-                CommandSet.Out.WriteLine($"Finished searching {blnSubFiles.Count} files in {i:D3}.bin");
+                CommandSet.Out.WriteLine($"Finished searching {blnSubFiles.Count} files in {mcbId:X4}.bin");
             }
 
             return 0;
