@@ -314,8 +314,8 @@ namespace HaruhiHeiretsuLib.Graphics
                     {
                         Left = layout.ScreenX,
                         Top = layout.ScreenY,
-                        Right = layout.ScreenX + layout.ScreenWidth,
-                        Bottom = layout.ScreenY + layout.ScreenHeight,
+                        Right = layout.ScreenX + Math.Abs(layout.ScreenWidth),
+                        Bottom = layout.ScreenY + Math.Abs(layout.ScreenHeight),
                     };
 
                     if (layout.RelativeFileIndex == -1)
