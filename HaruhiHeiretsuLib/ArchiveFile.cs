@@ -91,14 +91,6 @@ namespace HaruhiHeiretsuLib
                 if (fileBytes.Count > 0)
                 {
                     T file = new();
-                    try
-                    {
-                        file = FileManager<T>.FromCompressedData(fileBytes.ToArray(), offset, file.MagicInteger, file.Index, file.Length);
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
-                        Console.WriteLine($"Failed to parse file at 0x{i:X8} due to index out of range exception (most likely during decompression)");
-                    }
                     file.Offset = offset;
                     file.MagicInteger = GetMagicInteger(file.Offset);
                     if (file.MagicInteger == 0)
@@ -110,6 +102,14 @@ namespace HaruhiHeiretsuLib
                     {
                         file.Index = GetFileIndex(file.MagicInteger);
                         file.Length = GetFileLength(file.MagicInteger);
+                    }
+                    try
+                    {
+                        file = FileManager<T>.FromCompressedData(fileBytes.ToArray(), offset, file.MagicInteger, file.Index, file.Length);
+                    }
+                    catch (IndexOutOfRangeException)
+                    {
+                        Console.WriteLine($"Failed to parse file at 0x{i:X8} due to index out of range exception (most likely during decompression)");
                     }
                     file.CompressedData = fileBytes.ToArray();
                     Files.Add(file);

@@ -18,7 +18,7 @@ namespace HaruhiHeiretsuLib.Strings
         public Dictionary<int, string> DramatisPersonae { get; set; } = new();
         public int DialogueSectionPointer { get; set; }
 
-        private static int[] ValidIndices = { -1, 1, 7, 11, 17, 27, 31, 37, 53, 55, 57, 69, 81, 85 };
+        private static int[] ValidIndices = { -1, 1, 7, 11, 17, 27, 31, 37, 53, 55, 57, 61, 63, 69, 81, 85 };
 
         public ShadeStringsFile()
         {

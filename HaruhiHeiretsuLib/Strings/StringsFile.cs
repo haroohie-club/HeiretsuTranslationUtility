@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Resources.NetStandard;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuLib.Strings
 {
@@ -28,11 +27,24 @@ namespace HaruhiHeiretsuLib.Strings
             return (oldLength, newLineData);
         }
 
+        public void WriteResxFile(string fileName)
+        {
+            using ResXResourceWriter resxWriter = new(fileName);
+            for (int i = 0; i < DialogueLines.Count; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(DialogueLines[i].Line) && DialogueLines[i].Length > 1)
+                {
+                    resxWriter.AddResource(new ResXDataNode($"{i:D4} ({Path.GetFileNameWithoutExtension(fileName)}) {DialogueLines[i].Speaker}",
+                        DialogueLines[i].Line));
+                }
+            }
+        }
+
         public override string ToString()
         {
             if (Location != (-1, -1))
             {
-                return $"{(short)McbId:X4},{Location.child}";
+                return $"{McbId:X4}/{Location.parent},{Location.child}";
             }
             else
             {

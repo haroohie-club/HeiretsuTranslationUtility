@@ -14,6 +14,7 @@ namespace HaruhiHeiretsuCLI
                 "",
                 "Available commands:",
                 new ExportFileMapCommand(),
+                new ExportResxCommand(),
                 new ExtractArchiveCommand(),
                 new ExtractListOfFilesCommand(),
                 new ExtractSgeFilesCommand(),
@@ -23,7 +24,7 @@ namespace HaruhiHeiretsuCLI
                 new ReplaceFilesCommand(),
                 new ReplaceFontCommand(),
                 new StringSearchCommand(),
-                new GeneratePatchCommand()
+                new GeneratePatchCommand(),
             };
 
             return commands.Run(args);

@@ -20,6 +20,8 @@ namespace HaruhiHeiretsuLib
 
         public virtual void Initialize(byte[] decompressedData, int offset)
         {
+            Data = decompressedData.ToList();
+            Offset = offset;
         }
         public virtual byte[] GetBytes()
         {
@@ -37,18 +39,18 @@ namespace HaruhiHeiretsuLib
         public static T FromCompressedData(byte[] compressedData, int offset = 0, uint magicInteger = 0, int index = -1, int length = -1)
         {
             T created = new();
-            //try
-            //{
-            created.MagicInteger = magicInteger;
-            created.Index = index;
-            created.Length = length;
-            created.Location = (-1, -1);
+            try
+            {
+                created.MagicInteger = magicInteger;
+                created.Index = index;
+                created.Length = length;
+                created.Location = (-1, -1);
                 created.Initialize(Helpers.DecompressData(compressedData), offset);
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine($"Failed to initialize file at offest {offset}: {e.Message}");
-            //}
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to initialize file at offest {offset}: {e.Message}");
+            }
             return created;
         }
     }
