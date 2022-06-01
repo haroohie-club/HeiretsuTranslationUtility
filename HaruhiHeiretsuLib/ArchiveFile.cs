@@ -76,6 +76,7 @@ namespace HaruhiHeiretsuLib
                 SecondHeaderNumbers.Add(BitConverter.ToUInt32(archiveBytes.Skip(i).Take(4).ToArray()));
             }
 
+            int startFile = 1;
             for (int i = firstFileOffset; i < archiveBytes.Length;)
             {
                 int offset = i;
@@ -95,12 +96,12 @@ namespace HaruhiHeiretsuLib
                     file.MagicInteger = GetMagicInteger(file.Offset);
                     if (file.MagicInteger == 0)
                     {
-                        file.Index = -1;
+                        file.Index = startFile++; // All archives have two files at the beginning that aren't indexed in the header, so we track them this way
                         file.Length = -1;
                     }
                     else
                     {
-                        file.Index = GetFileIndex(file.MagicInteger);
+                        file.Index = GetFileIndex(file.MagicInteger) + 3; // idk this game is weird
                         file.Length = GetFileLength(file.MagicInteger);
                     }
                     try
