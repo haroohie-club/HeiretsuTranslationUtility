@@ -13,6 +13,7 @@ namespace HaruhiHeiretsuCLI
                 "Usage: HaruhiHeiretscuCLI COMMAND [OPTIONS]",
                 "",
                 "Available commands:",
+                new CheckBlnBinIntegrityCommand(),
                 new ExportFileMapCommand(),
                 new ExportResxCommand(),
                 new ExtractArchiveCommand(),
