@@ -49,7 +49,7 @@ namespace HaruhiHeiretsuLib
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Failed to initialize file at offest {offset}: {e.Message}");
+                Console.WriteLine($"Failed to initialize file at offest 0x{offset:X8}: {e.Message}");
             }
             return created;
         }
