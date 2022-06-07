@@ -80,7 +80,7 @@ namespace HaruhiHeiretsuCLI
 
                     archivesEdited[McbFile.ArchiveIndex.GRP] = true;
 
-                    CommandSet.Out.WriteLine($"Finished replacing file {file} in MCB & GRP");
+                    CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
                 }
                 else if (file.EndsWith(".resx", StringComparison.OrdinalIgnoreCase))
                 {

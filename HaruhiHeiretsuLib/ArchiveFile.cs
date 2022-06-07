@@ -192,7 +192,7 @@ namespace HaruhiHeiretsuLib
             {
                 searchSet = Header;
             }
-            return (int)(BitConverter.ToUInt32(searchSet.Skip(FirstHeaderPointerOffset + (file.Index * 4)).Take(4).ToArray()) >> MagicIntegerMsbShift) * MagicIntegerMsbMultiplier;
+            return (int)(BitConverter.ToUInt32(searchSet.Skip(FirstHeaderPointerOffset + ((file.Index - 3) * 4)).Take(4).ToArray()) >> MagicIntegerMsbShift) * MagicIntegerMsbMultiplier;
         }
 
         public uint GetNewMagicalInteger(T file, int compressedLength)
@@ -226,10 +226,10 @@ namespace HaruhiHeiretsuLib
                 else
                 {
                     compressedBytes = Helpers.CompressData(Files[i].GetBytes());
-                    if (Files[i].Index >= 0)
+                    if ((Files[i].Index - 3) >= 0)
                     {
                         byte[] newMagicalIntegerBytes = BitConverter.GetBytes(GetNewMagicalInteger(Files[i], compressedBytes.Length));
-                        int pointerOffset = FirstHeaderPointerOffset + (Files[i].Index * 4);
+                        int pointerOffset = FirstHeaderPointerOffset + ((Files[i].Index - 3) * 4);
                         for (int j = 0; j < newMagicalIntegerBytes.Length; j++)
                         {
                             bytes[pointerOffset + j] = newMagicalIntegerBytes[j];
@@ -253,7 +253,7 @@ namespace HaruhiHeiretsuLib
                     if (pointerShift > 0)
                     {
                         byte[] newPointer = BitConverter.GetBytes((uint)((Files[i + 1].Offset / MagicIntegerMsbMultiplier) + pointerShift) << MagicIntegerMsbShift);
-                        int pointerOffset = FirstHeaderPointerOffset + (Files[i + 1].Index * 4);
+                        int pointerOffset = FirstHeaderPointerOffset + ((Files[i + 1].Index - 3) * 4);
                         bytes[pointerOffset + 2] = newPointer[2];
                         bytes[pointerOffset + 3] = newPointer[3];
                         Header[pointerOffset + 2] = newPointer[2];
