@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Resources.NetStandard;
 using System.Text;
@@ -25,6 +26,33 @@ namespace HaruhiHeiretsuLib.Strings
             byte[] newLineData = Encoding.GetEncoding("Shift-JIS").GetBytes(newLine);
 
             return (oldLength, newLineData);
+        }
+
+        public void ImportResxFile(string fileName)
+        {
+            Edited = true;
+            string resxContents = File.ReadAllText(fileName);
+            resxContents = resxContents.Replace("System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                "System.Resources.NetStandard.ResXResourceWriter, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            resxContents = resxContents.Replace("System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                "System.Resources.NetStandard.ResXResourceReader, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            TextReader textReader = new StringReader(resxContents);
+
+            using ResXResourceReader resxReader = new(textReader);
+            foreach (DictionaryEntry d in resxReader)
+            {
+                int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
+                string dialogueText = (string)d.Value;
+
+                // Replace all faux-ellipses with an ellipsis character
+                dialogueText = dialogueText.Replace("...", "…");
+                // Replace all faux-em-dashes with actual em-dash characters
+                dialogueText = dialogueText.Replace("--", "—");
+                // Consolidate Unix/Windows newlines to just \n
+                dialogueText = dialogueText.Replace("\r\n", "\n");
+
+                int lineLength = 0;
+            }
         }
 
         public void WriteResxFile(string fileName)

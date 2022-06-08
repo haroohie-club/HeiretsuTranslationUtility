@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -20,8 +19,8 @@ namespace HaruhiHeiretsuCLI
         {
             Options = new()
             {
-                "Replaces strings in the mcb and dat/evt/scr archives",
-                "Usage: HaruhiHeiretsuCLI repalce-strings -m [MCB_PATH] -d [DAT_BIN] -e [EVT_BIN] -s [SCR_BIN] -r [REPLACEMENT_FOLDER] -o [OUTPUT_FOLDER]",
+                "Replaces files in the mcb and bin archives",
+                "Usage: HaruhiHeiretsuCLI repalce-files -m [MCB_PATH] -d [DAT_BIN] -e [EVT_BIN] -g [GRP_BIN] -s [SCR_BIN] -r [REPLACEMENT_FOLDER] -o [OUTPUT_FOLDER]",
                 "",
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
                 { "d|dat=", "Path to dat.bin", d => _dat = d },
@@ -81,10 +80,6 @@ namespace HaruhiHeiretsuCLI
                     archivesEdited[McbFile.ArchiveIndex.GRP] = true;
 
                     CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
-                }
-                else if (file.EndsWith(".resx", StringComparison.OrdinalIgnoreCase))
-                {
-                    // TODO
                 }
                 else if (file.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
                 {

@@ -2,6 +2,7 @@
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
 using Microsoft.Win32;
+using plugin_shade.Archives;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -42,7 +43,13 @@ namespace HaruhiHeiretsuEditor
             if (openFileDialog.ShowDialog() == true)
             {
                 _mcb = new McbFile(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
-                _mcb.LoadStringsFiles(File.ReadAllText("string_file_locations.csv"));
+
+                using Stream archiveStream = _mcb.ArchiveFiles[75].GetFileData().GetAwaiter().GetResult();
+                BlnSub blnSub = new();
+                BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, 2);
+                byte[] commandsFileData = blnSubFile.GetFileDataBytes();
+
+                _mcb.LoadStringsFiles(File.ReadAllText("string_file_locations.csv"), ScriptCommand.ParseScriptCommandFile(commandsFileData));
                 _mcb.LoadGraphicsFiles(File.ReadAllText("graphics_locations.csv"));
                 _mcb.LoadFontFile();
                 scriptsListBox.ItemsSource = _mcb.StringsFiles;
@@ -104,8 +111,20 @@ namespace HaruhiHeiretsuEditor
             if (openFileDialog.ShowDialog() == true)
             {
                 _scrFile = ArchiveFile<ScriptFile>.FromFile(openFileDialog.FileName);
+                List<string> scriptFileNames = ScriptFile.ParseScriptListFile(_scrFile.Files[0].Data.ToArray());
+                List<ScriptCommand> availableCommands = ScriptCommand.ParseScriptCommandFile(_scrFile.Files[1].Data.ToArray());
+                for (int i = 0; i < _scrFile.Files.Count; i++)
+                {
+                    _scrFile.Files[i].Name = scriptFileNames[i];
+                    _scrFile.Files[i].AvailableCommands = availableCommands;
+                    _scrFile.Files[i].PopulateCommandBlocks();
+                }
                 scriptsListBox.ItemsSource = _scrFile.Files;
                 scriptsListBox.Items.Refresh();
+                foreach (ScriptCommand command in availableCommands)
+                {
+                    availableCommandsEditStackPanel.Children.Add(new TextBlock { Text = command.GetSignature() });
+                }
             }
         }
 
@@ -192,6 +211,7 @@ namespace HaruhiHeiretsuEditor
         private void ScriptsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             scriptEditStackPanel.Children.Clear();
+            commandsEditStackPanel.Children.Clear();
             if (_mcb is not null)
             {
                 scriptEditStackPanel.Children.Add(new TextBlock { Text = $"{_mcb.StringsFiles.Sum(s => s.DialogueLines.Count)}" });
@@ -218,6 +238,21 @@ namespace HaruhiHeiretsuEditor
                     dialogueTextBox.TextChanged += DialogueTextBox_TextChanged;
                     dialogueStackPanel.Children.Add(dialogueTextBox);
                     scriptEditStackPanel.Children.Add(dialogueStackPanel);
+                }
+                if (selectedFile.GetType() == typeof(ScriptFile))
+                {
+                    var scriptFile = (ScriptFile)selectedFile;
+                    foreach (ScriptCommandBlock block in scriptFile.ScriptCommandBlocks)
+                    {
+                        commandsEditStackPanel.Children.Add(new TextBlock() { Text = $"{block.Name} ({block.Unknown})", FontSize = 16 });
+
+                        foreach (ScriptCommandInvocation invocation in block.Invocations)
+                        {
+                            commandsEditStackPanel.Children.Add(new TextBlock() { Text = invocation.GetInvocation() });
+                        }
+
+                        commandsEditStackPanel.Children.Add(new Separator());
+                    }
                 }
             }
         }

@@ -260,7 +260,7 @@ namespace HaruhiHeiretsuLib
             LoadStringsFiles(string.Join('\n', stringsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
         }
 
-        public void LoadStringsFiles(string stringFileLocations)
+        public void LoadStringsFiles(string stringFileLocations, List<ScriptCommand> scriptCommands = null)
         {
             foreach (string line in stringFileLocations.Replace("\r\n", "\n").Split("\n"))
             {
@@ -279,7 +279,6 @@ namespace HaruhiHeiretsuLib
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
                 short mcbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id;
 
-
                 switch ((ArchiveIndex)blnSubFile.Entry.archiveIndex)
                 {
                     case ArchiveIndex.DAT:
@@ -290,7 +289,10 @@ namespace HaruhiHeiretsuLib
                         StringsFiles.Add(shadeStringsFile);
                         break;
                     case ArchiveIndex.SCR:
-                        StringsFiles.Add(new ScriptFile(parentLoc, childLoc, subFileData, mcbId));
+                        ScriptFile scriptFile = new(parentLoc, childLoc, subFileData, mcbId);
+                        scriptFile.AvailableCommands = scriptCommands;
+                        scriptFile.PopulateCommandBlocks();
+                        StringsFiles.Add(scriptFile);
                         break;
                     case ArchiveIndex.EVT:
                         StringsFiles.Add(new EventFile(parentLoc, childLoc, subFileData, mcbId));
