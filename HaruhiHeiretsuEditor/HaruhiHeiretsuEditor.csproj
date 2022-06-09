@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FolderBrowserEx" Version="1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\HaruhiHeiretsuLib\HaruhiHeiretsuLib.csproj" />
   </ItemGroup>
 

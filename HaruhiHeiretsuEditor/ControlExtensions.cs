@@ -16,6 +16,11 @@ namespace HaruhiHeiretsuEditor
         public int DialogueLineIndex { get; set; }
     }
 
+    public class ScriptButton : Button
+    {
+        public ScriptFile Script { get; set; }
+    }
+
     public class MapButton : Button
     {
         public GraphicsFile Map { get; set; }

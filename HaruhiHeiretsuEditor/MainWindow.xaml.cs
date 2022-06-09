@@ -1,4 +1,5 @@
-﻿using HaruhiHeiretsuLib;
+﻿using FolderBrowserEx;
+using HaruhiHeiretsuLib;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
 using Microsoft.Win32;
@@ -6,6 +7,7 @@ using plugin_shade.Archives;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -208,6 +210,36 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        private void ExportAllScriptsButton_Click(object sender, RoutedEventArgs e)
+        {
+            FolderBrowserDialog saveFolderDialog = new()
+            {
+                AllowMultiSelect = false
+            };
+            if (saveFolderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                foreach (ScriptFile script in scriptsListBox.Items)
+                {
+                    if (script.ScriptCommandBlocks.Count > 0)
+                    {
+                        File.WriteAllText(Path.Combine(saveFolderDialog.SelectedFolder, $"{script.Name}.sws"), script.GetScript());
+                    }
+                }
+            }
+        }
+
+        private void ExportCommandListButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "TXT file|*.txt"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllText(saveFileDialog.FileName, string.Join("\n", ((ScriptFile)scriptsListBox.Items[2]).AvailableCommands.Select(c => c.GetSignature())));
+            }
+        }
+
         private void ScriptsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             scriptEditStackPanel.Children.Clear();
@@ -242,9 +274,13 @@ namespace HaruhiHeiretsuEditor
                 if (selectedFile.GetType() == typeof(ScriptFile))
                 {
                     var scriptFile = (ScriptFile)selectedFile;
+                    ScriptButton openInEditorButton = new() { Content = "Open in Editor", Script = scriptFile };
+                    openInEditorButton.Click += OpenInEditorButton_Click;
+                    commandsEditStackPanel.Children.Add(openInEditorButton);
                     foreach (ScriptCommandBlock block in scriptFile.ScriptCommandBlocks)
                     {
-                        commandsEditStackPanel.Children.Add(new TextBlock() { Text = $"{block.Name} ({block.Unknown})", FontSize = 16 });
+
+                        commandsEditStackPanel.Children.Add(new TextBlock() { Text = $"{block.Name} ({block.NumInvocations})", FontSize = 16 });
 
                         foreach (ScriptCommandInvocation invocation in block.Invocations)
                         {
@@ -255,6 +291,14 @@ namespace HaruhiHeiretsuEditor
                     }
                 }
             }
+        }
+
+        private void OpenInEditorButton_Click(object sender, RoutedEventArgs e)
+        {
+            ScriptFile script = ((ScriptButton)sender).Script;
+            string tempFile = Path.Combine(Path.GetTempPath(), $"{script.Name}.sws");
+            File.WriteAllText(tempFile, script.GetScript());
+            new Process { StartInfo = new ProcessStartInfo(tempFile) { UseShellExecute = true } }.Start();
         }
 
         private void DialogueTextBox_TextChanged(object sender, TextChangedEventArgs e)

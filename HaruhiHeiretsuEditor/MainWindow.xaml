@@ -30,6 +30,8 @@
                         <Button x:Name="importEventsFileButton" Content="Import" HorizontalAlignment="Left" Click="ImportEventsFileButton_Click" />
                         <Button x:Name="exportStringsEventsFileButton" Content="Export Strings" HorizontalAlignment="Left" />
                         <Button x:Name="exportAllStringsEventsFileButton" Content="Export All Strings" HorizontalAlignment="Left" />
+                        <Button x:Name="exportAllScriptsButton" Content="Export All Scripts" HorizontalAlignment="Left" Click="ExportAllScriptsButton_Click" />
+                        <Button x:Name="exportCommandListButton" Content="Export Command List" HorizontalAlignment="Left" Click="ExportCommandListButton_Click" />
                     </ToolBar>
                     <ListBox x:Name="scriptsListBox" Margin="0,-11,521,24" Grid.ColumnSpan="2" MaxHeight="355" SelectionChanged="ScriptsListBox_SelectionChanged" />
                     <StackPanel Grid.Column="1" Margin="175,30,0,0">

@@ -46,6 +46,12 @@ namespace HaruhiHeiretsuLib
             }
             return true;
         }
+
+        public static int GetIntFromByteArray(IEnumerable<byte> data, int position)
+        {
+            return BitConverter.ToInt32(data.Skip(position * 4).Take(4).Reverse().ToArray());
+        }
+
         public static byte[] CompressData(byte[] decompressedData)
         {
             // nonsense hack to deal with a rare edge case where the last byte of a file could get dropped
