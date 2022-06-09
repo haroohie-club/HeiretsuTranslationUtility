@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
+using System.Numerics;
 
 namespace HaruhiHeiretsuLib.Strings
 {
@@ -259,9 +260,14 @@ namespace HaruhiHeiretsuLib.Strings
 
         public void PopulateCommandBlocks()
         {
+            List<ScriptCommandInvocation> allInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToList();
             for (int i = 0; i < ScriptCommandBlocks.Count; i++)
             {
                 ScriptCommandBlocks[i].PopulateCommands(AvailableCommands, Data);
+                for (int j = 0; j < ScriptCommandBlocks[i].Invocations.Count; j++)
+                {
+                    ScriptCommandBlocks[i].Invocations[j].AllOtherInvocations = allInvocations;
+                }
             }
         }
 
@@ -414,9 +420,11 @@ namespace HaruhiHeiretsuLib.Strings
             
             for (int i = Offset; i < endAddress - 8;)
             {
-                ScriptCommandInvocation invocation = new(parameters);
+                ScriptCommandInvocation invocation = new(parameters, i);
                 invocation.LineNumber = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
-                i += 4;
+                i += 2;
+                invocation.Unknown = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
+                i += 2;
                 invocation.CommandCode = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
                 i += 2;
                 short numParams = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
@@ -453,14 +461,19 @@ namespace HaruhiHeiretsuLib.Strings
     {
         private List<string> _scriptParams;
 
+        public int Address { get; set; }
         public short LineNumber { get; set; }
+        public short Unknown { get; set; }
         public short CommandCode { get; set; }
         public ScriptCommand Command { get; set; }
         public List<(short typeCode, byte[] value)> Parameters { get; set; } = new();
 
-        public ScriptCommandInvocation(List<string> scriptParams)
+        public List<ScriptCommandInvocation> AllOtherInvocations { get; set; }
+
+        public ScriptCommandInvocation(List<string> scriptParams, int address)
         {
             _scriptParams = scriptParams;
+            Address = address;
         }
 
         public override string ToString()
@@ -475,9 +488,33 @@ namespace HaruhiHeiretsuLib.Strings
             }
         }
 
+        public string GetRawInvocation()
+        {
+            string invocation = Command.Name;
+            if (Unknown >= 0)
+            {
+                invocation += $"<{Unknown}>";
+            }
+            invocation += "(";
+            for (int i = 0; i < Parameters.Count; i++)
+            {
+                invocation += $"{Parameters[i].typeCode:X4} {string.Join(" ", Parameters[i].value.Select(b => $"{b:X2}"))}, ";
+            }
+            if (Parameters.Count > 0)
+            {
+                invocation = invocation[0..^2];
+            }
+            return $"{invocation})";
+        }
+
         public string GetInvocation()
         {
-            string invocation = $"{Command.Name}(";
+            string invocation = Command.Name;
+            if (Unknown >= 0)
+            {
+                invocation += $"<{Unknown}>";
+            }
+            invocation += "(";
             switch (Command.Name)
             {
                 case "EV_MODE":
@@ -491,37 +528,101 @@ namespace HaruhiHeiretsuLib.Strings
                         }
 
                         byte[] data = Parameters[pos].value;
-                        invocation += $", {Calculate5TypeParameter(Helpers.GetIntFromByteArray(data, 0), Helpers.GetIntFromByteArray(data, 1))}";
+                        invocation += $", 19{Calculate5TypeParameter(Helpers.GetIntFromByteArray(data, 0), Helpers.GetIntFromByteArray(data, 1))}";
                     }
                     break;
                 case "SCENE_SET":
-                    var sceneSetFirst = Parameters[GetParameterPosition(5, 0)];
-                    var sceneSetSecond = Parameters[GetParameterPosition(5, 1)];
-                    string firstFlag = Calculate5TypeParameter(Helpers.GetIntFromByteArray(sceneSetFirst.value, 0), Helpers.GetIntFromByteArray(sceneSetFirst.value, 1));
-                    string secondFlag = Calculate5TypeParameter(Helpers.GetIntFromByteArray(sceneSetSecond.value, 0), Helpers.GetIntFromByteArray(sceneSetSecond.value, 1));
+                    var sceneSetFirstInt = Parameters[GetParameterPosition(5, 0)];
+                    var sceneSetSecondInt = Parameters[GetParameterPosition(5, 1)];
+                    string firstFlag = Calculate5TypeParameter(Helpers.GetIntFromByteArray(sceneSetFirstInt.value, 0), Helpers.GetIntFromByteArray(sceneSetFirstInt.value, 1));
+                    string secondFlag = Calculate5TypeParameter(Helpers.GetIntFromByteArray(sceneSetSecondInt.value, 0), Helpers.GetIntFromByteArray(sceneSetSecondInt.value, 1));
                     invocation += $"{firstFlag}, {secondFlag}";
                     break;
                 case "WAIT":
                     int waitFirstPosition = GetParameterPosition(3, 0);
                     if (waitFirstPosition >= 0)
                     {
-                        invocation += Calculate5TypeParameter(Helpers.GetIntFromByteArray(Parameters[waitFirstPosition].value, 1), Helpers.GetIntFromByteArray(Parameters[waitFirstPosition].value, 2));
+                        invocation += ParseTime(Parameters[waitFirstPosition].value);
+                    }
+                    break;
+                case "JUMP":
+                    invocation += $"{AllOtherInvocations.First(i => i.Address == Helpers.GetIntFromByteArray(Parameters[GetParameterPosition(0, 0)].value, 0)).LineNumber}";
+                    int jumpConditionPos = GetParameterPosition(2, 0);
+                    if (jumpConditionPos >= 0)
+                    {
+                        byte[] conditionData = Parameters[jumpConditionPos].value;
+                        short numConditions = BitConverter.ToInt16(conditionData.Skip(2).Take(2).Reverse().ToArray());
+
+                        invocation += ", if ";
+                        byte lastCombiningByte = 0;
+
+                        for (int i = 0; i < numConditions; i++)
+                        {
+                            byte comparatorByte = conditionData[4 + i * 18];
+                            byte combiningByte = conditionData[5 + i * 18];
+                            string value1 = Calculate5TypeParameter(Helpers.GetIntFromByteArray(conditionData.Skip(6 + i * 18), 0), Helpers.GetIntFromByteArray(conditionData.Skip(6 + i * 18), 1));
+                            string value2 = Calculate5TypeParameter(Helpers.GetIntFromByteArray(conditionData.Skip(14 + i * 18), 0), Helpers.GetIntFromByteArray(conditionData.Skip(14 + i * 18), 1));
+
+                            if (i > 0)
+                            {
+                                switch (lastCombiningByte)
+                                {
+                                    case 0x80:
+                                        invocation += $" && ";
+                                        break;
+                                    case 0x81:
+                                        invocation += $" || ";
+                                        break;
+                                    case 0x82:
+                                        break;
+                                }
+                            }
+
+                            switch (comparatorByte)
+                            {
+                                case 0x83:
+                                    invocation += $"{value1} == {value2}";
+                                    break;
+                                case 0x84:
+                                    invocation += $"{value1} != {value2}";
+                                    break;
+                                case 0x85:
+                                    invocation += $"{value1} > {value2}";
+                                    break;
+                                case 0x86:
+                                    invocation += $"{value1} < {value2}";
+                                    break;
+                                case 0x87:
+                                    invocation += $"{value1} >= {value2}";
+                                    break;
+                                case 0x88:
+                                    invocation += $"{value1} <= {value2}";
+                                    break;
+                                case 0x89:
+                                    invocation += $"{value1}";
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                            lastCombiningByte = combiningByte;
+                        }
                     }
                     break;
                 case "SET":
-                    var setFirst = Parameters[GetParameterPosition(5, 0)];
-                    var setSecond = Parameters[GetParameterPosition(5, 1)];
-                    string value = Calculate5TypeParameter(Helpers.GetIntFromByteArray(setSecond.value, 0), Helpers.GetIntFromByteArray(setSecond.value, 1));
-                    int setCommandCode = Helpers.GetIntFromByteArray(setFirst.value, 0);
-                    int setVariableIndex = Helpers.GetIntFromByteArray(setFirst.value, 1);
+                    var setFirstInt = Parameters[GetParameterPosition(5, 0)];
+                    var setSecondInt = Parameters[GetParameterPosition(5, 1)];
+                    string value = Calculate5TypeParameter(Helpers.GetIntFromByteArray(setSecondInt.value, 0), Helpers.GetIntFromByteArray(setSecondInt.value, 1));
+                    int setCommandCode = Helpers.GetIntFromByteArray(setFirstInt.value, 0);
+                    int setVariableIndex = Helpers.GetIntFromByteArray(setFirstInt.value, 1);
 
                     if (setCommandCode == 0x302 && setVariableIndex >= 0x1303 && setVariableIndex <= 0x1403)
                     {
-                        invocation += $"(int)MEMORY[{0x801FBA00 + (setVariableIndex - 0x2E3E) * 4:X8}], {value}";
+                        invocation += $"memd {setVariableIndex}, {value}";
                     }
                     else if (setCommandCode == 0x304)
                     {
-                        invocation += $"{_scriptParams[setVariableIndex]}, {value}";
+                        invocation += $"var {_scriptParams[setVariableIndex]}, {value}";
                     }
                     else
                     {
@@ -538,6 +639,38 @@ namespace HaruhiHeiretsuLib.Strings
                 case "SET_DV":
                 case "UI_PLACE":
                     invocation += Helpers.GetIntFromByteArray(Parameters[GetParameterPosition(10, 0)].value, 0) != 0 ? "TRUE" : "FALSE";
+                    break;
+                case "TOPIC_GET":
+                    invocation += _scriptParams[BitConverter.ToInt16(Parameters[GetParameterPosition(21, 0)].value.Reverse().ToArray())];
+                    var topicGetBoolLoc = GetParameterPosition(10, 0);
+                    if (topicGetBoolLoc >= 0)
+                    {
+                        invocation += $", {(Helpers.GetIntFromByteArray(Parameters[topicGetBoolLoc].value, 0) != 0 ? "TRUE" : "FALSE")}";
+                    }
+                    var topicGet19IntLoc = GetParameterPosition(25, 0);
+                    if (topicGet19IntLoc >= 0)
+                    {
+                        invocation += $", 19{Calculate5TypeParameter(Helpers.GetIntFromByteArray(Parameters[topicGet19IntLoc].value, 0), Helpers.GetIntFromByteArray(Parameters[topicGet19IntLoc].value, 1))}";
+                    }
+                    var topicGetIntLoc = GetParameterPosition(5, 0);
+                    if (topicGetIntLoc >= 0)
+                    {
+                        invocation += $", 19{Calculate5TypeParameter(Helpers.GetIntFromByteArray(Parameters[topicGetIntLoc].value, 0), Helpers.GetIntFromByteArray(Parameters[topicGetIntLoc].value, 1))}";
+                    }
+                    break;
+                case "FI":
+                    invocation += ParseTime(Parameters[GetParameterPosition(3, 0)].value);
+                    for (int i = 0; ; i++)
+                    {
+                        int pos = GetParameterPosition(25, i);
+                        if (pos < 0)
+                        {
+                            break;
+                        }
+
+                        byte[] data = Parameters[pos].value;
+                        invocation += $", 19{Calculate5TypeParameter(Helpers.GetIntFromByteArray(data, 0), Helpers.GetIntFromByteArray(data, 1))}";
+                    }
                     break;
                 case "EV_START":
                     var evStartFirst = Parameters[GetParameterPosition(5, 0)].value;
@@ -567,22 +700,62 @@ namespace HaruhiHeiretsuLib.Strings
                     }
                     break;
                 case "APPEAR":
-                    int appearFirstPosition = GetParameterPosition(10, 0);
-                    if (appearFirstPosition >= 0)
+                    int appearBool = GetParameterPosition(10, 0);
+                    if (appearBool >= 0)
                     {
                         invocation += Helpers.GetIntFromByteArray(Parameters[GetParameterPosition(10, 0)].value, 0) != 0 ? "TRUE" : "FALSE";
                     }
                     break;
-                default:
-                    for (int i = 0; i < Parameters.Count; i++)
+                case "TURN":
+                    bool turnParamExists = false;
+                    int turnInt08 = GetParameterPosition(8, 0);
+                    if (turnInt08 >= 0)
                     {
-                        invocation += $"{Parameters[i].typeCode:X4} {string.Join(" ", Parameters[i].value.Select(b => $"{b:X2}"))}, ";
+                        turnParamExists = true;
+                        invocation += $"08{Calculate5TypeParameter(Helpers.GetIntFromByteArray(Parameters[turnInt08].value, 0), Helpers.GetIntFromByteArray(Parameters[turnInt08].value, 1))}";
                     }
-                    if (Parameters.Count > 0)
+                    int turnInt0D = GetParameterPosition(13, 0);
+                    if (turnInt0D >= 0)
                     {
-                        invocation = invocation[0..^2];
+                        if (turnParamExists)
+                        {
+                            invocation += ", ";
+                        }
+                        turnParamExists = true;
+                        invocation += $"0D{Calculate5TypeParameter(Helpers.GetIntFromByteArray(Parameters[turnInt0D].value, 0), Helpers.GetIntFromByteArray(Parameters[turnInt0D].value, 1))}";
+                    }
+                    int turnVector = GetParameterPosition(20, 0);
+                    if (turnVector >= 0)
+                    {
+                        if (turnParamExists)
+                        {
+                            invocation += ", ";
+                        }
+                        turnParamExists = true;
+                        invocation += ParseVector(Parameters[turnVector].value);
+                    }
+                    int turnInt10 = GetParameterPosition(16, 0);
+                    if (turnInt10 >= 0)
+                    {
+                        if (turnParamExists)
+                        {
+                            invocation += ", ";
+                        }
+                        turnParamExists = true;
+                        invocation += $"10{Calculate5TypeParameter(Helpers.GetIntFromByteArray(Parameters[turnInt10].value, 0), Helpers.GetIntFromByteArray(Parameters[turnInt10].value, 1))}";
+                    }
+                    int turnInt = GetParameterPosition(5, 0);
+                    if (turnInt >= 0)
+                    {
+                        if (turnParamExists)
+                        {
+                            invocation += ", ";
+                        }
+                        invocation += $"{Calculate5TypeParameter(Helpers.GetIntFromByteArray(Parameters[turnInt].value, 0), Helpers.GetIntFromByteArray(Parameters[turnInt].value, 1))}";
                     }
                     break;
+                default:
+                    return GetRawInvocation();
             }
             return $"{invocation})";
         }
@@ -592,55 +765,37 @@ namespace HaruhiHeiretsuLib.Strings
             switch (controlCode)
             {
                 case 0x300:
-                    return $"{valueCode}";
+                    return $"lit {valueCode}";
                 case 0x302:
                     if (valueCode - 0x124F < 0)
                     {
                         throw new ArgumentException("Illegal system flag index");
                     }
-                    return $"MEMORY[{0x801FBA00 + 4 * (valueCode - 0x2E3E):X8}]";
+                    return $"memd {valueCode}";
                 case 0x303:
-                    if (valueCode >= 0x1000 && valueCode <= 0x1020)
-                    {
-                        switch (valueCode)
-                        {
-                            case 0x1000:
-                                return "MEMORY[801F2C0B]";
-                            case 0x1001:
-                                return "MEMORY[801FBE30]";
-                            case 0x1002:
-                                return "(int)MEMORY[r13 - 0x73E0] + 0x1620";
-                            case 0x1003:
-                                return "(int)MEMORY[r13 - 0x73E0] + 0x161C";
-                            case 0x1004:
-                                return "MEMORY[801F2C0C]";
-                            case 0x1005:
-                                return "(ushort)MEMORY[801F2C14]";
-                            default:
-                                return "-1";
-                        }
-                    }
-                    if (valueCode >= 0x1100 && valueCode <= 0x1200)
-                    {
-                        int temp = valueCode - 0x1100;
-                        if (valueCode >= 0x280 && valueCode <= 0x47F)
-                        {
-                            return $"MEMORY[{0x801FBA00 + (temp + 0x7504) * 4}:X8]";
-                        }
-                    }
-                    if (valueCode >= 0x1201 && valueCode <= 0x4865)
-                    {
-                        return "-1";
-                    }
-                    return "-1";
+                    return $"mmem {valueCode}";
                 case 0x304:
-                    return _scriptParams[valueCode];
+                    return $"var {_scriptParams[valueCode]}";
                 default:
                     return "-1";
             }
         }
 
-        public int GetParameterPosition(int targetCommandCode, int paramNum)
+        private string ParseTime(byte[] type03Parameter)
+        {
+            string param = Helpers.GetIntFromByteArray(type03Parameter, 0) == 0x201 ? "frames " : "time ";
+            param += Calculate5TypeParameter(Helpers.GetIntFromByteArray(type03Parameter, 1), Helpers.GetIntFromByteArray(type03Parameter, 2));
+            return param;
+        }
+
+        private string ParseVector(byte[] type14Parameter)
+        {
+            return $"Vector3({Calculate5TypeParameter(Helpers.GetIntFromByteArray(type14Parameter, 0), Helpers.GetIntFromByteArray(type14Parameter, 1))}, " +
+                $"{Calculate5TypeParameter(Helpers.GetIntFromByteArray(type14Parameter, 2), Helpers.GetIntFromByteArray(type14Parameter, 3))}, " +
+                $"{Calculate5TypeParameter(Helpers.GetIntFromByteArray(type14Parameter, 4), Helpers.GetIntFromByteArray(type14Parameter, 5))})";
+        }
+
+        private int GetParameterPosition(int targetCommandCode, int paramNum)
         {
             int currentParam = 0;
             for (int i = 0; i < Parameters.Count; i++)
