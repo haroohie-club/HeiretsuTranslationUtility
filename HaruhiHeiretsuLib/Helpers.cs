@@ -52,6 +52,18 @@ namespace HaruhiHeiretsuLib
             return BitConverter.ToInt32(data.Skip(position * 4).Take(4).Reverse().ToArray());
         }
 
+        public static byte[] GetStringBytes(string str)
+        {
+            List<byte> bytes = new();
+
+            byte[] stringBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(str);
+            bytes.AddRange(BitConverter.GetBytes(stringBytes.Length + 1).Reverse());
+            bytes.AddRange(stringBytes);
+            bytes.Add(0);
+
+            return bytes.ToArray();
+        }
+
         public static byte[] CompressData(byte[] decompressedData)
         {
             // nonsense hack to deal with a rare edge case where the last byte of a file could get dropped

@@ -222,7 +222,7 @@ namespace HaruhiHeiretsuEditor
                 {
                     if (script.ScriptCommandBlocks.Count > 0)
                     {
-                        File.WriteAllText(Path.Combine(saveFolderDialog.SelectedFolder, $"{script.Name}.sws"), script.GetScript());
+                        File.WriteAllText(Path.Combine(saveFolderDialog.SelectedFolder, $"{script.Name}.sws"), script.Decompile());
                     }
                 }
             }
@@ -297,7 +297,7 @@ namespace HaruhiHeiretsuEditor
         {
             ScriptFile script = ((ScriptButton)sender).Script;
             string tempFile = Path.Combine(Path.GetTempPath(), $"{script.Name}.sws");
-            File.WriteAllText(tempFile, script.GetScript());
+            File.WriteAllText(tempFile, script.Decompile());
             new Process { StartInfo = new ProcessStartInfo(tempFile) { UseShellExecute = true } }.Start();
         }
 
