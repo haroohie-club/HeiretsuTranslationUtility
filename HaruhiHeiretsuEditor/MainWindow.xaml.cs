@@ -210,6 +210,26 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
+        private void ImportScriptFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "Shade Wii script file|*.sws"
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                ScriptFile currentFile = (ScriptFile)scriptsListBox.SelectedItem;
+                ScriptFile scriptFile = new();
+                scriptFile.Location = currentFile.Location;
+                scriptFile.Name = currentFile.Name;
+                scriptFile.AvailableCommands = currentFile.AvailableCommands;
+                scriptFile.Edited = true;
+                scriptFile.Compile(File.ReadAllText(openFileDialog.FileName));
+                _mcb.StringsFiles[scriptsListBox.SelectedIndex] = scriptFile;
+                scriptsListBox.Items.Refresh();
+            }
+        }
+
         private void ExportAllScriptsButton_Click(object sender, RoutedEventArgs e)
         {
             FolderBrowserDialog saveFolderDialog = new()

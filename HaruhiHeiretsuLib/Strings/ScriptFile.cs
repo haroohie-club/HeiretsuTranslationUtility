@@ -314,7 +314,7 @@ namespace HaruhiHeiretsuLib.Strings
 
             ScriptCommandBlockDefinitionsEnd = bytes.Count;
             bytes.RemoveRange(ScriptCommandBlockDefinitionsEndOffset, 4);
-            bytes.InsertRange(ScriptCommandBlockDefinitionsEndOffset, BitConverter.GetBytes(VariablesEnd).Reverse());
+            bytes.InsertRange(ScriptCommandBlockDefinitionsEndOffset, BitConverter.GetBytes(ScriptCommandBlockDefinitionsEnd).Reverse());
 
             foreach (ScriptCommandBlock scriptCommandBlock in ScriptCommandBlocks)
             {
@@ -324,6 +324,7 @@ namespace HaruhiHeiretsuLib.Strings
 
                 foreach (ScriptCommandInvocation invocation in scriptCommandBlock.Invocations)
                 {
+                    invocation.Address = bytes.Count;
                     bytes.AddRange(invocation.GetBytes());
                 }
             }
@@ -334,7 +335,11 @@ namespace HaruhiHeiretsuLib.Strings
                 {
                     invocation.ScriptVariables = Variables;
                     invocation.AllOtherInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToList();
-                    invocation.ResolveAddresses();
+                    if (invocation.ResolveAddresses())
+                    {
+                        bytes.RemoveRange(invocation.Address, invocation.Length);
+                        bytes.InsertRange(invocation.Address, invocation.GetBytes());
+                    }
                 }
             }
 
@@ -782,7 +787,7 @@ namespace HaruhiHeiretsuLib.Strings
                     List<byte> bytes = new();
                     bytes.AddRange(BitConverter.GetBytes((short)22).Reverse()); // Add length
                     bytes.AddRange(BitConverter.GetBytes((short)1).Reverse()); // Add number of conditions
-                    string parameter = trimmedParameters.Split(',')[0].ToLower();
+                    string parameter = trimmedParameters.Split(',')[0];
                     string[] components = parameter.Split(' ');
 
                     byte[] firstOperand = CalculateControlStructure(components[1], components[2], variables);
@@ -797,6 +802,7 @@ namespace HaruhiHeiretsuLib.Strings
                     {
                         bytes.AddRange(new byte[] { 0x89, 0x82 });
                         bytes.AddRange(firstOperand);
+                        bytes.AddRange(CalculateControlStructure("lit", "1", variables));
                     }
                     Parameters.Add(new() { Type = ScriptCommand.ParameterType.CONDITIONAL, Value = bytes.ToArray() });
                     i += parameter.Length + 5;
@@ -807,7 +813,7 @@ namespace HaruhiHeiretsuLib.Strings
                 if (trimmedParameters.StartsWith("time ", StringComparison.OrdinalIgnoreCase) || trimmedParameters.StartsWith("frames ", StringComparison.OrdinalIgnoreCase))
                 {
                     List<byte> bytes = new();
-                    string parameter = trimmedParameters.Split(',')[0].ToLower();
+                    string parameter = trimmedParameters.Split(',')[0];
                     string[] components = parameter.Split(' ');
 
                     switch (components[0])
@@ -932,8 +938,9 @@ namespace HaruhiHeiretsuLib.Strings
             }
         }
 
-        public void ResolveAddresses()
+        public bool ResolveAddresses()
         {
+            bool resolvedAddress = false;
             for (int i = 0; i < Parameters.Count; i++)
             {
                 if (Parameters[i].Type == ScriptCommand.ParameterType.ADDRESS)
@@ -941,8 +948,10 @@ namespace HaruhiHeiretsuLib.Strings
                     int lineNumber = BitConverter.ToInt32(Parameters[i].Value.Reverse().ToArray());
                     int address = AllOtherInvocations.First(i => i.LineNumber == lineNumber).Address;
                     Parameters[i] = new Parameter { Type = Parameters[i].Type, Value = BitConverter.GetBytes(address).Reverse().ToArray() };
+                    resolvedAddress = true;
                 }
             }
+            return resolvedAddress;
         }
 
         public string DoADifferentThing()

@@ -58,6 +58,10 @@ namespace HaruhiHeiretsuCLI
                 string archive = archiveRegexMatch.Groups["archiveName"].Value;
                 int archiveIndex = int.Parse(archiveRegexMatch.Groups["archiveIndex"].Value);
 
+                if (file.Contains("ignore", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
                 if (file.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
                 {
                     if (archive != "grp")
@@ -80,6 +84,33 @@ namespace HaruhiHeiretsuCLI
                     archivesEdited[McbFile.ArchiveIndex.GRP] = true;
 
                     CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
+                }
+                else if (file.EndsWith(".sws", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (archive != "scr")
+                    {
+                        CommandSet.Out.WriteLine($"WARNING: SWS file {file} targets {archive}.bin rather than scr.bin, skipping...");
+                        continue;
+                    }
+
+                    ScriptFile scriptFile = new();
+                    scriptFile.AvailableCommands = ScriptCommand.ParseScriptCommandFile(scr.Files[1].Data.ToArray());
+                    scriptFile.Compile(File.ReadAllText(file));
+                    List<byte> data = scriptFile.Data;
+
+                    int i = mcb.LoadedFiles.Count;
+                    mcb.LoadFiles(file.Split('_'));
+                    for (; i < mcb.LoadedFiles.Count; i++)
+                    {
+                        mcb.LoadedFiles[i].Edited = true;
+                        mcb.LoadedFiles[i].Data = data.ToList();
+                    }
+
+                    archivesEdited[McbFile.ArchiveIndex.SCR] = true;
+                    scr.Files.First(f => f.Index == archiveIndex).Edited = true;
+                    scr.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
+
+                    CommandSet.Out.WriteLine($"Finished replacing {Path.GetFileName(file)} in MCB & SCR");
                 }
                 else if (file.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
                 {
@@ -117,7 +148,7 @@ namespace HaruhiHeiretsuCLI
                             break;
                     }
 
-                    CommandSet.Out.WriteLine($"Finished replacing {file} in MCB & {archive.ToUpper()}");
+                    CommandSet.Out.WriteLine($"Finished replacing {Path.GetFileName(file)} in MCB & {archive.ToUpper()}");
                 }
             }
 
