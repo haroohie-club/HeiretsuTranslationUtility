@@ -20,7 +20,7 @@ namespace HaruhiHeiretsuCLI
             Options = new()
             {
                 "Replaces files in the mcb and bin archives",
-                "Usage: HaruhiHeiretsuCLI repalce-files -m [MCB_PATH] -d [DAT_BIN] -e [EVT_BIN] -g [GRP_BIN] -s [SCR_BIN] -r [REPLACEMENT_FOLDER] -o [OUTPUT_FOLDER]",
+                "Usage: HaruhiHeiretsuCLI replace-files -m [MCB_PATH] -d [DAT_BIN] -e [EVT_BIN] -g [GRP_BIN] -s [SCR_BIN] -r [REPLACEMENT_FOLDER] -o [OUTPUT_FOLDER]",
                 "",
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
                 { "d|dat=", "Path to dat.bin", d => _dat = d },

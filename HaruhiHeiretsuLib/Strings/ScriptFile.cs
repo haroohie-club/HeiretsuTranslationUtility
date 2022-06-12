@@ -810,7 +810,7 @@ namespace HaruhiHeiretsuLib.Strings
                 }
 
                 // See if it's a time
-                if (trimmedParameters.StartsWith("time ", StringComparison.OrdinalIgnoreCase) || trimmedParameters.StartsWith("frames ", StringComparison.OrdinalIgnoreCase))
+                if (trimmedParameters.StartsWith("time_", StringComparison.OrdinalIgnoreCase))
                 {
                     List<byte> bytes = new();
                     string parameter = trimmedParameters.Split(',')[0];
@@ -818,10 +818,10 @@ namespace HaruhiHeiretsuLib.Strings
 
                     switch (components[0])
                     {
-                        case "time":
+                        case "time_f":
                             bytes.AddRange(BitConverter.GetBytes(0x200).Reverse());
                             break;
-                        case "frames":
+                        case "time_s":
                             bytes.AddRange(BitConverter.GetBytes(0x201).Reverse());
                             break;
                     }
@@ -1444,7 +1444,7 @@ namespace HaruhiHeiretsuLib.Strings
 
         private string ParseTime(byte[] type03Parameter)
         {
-            string param = Helpers.GetIntFromByteArray(type03Parameter, 0) == 0x201 ? "frames " : "time ";
+            string param = Helpers.GetIntFromByteArray(type03Parameter, 0) == 0x201 ? "time_f " : "time_s ";
             param += CalculateIntParameter(Helpers.GetIntFromByteArray(type03Parameter, 1), Helpers.GetIntFromByteArray(type03Parameter, 2));
             return param;
         }
