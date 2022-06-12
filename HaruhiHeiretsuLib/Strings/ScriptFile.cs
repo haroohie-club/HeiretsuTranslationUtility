@@ -1444,7 +1444,7 @@ namespace HaruhiHeiretsuLib.Strings
 
         private string ParseTime(byte[] type03Parameter)
         {
-            string param = Helpers.GetIntFromByteArray(type03Parameter, 0) == 0x201 ? "time_f " : "time_s ";
+            string param = Helpers.GetIntFromByteArray(type03Parameter, 0) == 0x201 ? "time_s " : "time_f ";
             param += CalculateIntParameter(Helpers.GetIntFromByteArray(type03Parameter, 1), Helpers.GetIntFromByteArray(type03Parameter, 2));
             return param;
         }
