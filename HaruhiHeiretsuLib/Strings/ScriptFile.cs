@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Reflection;
-using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Globalization;
 
@@ -19,14 +17,14 @@ namespace HaruhiHeiretsuLib.Strings
         public List<ScriptCommand> AvailableCommands { get; set; }
         public List<ScriptCommandBlock> ScriptCommandBlocks { get; set; } = new();
 
-        public List<string> Variables { get; set; } = new();
+        public List<string> Objects { get; set; } = new();
 
-        public int NumVariablesOffset { get; set; }
-        public short NumVariables { get; set; }
+        public int NumObjectssOffset { get; set; }
+        public short NumObjects { get; set; }
         public int NumScriptCommandBlocksOffset { get; set; }
         public short NumScriptCommandBlocks { get; set; }
-        public int VariablesEndOffset { get; set; }
-        public int VariablesEnd { get; set; }
+        public int ObjectssEndOffset { get; set; }
+        public int ObjectsEnd { get; set; }
         public int ScriptCommandBlockDefinitionsEndOffset { get; set; }
         public int ScriptCommandBlockDefinitionsEnd { get; set; }
 
@@ -78,28 +76,28 @@ namespace HaruhiHeiretsuLib.Strings
             Room = ReadString(Data, pos, out pos);
             Time = ReadString(Data, pos, out pos);
 
-            NumVariables = BitConverter.ToInt16(Data.Skip(pos).Take(2).Reverse().ToArray());
-            NumVariablesOffset = pos;
+            NumObjects = BitConverter.ToInt16(Data.Skip(pos).Take(2).Reverse().ToArray());
+            NumObjectssOffset = pos;
             pos += 2;
 
             NumScriptCommandBlocks = BitConverter.ToInt16(Data.Skip(pos).Take(2).Reverse().ToArray());
             NumScriptCommandBlocksOffset = pos;
             pos += 2;
 
-            VariablesEnd = BitConverter.ToInt32(Data.Skip(pos).Take(4).Reverse().ToArray());
-            VariablesEndOffset = pos;
+            ObjectsEnd = BitConverter.ToInt32(Data.Skip(pos).Take(4).Reverse().ToArray());
+            ObjectssEndOffset = pos;
             pos += 4;
 
             ScriptCommandBlockDefinitionsEnd = BitConverter.ToInt32(Data.Skip(pos).Take(4).Reverse().ToArray());
             ScriptCommandBlockDefinitionsEndOffset = pos;
             pos += 4;
 
-            for (int i = 0; i < NumVariables; i++)
+            for (int i = 0; i < NumObjects; i++)
             {
-                Variables.Add(ReadString(Data, pos, out pos));
+                Objects.Add(ReadString(Data, pos, out pos));
             }
 
-            for (int i = VariablesEnd; i < ScriptCommandBlockDefinitionsEnd; i += 0x08)
+            for (int i = ObjectsEnd; i < ScriptCommandBlockDefinitionsEnd; i += 0x08)
             {
                 int endAddress;
                 if (i + 8 == ScriptCommandBlockDefinitionsEnd)
@@ -110,7 +108,7 @@ namespace HaruhiHeiretsuLib.Strings
                 {
                     endAddress = BitConverter.ToInt32(Data.Skip(i + 12).Take(4).Reverse().ToArray());
                 }
-                ScriptCommandBlocks.Add(new(i, endAddress, Data, Variables));
+                ScriptCommandBlocks.Add(new(i, endAddress, Data, Objects));
             }
 
             //for (int i = 0; i < Data.Count;)
@@ -202,11 +200,11 @@ namespace HaruhiHeiretsuLib.Strings
 
             int lengthDifference = newLineData.Length - oldLength;
 
-            VariablesEnd += lengthDifference;
-            Data.RemoveRange(VariablesEndOffset, 4);
-            Data.InsertRange(VariablesEndOffset, BitConverter.GetBytes(VariablesEnd).Reverse());
+            ObjectsEnd += lengthDifference;
+            Data.RemoveRange(ObjectssEndOffset, 4);
+            Data.InsertRange(ObjectssEndOffset, BitConverter.GetBytes(ObjectsEnd).Reverse());
 
-            ScriptCommandBlockDefinitionsEnd = VariablesEnd + 8 * NumScriptCommandBlocks;
+            ScriptCommandBlockDefinitionsEnd = ObjectsEnd + 8 * NumScriptCommandBlocks;
             Data.RemoveRange(ScriptCommandBlockDefinitionsEndOffset, 4);
             Data.InsertRange(ScriptCommandBlockDefinitionsEndOffset, BitConverter.GetBytes(ScriptCommandBlockDefinitionsEnd).Reverse());
 
@@ -266,7 +264,7 @@ namespace HaruhiHeiretsuLib.Strings
             bytes.AddRange(Helpers.GetStringBytes(Time));
 
             ScriptCommandBlocks = new();
-            Variables = new();
+            Objects = new();
 
             for (int lineNumber = 2; lineNumber < lines.Length;)
             {
@@ -278,31 +276,31 @@ namespace HaruhiHeiretsuLib.Strings
                 if (lines[lineNumber - 1].StartsWith("=="))
                 {
                     ScriptCommandBlock commandBlock = new();
-                    lineNumber = commandBlock.ParseBlock(lineNumber, lines[(lineNumber - 1)..], AvailableCommands, Variables);
+                    lineNumber = commandBlock.ParseBlock(lineNumber, lines[(lineNumber - 1)..], AvailableCommands, Objects);
                     ScriptCommandBlocks.Add(commandBlock);
                 }
             }
 
-            NumVariables = (short)Variables.Count;
+            NumObjects = (short)Objects.Count;
             NumScriptCommandBlocks = (short)ScriptCommandBlocks.Count;
 
-            NumVariablesOffset = bytes.Count;
-            bytes.AddRange(BitConverter.GetBytes(NumVariables).Reverse());
+            NumObjectssOffset = bytes.Count;
+            bytes.AddRange(BitConverter.GetBytes(NumObjects).Reverse());
             NumScriptCommandBlocksOffset = bytes.Count;
             bytes.AddRange(BitConverter.GetBytes(NumScriptCommandBlocks).Reverse());
-            VariablesEndOffset = bytes.Count;
+            ObjectssEndOffset = bytes.Count;
             bytes.AddRange(BitConverter.GetBytes(0));
             ScriptCommandBlockDefinitionsEndOffset = bytes.Count;
             bytes.AddRange(BitConverter.GetBytes(0));
 
-            foreach (string variable in Variables)
+            foreach (string @object in Objects)
             {
-                bytes.AddRange(Helpers.GetStringBytes(variable));
+                bytes.AddRange(Helpers.GetStringBytes(@object));
             }
 
-            VariablesEnd = bytes.Count;
-            bytes.RemoveRange(VariablesEndOffset, 4);
-            bytes.InsertRange(VariablesEndOffset, BitConverter.GetBytes(VariablesEnd).Reverse());
+            ObjectsEnd = bytes.Count;
+            bytes.RemoveRange(ObjectssEndOffset, 4);
+            bytes.InsertRange(ObjectssEndOffset, BitConverter.GetBytes(ObjectsEnd).Reverse());
 
             foreach (ScriptCommandBlock scriptCommandBlock in ScriptCommandBlocks)
             {
@@ -333,7 +331,7 @@ namespace HaruhiHeiretsuLib.Strings
             {
                 foreach (ScriptCommandInvocation invocation in scriptCommandBlock.Invocations)
                 {
-                    invocation.ScriptVariables = Variables;
+                    invocation.ScriptObjects = Objects;
                     invocation.AllOtherInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToList();
                     if (invocation.ResolveAddresses())
                     {
@@ -494,15 +492,15 @@ namespace HaruhiHeiretsuLib.Strings
             DIALOGUE = 1,
             CONDITIONAL = 2,
             TIMESPAN = 3,
-            UNKNOWN04 = 4,
+            VECTOR2 = 4,
             INT = 5,
-            INT06 = 6,
-            UNKNOWN07 = 7,
+            TRANSITION = 6,
+            INDEXEDADDRESS = 7,
             INT08 = 8,
             UNKNOWN09 = 9,
             BOOL = 10,
             UNKNOWN0B = 11,
-            UNKNOWN0C = 12,
+            COLOR = 12,
             CHARACTER = 13,
             INT0E = 14,
             UNKNOWN0F = 15,
@@ -527,11 +525,37 @@ namespace HaruhiHeiretsuLib.Strings
         public static readonly Dictionary<short, string> CharacterCodeToCharacterMap = new()
         {
             { 0, "KYON" },
+            { 1, "KYON2" },
             { 2, "HARUHI" },
             { 3, "NAGATO" },
+            { 4, "NAGATO2" },
             { 5, "MIKURU" },
+            { 6, "MIKURU2" },
             { 7, "KOIZUMI" },
+            { 8, "KOIZUMI2" },
+            { 9, "TSURUYA" },
             { 10, "KYN_SIS" },
+            { 11, "MIKOTO" },
+            { 12, "MIKOTO2" },
+            { 13, "TAIICHIRO" },
+            { 15, "CAPTAIN" },
+            { 16, "GUEST_M3" },
+            { 17, "GUEST_F3_17" },
+            { 18, "CREW_F" },
+            { 19, "CREW_M" },
+            { 20, "GUEST_M1_20" },
+            { 21, "GUEST_M2_21" },
+            { 22, "GUEST_F1" },
+            { 23, "GUEST_F2" },
+            { 27, "GUEST_M2_27" },
+            { 24, "TANIGUCHI" },
+            { 25, "KUNIKIDA" },
+            { 26, "ANNOUNCER" },
+            { 28, "GUEST_F3" },
+            { 29, "???" },
+            { 30, "TAIICHIRO_30" },
+            { 31, "MIKOTO_31" },
+            { 32, "GUEST_M1_32" },
         };
 
         public static readonly Dictionary<string, byte> ComparisonOperatorToCodeMap = new()
@@ -542,6 +566,26 @@ namespace HaruhiHeiretsuLib.Strings
             { "<", 0x86 },
             { ">=", 0x87 },
             { "<=", 0x88 },
+        };
+
+        public static readonly Dictionary<string, int> TransitionToCodeMap = new()
+        {
+            { "HARD_CUT", 0 },
+            { "CROSS_DISSOLVE", 1 },
+            { "PUSH_RIGHT", 2 },
+            { "PUSH_LEFT", 3 },
+            { "PUSH_UP", 4 },
+            { "PUSH_DOWN", 5 },
+            { "WIPE_RIGHT", 6 },
+            { "WIPE_LEFT", 7 },
+            { "WIPE_UP", 8 },
+            { "WIPE_DOWN", 9 },
+            { "HORIZONTAL_BLINDS", 10 },
+            { "VERTICAL_BLINDS", 11 },
+            { "CENTER_OUT", 12 },
+            { "RED_SETTINGS_BG", 13 },
+            { "BLACK_SETTINGS_BG", 14 },
+            { "FADE_TO_BLACK", 500 },
         };
     }
 
@@ -555,17 +599,17 @@ namespace HaruhiHeiretsuLib.Strings
         public List<ScriptCommandInvocation> Invocations { get; set; } = new();
         public int Length => Invocations.Sum(i => i.Length);
 
-        public ScriptCommandBlock(int address, int endAddress, IEnumerable<byte> data, List<string> variables)
+        public ScriptCommandBlock(int address, int endAddress, IEnumerable<byte> data, List<string> objects)
         {
             DefinitionAddress = address;
             NameIndex = BitConverter.ToUInt16(data.Skip(address).Take(2).Reverse().ToArray());
-            Name = variables[NameIndex];
+            Name = objects[NameIndex];
             NumInvocations = BitConverter.ToUInt16(data.Skip(address + 2).Take(2).Reverse().ToArray());
             BlockOffset = BitConverter.ToInt32(data.Skip(address + 4).Take(4).Reverse().ToArray());
 
             for (int i = BlockOffset; i < endAddress - 8;)
             {
-                ScriptCommandInvocation invocation = new(variables, i);
+                ScriptCommandInvocation invocation = new(objects, i);
                 invocation.LineNumber = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
                 i += 2;
                 invocation.CharacterEntity = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
@@ -605,7 +649,7 @@ namespace HaruhiHeiretsuLib.Strings
             }
         }
 
-        public int ParseBlock(int lineNumber, string[] lines, List<ScriptCommand> allCommands, List<string> variables)
+        public int ParseBlock(int lineNumber, string[] lines, List<ScriptCommand> allCommands, List<string> objects)
         {
             Regex nameRegex = new(@"== (?<name>.+) ==");
             Match nameMatch = nameRegex.Match(lines[0]);
@@ -615,8 +659,15 @@ namespace HaruhiHeiretsuLib.Strings
             }
 
             Name = nameMatch.Groups["name"].Value;
-            variables.Add(Name);
-            NameIndex = (ushort)(variables.Count - 1);
+            if (!objects.Contains(Name))
+            {
+                objects.Add(Name);
+                NameIndex = (ushort)(objects.Count - 1);
+            }
+            else
+            {
+                NameIndex = (ushort)objects.IndexOf(Name);
+            }
 
             int i = 1;
             for (; i < lines.Length; i++)
@@ -631,7 +682,7 @@ namespace HaruhiHeiretsuLib.Strings
                     continue;
                 }
 
-                Invocations.Add(new ScriptCommandInvocation(lines[i], (short)(i + lineNumber), allCommands, variables));
+                Invocations.Add(new ScriptCommandInvocation(lines[i], (short)(i + lineNumber), allCommands, objects));
             }
 
             NumInvocations = (ushort)Invocations.Count;
@@ -653,21 +704,21 @@ namespace HaruhiHeiretsuLib.Strings
         public short CharacterEntity { get; set; }
         public short CommandCode { get; set; }
         public ScriptCommand Command { get; set; }
-        public List<string> ScriptVariables { get; set; }
+        public List<string> ScriptObjects { get; set; }
         public List<Parameter> Parameters { get; set; } = new();
         public int Length => 12 + Parameters.Sum(p => 2 + p.Value.Length);
 
         public List<ScriptCommandInvocation> AllOtherInvocations { get; set; }
 
-        public ScriptCommandInvocation(List<string> scriptVariables, int address)
+        public ScriptCommandInvocation(List<string> scriptObjects, int address)
         {
-            ScriptVariables = scriptVariables;
+            ScriptObjects = scriptObjects;
             Address = address;
         }
 
-        public ScriptCommandInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> variables)
+        public ScriptCommandInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects)
         {
-            ParseInvocation(invocation, lineNumber, allCommands, variables);
+            ParseInvocation(invocation, lineNumber, allCommands, objects);
         }
 
         public override string ToString()
@@ -722,9 +773,9 @@ namespace HaruhiHeiretsuLib.Strings
             return $"{invocation})";
         }
 
-        public void ParseInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> variables)
+        public void ParseInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects)
         {
-            Match match = Regex.Match(invocation, @"(?<command>[A-Z\d_]+)(?:<(?<character>[A-Z\d_]+)>)?\((?<parameters>.+)?\)");
+            Match match = Regex.Match(invocation, @"(?<command>[A-Z\d_]+)(?:<(?<character>[?A-Z\d_]+)>)?\((?<parameters>.+)?\)");
             if (!match.Success)
             {
                 throw new ArgumentException($"Invalid invocation '{invocation}' provided!");
@@ -734,7 +785,11 @@ namespace HaruhiHeiretsuLib.Strings
             string character = match.Groups["character"].Value;
             string parameters = match.Groups["parameters"].Value;
 
-            Command = allCommands.First(c => c.Name == command);
+            Command = allCommands.FirstOrDefault(c => c.Name == command);
+            if (Command is null)
+            {
+                throw new ArgumentException($"Command '{command}' is not a valid command!");
+            }
             CommandCode = (short)allCommands.IndexOf(Command);
             LineNumber = lineNumber;
             if (character.Length > 0)
@@ -749,192 +804,261 @@ namespace HaruhiHeiretsuLib.Strings
             Parameters = new();
             for (int i = 0; i < parameters.Length;)
             {
-                string trimmedParameters = parameters[i..].Trim();
-                i += parameters[i..].Length - trimmedParameters.Length;
-
-                // Try to see if it's a line number
-                Match lineNumberMatch = Regex.Match(trimmedParameters, @"^\d+");
-                if (lineNumberMatch.Success)
+                try
                 {
-                    string parameter = trimmedParameters.Split(',')[0];
+                    string trimmedParameters = parameters[i..].Trim();
+                    i += parameters[i..].Length - trimmedParameters.Length;
 
-                    if (int.TryParse(parameter, out int varLineNumber))
+                    // Try to see if it's a line number
+                    Match lineNumberMatch = Regex.Match(trimmedParameters, @"^\d+");
+                    if (lineNumberMatch.Success)
                     {
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = BitConverter.GetBytes(varLineNumber).Reverse().ToArray() });
+                        string parameter = trimmedParameters.Split(',')[0];
+
+                        if (int.TryParse(parameter, out int varLineNumber))
+                        {
+                            Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = BitConverter.GetBytes(varLineNumber).Reverse().ToArray() });
+                            i += parameter.Length + 2;
+                            continue;
+                        }
+                    }
+
+                    // See if it's a string
+                    if (trimmedParameters.StartsWith("\""))
+                    {
+                        int firstQuote = trimmedParameters.IndexOf('"');
+                        int secondQuote = trimmedParameters[(firstQuote + 1)..].IndexOf('"');
+                        string line = trimmedParameters[(firstQuote + 1)..(secondQuote + 1)].Replace("\\n", "\n");
+
+                        objects.Add(line);
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.DIALOGUE, Value = BitConverter.GetBytes((short)(objects.Count - 1)).Reverse().ToArray() });
+
+                        i += line.Replace("\n", "\\n").Length + 4;
+                        continue;
+                    }
+
+                    // See if it's a conditional (currently we only support one condition!!)
+                    // TODO: Add support for more than one condition
+                    if (trimmedParameters.StartsWith("if ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        List<byte> bytes = new();
+                        bytes.AddRange(BitConverter.GetBytes((short)22).Reverse()); // Add length
+                        bytes.AddRange(BitConverter.GetBytes((short)1).Reverse()); // Add number of conditions
+                        string parameter = trimmedParameters.Split(',')[0];
+                        string[] components = parameter.Split(' ');
+
+                        byte[] firstOperand = CalculateControlStructure(components[1], components[2], objects);
+                        if (components.Length > 3)
+                        {
+                            bytes.Add(ScriptCommand.ComparisonOperatorToCodeMap[components[3]]); // add comparator byte
+                            bytes.Add(0x82); // always this for one condition
+                            bytes.AddRange(firstOperand);
+                            bytes.AddRange(CalculateControlStructure(components[4], components[5], objects));
+                        }
+                        else
+                        {
+                            bytes.AddRange(new byte[] { 0x89, 0x82 });
+                            bytes.AddRange(firstOperand);
+                            bytes.AddRange(CalculateControlStructure("lit", "1", objects));
+                        }
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.CONDITIONAL, Value = bytes.ToArray() });
+                        i += parameter.Length + 5;
+                        continue;
+                    }
+
+                    // See if it's a time
+                    if (trimmedParameters.StartsWith("time_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        List<byte> bytes = new();
+                        string parameter = trimmedParameters.Split(',')[0];
+                        string[] components = parameter.Split(' ');
+
+                        switch (components[0])
+                        {
+                            case "time_f":
+                                bytes.AddRange(BitConverter.GetBytes(0x200).Reverse());
+                                break;
+                            case "time_s":
+                                bytes.AddRange(BitConverter.GetBytes(0x201).Reverse());
+                                break;
+                        }
+
+                        bytes.AddRange(CalculateControlStructure(components[1], components[2], objects));
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.TIMESPAN, Value = bytes.ToArray() });
                         i += parameter.Length + 2;
                         continue;
                     }
-                }
 
-                // See if it's a string
-                if (trimmedParameters.StartsWith("\""))
-                {
-                    int firstQuote = trimmedParameters.IndexOf('"');
-                    int secondQuote = trimmedParameters[(firstQuote + 1)..].IndexOf('"');
-                    string line = trimmedParameters[(firstQuote + 1)..(secondQuote + 1)].Replace("\\n", "\n");
-
-                    variables.Add(line);
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.DIALOGUE, Value = BitConverter.GetBytes((short)(variables.Count - 1)).Reverse().ToArray() });
-
-                    i += line.Replace("\n", "\\n").Length + 4;
-                    continue;
-                }
-
-                // See if it's a conditional (currently we only support one condition!!)
-                // TODO: Add support for more than one condition
-                if (trimmedParameters.StartsWith("if ", StringComparison.OrdinalIgnoreCase))
-                {
-                    List<byte> bytes = new();
-                    bytes.AddRange(BitConverter.GetBytes((short)22).Reverse()); // Add length
-                    bytes.AddRange(BitConverter.GetBytes((short)1).Reverse()); // Add number of conditions
-                    string parameter = trimmedParameters.Split(',')[0];
-                    string[] components = parameter.Split(' ');
-
-                    byte[] firstOperand = CalculateControlStructure(components[1], components[2], variables);
-                    if (components.Length > 3)
+                    // Is it a Vector2?
+                    if (trimmedParameters.StartsWith("Vector2(", StringComparison.OrdinalIgnoreCase))
                     {
-                        bytes.Add(ScriptCommand.ComparisonOperatorToCodeMap[components[3]]); // add comparator byte
-                        bytes.Add(0x82); // always this for one condition
-                        bytes.AddRange(firstOperand);
-                        bytes.AddRange(CalculateControlStructure(components[4], components[5], variables));
-                    }
-                    else
-                    {
-                        bytes.AddRange(new byte[] { 0x89, 0x82 });
-                        bytes.AddRange(firstOperand);
-                        bytes.AddRange(CalculateControlStructure("lit", "1", variables));
-                    }
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.CONDITIONAL, Value = bytes.ToArray() });
-                    i += parameter.Length + 5;
-                    continue;
-                }
+                        List<byte> bytes = new();
+                        string[] vectorComponents = trimmedParameters[8..].Split(')')[0].Split(',');
+                        foreach (string vectorComponent in vectorComponents)
+                        {
+                            string trimmedVectorComponent = vectorComponent.Trim();
+                            string[] parts = trimmedVectorComponent.Split(' ');
+                            bytes.AddRange(CalculateControlStructure(parts[0], parts[1], objects));
+                        }
 
-                // See if it's a time
-                if (trimmedParameters.StartsWith("time_", StringComparison.OrdinalIgnoreCase))
-                {
-                    List<byte> bytes = new();
-                    string parameter = trimmedParameters.Split(',')[0];
-                    string[] components = parameter.Split(' ');
-
-                    switch (components[0])
-                    {
-                        case "time_f":
-                            bytes.AddRange(BitConverter.GetBytes(0x200).Reverse());
-                            break;
-                        case "time_s":
-                            bytes.AddRange(BitConverter.GetBytes(0x201).Reverse());
-                            break;
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR2, Value = bytes.ToArray() });
+                        i += vectorComponents.Sum(c => c.Length) + 11;
+                        continue;
                     }
 
-                    bytes.AddRange(CalculateControlStructure(components[1], components[2], variables));
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.TIMESPAN, Value = bytes.ToArray() });
-                    i += parameter.Length + 2;
-                    continue;
-                }
-
-                // Is it a boolean?
-                if (trimmedParameters.StartsWith("TRUE", StringComparison.OrdinalIgnoreCase) || trimmedParameters.StartsWith("FALSE", StringComparison.OrdinalIgnoreCase))
-                {
-                    string parameter = trimmedParameters.Split(',')[0].ToLower();
-
-                    bool boolean = bool.Parse(parameter);
-
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.BOOL, Value = boolean ? BitConverter.GetBytes(1).Reverse().ToArray() : BitConverter.GetBytes(0).Reverse().ToArray() });
-                    i += parameter.Length + 2;
-                    continue;
-                }
-
-                // Is it a character?
-                if (trimmedParameters.StartsWith("CHARACTER[", StringComparison.OrdinalIgnoreCase))
-                {
-                    string characterName = trimmedParameters.Split(',')[0][10..^1].ToUpper();
-                    int characterEntity = GetCharacterEntity(characterName);
-
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.CHARACTER, Value = CalculateControlStructure("lit", $"{characterEntity}", variables) });
-                    i += characterName.Length + 12;
-                    continue;
-                }
-
-                // Is it a Vector3?
-                if (trimmedParameters.StartsWith("Vector3(", StringComparison.OrdinalIgnoreCase))
-                {
-                    List<byte> bytes = new();
-                    string[] vectorComponents = trimmedParameters[8..].Split(')')[0].Split(',');
-                    foreach (string vectorComponent in vectorComponents)
+                    // Is it a transition?
+                    if (trimmedParameters.StartsWith("Transition[", StringComparison.OrdinalIgnoreCase))
                     {
-                        string trimmedVectorComponent = vectorComponent.Trim();
-                        string[] parts = trimmedVectorComponent.Split(' ');
-                        bytes.AddRange(CalculateControlStructure(parts[0], parts[1], variables));
+                        List<byte> bytes = new();
+                        string parameter = trimmedParameters.Split(',')[0][11..^1].ToUpper();
+                        if (ScriptCommand.TransitionToCodeMap.TryGetValue(parameter, out int transition))
+                        {
+                            bytes.AddRange(CalculateControlStructure("lit", $"{transition}", objects));
+                        }
+                        else
+                        {
+                            string[] controlSplit = parameter.Split(' ');
+                            bytes.AddRange(CalculateControlStructure(controlSplit[0], controlSplit[1], objects));
+                        }
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.TRANSITION, Value = bytes.ToArray() });
+                        i += parameter.Length + 13;
+                        continue;
                     }
 
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR3, Value = bytes.ToArray() });
-                    i += vectorComponents.Sum(c => c.Length) + 11;
-                    continue;
-                }
-
-                // Is it a var index?
-                if (trimmedParameters.StartsWith('$'))
-                {
-                    string variable = trimmedParameters.Split(',')[0][1..].ToUpper();
-
-                    if (!variables.Contains(variable))
+                    // Is it an indexed address?
+                    if (trimmedParameters.StartsWith("("))
                     {
-                        variables.Add(variable);
-                    }
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.VARINDEX, Value = BitConverter.GetBytes((short)variables.IndexOf(variable)).Reverse().ToArray() });
-                    i += variable.Length + 2;
-                    continue;
-                }
-
-                // Is it an int array?
-                if (trimmedParameters.StartsWith('['))
-                {
-                    List<byte> bytes = new();
-                    string[] arrayStrings = trimmedParameters[1..].Split(']')[0].Split(',');
-                    bytes.AddRange(BitConverter.GetBytes(arrayStrings.Length).Reverse());
-                    foreach (string arrayString in arrayStrings)
-                    {
-                        string trimmedArrayString = arrayString.Trim();
-                        string[] parts = trimmedArrayString.Split(' ');
-                        bytes.AddRange(CalculateControlStructure(parts[0], parts[1], variables));
+                        List<byte> bytes = new();
+                        string[] components = trimmedParameters.Split(')')[0].Split(',');
+                        bytes.AddRange(BitConverter.GetBytes(int.Parse(components[0].Trim())).Reverse());
+                        bytes.AddRange(components[1].Trim() == "TRUE" ? new byte[] { 0x01, 0x00, 0x00, 0x00 } : new byte[4]);
+                        string[] controlCodeComponents = components[2].Trim().Split(' ');
+                        bytes.AddRange(CalculateControlStructure(controlCodeComponents[0], controlCodeComponents[1], objects));
                     }
 
-                    i += arrayStrings.Sum(a => a.Length) + 4;
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.INTARRAY, Value = bytes.ToArray() });
-                }
-
-                // Is it unknown?
-                if (trimmedParameters.StartsWith("UNKNOWN", StringComparison.OrdinalIgnoreCase))
-                {
-                    List<byte> bytes = new();
-                    string parameter = trimmedParameters.Split(',')[0];
-                    int typeCode = int.Parse(parameter[7..9], NumberStyles.HexNumber);
-                    string[] components = parameter.Split(' ');
-
-                    for (int j = 1; j < components.Length; j++)
+                    // Is it a boolean?
+                    if (trimmedParameters.StartsWith("TRUE", StringComparison.OrdinalIgnoreCase) || trimmedParameters.StartsWith("FALSE", StringComparison.OrdinalIgnoreCase))
                     {
-                        bytes.Add(byte.Parse(components[j], NumberStyles.HexNumber));
+                        string parameter = trimmedParameters.Split(',')[0].ToLower();
+
+                        bool boolean = bool.Parse(parameter);
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.BOOL, Value = boolean ? BitConverter.GetBytes(1).Reverse().ToArray() : BitConverter.GetBytes(0).Reverse().ToArray() });
+                        i += parameter.Length + 2;
+                        continue;
                     }
 
-                    Parameters.Add(new() { Type = (ScriptCommand.ParameterType)typeCode, Value = bytes.ToArray() });
-                    i += parameter.Length + 2;
-                    continue;
-                }
+                    // Is it a color?
+                    if (trimmedParameters.StartsWith("color", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string parameter = trimmedParameters.Split(',')[0].ToLower();
+                        string[] components = parameter.Split(' ');
 
-                // It has to be some sort of int; try to see if it's an unknown kind
-                if (int.TryParse(trimmedParameters[0..2], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int type))
+                        int color = int.Parse(components[2], NumberStyles.HexNumber);
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.COLOR, Value = CalculateControlStructure(components[1], $"{color}", objects) });
+                        i += parameter.Length + 2;
+                        continue;
+                    }
+
+                    // Is it a character?
+                    if (trimmedParameters.StartsWith("Character[", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string characterName = trimmedParameters.Split(',')[0][10..^1].ToUpper();
+                        int characterEntity = GetCharacterEntity(characterName);
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.CHARACTER, Value = CalculateControlStructure("lit", $"{characterEntity}", objects) });
+                        i += characterName.Length + 12;
+                        continue;
+                    }
+
+                    // Is it a Vector3?
+                    if (trimmedParameters.StartsWith("Vector3(", StringComparison.OrdinalIgnoreCase))
+                    {
+                        List<byte> bytes = new();
+                        string[] vectorComponents = trimmedParameters[8..].Split(')')[0].Split(',');
+                        foreach (string vectorComponent in vectorComponents)
+                        {
+                            string trimmedVectorComponent = vectorComponent.Trim();
+                            string[] parts = trimmedVectorComponent.Split(' ');
+                            bytes.AddRange(CalculateControlStructure(parts[0], parts[1], objects));
+                        }
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR3, Value = bytes.ToArray() });
+                        i += vectorComponents.Sum(c => c.Length) + 11;
+                        continue;
+                    }
+
+                    // Is it a var index?
+                    if (trimmedParameters.StartsWith('$'))
+                    {
+                        string scriptObject = trimmedParameters.Split(',')[0][1..].ToUpper();
+
+                        if (!objects.Contains(scriptObject))
+                        {
+                            objects.Add(scriptObject);
+                        }
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VARINDEX, Value = BitConverter.GetBytes((short)objects.IndexOf(scriptObject)).Reverse().ToArray() });
+                        i += scriptObject.Length + 2;
+                        continue;
+                    }
+
+                    // Is it an int array?
+                    if (trimmedParameters.StartsWith('['))
+                    {
+                        List<byte> bytes = new();
+                        string[] arrayStrings = trimmedParameters[1..].Split(']')[0].Split(',');
+                        bytes.AddRange(BitConverter.GetBytes(arrayStrings.Length).Reverse());
+                        foreach (string arrayString in arrayStrings)
+                        {
+                            string trimmedArrayString = arrayString.Trim();
+                            string[] parts = trimmedArrayString.Split(' ');
+                            bytes.AddRange(CalculateControlStructure(parts[0], parts[1], objects));
+                        }
+
+                        i += arrayStrings.Sum(a => a.Length) + 4;
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.INTARRAY, Value = bytes.ToArray() });
+                    }
+
+                    // Is it unknown?
+                    if (trimmedParameters.StartsWith("UNKNOWN", StringComparison.OrdinalIgnoreCase))
+                    {
+                        List<byte> bytes = new();
+                        string parameter = trimmedParameters.Split(',')[0];
+                        int typeCode = int.Parse(parameter[7..9], NumberStyles.HexNumber);
+                        string[] components = parameter.Split(' ');
+
+                        for (int j = 1; j < components.Length; j++)
+                        {
+                            bytes.Add(byte.Parse(components[j], NumberStyles.HexNumber));
+                        }
+
+                        Parameters.Add(new() { Type = (ScriptCommand.ParameterType)typeCode, Value = bytes.ToArray() });
+                        i += parameter.Length + 2;
+                        continue;
+                    }
+
+                    // It has to be some sort of int; try to see if it's an unknown kind
+                    if (int.TryParse(trimmedParameters[0..2], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int type))
+                    {
+                        string[] parameter = trimmedParameters[2..].Split(',')[0].Split(' ');
+
+                        Parameters.Add(new() { Type = (ScriptCommand.ParameterType)type, Value = CalculateControlStructure(parameter[0], parameter[1], objects) });
+                        i += parameter.Sum(p => p.Length) + 4;
+                        continue;
+                    }
+
+                    // It's a regular int
+                    string[] intParams = trimmedParameters.Split(',')[0].Split(' ');
+                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.INT, Value = CalculateControlStructure(intParams[0], intParams[1], objects) });
+                    i += intParams.Sum(p => p.Length) + 2;
+                }
+                catch (Exception e)
                 {
-                    string[] parameter = trimmedParameters[2..].Split(',')[0].Split(' ');
-
-                    Parameters.Add(new() { Type = (ScriptCommand.ParameterType)type, Value = CalculateControlStructure(parameter[0], parameter[1], variables) });
-                    i += parameter.Sum(p => p.Length) + 4;
-                    continue;
+                    Console.WriteLine($"ERROR: Failed to compile line {LineNumber} (command: {Command.Name}): first parameter of '{parameters[i..]}' threw \"{e.Message}\"");
+                    throw;
                 }
-
-                // It's a regular int
-                string[] intParams = trimmedParameters.Split(',')[0].Split(' ');
-                Parameters.Add(new() { Type = ScriptCommand.ParameterType.INT, Value = CalculateControlStructure(intParams[0], intParams[1], variables) });
-                i += intParams.Sum(p => p.Length) + 2;
             }
         }
 
@@ -946,299 +1070,30 @@ namespace HaruhiHeiretsuLib.Strings
                 if (Parameters[i].Type == ScriptCommand.ParameterType.ADDRESS)
                 {
                     int lineNumber = BitConverter.ToInt32(Parameters[i].Value.Reverse().ToArray());
-                    int address = AllOtherInvocations.First(i => i.LineNumber == lineNumber).Address;
+                    int address = AllOtherInvocations.FirstOrDefault(i => i.LineNumber == lineNumber)?.Address ?? -1;
+                    if (address < 0)
+                    {
+                        throw new ArgumentException($"ERROR: Line {LineNumber} (command {Command.Name}) attempting to resolve address to line {lineNumber} when no such line exists.");
+                    }
                     Parameters[i] = new Parameter { Type = Parameters[i].Type, Value = BitConverter.GetBytes(address).Reverse().ToArray() };
+                    resolvedAddress = true;
+                }
+                else if (Parameters[i].Type == ScriptCommand.ParameterType.INDEXEDADDRESS)
+                {
+                    List<byte> parameterBytes = new(Parameters[i].Value);
+                    int lineNumber = BitConverter.ToInt32(parameterBytes.Take(4).Reverse().ToArray());
+                    int address = AllOtherInvocations.FirstOrDefault(i => i.LineNumber == lineNumber)?.Address ?? -1;
+                    if (address < 0)
+                    {
+                        throw new ArgumentException($"ERROR: Line {LineNumber} (command {Command.Name}) attempting to resolve address to line {lineNumber} when no such line exists.");
+                    }
+                    parameterBytes.RemoveRange(0, 4);
+                    parameterBytes.InsertRange(0, BitConverter.GetBytes(address).Reverse());
+                    Parameters[i] = new Parameter { Type = Parameters[i].Type, Value = parameterBytes.ToArray() };
                     resolvedAddress = true;
                 }
             }
             return resolvedAddress;
-        }
-
-        public string DoADifferentThing()
-        {
-            string invocation = Command.Name;
-            if (CharacterEntity >= 0)
-            {
-                invocation += $"<{GetCharacter(CharacterEntity)}>";
-            }
-            invocation += "(";
-            switch (Command.Name)
-            {
-                case "FREE":
-                    bool freeArgumentUsed = false;
-                    int free19IntPos = GetParameterPosition(ScriptCommand.ParameterType.INT19, 0);
-                    if (free19IntPos >= 0)
-                    {
-                        invocation += $"19{CalculateIntParameter(Helpers.GetIntFromByteArray(Parameters[free19IntPos].Value, 0), Helpers.GetIntFromByteArray(Parameters[free19IntPos].Value, 1))}";
-                        freeArgumentUsed = true;
-                    }
-                    int free06IntPos = GetParameterPosition(ScriptCommand.ParameterType.INT06, 0);
-                    if (free06IntPos >= 0)
-                    {
-                        if (freeArgumentUsed)
-                        {
-                            invocation += ", ";
-                        }
-                        invocation += $"06{CalculateIntParameter(Helpers.GetIntFromByteArray(Parameters[free06IntPos].Value, 0), Helpers.GetIntFromByteArray(Parameters[free06IntPos].Value, 1))}";
-                    }
-                    break;
-                case "EV_MODE":
-                    invocation += ParseBoolean(Parameters[GetParameterPosition(ScriptCommand.ParameterType.BOOL, 0)].Value);
-                    for (int i = 0; ; i++)
-                    {
-                        int pos = GetParameterPosition(ScriptCommand.ParameterType.INT19, i);
-                        if (pos < 0)
-                        {
-                            break;
-                        }
-
-                        byte[] data = Parameters[pos].Value;
-                        invocation += $", 19{CalculateIntParameter(Helpers.GetIntFromByteArray(data, 0), Helpers.GetIntFromByteArray(data, 1))}";
-                    }
-                    break;
-                case "SCENE_SET":
-                    var sceneSetFirstInt = Parameters[GetParameterPosition(ScriptCommand.ParameterType.INT, 0)];
-                    var sceneSetSecondInt = Parameters[GetParameterPosition(ScriptCommand.ParameterType.INT, 1)];
-                    string firstFlag = CalculateIntParameter(Helpers.GetIntFromByteArray(sceneSetFirstInt.Value, 0), Helpers.GetIntFromByteArray(sceneSetFirstInt.Value, 1));
-                    string secondFlag = CalculateIntParameter(Helpers.GetIntFromByteArray(sceneSetSecondInt.Value, 0), Helpers.GetIntFromByteArray(sceneSetSecondInt.Value, 1));
-                    invocation += $"{firstFlag}, {secondFlag}";
-                    break;
-                case "WAIT":
-                    int waitFirstPosition = GetParameterPosition(ScriptCommand.ParameterType.TIMESPAN, 0);
-                    if (waitFirstPosition >= 0)
-                    {
-                        invocation += ParseTime(Parameters[waitFirstPosition].Value);
-                    }
-                    break;
-                case "JUMP":
-                    invocation += $"{AllOtherInvocations.First(i => i.Address == Helpers.GetIntFromByteArray(Parameters[GetParameterPosition(ScriptCommand.ParameterType.ADDRESS, 0)].Value, 0)).LineNumber}";
-                    int jumpConditionPos = GetParameterPosition(ScriptCommand.ParameterType.CONDITIONAL, 0);
-                    if (jumpConditionPos >= 0)
-                    {
-                        invocation += ParseConditional(Parameters[jumpConditionPos].Value);
-                    }
-                    break;
-                case "SET":
-                    var setFirstInt = Parameters[GetParameterPosition(ScriptCommand.ParameterType.INT, 0)];
-                    var setSecondInt = Parameters[GetParameterPosition(ScriptCommand.ParameterType.INT, 1)];
-                    string value = CalculateIntParameter(Helpers.GetIntFromByteArray(setSecondInt.Value, 0), Helpers.GetIntFromByteArray(setSecondInt.Value, 1));
-                    int setCommandCode = Helpers.GetIntFromByteArray(setFirstInt.Value, 0);
-                    int setVariableIndex = Helpers.GetIntFromByteArray(setFirstInt.Value, 1);
-
-                    if (setCommandCode == 0x302 && setVariableIndex >= 0x1303 && setVariableIndex <= 0x1403)
-                    {
-                        invocation += $"memd {setVariableIndex}, {value}";
-                    }
-                    else if (setCommandCode == 0x304)
-                    {
-                        invocation += $"var {ScriptVariables[setVariableIndex]}, {value}";
-                    }
-                    else
-                    {
-                        invocation += $"Unknown";
-                    }
-                    break;
-                case "LOG":
-                case "MW":
-                case "UI_DATEPLACE":
-                case "SET_EAR":
-                case "MENU_LOCK":
-                case "SMENU_LOCK":
-                case "POINT_INVALID":
-                case "SET_DV":
-                case "UI_PLACE":
-                    invocation += ParseBoolean(Parameters[GetParameterPosition(ScriptCommand.ParameterType.BOOL, 0)].Value);
-                    break;
-                case "FI":
-                    invocation += ParseTime(Parameters[GetParameterPosition(ScriptCommand.ParameterType.TIMESPAN, 0)].Value);
-                    for (int i = 0; ; i++)
-                    {
-                        int pos = GetParameterPosition(ScriptCommand.ParameterType.INT19, i);
-                        if (pos < 0)
-                        {
-                            break;
-                        }
-
-                        byte[] data = Parameters[pos].Value;
-                        invocation += $", 19{CalculateIntParameter(Helpers.GetIntFromByteArray(data, 0), Helpers.GetIntFromByteArray(data, 1))}";
-                    }
-                    break;
-                case "TOPIC_GET":
-                    invocation += ScriptVariables[BitConverter.ToInt16(Parameters[GetParameterPosition(ScriptCommand.ParameterType.VARINDEX, 0)].Value.Reverse().ToArray())];
-                    var topicGetBoolLoc = GetParameterPosition(ScriptCommand.ParameterType.BOOL, 0);
-                    if (topicGetBoolLoc >= 0)
-                    {
-                        invocation += $", {ParseBoolean(Parameters[topicGetBoolLoc].Value)}";
-                    }
-                    var topicGet19IntLoc = GetParameterPosition(ScriptCommand.ParameterType.INT19, 0);
-                    if (topicGet19IntLoc >= 0)
-                    {
-                        invocation += $", 19{CalculateIntParameter(Helpers.GetIntFromByteArray(Parameters[topicGet19IntLoc].Value, 0), Helpers.GetIntFromByteArray(Parameters[topicGet19IntLoc].Value, 1))}";
-                    }
-                    var topicGetIntLoc = GetParameterPosition(ScriptCommand.ParameterType.INT, 0);
-                    if (topicGetIntLoc >= 0)
-                    {
-                        invocation += $", 19{CalculateIntParameter(Helpers.GetIntFromByteArray(Parameters[topicGetIntLoc].Value, 0), Helpers.GetIntFromByteArray(Parameters[topicGetIntLoc].Value, 1))}";
-                    }
-                    break;
-                case "CAM_SET":
-                    int camSetIntLoc = GetParameterPosition(ScriptCommand.ParameterType.INT, 0);
-                    invocation += $"{CalculateIntParameter(Helpers.GetIntFromByteArray(Parameters[camSetIntLoc].Value, 0), Helpers.GetIntFromByteArray(Parameters[camSetIntLoc].Value, 1))}";
-                    int camSetCharacterLoc = GetParameterPosition(ScriptCommand.ParameterType.CHARACTER, 0);
-                    invocation += $", Character[{GetCharacter(CalculateIntParameter(Helpers.GetIntFromByteArray(Parameters[camSetCharacterLoc].Value, 0), Helpers.GetIntFromByteArray(Parameters[camSetCharacterLoc].Value, 1)))}]";
-                    break;
-                case "EV_START":
-                    var evStartFirst = Parameters[GetParameterPosition(ScriptCommand.ParameterType.INT, 0)].Value;
-                    string eventIndex = CalculateIntParameter(Helpers.GetIntFromByteArray(evStartFirst, 0), Helpers.GetIntFromByteArray(evStartFirst, 1));
-                    invocation += eventIndex;
-                    var evStartSecond = Parameters.ElementAtOrDefault(GetParameterPosition(ScriptCommand.ParameterType.INTARRAY, 0)).Value;
-                    if (evStartSecond is not null)
-                    {
-                        List<string> values = new();
-                        int numValues = Helpers.GetIntFromByteArray(evStartSecond, 0);
-                        for (int i = 1; i <= numValues; i++)
-                        {
-                            values.Add(CalculateIntParameter(Helpers.GetIntFromByteArray(evStartSecond, i * 2 - 1), Helpers.GetIntFromByteArray(evStartSecond, i * 2)));
-                        }
-                        invocation += $", [{string.Join(", ", values)}]";
-                    }
-                    for (int i = 1; ; i++)
-                    {
-                        int pos = GetParameterPosition(ScriptCommand.ParameterType.INT, i);
-                        if (pos < 0)
-                        {
-                            break;
-                        }
-
-                        byte[] data = Parameters[pos].Value;
-                        invocation += $", {CalculateIntParameter(Helpers.GetIntFromByteArray(data, 0), Helpers.GetIntFromByteArray(data, 1))}";
-                    }
-                    break;
-                case "APPEAR":
-                    int appearBoolPos = GetParameterPosition(ScriptCommand.ParameterType.BOOL, 0);
-                    if (appearBoolPos >= 0)
-                    {
-                        invocation += ParseBoolean(Parameters[appearBoolPos].Value);
-                    }
-                    break;
-                case "GAZE":
-                    bool parameterAdded = false;
-                    int gazeBoolLocation = GetParameterPosition(ScriptCommand.ParameterType.BOOL, 0);
-                    if (gazeBoolLocation >= 0)
-                    {
-                        invocation += ParseBoolean(Parameters[gazeBoolLocation].Value);
-                        parameterAdded = true;
-                    }
-                    int gazeCharacterLocation = GetParameterPosition(ScriptCommand.ParameterType.CHARACTER, 0);
-                    if (gazeCharacterLocation >= 0)
-                    {
-                        if (parameterAdded)
-                        {
-                            invocation += ", ";
-                        }
-                        invocation += GetCharacter(CalculateIntParameter(Helpers.GetIntFromByteArray(Parameters[gazeCharacterLocation].Value, 0), Helpers.GetIntFromByteArray(Parameters[gazeCharacterLocation].Value, 1)));
-                        parameterAdded = true;
-                    }
-                    int gazeVectorLocation = GetParameterPosition(ScriptCommand.ParameterType.VECTOR3, 0);
-                    if (gazeVectorLocation >= 0)
-                    {
-                        if (parameterAdded)
-                        {
-                            invocation += ", ";
-                        }
-                        invocation += ParseVector(Parameters[gazeVectorLocation].Value);
-                        parameterAdded = true;
-                    }
-                    int gazeInt10Location = GetParameterPosition(ScriptCommand.ParameterType.INT10, 0);
-                    if (gazeInt10Location >= 0)
-                    {
-                        if (parameterAdded)
-                        {
-                            invocation += ", ";
-                        }
-                        invocation += ParseInt10(Parameters[gazeInt10Location].Value);
-                        parameterAdded = true;
-                    }
-                    for (int i = 0; ; i++)
-                    {
-                        int pos = GetParameterPosition(ScriptCommand.ParameterType.INT, i);
-                        if (pos < 0)
-                        {
-                            break;
-                        }
-
-                        if (parameterAdded)
-                        {
-                            invocation += ", ";
-                        }
-
-                        byte[] data = Parameters[pos].Value;
-                        invocation += $"{CalculateIntParameter(Helpers.GetIntFromByteArray(data, 0), Helpers.GetIntFromByteArray(data, 1))}";
-                        parameterAdded = true;
-                    }
-                    int gazeInt0ELocation = GetParameterPosition(ScriptCommand.ParameterType.INT0E, 0);
-                    if (gazeInt0ELocation >= 0)
-                    {
-                        if (parameterAdded)
-                        {
-                            invocation += ", ";
-                        }
-
-                        invocation += ParseInt0E(Parameters[gazeInt0ELocation].Value);
-                    }
-                    break;
-                case "TURN":
-                    bool turnParamExists = false;
-                    int turnInt08 = GetParameterPosition(ScriptCommand.ParameterType.INT08, 0);
-                    if (turnInt08 >= 0)
-                    {
-                        turnParamExists = true;
-                        invocation += $"08{CalculateIntParameter(Helpers.GetIntFromByteArray(Parameters[turnInt08].Value, 0), Helpers.GetIntFromByteArray(Parameters[turnInt08].Value, 1))}";
-                    }
-                    int turnCharacter = GetParameterPosition(ScriptCommand.ParameterType.CHARACTER, 0);
-                    if (turnCharacter >= 0)
-                    {
-                        if (turnParamExists)
-                        {
-                            invocation += ", ";
-                        }
-                        turnParamExists = true;
-                        invocation += $"Character[{GetCharacter(CalculateIntParameter(Helpers.GetIntFromByteArray(Parameters[turnCharacter].Value, 0), Helpers.GetIntFromByteArray(Parameters[turnCharacter].Value, 1)))}]";
-                    }
-                    int turnVector = GetParameterPosition(ScriptCommand.ParameterType.VECTOR3, 0);
-                    if (turnVector >= 0)
-                    {
-                        if (turnParamExists)
-                        {
-                            invocation += ", ";
-                        }
-                        turnParamExists = true;
-                        invocation += ParseVector(Parameters[turnVector].Value);
-                    }
-                    int turnInt10 = GetParameterPosition(ScriptCommand.ParameterType.INT10, 0);
-                    if (turnInt10 >= 0)
-                    {
-                        if (turnParamExists)
-                        {
-                            invocation += ", ";
-                        }
-                        turnParamExists = true;
-                        invocation += ParseInt10(Parameters[turnInt10].Value);
-                    }
-                    int turnInt = GetParameterPosition(ScriptCommand.ParameterType.INT, 0);
-                    if (turnInt >= 0)
-                    {
-                        if (turnParamExists)
-                        {
-                            invocation += ", ";
-                        }
-                        invocation += $"{CalculateIntParameter(Helpers.GetIntFromByteArray(Parameters[turnInt].Value, 0), Helpers.GetIntFromByteArray(Parameters[turnInt].Value, 1))}";
-                    }
-                    break;
-                default:
-                    return "";
-            }
-            return $"{invocation})";
         }
 
         public string ParseParameter(Parameter parameter)
@@ -1246,21 +1101,27 @@ namespace HaruhiHeiretsuLib.Strings
             switch (parameter.Type)
             {
                 case ScriptCommand.ParameterType.ADDRESS:
-                    return $"{AllOtherInvocations.First(i => i.Address == Helpers.GetIntFromByteArray(Parameters[GetParameterPosition(ScriptCommand.ParameterType.ADDRESS, 0)].Value, 0)).LineNumber}";
+                    return ParseAddress(parameter.Value);
                 case ScriptCommand.ParameterType.DIALOGUE:
-                    return $"\"{ScriptVariables[BitConverter.ToInt16(parameter.Value.Reverse().ToArray())].Replace("\n", "\\n")}\"";
+                    return $"\"{ScriptObjects[BitConverter.ToInt16(parameter.Value.Reverse().ToArray())].Replace("\n", "\\n")}\"";
                 case ScriptCommand.ParameterType.CONDITIONAL:
                     return ParseConditional(parameter.Value);
                 case ScriptCommand.ParameterType.TIMESPAN:
                     return ParseTime(parameter.Value);
+                case ScriptCommand.ParameterType.VECTOR2:
+                    return ParseVector2(parameter.Value);
                 case ScriptCommand.ParameterType.INT:
                     return CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1));
-                case ScriptCommand.ParameterType.INT06:
-                    return $"06{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}";
+                case ScriptCommand.ParameterType.TRANSITION:
+                    return ParseTransition(parameter.Value);
+                case ScriptCommand.ParameterType.INDEXEDADDRESS:
+                    return ParseIndexedAddress(parameter.Value);
                 case ScriptCommand.ParameterType.INT08:
                     return $"08{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}";
                 case ScriptCommand.ParameterType.BOOL:
                     return ParseBoolean(parameter.Value);
+                case ScriptCommand.ParameterType.COLOR:
+                    return ParseColor(CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1)));
                 case ScriptCommand.ParameterType.CHARACTER:
                     return GetCharacter(CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1)));
                 case ScriptCommand.ParameterType.INT0E:
@@ -1268,9 +1129,9 @@ namespace HaruhiHeiretsuLib.Strings
                 case ScriptCommand.ParameterType.INT10:
                     return $"10{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}";
                 case ScriptCommand.ParameterType.VECTOR3:
-                    return ParseVector(parameter.Value);
+                    return ParseVector3(parameter.Value);
                 case ScriptCommand.ParameterType.VARINDEX:
-                    return $"${ScriptVariables[BitConverter.ToInt16(parameter.Value.Reverse().ToArray())]}";
+                    return $"${ScriptObjects[BitConverter.ToInt16(parameter.Value.Reverse().ToArray())]}";
                 case ScriptCommand.ParameterType.INTARRAY:
                     List<string> values = new();
                     int numValues = Helpers.GetIntFromByteArray(parameter.Value, 0);
@@ -1301,13 +1162,13 @@ namespace HaruhiHeiretsuLib.Strings
                 case 0x303:
                     return $"memm {valueCode}";
                 case 0x304:
-                    return $"var {ScriptVariables[valueCode]}";
+                    return $"var {ScriptObjects[valueCode]}";
                 default:
                     return "-1";
             }
         }
 
-        public byte[] CalculateControlStructure(string controlCode, string value, List<string> variables)
+        public byte[] CalculateControlStructure(string controlCode, string value, List<string> objects)
         {
             List<byte> bytes = new();
 
@@ -1327,11 +1188,11 @@ namespace HaruhiHeiretsuLib.Strings
                     break;
                 case "var":
                     bytes.AddRange(BitConverter.GetBytes(0x304).Reverse());
-                    if (!variables.Contains(value))
+                    if (!objects.Contains(value))
                     {
-                        variables.Add(value);
+                        objects.Add(value);
                     }
-                    bytes.AddRange(BitConverter.GetBytes(variables.IndexOf(value)).Reverse());
+                    bytes.AddRange(BitConverter.GetBytes(objects.IndexOf(value)).Reverse());
                     break;
             }
 
@@ -1368,6 +1229,19 @@ namespace HaruhiHeiretsuLib.Strings
             }
         }
 
+        public static string ParseColor(string colorCode)
+        {
+            if (colorCode.StartsWith("lit"))
+            {
+                int color = int.Parse(colorCode[4..]);
+                return $"color lit {color:X8}";
+            }
+            else
+            {
+                return $"color {colorCode}";
+            }
+        }
+
         public static short GetCharacterEntity(string character)
         {
             if (character.StartsWith("UNKNOWN"))
@@ -1378,6 +1252,11 @@ namespace HaruhiHeiretsuLib.Strings
             {
                 return ScriptCommand.CharacterCodeToCharacterMap.First(c => c.Value == character).Key;
             }
+        }
+
+        private string ParseAddress(byte[] type00Parameter)
+        {
+            return $"{AllOtherInvocations.First(i => i.Address == Helpers.GetIntFromByteArray(type00Parameter, 0)).LineNumber}";
         }
 
         public string ParseConditional(byte[] conditionalData)
@@ -1449,17 +1328,49 @@ namespace HaruhiHeiretsuLib.Strings
             return param;
         }
 
-        private string ParseInt0E(byte[] type0EParameter)
+        private string ParseTransition(byte[] type06Parameter)
         {
-            return $"0E{CalculateIntParameter(Helpers.GetIntFromByteArray(type0EParameter, 0), Helpers.GetIntFromByteArray(type0EParameter, 1))}";
+            string parameter = CalculateIntParameter(Helpers.GetIntFromByteArray(type06Parameter, 0), Helpers.GetIntFromByteArray(type06Parameter, 1));
+            if (parameter.StartsWith("lit "))
+            {
+                int parsedInt = int.Parse(parameter[4..]);
+                string transition = ScriptCommand.TransitionToCodeMap.FirstOrDefault(t => t.Value == parsedInt).Key;
+                if (transition is not null)
+                {
+                    return $"Transition[{transition}]";
+                }
+                else
+                {
+                    return $"Transition[{parameter}]";
+                }
+            }
+            else
+            {
+                return $"Transition[{parameter}]";
+            }
         }
 
-        private string ParseInt10(byte[] type10Parameter)
+        private string ParseIndexedAddress(byte[] type07Parameter)
         {
-            return $"10{CalculateIntParameter(Helpers.GetIntFromByteArray(type10Parameter, 0), Helpers.GetIntFromByteArray(type10Parameter, 1))}";
+            string lineNumber = ParseAddress(type07Parameter[0..4]);
+            string alwaysUse = Helpers.GetIntFromByteArray(type07Parameter, 1) != 0 ? "TRUE" : "FALSE";
+            string index = CalculateIntParameter(Helpers.GetIntFromByteArray(type07Parameter, 2), Helpers.GetIntFromByteArray(type07Parameter, 3));
+
+            return $"({lineNumber}, {alwaysUse}, {index})";
         }
 
-        private string ParseVector(byte[] type14Parameter)
+        private string ParseVector2(byte[] type04Parameter)
+        {
+            string[] coords = new string[]
+            {
+                CalculateIntParameter(Helpers.GetIntFromByteArray(type04Parameter, 0), Helpers.GetIntFromByteArray(type04Parameter, 1)),
+                CalculateIntParameter(Helpers.GetIntFromByteArray(type04Parameter, 2), Helpers.GetIntFromByteArray(type04Parameter, 3)),
+            };
+
+            return $"Vector2({coords[0]}, {coords[1]})";
+        }
+
+        private string ParseVector3(byte[] type14Parameter)
         {
             string[] coords = new string[]
             {
@@ -1469,24 +1380,6 @@ namespace HaruhiHeiretsuLib.Strings
             };
 
             return $"Vector3({coords[0]}, {coords[1]}, {coords[2]})";
-        }
-
-        private int GetParameterPosition(ScriptCommand.ParameterType parameterType, int paramNum)
-        {
-            int currentParam = 0;
-            for (int i = 0; i < Parameters.Count; i++)
-            {
-                if (Parameters[i].Type == parameterType)
-                {
-                    if (currentParam == paramNum)
-                    {
-                        return i;
-                    }
-
-                    currentParam++;
-                }
-            }
-            return -1;
         }
     }
 
