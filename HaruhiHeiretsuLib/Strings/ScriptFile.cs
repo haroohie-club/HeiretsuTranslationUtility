@@ -254,7 +254,7 @@ namespace HaruhiHeiretsuLib.Strings
         public void Compile(string code)
         {
             List<byte> bytes = new();
-            Dictionary<string, int> labels = new();
+            List<(string, int)> labels = new();
             string[] lines = code.Split('\n');
             string[] info = lines[0].Split(' ');
             InternalName = info[0];
@@ -676,7 +676,7 @@ namespace HaruhiHeiretsuLib.Strings
             }
         }
 
-        public int ParseBlock(int lineNumber, string[] lines, List<ScriptCommand> allCommands, List<string> objects, Dictionary<string, int> labels)
+        public int ParseBlock(int lineNumber, string[] lines, List<ScriptCommand> allCommands, List<string> objects, List<(string, int)> labels)
         {
             Regex nameRegex = new(@"== (?<name>.+) ==");
             Match nameMatch = nameRegex.Match(lines[0]);
@@ -744,7 +744,7 @@ namespace HaruhiHeiretsuLib.Strings
             Address = address;
         }
 
-        public ScriptCommandInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, Dictionary<string, int> labels)
+        public ScriptCommandInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, List<(string, int)> labels)
         {
             ParseInvocation(invocation, lineNumber, allCommands, objects, labels);
         }
@@ -806,7 +806,7 @@ namespace HaruhiHeiretsuLib.Strings
             return $"{invocation})";
         }
 
-        public void ParseInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, Dictionary<string, int> labels)
+        public void ParseInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, List<(string label, int lineNumber)> labels)
         {
             Regex labelRegex = new(@"^{(?<label>[\w\d]+)}");
 
@@ -815,7 +815,14 @@ namespace HaruhiHeiretsuLib.Strings
             {
                 Label = lineLabelMatch.Groups["label"].Value;
                 invocation = invocation[lineLabelMatch.Length..];
-                labels.Add(Label, lineNumber);
+                if (!labels.Any(l => l.label == Label))
+                {
+                    labels.Add((Label, lineNumber));
+                }
+                else
+                {
+                    labels[labels.IndexOf(labels.First(l => l.label == Label))] = (Label, lineNumber); // this is hell, i'm in hell
+                }
             }
 
             Match match = Regex.Match(invocation, @"(?<command>[A-Z\d_]+)(?:<(?<character>[?A-Z\d_]+)>)?\((?<parameters>.+)?\)");
@@ -862,7 +869,7 @@ namespace HaruhiHeiretsuLib.Strings
                         if (int.TryParse(parameter, out int varLineNumber))
                         {
                             List<byte> bytes = new(new byte[] { 0 });
-                            bytes.AddRange(BitConverter.GetBytes(varLineNumber).Reverse());
+                            bytes.AddRange(BitConverter.GetBytes(varLineNumber).Reverse().Skip(1)); // skip the first byte to keep us at four bytes; this makes us a 24-bit integer :D
                             Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = bytes.ToArray() });
                             i += parameter.Length + 2;
                             continue;
@@ -871,7 +878,11 @@ namespace HaruhiHeiretsuLib.Strings
                     else if (labelMatch.Success)
                     {
                         List<byte> bytes = new(new byte[] { 1 });
-                        bytes.AddRange(Encoding.ASCII.GetBytes(labelMatch.Groups["label"].Value));
+                        if (!labels.Any(l => l.label == labelMatch.Groups["label"].Value))
+                        {
+                            labels.Add((labelMatch.Groups["label"].Value, 0));
+                        }
+                        bytes.AddRange(BitConverter.GetBytes(labels.IndexOf(labels.First(l => l.label == labelMatch.Groups["label"].Value))).Reverse().Skip(1)); // another 24-bit integer
                         Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = bytes.ToArray() });
                         i += labelMatch.Length + 1;
                         continue;
@@ -986,22 +997,29 @@ namespace HaruhiHeiretsuLib.Strings
                         List<byte> bytes = new();
                         string[] components = trimmedParameters.Split(')')[0].Split(',');
 
-                        Match indexedLabelMatch = labelRegex.Match(components[0]);
+                        Match indexedLabelMatch = labelRegex.Match(components[0][1..]);
                         if (indexedLabelMatch.Success)
                         {
                             bytes.Add(1);
-                            bytes.AddRange(Encoding.ASCII.GetBytes(indexedLabelMatch.Groups["label"].Value));
-                            bytes.Add(0);
+                            if (!labels.Any(l => l.label == indexedLabelMatch.Groups["label"].Value))
+                            {
+                                labels.Add((indexedLabelMatch.Groups["label"].Value, 0));
+                            }
+                            bytes.AddRange(BitConverter.GetBytes(labels.IndexOf(labels.First(l => l.label == indexedLabelMatch.Groups["label"].Value))).Reverse().Skip(1));
                         }
                         else
                         {
                             bytes.Add(0);
-                            bytes.AddRange(BitConverter.GetBytes(int.Parse(components[0].Trim())).Reverse());
+                            bytes.AddRange(BitConverter.GetBytes(int.Parse(components[0].Trim())).Reverse().Skip(1));
                         }
 
                         bytes.AddRange(components[1].Trim() == "TRUE" ? new byte[] { 0x01, 0x00, 0x00, 0x00 } : new byte[4]); // weird little-endian looking thing is on purpose; matches game
                         string[] controlCodeComponents = components[2].Trim().Split(' ');
                         bytes.AddRange(CalculateControlStructure(controlCodeComponents[0], controlCodeComponents[1], objects));
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.INDEXEDADDRESS, Value = bytes.ToArray() });
+                        i += trimmedParameters.Split(')')[0].Length + 2;
+                        continue;
                     }
 
                     // Is it a boolean?
@@ -1154,7 +1172,7 @@ namespace HaruhiHeiretsuLib.Strings
             }
         }
 
-        public bool ResolveAddresses(Dictionary<string, int> labels)
+        public bool ResolveAddresses(List<(string label, int lineNumber)> labels)
         {
             bool resolvedAddress = false;
             for (int i = 0; i < Parameters.Count; i++)
@@ -1164,11 +1182,15 @@ namespace HaruhiHeiretsuLib.Strings
                     int lineNumber;
                     if (Parameters[i].Value[0] == 0x00)
                     {
-                        lineNumber = BitConverter.ToInt32(Parameters[i].Value[1..].Reverse().ToArray());
+                        List<byte> tempBytes = new(new byte[] { 0 });
+                        tempBytes.AddRange(Parameters[i].Value[1..]);
+                        lineNumber = BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray()); // why dear god did you do this? bc roslyn won't let me do it w/ List.Reverse() existing
                     }
                     else
                     {
-                        lineNumber = labels[Encoding.ASCII.GetString(Parameters[i].Value[1..])];
+                        List<byte> tempBytes = new(new byte[] { 0 });
+                        tempBytes.AddRange(Parameters[i].Value[1..4]);
+                        lineNumber = labels[BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray())].lineNumber;
                     }
                     int address = AllOtherInvocations.FirstOrDefault(i => i.LineNumber == lineNumber)?.Address ?? -1;
                     if (address < 0)
@@ -1181,25 +1203,25 @@ namespace HaruhiHeiretsuLib.Strings
                 else if (Parameters[i].Type == ScriptCommand.ParameterType.INDEXEDADDRESS)
                 {
                     List<byte> parameterBytes = new(Parameters[i].Value);
-                    int length;
                     int lineNumber;
                     if (Parameters[i].Value[0] == 0x00)
                     {
-                        lineNumber = BitConverter.ToInt32(Parameters[i].Value.Skip(1).Take(4).Reverse().ToArray());
-                        length = 4;
+                        List<byte> tempBytes = new(new byte[] { 0 });
+                        tempBytes.AddRange(Parameters[i].Value[1..4]);
+                        lineNumber = BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray());
                     }
                     else
                     {
-                        string label = Encoding.ASCII.GetString(Parameters[i].Value.Skip(1).TakeWhile(b => b != 0x00).ToArray());
-                        lineNumber = labels[label];
-                        length = label.Length + 1;
+                        List<byte> tempBytes = new(new byte[] { 0 });
+                        tempBytes.AddRange(Parameters[i].Value[1..4]);
+                        lineNumber = labels[BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray())].lineNumber;
                     }
                     int address = AllOtherInvocations.FirstOrDefault(i => i.LineNumber == lineNumber)?.Address ?? -1;
                     if (address < 0)
                     {
                         throw new ArgumentException($"ERROR: Line {LineNumber} (command {Command.Name}) attempting to resolve address to line {lineNumber} when no such line exists.");
                     }
-                    parameterBytes.RemoveRange(0, length + 1);
+                    parameterBytes.RemoveRange(0, 4);
                     parameterBytes.InsertRange(0, BitConverter.GetBytes(address).Reverse());
                     Parameters[i] = new Parameter { Type = Parameters[i].Type, Value = parameterBytes.ToArray() };
                     resolvedAddress = true;
