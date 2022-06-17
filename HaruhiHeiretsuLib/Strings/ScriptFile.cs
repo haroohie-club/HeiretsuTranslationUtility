@@ -999,7 +999,7 @@ namespace HaruhiHeiretsuLib.Strings
                             bytes.AddRange(BitConverter.GetBytes(int.Parse(components[0].Trim())).Reverse());
                         }
 
-                        bytes.AddRange(components[1].Trim() == "TRUE" ? new byte[] { 0x01, 0x00, 0x00, 0x00 } : new byte[4]);
+                        bytes.AddRange(components[1].Trim() == "TRUE" ? new byte[] { 0x01, 0x00, 0x00, 0x00 } : new byte[4]); // weird little-endian looking thing is on purpose; matches game
                         string[] controlCodeComponents = components[2].Trim().Split(' ');
                         bytes.AddRange(CalculateControlStructure(controlCodeComponents[0], controlCodeComponents[1], objects));
                     }
