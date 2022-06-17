@@ -21,9 +21,15 @@ namespace HaruhiHeiretsuLib.Graphics
         public int SizePointer { get; set; }
         public int DataPointer { get; set; }
 
-        // Map File Properties
-        public byte[] UnknownMapHeaderInt1 { get; set; }
+        // Layout File Properties
+        public byte[] UnknownLayoutHeaderInt1 { get; set; }
         public List<LayoutComponent> LayoutComponents { get; set; }
+
+        // World Data File Properties
+        public byte[] WorldDataHeader { get; set; }
+        public List<string> WorldDataModelNames { get; set; } = new();
+        public List<byte[]> WorldDataEntries { get; set; } = new();
+        public List<byte[]> WorldDataFooterEntries { get; set; } = new();
 
         public GraphicsFile()
         {
@@ -52,7 +58,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 FileType = GraphicsFileType.LAYOUT;
                 Width = 640;
                 Height = 480;
-                UnknownMapHeaderInt1 = Data.Skip(4).Take(4).ToArray();
+                UnknownLayoutHeaderInt1 = Data.Skip(4).Take(4).ToArray();
                 LayoutComponents = new();
                 for (int i = 8; i < Data.Count - 0x1C; i += 0x1C)
                 {
@@ -75,6 +81,26 @@ namespace HaruhiHeiretsuLib.Graphics
                         GreenTint = Data[i + 0x19],
                         BlueTint = Data[i + 0x18],
                     });
+                }
+            }
+            else if (Data.Take(4).SequenceEqual(new byte[] { 0x1B, 0x2F, 0x5D, 0xBF }))
+            {
+                FileType = GraphicsFileType.WORLD_DATA;
+                WorldDataHeader = Data.Take(0x100).ToArray();
+                for (int i = 0; i < 256; i++)
+                {
+                    byte[] stringData = Data.Skip(i * 0x10 + 0x100).TakeWhile(b => b != 0x00).ToArray();
+                    if (stringData.Length == 0)
+                    {
+                        WorldDataModelNames.Add("");
+                    }
+                    else
+                    {
+                        WorldDataModelNames.Add(Encoding.ASCII.GetString(stringData));
+                    }
+
+                    WorldDataEntries.Add(Data.Skip(i * 0x2C + 0x1100).Take(0x2C).ToArray());
+                    WorldDataFooterEntries.Add(Data.Skip(i * 0x18 + 0x6900).Take(0x18).ToArray());
                 }
             }
             else
@@ -455,6 +481,7 @@ namespace HaruhiHeiretsuLib.Graphics
             LAYOUT,
             SGE,
             TILE_20AF30,
+            WORLD_DATA,
             UNKNOWN
         }
 

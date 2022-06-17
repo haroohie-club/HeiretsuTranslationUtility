@@ -430,8 +430,8 @@ namespace HaruhiHeiretsuEditor
                 else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.LAYOUT)
                 {
                     graphicsEditStackPanel.Background = Brushes.Gray;
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"MAP: {string.Join(' ', selectedFile.UnknownMapHeaderInt1.Select(b => $"{b:X2}"))}", Background = Brushes.White });
-                    MapButton loadButton = new() { Content = "Load Map", Map = selectedFile };
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"LAYOUT: {string.Join(' ', selectedFile.UnknownLayoutHeaderInt1.Select(b => $"{b:X2}"))}", Background = Brushes.White });
+                    MapButton loadButton = new() { Content = "Load Layout", Map = selectedFile };
                     loadButton.Click += LoadButton_Click;
 
                     graphicsEditStackPanel.Children.Add(loadButton);
@@ -500,6 +500,17 @@ namespace HaruhiHeiretsuEditor
                     }
 
                     graphicsEditStackPanel.Children.Add(grid);
+                }
+                else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.WORLD_DATA)
+                {
+                    for (int i = 0; i < 256; i++)
+                    {
+                        StackPanel stackPanel = new() { Orientation = Orientation.Horizontal };
+                        stackPanel.Children.Add(new TextBlock { Text = $"{selectedFile.WorldDataModelNames[i]}: " });
+                        stackPanel.Children.Add(new TextBox { Text = $"{string.Join(' ', selectedFile.WorldDataEntries[i].Select(b => $"{b:X2}"))}" });
+
+                        graphicsEditStackPanel.Children.Add(stackPanel);
+                    }
                 }
             }
         }
