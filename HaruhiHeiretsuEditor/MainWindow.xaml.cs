@@ -289,6 +289,7 @@ namespace HaruhiHeiretsuEditor
                     DialogueTextBox dialogueTextBox = new() { Text = selectedFile.DialogueLines[i].Line, AcceptsReturn = true, StringsFile = selectedFile, DialogueLineIndex = i };
                     dialogueTextBox.TextChanged += DialogueTextBox_TextChanged;
                     dialogueStackPanel.Children.Add(dialogueTextBox);
+                    dialogueStackPanel.Children.Add(new TextBlock { Text = string.Join(", ", selectedFile.DialogueLines[i].Metadata) });
                     scriptEditStackPanel.Children.Add(dialogueStackPanel);
                 }
                 if (selectedFile.GetType() == typeof(ScriptFile))

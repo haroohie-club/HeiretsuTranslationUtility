@@ -5,7 +5,7 @@ using System.IO;
 
 namespace HaruhiHeiretsuTests
 {
-    public class Tests
+    public class ScriptTests
     {
         private const string SCRCOMMAND_FILE = @"inputs\SCRCOMMAND.bin";
 

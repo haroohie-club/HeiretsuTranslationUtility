@@ -89,7 +89,7 @@ namespace HaruhiHeiretsuLib.Strings
         public int Length => Encoding.GetEncoding("Shift-JIS").GetByteCount(Line);
         public int NumPaddingZeroes { get; set; } = 1;
 
-        public List<string> Metadata { get; set; }
+        public List<string> Metadata { get; set; } = new();
 
         public override string ToString()
         {

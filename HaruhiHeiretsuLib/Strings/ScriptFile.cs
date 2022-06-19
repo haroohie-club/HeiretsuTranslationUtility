@@ -52,7 +52,7 @@ namespace HaruhiHeiretsuLib.Strings
 
         public override byte[] GetBytes() => Data.ToArray();
 
-        private string ReadString(IEnumerable<byte> data, int currentPosition, out int newPosition)
+        private static string ReadString(IEnumerable<byte> data, int currentPosition, out int newPosition)
         {
             int stringLength = BitConverter.ToInt32(data.Skip(currentPosition).Take(4).Reverse().ToArray());
             string result = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(currentPosition + 4).Take(stringLength - 1).ToArray());
@@ -111,32 +111,20 @@ namespace HaruhiHeiretsuLib.Strings
                 ScriptCommandBlocks.Add(new(i, endAddress, Data, Objects));
             }
 
-            for (int i = 0; i < ScriptCommandBlocks.Count; i++)
-            {
-                for (int j = 0; j < ScriptCommandBlocks[i].Invocations.Count; j++)
+            DialogueLines = ScriptCommandBlocks
+                .SelectMany(b => b.Invocations.Where(i => i.CommandCode != 0x4B) // TL_ADD (4B) does not have real dialogue, just references
+                .SelectMany(i => i.Parameters.Where(p => p.Type == ScriptCommand.ParameterType.DIALOGUE)
+                .Select(p => new DialogueLine()
                 {
-                    for (int k = 0; k < ScriptCommandBlocks[i].Invocations[j].Parameters.Count; k++)
-                    {
-                        if (ScriptCommandBlocks[i].Invocations[j].Parameters[k].Type == ScriptCommand.ParameterType.DIALOGUE && ScriptCommandBlocks[i].Invocations[j].CommandCode != 0x4B) // TL_ADD (4B) is not real dialogue
-                        {
-                            short index = BitConverter.ToInt16(ScriptCommandBlocks[i].Invocations[j].Parameters[k].Value.Reverse().ToArray());
-                            Speaker speaker = (Speaker)ScriptCommandBlocks[i].Invocations[j].CharacterEntity;
+                    Line = Objects[BitConverter.ToInt16(p.Value.Reverse().ToArray())],
+                    Speaker = i.CommandCode >= 0x2E && i.CommandCode <= 0x31 ? Speaker.CHOICE : (Speaker)i.CharacterEntity
+                }))).ToList();
+        }
 
-                            if (ScriptCommandBlocks[i].Invocations[j].CommandCode >= 0x2E && ScriptCommandBlocks[i].Invocations[j].CommandCode <= 0x31) // between CMNT & SELECT2
-                            {
-                                speaker = Speaker.CHOICE;
-                            }
-
-                            DialogueLines.Add(new()
-                            {
-                                Line = Objects[index],
-                                Speaker =  speaker,
-                            });
-                            ScriptCommandBlocks[i].Invocations[j].Parameters[k].SetDialogueIndex(DialogueLines.Count - 1);
-                        }
-                    }
-                }
-            }
+        private Parameter[] GetDialogueParameters()
+        {
+            return ScriptCommandBlocks.SelectMany(b => b.Invocations.Where(i => i.CommandCode != 0x4B)
+            .SelectMany(i => i.Parameters.Where(p => p.Type == ScriptCommand.ParameterType.DIALOGUE))).ToArray();
         }
 
         public override void EditDialogue(int index, string newLine)
@@ -144,19 +132,8 @@ namespace HaruhiHeiretsuLib.Strings
             DialogueLines[index].Line = newLine;
             Objects.Add(newLine);
 
-            foreach (ScriptCommandBlock commandBlock in ScriptCommandBlocks)
-            {
-                foreach (ScriptCommandInvocation invocation in commandBlock.Invocations)
-                {
-                    foreach (Parameter parameter in invocation.Parameters)
-                    {
-                        if (parameter.DialogueIndex == index)
-                        {
-                            parameter.SetValue(BitConverter.GetBytes((short)(Objects.Count - 1)).Reverse().ToArray());
-                        }
-                    }
-                }
-            }
+            Parameter[] dialogueParams = GetDialogueParameters();
+            dialogueParams[index].Value = BitConverter.GetBytes((short)(Objects.Count - 1)).Reverse().ToArray();
 
             Recompile();
         }
@@ -309,6 +286,86 @@ namespace HaruhiHeiretsuLib.Strings
                         if (string.IsNullOrEmpty(referencedCommand.Label))
                         {
                             referencedCommand.Label = $"label{numLabels++:D3}";
+                        }
+                    }
+                }
+            }
+
+            TagDialogueWithVjumpMetadata();
+        }
+
+        private void TagDialogueWithVjumpMetadata()
+        {
+            Parameter[] dialogueParams = GetDialogueParameters();
+            ScriptCommandInvocation[] allInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToArray();
+            Dictionary<int, int> NumChoicesPerInvocationIndex = new();
+
+            for (int i = 0; i < DialogueLines.Count; i++)
+            {
+                if (DialogueLines[i].Speaker == Speaker.CHOICE)
+                {
+                    int selectIndex = Array.IndexOf(allInvocations, allInvocations.First(v => v.LineNumber == dialogueParams[i].LineNumber));
+                    if (NumChoicesPerInvocationIndex.ContainsKey(selectIndex))
+                    {
+                        NumChoicesPerInvocationIndex[selectIndex]++;
+                    }
+                    else
+                    {
+
+                        if (!allInvocations[selectIndex].Command.Name.Contains('2'))
+                        {
+                            NumChoicesPerInvocationIndex.Add(selectIndex, 0);
+                        }
+                        else
+                        {
+                            NumChoicesPerInvocationIndex.Add(selectIndex, 1);
+                        }
+                    }
+
+                    if (NumChoicesPerInvocationIndex[selectIndex] == 0)
+                    {
+                        continue;
+                    }
+
+                    int nextVjumpIndex = -1;
+                    for (int j = selectIndex + 1; j < allInvocations.Length; j++)
+                    {
+                        if (allInvocations[j].Command.Name.Equals("VJUMP", StringComparison.OrdinalIgnoreCase))
+                        {
+                            nextVjumpIndex = j;
+                            break;
+                        }
+                    }
+
+                    if (nextVjumpIndex < 0)
+                    {
+                        continue;
+                    }
+
+                    int currentAddressParameter = 0;
+                    foreach (Parameter parameter in allInvocations[nextVjumpIndex].Parameters)
+                    {
+                        if (parameter.Type == ScriptCommand.ParameterType.INDEXEDADDRESS)
+                        {
+                            currentAddressParameter++;
+                            if (currentAddressParameter < NumChoicesPerInvocationIndex[selectIndex])
+                            {
+                                continue;
+                            }
+                            else if (currentAddressParameter > NumChoicesPerInvocationIndex[selectIndex])
+                            {
+                                break;
+                            }
+
+                            int targetLineNumber = allInvocations.First(v => v.Address == BitConverter.ToInt32(parameter.Value.Take(4).Reverse().ToArray())).LineNumber;
+                            for (int j = 0; j < dialogueParams.Length; j++)
+                            {
+                                if (dialogueParams[j].LineNumber >= targetLineNumber)
+                                {
+                                    DialogueLines[i].Metadata.Add($"VJUMPs to {j:D4}");
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -557,7 +614,7 @@ namespace HaruhiHeiretsuLib.Strings
                     short paramTypeCode = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
                     i += 2;
                     int paramLength = ScriptCommand.GetParameterLength(paramTypeCode, data.Skip(i));
-                    invocation.Parameters.Add(new Parameter() { Type = (ScriptCommand.ParameterType)paramTypeCode, Value = data.Skip(i).Take(paramLength).ToArray() });
+                    invocation.Parameters.Add(new Parameter() { Type = (ScriptCommand.ParameterType)paramTypeCode, Value = data.Skip(i).Take(paramLength).ToArray(), LineNumber = invocation.LineNumber });
                     i += paramLength;
                 }
                 Invocations.Add(invocation);
@@ -625,21 +682,11 @@ namespace HaruhiHeiretsuLib.Strings
         }
     }
 
-    public class Parameter
+    public struct Parameter
     {
         public ScriptCommand.ParameterType Type { get; set; }
         public byte[] Value { get; set; }
-        public int? DialogueIndex { get; set; }
-
-        public void SetDialogueIndex(int index)
-        {
-            DialogueIndex = index;
-        }
-
-        public void SetValue(byte[] value)
-        {
-            Value = value;
-        }
+        public int LineNumber { get; set; }
     }
 
     public class ScriptCommandInvocation
@@ -791,7 +838,7 @@ namespace HaruhiHeiretsuLib.Strings
                         {
                             List<byte> bytes = new(new byte[] { 0 });
                             bytes.AddRange(BitConverter.GetBytes(varLineNumber).Reverse().Skip(1)); // skip the first byte to keep us at four bytes; this makes us a 24-bit integer :D
-                            Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = bytes.ToArray() });
+                            Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = bytes.ToArray(), LineNumber = LineNumber });
                             i += parameter.Length + 2;
                             continue;
                         }
@@ -804,7 +851,7 @@ namespace HaruhiHeiretsuLib.Strings
                             labels.Add((labelMatch.Groups["label"].Value, 0));
                         }
                         bytes.AddRange(BitConverter.GetBytes(labels.IndexOf(labels.First(l => l.label == labelMatch.Groups["label"].Value))).Reverse().Skip(1)); // another 24-bit integer
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += labelMatch.Length + 1;
                         continue;
                     }
@@ -817,7 +864,7 @@ namespace HaruhiHeiretsuLib.Strings
                         string line = trimmedParameters[(firstQuote + 1)..(secondQuote + 1)].Replace("\\n", "\n").Replace("\\\"", "\"");
 
                         objects.Add(line);
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.DIALOGUE, Value = BitConverter.GetBytes((short)(objects.Count - 1)).Reverse().ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.DIALOGUE, Value = BitConverter.GetBytes((short)(objects.Count - 1)).Reverse().ToArray(), LineNumber = LineNumber });
 
                         i += line.Replace("\n", "\\n").Replace("\"", "\\\"").Length + 4;
                         continue;
@@ -847,7 +894,7 @@ namespace HaruhiHeiretsuLib.Strings
                             bytes.AddRange(firstOperand);
                             bytes.AddRange(CalculateControlStructure("lit", "1", objects));
                         }
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.CONDITIONAL, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.CONDITIONAL, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += parameter.Length + 5;
                         continue;
                     }
@@ -870,7 +917,7 @@ namespace HaruhiHeiretsuLib.Strings
                         }
 
                         bytes.AddRange(CalculateControlStructure(components[1], components[2], objects));
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.TIMESPAN, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.TIMESPAN, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += parameter.Length + 2;
                         continue;
                     }
@@ -887,7 +934,7 @@ namespace HaruhiHeiretsuLib.Strings
                             bytes.AddRange(CalculateControlStructure(parts[0], parts[1], objects));
                         }
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR2, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR2, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += vectorComponents.Sum(c => c.Length) + 11;
                         continue;
                     }
@@ -907,7 +954,7 @@ namespace HaruhiHeiretsuLib.Strings
                             bytes.AddRange(CalculateControlStructure(controlSplit[0], controlSplit[1], objects));
                         }
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.TRANSITION, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.TRANSITION, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += parameter.Length + 13;
                         continue;
                     }
@@ -938,7 +985,7 @@ namespace HaruhiHeiretsuLib.Strings
                         string[] controlCodeComponents = components[2].Trim().Split(' ');
                         bytes.AddRange(CalculateControlStructure(controlCodeComponents[0], controlCodeComponents[1], objects));
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.INDEXEDADDRESS, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.INDEXEDADDRESS, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += trimmedParameters.Split(')')[0].Length + 2;
                         continue;
                     }
@@ -949,7 +996,7 @@ namespace HaruhiHeiretsuLib.Strings
                         string parameter = trimmedParameters.Split(',')[0];
                         string[] components = parameter.Split(' ');
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.ANGLE, Value = CalculateControlStructure(components[1], components[2], objects) });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.ANGLE, Value = CalculateControlStructure(components[1], components[2], objects), LineNumber = LineNumber });
                         i += parameter.Length + 2;
                         continue;
                     }
@@ -961,7 +1008,7 @@ namespace HaruhiHeiretsuLib.Strings
 
                         bool boolean = bool.Parse(parameter);
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.BOOL, Value = boolean ? BitConverter.GetBytes(1).Reverse().ToArray() : BitConverter.GetBytes(0).Reverse().ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.BOOL, Value = boolean ? BitConverter.GetBytes(1).Reverse().ToArray() : BitConverter.GetBytes(0).Reverse().ToArray(), LineNumber = LineNumber });
                         i += parameter.Length + 2;
                         continue;
                     }
@@ -971,7 +1018,7 @@ namespace HaruhiHeiretsuLib.Strings
                     {
                         string[] volumeComponents = trimmedParameters.Split(',')[0][7..^1].Split(' ');
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VOLUME, Value = CalculateControlStructure(volumeComponents[0], volumeComponents[1], objects) });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VOLUME, Value = CalculateControlStructure(volumeComponents[0], volumeComponents[1], objects), LineNumber = LineNumber });
                         i += volumeComponents.Sum(v => v.Length) + 10;
                         continue;
                     }
@@ -984,7 +1031,7 @@ namespace HaruhiHeiretsuLib.Strings
 
                         int color = int.Parse(components[2], NumberStyles.HexNumber);
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.COLOR, Value = CalculateControlStructure(components[1], $"{color}", objects) });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.COLOR, Value = CalculateControlStructure(components[1], $"{color}", objects), LineNumber = LineNumber });
                         i += parameter.Length + 2;
                         continue;
                     }
@@ -995,7 +1042,7 @@ namespace HaruhiHeiretsuLib.Strings
                         string characterName = trimmedParameters.Split(',')[0][10..^1].ToUpper();
                         int characterEntity = GetCharacterEntity(characterName);
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.CHARACTER, Value = CalculateControlStructure("lit", $"{characterEntity}", objects) });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.CHARACTER, Value = CalculateControlStructure("lit", $"{characterEntity}", objects), LineNumber = LineNumber });
                         i += characterName.Length + 12;
                         continue;
                     }
@@ -1006,7 +1053,7 @@ namespace HaruhiHeiretsuLib.Strings
                         string parameter = trimmedParameters.Split(',')[0][7..^1];
                         string[] components = parameter.Split(' ');
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.PREVEC, Value = CalculateControlStructure(components[0], components[1], objects) });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.PREVEC, Value = CalculateControlStructure(components[0], components[1], objects), LineNumber = LineNumber });
                         i += parameter.Length + 9;
                         continue;
                     }
@@ -1026,7 +1073,7 @@ namespace HaruhiHeiretsuLib.Strings
                             bytes.AddRange(CalculateControlStructure(components[1], components[2], objects));
                         }
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.FLOAT, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.FLOAT, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += components.Sum(c => c.Length) + 4;
                         continue;
                     }
@@ -1043,7 +1090,7 @@ namespace HaruhiHeiretsuLib.Strings
                             bytes.AddRange(CalculateControlStructure(parts[1], $"{ReverseFloat(float.Parse(parts[2]))}", objects));
                         }
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR3, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR3, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += vectorComponents.Sum(c => c.Length) + 12;
                         continue;
                     }
@@ -1057,7 +1104,7 @@ namespace HaruhiHeiretsuLib.Strings
                         {
                             objects.Add(scriptObject);
                         }
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VARINDEX, Value = BitConverter.GetBytes((short)objects.IndexOf(scriptObject)).Reverse().ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VARINDEX, Value = BitConverter.GetBytes((short)objects.IndexOf(scriptObject)).Reverse().ToArray(), LineNumber = LineNumber });
                         i += scriptObject.Length + 2;
                         continue;
                     }
@@ -1076,7 +1123,7 @@ namespace HaruhiHeiretsuLib.Strings
                         }
 
                         i += arrayStrings.Sum(a => a.Length) + 4;
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.INTARRAY, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.INTARRAY, Value = bytes.ToArray(), LineNumber = LineNumber });
                         continue;
                     }
 
@@ -1100,7 +1147,7 @@ namespace HaruhiHeiretsuLib.Strings
                         bytes.InsertRange(0, BitConverter.GetBytes(bytes.Count + 4).Reverse());
 
                         i += lipSyncString.Length + 11;
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.LIPSYNCDATA, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.LIPSYNCDATA, Value = bytes.ToArray(), LineNumber = LineNumber });
                         continue;
                     }
 
@@ -1117,7 +1164,7 @@ namespace HaruhiHeiretsuLib.Strings
                             bytes.Add(byte.Parse(components[j], NumberStyles.HexNumber));
                         }
 
-                        Parameters.Add(new() { Type = (ScriptCommand.ParameterType)typeCode, Value = bytes.ToArray() });
+                        Parameters.Add(new() { Type = (ScriptCommand.ParameterType)typeCode, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += parameter.Length + 2;
                         continue;
                     }
@@ -1127,14 +1174,14 @@ namespace HaruhiHeiretsuLib.Strings
                     {
                         string[] parameter = trimmedParameters[2..].Split(',')[0].Split(' ');
 
-                        Parameters.Add(new() { Type = (ScriptCommand.ParameterType)type, Value = CalculateControlStructure(parameter[0], parameter[1], objects) });
+                        Parameters.Add(new() { Type = (ScriptCommand.ParameterType)type, Value = CalculateControlStructure(parameter[0], parameter[1], objects), LineNumber = LineNumber });
                         i += parameter.Sum(p => p.Length) + 4;
                         continue;
                     }
 
                     // It's a regular int
                     string[] intParams = trimmedParameters.Split(',')[0].Split(' ');
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.INT, Value = CalculateControlStructure(intParams[0], intParams[1], objects) });
+                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.INT, Value = CalculateControlStructure(intParams[0], intParams[1], objects), LineNumber = LineNumber });
                     i += intParams.Sum(p => p.Length) + 2;
                 }
                 catch (Exception e)
@@ -1170,7 +1217,7 @@ namespace HaruhiHeiretsuLib.Strings
                     {
                         throw new ArgumentException($"ERROR: Line {LineNumber} (command {Command.Name}) attempting to resolve address to line {lineNumber} when no such line exists.");
                     }
-                    Parameters[i] = new Parameter { Type = Parameters[i].Type, Value = BitConverter.GetBytes(address).Reverse().ToArray() };
+                    Parameters[i] = new Parameter { Type = Parameters[i].Type, Value = BitConverter.GetBytes(address).Reverse().ToArray(), LineNumber = LineNumber };
                     resolvedAddress = true;
                 }
                 else if (Parameters[i].Type == ScriptCommand.ParameterType.INDEXEDADDRESS)
@@ -1196,7 +1243,7 @@ namespace HaruhiHeiretsuLib.Strings
                     }
                     parameterBytes.RemoveRange(0, 4);
                     parameterBytes.InsertRange(0, BitConverter.GetBytes(address).Reverse());
-                    Parameters[i] = new Parameter { Type = Parameters[i].Type, Value = parameterBytes.ToArray() };
+                    Parameters[i] = new Parameter { Type = Parameters[i].Type, Value = parameterBytes.ToArray(), LineNumber = LineNumber };
                     resolvedAddress = true;
                 }
             }
