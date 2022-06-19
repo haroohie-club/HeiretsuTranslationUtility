@@ -161,7 +161,7 @@ namespace HaruhiHeiretsuLib
                 using Stream archiveInputStream = await archiveFile.GetFileData();
                 BlnSub blnSub = new();
                 List<IArchiveFileInfo> blnSubFiles = (List<IArchiveFileInfo>)blnSub.Load(archiveInputStream);
-
+                
                 MemoryStream archiveOutputStream = new();
                 blnSub.Save(archiveOutputStream, blnSubFiles, archiveIndexToAdjust: archiveIndexToAdjust, offsetAdjustments: offsetAdjustments, leaveOpen: true);
                 archiveFile.SetFileData(archiveOutputStream);
@@ -328,6 +328,29 @@ namespace HaruhiHeiretsuLib
                 graphicsFile.Initialize(subFileData, 0);
                 graphicsFile.Offset = (int)blnSubFile.Offset;
                 GraphicsFiles.Add(graphicsFile);
+            }
+        }
+
+        public async Task LoadGraphicsFiles()
+        {
+            for (int parent = 0; parent < ArchiveFiles.Count; parent++)
+            {
+                Stream mcbData = await ArchiveFiles[parent].GetFileData();
+                BlnSub mcb = new();
+                List<BlnSubArchiveFileInfo> blnSubFiles = mcb.Load(mcbData).Select(a => (BlnSubArchiveFileInfo)a).ToList();
+
+                for (int child = 0; child < blnSubFiles.Count; child++)
+                {
+                    if (blnSubFiles[child].Entry.archiveIndex == (int)ArchiveIndex.GRP)
+                    {
+                        byte[] fileData = blnSubFiles[child].GetFileDataBytes();
+
+                        GraphicsFile graphicsFile = new() { Location = (parent, child), McbId = ((BlnArchiveFileInfo)ArchiveFiles[parent]).Entry.id };
+                        graphicsFile.Initialize(fileData, 0);
+                        graphicsFile.Offset = (int)blnSubFiles[child].Offset;
+                        GraphicsFiles.Add(graphicsFile);
+                    }
+                }
             }
         }
 

@@ -691,8 +691,6 @@ namespace HaruhiHeiretsuLib.Strings
 
     public class ScriptCommandInvocation
     {
-        private const ulong F2 = 0x4330000080000000L;
-        private const ulong F0 = 0x3F50000000000000L;
 
         public int Address { get; set; }
         public short LineNumber { get; set; }
@@ -1066,7 +1064,7 @@ namespace HaruhiHeiretsuLib.Strings
 
                         if (components[1] == "lit")
                         {
-                            bytes.AddRange(CalculateControlStructure(components[1], $"{ReverseFloat(float.Parse(components[2]))}", objects));
+                            bytes.AddRange(CalculateControlStructure(components[1], $"{Helpers.FloatToInt(float.Parse(components[2]))}", objects));
                         }
                         else
                         {
@@ -1087,7 +1085,7 @@ namespace HaruhiHeiretsuLib.Strings
                         {
                             string trimmedVectorComponent = vectorComponent.Trim();
                             string[] parts = trimmedVectorComponent.Split(' ');
-                            bytes.AddRange(CalculateControlStructure(parts[1], $"{ReverseFloat(float.Parse(parts[2]))}", objects));
+                            bytes.AddRange(CalculateControlStructure(parts[1], $"{Helpers.FloatToInt(float.Parse(parts[2]))}", objects));
                         }
 
                         Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR3, Value = bytes.ToArray(), LineNumber = LineNumber });
@@ -1187,7 +1185,7 @@ namespace HaruhiHeiretsuLib.Strings
                 catch (Exception e)
                 {
                     Console.WriteLine($"ERROR: Failed to compile line {LineNumber} (command: {Command.Name}): first parameter of '{parameters[i..]}' threw \"{e.Message}\"");
-                    throw;
+                    return;
                 }
             }
         }
@@ -1510,26 +1508,13 @@ namespace HaruhiHeiretsuLib.Strings
             }
         }
 
-        private int ReverseFloat(float value)
-        {
-            double d1 = value / BitConverter.UInt64BitsToDouble(F0);
-            ulong f1 = BitConverter.DoubleToUInt64Bits(d1 + BitConverter.UInt64BitsToDouble(F2));
-            uint adjustedInt = (uint)f1;
-            return (int)(adjustedInt ^ 0x80000000);
-        }
-
         private string ParseFloat(byte[] type12Parameter)
         {
             string startingString = CalculateIntParameter(Helpers.GetIntFromByteArray(type12Parameter, 0), Helpers.GetIntFromByteArray(type12Parameter, 1));
             if (startingString.StartsWith("lit"))
             {
                 int startingInt = int.Parse(startingString.Split(' ')[1]);
-                uint adjustedInt = (uint)startingInt ^ 0x80000000;
-                ulong f1 = (F2 & 0xFFFFFFFF00000000L) | adjustedInt;
-                double d1 = BitConverter.UInt64BitsToDouble(f1) - BitConverter.UInt64BitsToDouble(F2);
-                double d31 = d1 * BitConverter.UInt64BitsToDouble(F0);
-
-                return $"float lit {(float)d31}";
+                return $"float lit {Helpers.IntToFloat(startingInt)}";
             }
             else
             {

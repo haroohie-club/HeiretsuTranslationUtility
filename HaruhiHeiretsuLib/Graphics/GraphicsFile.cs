@@ -28,7 +28,7 @@ namespace HaruhiHeiretsuLib.Graphics
         // World Data File Properties
         public byte[] WorldDataHeader { get; set; }
         public List<string> WorldDataModelNames { get; set; } = new();
-        public List<byte[]> WorldDataEntries { get; set; } = new();
+        public List<WorldDataEntry> WorldDataEntries { get; set; } = new();
         public List<byte[]> WorldDataFooterEntries { get; set; } = new();
 
         public GraphicsFile()
@@ -99,7 +99,7 @@ namespace HaruhiHeiretsuLib.Graphics
                         WorldDataModelNames.Add(Encoding.ASCII.GetString(stringData));
                     }
 
-                    WorldDataEntries.Add(Data.Skip(i * 0x2C + 0x1100).Take(0x2C).ToArray());
+                    WorldDataEntries.Add(new(Data.Skip(i * 0x2C + 0x1100).Take(0x2C)));
                     WorldDataFooterEntries.Add(Data.Skip(i * 0x18 + 0x6900).Take(0x18).ToArray());
                 }
             }
@@ -498,6 +498,20 @@ namespace HaruhiHeiretsuLib.Graphics
             CI8 = 0x09,
             CI14X2 = 0x0A,
             CMPR = 0x0E,
+        }
+    }
+
+    public class WorldDataEntry
+    {
+        public float X { get; set; }
+        public float Y { get; set; }
+        public byte[] RemainingData { get; set; }
+
+        public WorldDataEntry(IEnumerable<byte> data)
+        {
+            X = Helpers.IntToFloat(BitConverter.ToInt32(data.Skip(8).Take(4).Reverse().ToArray()));
+            Y = Helpers.IntToFloat(BitConverter.ToInt32(data.Skip(12).Take(4).Reverse().ToArray()));
+            RemainingData = data.Skip(8).ToArray();
         }
     }
 

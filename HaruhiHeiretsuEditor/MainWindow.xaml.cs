@@ -52,7 +52,7 @@ namespace HaruhiHeiretsuEditor
                 byte[] commandsFileData = blnSubFile.GetFileDataBytes();
 
                 _mcb.LoadStringsFiles(File.ReadAllText("string_file_locations.csv"), ScriptCommand.ParseScriptCommandFile(commandsFileData));
-                _mcb.LoadGraphicsFiles(File.ReadAllText("graphics_locations.csv"));
+                _mcb.LoadGraphicsFiles().GetAwaiter().GetResult();
                 _mcb.LoadFontFile();
                 scriptsListBox.ItemsSource = _mcb.StringsFiles;
                 graphicsListBox.ItemsSource = _mcb.GraphicsFiles;
@@ -508,7 +508,9 @@ namespace HaruhiHeiretsuEditor
                     {
                         StackPanel stackPanel = new() { Orientation = Orientation.Horizontal };
                         stackPanel.Children.Add(new TextBlock { Text = $"{selectedFile.WorldDataModelNames[i]}: " });
-                        stackPanel.Children.Add(new TextBox { Text = $"{string.Join(' ', selectedFile.WorldDataEntries[i].Select(b => $"{b:X2}"))}" });
+                        stackPanel.Children.Add(new TextBox { Text = $"{selectedFile.WorldDataEntries[i].X}" });
+                        stackPanel.Children.Add(new TextBox { Text = $"{selectedFile.WorldDataEntries[i].Y}" });
+                        stackPanel.Children.Add(new TextBox { Text = $"{string.Join(" ", selectedFile.WorldDataEntries[i].RemainingData.Select(b => $"{b:X2}"))}" });
 
                         graphicsEditStackPanel.Children.Add(stackPanel);
                     }

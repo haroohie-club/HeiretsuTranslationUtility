@@ -11,6 +11,26 @@ namespace HaruhiHeiretsuLib
 {
     public static class Helpers
     {
+        private const ulong F2 = 0x4330000080000000L;
+        private const ulong F0 = 0x3F50000000000000L;
+
+        public static int FloatToInt(float value)
+        {
+            double d1 = value / BitConverter.UInt64BitsToDouble(F0);
+            ulong f1 = BitConverter.DoubleToUInt64Bits(d1 + BitConverter.UInt64BitsToDouble(F2));
+            uint adjustedInt = (uint)f1;
+            return (int)(adjustedInt ^ 0x80000000);
+        }
+
+        public static float IntToFloat(int startingInt)
+        {
+            uint adjustedInt = (uint)startingInt ^ 0x80000000;
+            ulong f1 = (F2 & 0xFFFFFFFF00000000L) | adjustedInt;
+            double d1 = BitConverter.UInt64BitsToDouble(f1) - BitConverter.UInt64BitsToDouble(F2);
+            double d31 = d1 * BitConverter.UInt64BitsToDouble(F0);
+
+            return (float)d31;
+        }
 
         // redmean color distance formula with alpha term
         public static double ColorDistance(Color color1, Color color2)
