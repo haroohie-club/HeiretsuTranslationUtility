@@ -511,17 +511,17 @@ namespace HaruhiHeiretsuLib.Strings
             INT = 5,
             TRANSITION = 6,
             INDEXEDADDRESS = 7,
-            INT08 = 8,
+            ANGLE = 8,
             UNKNOWN09 = 9,
             BOOL = 10,
-            UNKNOWN0B = 11,
+            VOLUME = 11,
             COLOR = 12,
             CHARACTER = 13,
             INT0E = 14,
             UNKNOWN0F = 15,
-            INT10 = 16,
+            PREVEC = 16,
             UNKNOWN11 = 17,
-            UNKNOWN12 = 18,
+            FLOAT = 18,
             UNKNOWN13 = 19,
             VECTOR3 = 20,
             VARINDEX = 21,
@@ -553,24 +553,25 @@ namespace HaruhiHeiretsuLib.Strings
             { 11, "MIKOTO" },
             { 12, "MIKOTO2" },
             { 13, "TAIICHIRO" },
+            { 14, "TAIICHIRO2" },
             { 15, "CAPTAIN" },
             { 16, "GUEST_M3" },
-            { 17, "GUEST_F3_17" },
+            { 17, "GUEST_F3" },
             { 18, "CREW_F" },
             { 19, "CREW_M" },
             { 20, "GUEST_M1_20" },
             { 21, "GUEST_M2_21" },
             { 22, "GUEST_F1" },
             { 23, "GUEST_F2" },
-            { 27, "GUEST_M2_27" },
             { 24, "TANIGUCHI" },
             { 25, "KUNIKIDA" },
             { 26, "ANNOUNCER" },
-            { 28, "GUEST_F3" },
+            { 27, "CHAIRMAN" },
+            { 28, "SHOP_EMPLOYEE" },
             { 29, "???" },
-            { 30, "TAIICHIRO_30" },
-            { 31, "MIKOTO_31" },
-            { 32, "GUEST_M1_32" },
+            { 30, "ANOTHER_ONE" },
+            { 31, "ANOTHER_TWO" },
+            { 32, "CREW_32" },
         };
 
         public static readonly Dictionary<string, byte> ComparisonOperatorToCodeMap = new()
@@ -726,6 +727,9 @@ namespace HaruhiHeiretsuLib.Strings
 
     public class ScriptCommandInvocation
     {
+        private const ulong F2 = 0x4330000080000000L;
+        private const ulong F0 = 0x3F50000000000000L;
+
         public int Address { get; set; }
         public short LineNumber { get; set; }
         public string Label { get; set; }
@@ -892,13 +896,13 @@ namespace HaruhiHeiretsuLib.Strings
                     if (trimmedParameters.StartsWith("\""))
                     {
                         int firstQuote = trimmedParameters.IndexOf('"');
-                        int secondQuote = trimmedParameters[(firstQuote + 1)..].IndexOf('"');
-                        string line = trimmedParameters[(firstQuote + 1)..(secondQuote + 1)].Replace("\\n", "\n");
+                        int secondQuote = Regex.Match(trimmedParameters[(firstQuote + 1)..], @"[^\\]""").Index + 1;
+                        string line = trimmedParameters[(firstQuote + 1)..(secondQuote + 1)].Replace("\\n", "\n").Replace("\\\"", "\"");
 
                         objects.Add(line);
                         Parameters.Add(new() { Type = ScriptCommand.ParameterType.DIALOGUE, Value = BitConverter.GetBytes((short)(objects.Count - 1)).Reverse().ToArray() });
 
-                        i += line.Replace("\n", "\\n").Length + 4;
+                        i += line.Replace("\n", "\\n").Replace("\"", "\\\"").Length + 4;
                         continue;
                     }
 
@@ -1022,6 +1026,17 @@ namespace HaruhiHeiretsuLib.Strings
                         continue;
                     }
 
+                    // Is it an angle?
+                    if (trimmedParameters.StartsWith("degrees ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string parameter = trimmedParameters.Split(',')[0];
+                        string[] components = parameter.Split(' ');
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.ANGLE, Value = CalculateControlStructure(components[1], components[2], objects) });
+                        i += parameter.Length + 2;
+                        continue;
+                    }
+
                     // Is it a boolean?
                     if (trimmedParameters.StartsWith("TRUE", StringComparison.OrdinalIgnoreCase) || trimmedParameters.StartsWith("FALSE", StringComparison.OrdinalIgnoreCase))
                     {
@@ -1031,6 +1046,16 @@ namespace HaruhiHeiretsuLib.Strings
 
                         Parameters.Add(new() { Type = ScriptCommand.ParameterType.BOOL, Value = boolean ? BitConverter.GetBytes(1).Reverse().ToArray() : BitConverter.GetBytes(0).Reverse().ToArray() });
                         i += parameter.Length + 2;
+                        continue;
+                    }
+
+                    // Is it a sound volume?
+                    if (trimmedParameters.StartsWith("VOLUME[", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string[] volumeComponents = trimmedParameters.Split(',')[0][7..^1].Split(' ');
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VOLUME, Value = CalculateControlStructure(volumeComponents[0], volumeComponents[1], objects) });
+                        i += volumeComponents.Sum(v => v.Length) + 10;
                         continue;
                     }
 
@@ -1058,6 +1083,37 @@ namespace HaruhiHeiretsuLib.Strings
                         continue;
                     }
 
+                    // Is it a precalculated vector?
+                    if (trimmedParameters.StartsWith("PreVec[", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string parameter = trimmedParameters.Split(',')[0][7..^1];
+                        string[] components = parameter.Split(' ');
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.PREVEC, Value = CalculateControlStructure(components[0], components[1], objects) });
+                        i += parameter.Length + 9;
+                        continue;
+                    }
+
+                    // Is it a float?
+                    if (trimmedParameters.StartsWith("float ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        List<byte> bytes = new();
+                        string[] components = trimmedParameters.Split(',')[0].Split(' ');
+
+                        if (components[1] == "lit")
+                        {
+                            bytes.AddRange(CalculateControlStructure(components[1], $"{ReverseFloat(float.Parse(components[2]))}", objects));
+                        }
+                        else
+                        {
+                            bytes.AddRange(CalculateControlStructure(components[1], components[2], objects));
+                        }
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.FLOAT, Value = bytes.ToArray() });
+                        i += components.Sum(c => c.Length) + 4;
+                        continue;
+                    }
+
                     // Is it a Vector3?
                     if (trimmedParameters.StartsWith("Vector3(", StringComparison.OrdinalIgnoreCase))
                     {
@@ -1067,11 +1123,11 @@ namespace HaruhiHeiretsuLib.Strings
                         {
                             string trimmedVectorComponent = vectorComponent.Trim();
                             string[] parts = trimmedVectorComponent.Split(' ');
-                            bytes.AddRange(CalculateControlStructure(parts[0], parts[1], objects));
+                            bytes.AddRange(CalculateControlStructure(parts[1], $"{ReverseFloat(float.Parse(parts[2]))}", objects));
                         }
 
                         Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR3, Value = bytes.ToArray() });
-                        i += vectorComponents.Sum(c => c.Length) + 11;
+                        i += vectorComponents.Sum(c => c.Length) + 12;
                         continue;
                     }
 
@@ -1237,7 +1293,7 @@ namespace HaruhiHeiretsuLib.Strings
                 case ScriptCommand.ParameterType.ADDRESS:
                     return ParseAddress(parameter.Value);
                 case ScriptCommand.ParameterType.DIALOGUE:
-                    return $"\"{ScriptObjects[BitConverter.ToInt16(parameter.Value.Reverse().ToArray())].Replace("\n", "\\n")}\"";
+                    return $"\"{ScriptObjects[BitConverter.ToInt16(parameter.Value.Reverse().ToArray())].Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
                 case ScriptCommand.ParameterType.CONDITIONAL:
                     return ParseConditional(parameter.Value);
                 case ScriptCommand.ParameterType.TIMESPAN:
@@ -1250,18 +1306,22 @@ namespace HaruhiHeiretsuLib.Strings
                     return ParseTransition(parameter.Value);
                 case ScriptCommand.ParameterType.INDEXEDADDRESS:
                     return ParseIndexedAddress(parameter.Value);
-                case ScriptCommand.ParameterType.INT08:
-                    return $"08{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}";
+                case ScriptCommand.ParameterType.ANGLE:
+                    return $"degrees {CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}";
                 case ScriptCommand.ParameterType.BOOL:
                     return ParseBoolean(parameter.Value);
+                case ScriptCommand.ParameterType.VOLUME:
+                    return $"VOLUME[{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}]";
                 case ScriptCommand.ParameterType.COLOR:
                     return ParseColor(CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1)));
                 case ScriptCommand.ParameterType.CHARACTER:
                     return GetCharacter(CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1)));
                 case ScriptCommand.ParameterType.INT0E:
                     return $"0E{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}";
-                case ScriptCommand.ParameterType.INT10:
-                    return $"10{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}";
+                case ScriptCommand.ParameterType.PREVEC:
+                    return $"PreVec[{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}]";
+                case ScriptCommand.ParameterType.FLOAT:
+                    return ParseFloat(parameter.Value);
                 case ScriptCommand.ParameterType.VECTOR3:
                     return ParseVector3(parameter.Value);
                 case ScriptCommand.ParameterType.VARINDEX:
@@ -1486,6 +1546,33 @@ namespace HaruhiHeiretsuLib.Strings
             }
         }
 
+        private int ReverseFloat(float value)
+        {
+            double d1 = value / BitConverter.UInt64BitsToDouble(F0);
+            ulong f1 = BitConverter.DoubleToUInt64Bits(d1 + BitConverter.UInt64BitsToDouble(F2));
+            uint adjustedInt = (uint)f1;
+            return (int)(adjustedInt ^ 0x80000000);
+        }
+
+        private string ParseFloat(byte[] type12Parameter)
+        {
+            string startingString = CalculateIntParameter(Helpers.GetIntFromByteArray(type12Parameter, 0), Helpers.GetIntFromByteArray(type12Parameter, 1));
+            if (startingString.StartsWith("lit"))
+            {
+                int startingInt = int.Parse(startingString.Split(' ')[1]);
+                uint adjustedInt = (uint)startingInt ^ 0x80000000;
+                ulong f1 = (F2 & 0xFFFFFFFF00000000L) | adjustedInt;
+                double d1 = BitConverter.UInt64BitsToDouble(f1) - BitConverter.UInt64BitsToDouble(F2);
+                double d31 = d1 * BitConverter.UInt64BitsToDouble(F0);
+
+                return $"float lit {(float)d31}";
+            }
+            else
+            {
+                return $"float {startingString}";
+            }
+        }
+
         private string ParseIndexedAddress(byte[] type07Parameter)
         {
             string lineNumber = ParseAddress(type07Parameter[0..4]);
@@ -1510,9 +1597,9 @@ namespace HaruhiHeiretsuLib.Strings
         {
             string[] coords = new string[]
             {
-                CalculateIntParameter(Helpers.GetIntFromByteArray(type14Parameter, 0), Helpers.GetIntFromByteArray(type14Parameter, 1)),
-                CalculateIntParameter(Helpers.GetIntFromByteArray(type14Parameter, 2), Helpers.GetIntFromByteArray(type14Parameter, 3)),
-                CalculateIntParameter(Helpers.GetIntFromByteArray(type14Parameter, 4), Helpers.GetIntFromByteArray(type14Parameter, 5)),
+                ParseFloat(type14Parameter[0..8]),
+                ParseFloat(type14Parameter[8..16]),
+                ParseFloat(type14Parameter[16..24]),
             };
 
             return $"Vector3({coords[0]}, {coords[1]}, {coords[2]})";

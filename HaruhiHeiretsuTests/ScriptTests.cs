@@ -22,7 +22,7 @@ namespace HaruhiHeiretsuTests
         [TestCase(SCR001)]
         [TestCase(SCR101)]
         [TestCase(SCRKWMT)]
-        public void ScriptParsingIdempotent(string file)
+        public void ScriptCompileDecompileTrueInverses(string file)
         {
             List<ScriptCommand> commands = ScriptCommand.ParseScriptCommandFile(File.ReadAllBytes(SCRCOMMAND_FILE));
             byte[] dataOnDisk = File.ReadAllBytes(file);
