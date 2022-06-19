@@ -111,116 +111,59 @@ namespace HaruhiHeiretsuLib.Strings
                 ScriptCommandBlocks.Add(new(i, endAddress, Data, Objects));
             }
 
-            //for (int i = 0; i < Data.Count;)
-            //{
-            //    int length = 0;
-            //    string line;
-            //    if (lastLine == "TIME" && numsToRead > 0)
-            //    {
-            //        line = "TIME";
-            //        switch (numsToRead)
-            //        {
-            //            case 4:
-            //                NumParameters = BitConverter.ToInt16(Data.Skip(i).Take(2).Reverse().ToArray());
-            //                NumParametersOffset = i;
-            //                length = 2;
-            //                break;
-            //            case 3:
-            //                NumScriptCommandBlocks = BitConverter.ToInt16(Data.Skip(i).Take(2).Reverse().ToArray());
-            //                NumScriptCommandBlocksOffset = i;
-            //                length = 2;
-            //                break;
-            //            case 2:
-            //                ParametersEnd = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
-            //                ParametersEndOffset = i;
-            //                length = 4;
-            //                break;
-            //            case 1:
-            //                ScriptCommandBlockDefinitionsEnd = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray());
-            //                ScriptCommandBlockDefinitionsEndOffset = i;
-            //                length = 4;
-            //                break;
-            //            default:
-            //                break;
-            //        }
+            for (int i = 0; i < ScriptCommandBlocks.Count; i++)
+            {
+                for (int j = 0; j < ScriptCommandBlocks[i].Invocations.Count; j++)
+                {
+                    for (int k = 0; k < ScriptCommandBlocks[i].Invocations[j].Parameters.Count; k++)
+                    {
+                        if (ScriptCommandBlocks[i].Invocations[j].Parameters[k].Type == ScriptCommand.ParameterType.DIALOGUE && ScriptCommandBlocks[i].Invocations[j].CommandCode != 0x4B) // TL_ADD (4B) is not real dialogue
+                        {
+                            short index = BitConverter.ToInt16(ScriptCommandBlocks[i].Invocations[j].Parameters[k].Value.Reverse().ToArray());
+                            Speaker speaker = (Speaker)ScriptCommandBlocks[i].Invocations[j].CharacterEntity;
 
-            //        numsToRead--;
-            //    }
-            //    else
-            //    {
-            //        length = BitConverter.ToInt32(Data.Skip(i).Take(4).Reverse().ToArray()) - 1; // remove trailing 0x00
-            //        if (length < 0)
-            //        {
-            //            break;
-            //        }
-            //        line = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(i + 4).Take(length).ToArray());
-            //        length += 5;
+                            if (ScriptCommandBlocks[i].Invocations[j].CommandCode >= 0x2E && ScriptCommandBlocks[i].Invocations[j].CommandCode <= 0x31) // between CMNT & SELECT2
+                            {
+                                speaker = Speaker.CHOICE;
+                            }
 
-            //        Match match = Regex.Match(line, VOICE_REGEX);
-            //        if (match.Success)
-            //        {
-            //            (int offset, string line) mostRecentLine = lines.Last();
-            //            if (Regex.IsMatch(mostRecentLine.line, @"^(\w\d{1,2})+$") && !Regex.IsMatch(lines[^2].line, @"^(\w\d{1,2})+$"))
-            //            {
-            //                mostRecentLine = lines[^2];
-            //            }
-            //            if (!Regex.IsMatch(mostRecentLine.line, VOICE_REGEX))
-            //            {
-            //                DialogueLines.Add(new DialogueLine
-            //                {
-            //                    Line = mostRecentLine.line,
-            //                    Offset = mostRecentLine.offset,
-            //                    Speaker = DialogueLine.GetSpeaker(match.Groups["characterCode"].Value)
-            //                });
-            //            }
-            //            lines.Add((i, line));
-            //        }
-            //        else
-            //        {
-            //            lines.Add((i, line));
-            //        }
-            //    }
-
-            //    Parameters.Add(line);
-            //    lastLine = line;
-            //    i += length;
-            //}
+                            DialogueLines.Add(new()
+                            {
+                                Line = Objects[index],
+                                Speaker =  speaker,
+                            });
+                            ScriptCommandBlocks[i].Invocations[j].Parameters[k].SetDialogueIndex(DialogueLines.Count - 1);
+                        }
+                    }
+                }
+            }
         }
 
         public override void EditDialogue(int index, string newLine)
         {
-            (int oldLength, byte[] newLineData) = DialogueEditSetUp(index, newLine);
+            DialogueLines[index].Line = newLine;
+            Objects.Add(newLine);
 
-            List<byte> newLineDataIncludingLength = new();
-            newLineDataIncludingLength.AddRange(BitConverter.GetBytes(newLineData.Length + 1).Reverse());
-            newLineDataIncludingLength.AddRange(newLineData);
-
-            Data.RemoveRange(DialogueLines[index].Offset, oldLength + 4);
-            Data.InsertRange(DialogueLines[index].Offset, newLineDataIncludingLength);
-
-            int lengthDifference = newLineData.Length - oldLength;
-
-            ObjectsEnd += lengthDifference;
-            Data.RemoveRange(ObjectssEndOffset, 4);
-            Data.InsertRange(ObjectssEndOffset, BitConverter.GetBytes(ObjectsEnd).Reverse());
-
-            ScriptCommandBlockDefinitionsEnd = ObjectsEnd + 8 * NumScriptCommandBlocks;
-            Data.RemoveRange(ScriptCommandBlockDefinitionsEndOffset, 4);
-            Data.InsertRange(ScriptCommandBlockDefinitionsEndOffset, BitConverter.GetBytes(ScriptCommandBlockDefinitionsEnd).Reverse());
-
-            for (int i = 0; i < ScriptCommandBlocks.Count; i++)
+            foreach (ScriptCommandBlock commandBlock in ScriptCommandBlocks)
             {
-                ScriptCommandBlocks[i].DefinitionAddress += lengthDifference;
-                ScriptCommandBlocks[i].BlockOffset += lengthDifference;
-
-                Data.RemoveRange(ScriptCommandBlocks[i].DefinitionAddress + 4, 4);
-                Data.InsertRange(ScriptCommandBlocks[i].DefinitionAddress + 4, BitConverter.GetBytes(ScriptCommandBlocks[i].BlockOffset).Reverse());
+                foreach (ScriptCommandInvocation invocation in commandBlock.Invocations)
+                {
+                    foreach (Parameter parameter in invocation.Parameters)
+                    {
+                        if (parameter.DialogueIndex == index)
+                        {
+                            parameter.SetValue(BitConverter.GetBytes((short)(Objects.Count - 1)).Reverse().ToArray());
+                        }
+                    }
+                }
             }
 
-            for (int i = index + 1; i < DialogueLines.Count; i++)
-            {
-                DialogueLines[i].Offset += lengthDifference;
-            }
+            Recompile();
+        }
+
+        public void Recompile()
+        {
+            Compile(Decompile());
         }
 
         public string Decompile()
@@ -537,43 +480,6 @@ namespace HaruhiHeiretsuLib.Strings
             UNKNOWN2A = 42,
         }
 
-        public static readonly Dictionary<short, string> CharacterCodeToCharacterMap = new()
-        {
-            { 0, "KYON" },
-            { 1, "KYON2" },
-            { 2, "HARUHI" },
-            { 3, "NAGATO" },
-            { 4, "NAGATO2" },
-            { 5, "MIKURU" },
-            { 6, "MIKURU2" },
-            { 7, "KOIZUMI" },
-            { 8, "KOIZUMI2" },
-            { 9, "TSURUYA" },
-            { 10, "KYN_SIS" },
-            { 11, "MIKOTO" },
-            { 12, "MIKOTO2" },
-            { 13, "TAIICHIRO" },
-            { 14, "TAIICHIRO2" },
-            { 15, "CAPTAIN" },
-            { 16, "GUEST_M3" },
-            { 17, "GUEST_F3" },
-            { 18, "CREW_F" },
-            { 19, "CREW_M" },
-            { 20, "GUEST_M1_20" },
-            { 21, "GUEST_M2_21" },
-            { 22, "GUEST_F1" },
-            { 23, "GUEST_F2" },
-            { 24, "TANIGUCHI" },
-            { 25, "KUNIKIDA" },
-            { 26, "ANNOUNCER" },
-            { 27, "CHAIRMAN" },
-            { 28, "SHOP_EMPLOYEE" },
-            { 29, "???" },
-            { 30, "ANOTHER_ONE" },
-            { 31, "ANOTHER_TWO" },
-            { 32, "CREW_32" },
-        };
-
         public static readonly Dictionary<string, byte> ComparisonOperatorToCodeMap = new()
         {
             { "==", 0x83 },
@@ -719,10 +625,21 @@ namespace HaruhiHeiretsuLib.Strings
         }
     }
 
-    public struct Parameter
+    public class Parameter
     {
         public ScriptCommand.ParameterType Type { get; set; }
         public byte[] Value { get; set; }
+        public int? DialogueIndex { get; set; }
+
+        public void SetDialogueIndex(int index)
+        {
+            DialogueIndex = index;
+        }
+
+        public void SetValue(byte[] value)
+        {
+            Value = value;
+        }
     }
 
     public class ScriptCommandInvocation
@@ -1415,9 +1332,9 @@ namespace HaruhiHeiretsuLib.Strings
 
         private static string GetCharacter(int characterCode)
         {
-            if (ScriptCommand.CharacterCodeToCharacterMap.TryGetValue((short)characterCode, out string character))
+            if (characterCode <= 32)
             {
-                return character;
+                return ((Speaker)characterCode).ToString();
             }
             else
             {
@@ -1446,7 +1363,7 @@ namespace HaruhiHeiretsuLib.Strings
             }
             else
             {
-                return ScriptCommand.CharacterCodeToCharacterMap.First(c => c.Value == character).Key;
+                return (short)((int)Enum.Parse(typeof(Speaker), character));
             }
         }
 
@@ -1616,105 +1533,5 @@ namespace HaruhiHeiretsuLib.Strings
 
             return $"{lipSyncData}]";
         }
-    }
-
-    public class DialogueLine
-    {
-        public string Line { get; set; }
-        public Speaker Speaker { get; set; }
-        public int Offset { get; set; }
-        public int Length => Encoding.GetEncoding("Shift-JIS").GetByteCount(Line);
-        public int NumPaddingZeroes { get; set; } = 1;
-
-        public override string ToString()
-        {
-            return $"{Speaker}: {Line}";
-        }
-
-        public static Speaker GetSpeaker(string code)
-        {
-            switch (code)
-            {
-                case "ANN":
-                    return Speaker.ANNOUNCEMENT;
-                case "CAP":
-                    return Speaker.CAPTAIN;
-                case "CRF":
-                    return Speaker.CREW_F;
-                case "CRM":
-                    return Speaker.CREW_M;
-                case "GF1":
-                    return Speaker.GUEST_F1;
-                case "GF2":
-                    return Speaker.GUEST_F2;
-                case "GF3":
-                    return Speaker.GUEST_F3;
-                case "GM1":
-                    return Speaker.GUEST_M1;
-                case "GM2":
-                    return Speaker.GUEST_M2;
-                case "GM3":
-                    return Speaker.GUEST_M3;
-                case "HRH":
-                    return Speaker.HARUHI;
-                case "KZM":
-                    return Speaker.KOIZUMI;
-                case "KUN":
-                    return Speaker.KUNIKIDA;
-                case "KYN":
-                    return Speaker.KYON;
-                case "KY2":
-                    return Speaker.KYON2;
-                case "MKT":
-                    return Speaker.MIKOTO;
-                case "MKR":
-                    return Speaker.MIKURU;
-                case "MNL":
-                    return Speaker.MONOLOGUE;
-                case "NGT":
-                    return Speaker.NAGATO;
-                case "NG2":
-                    return Speaker.NAGATO2;
-                case "SIS":
-                    return Speaker.KYON_SIS;
-                case "TAI":
-                    return Speaker.TAIICHIRO;
-                case "TAN":
-                    return Speaker.TANIGUCHI;
-                case "TRY":
-                    return Speaker.TSURYA;
-                default:
-                    return Speaker.UNKNOWN;
-            }
-        }
-    }
-
-    public enum Speaker
-    {
-        ANNOUNCEMENT,
-        CAPTAIN,
-        CREW_F,
-        CREW_M,
-        GUEST_F1,
-        GUEST_F2,
-        GUEST_F3,
-        GUEST_M1,
-        GUEST_M2,
-        GUEST_M3,
-        HARUHI,
-        KOIZUMI,
-        KUNIKIDA,
-        KYON,
-        KYON2,
-        MIKOTO,
-        MIKURU,
-        MONOLOGUE,
-        NAGATO,
-        NAGATO2,
-        KYON_SIS,
-        TAIICHIRO,
-        TANIGUCHI,
-        TSURYA,
-        UNKNOWN,
     }
 }

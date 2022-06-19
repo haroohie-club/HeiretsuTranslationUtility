@@ -80,4 +80,117 @@ namespace HaruhiHeiretsuLib.Strings
             }
         }
     }
+
+    public class DialogueLine
+    {
+        public string Line { get; set; }
+        public Speaker Speaker { get; set; }
+        public int Offset { get; set; }
+        public int Length => Encoding.GetEncoding("Shift-JIS").GetByteCount(Line);
+        public int NumPaddingZeroes { get; set; } = 1;
+
+        public List<string> Metadata { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Speaker}: {Line}";
+        }
+
+        public static Speaker GetSpeaker(string code)
+        {
+            switch (code)
+            {
+                case "ANN":
+                    return Speaker.ANNOUNCEMENT;
+                case "CAP":
+                    return Speaker.CAPTAIN;
+                case "CRF":
+                    return Speaker.CREW_F;
+                case "CRM":
+                    return Speaker.CREW_M;
+                case "GF1":
+                    return Speaker.GUEST_F1;
+                case "GF2":
+                    return Speaker.GUEST_F2;
+                case "GF3":
+                    return Speaker.GUEST_F3;
+                case "GM1":
+                    return Speaker.GUEST_M1;
+                case "GM2":
+                    return Speaker.GUEST_M2;
+                case "GM3":
+                    return Speaker.GUEST_M3;
+                case "HRH":
+                    return Speaker.HARUHI;
+                case "KZM":
+                    return Speaker.KOIZUMI;
+                case "KUN":
+                    return Speaker.KUNIKIDA;
+                case "KYN":
+                    return Speaker.KYON;
+                case "KY2":
+                    return Speaker.KYON2;
+                case "MKT":
+                    return Speaker.MIKOTO;
+                case "MKR":
+                    return Speaker.MIKURU;
+                case "MNL":
+                    return Speaker.MONOLOGUE;
+                case "NGT":
+                    return Speaker.NAGATO;
+                case "NG2":
+                    return Speaker.NAGATO2;
+                case "SIS":
+                    return Speaker.KYN_SIS;
+                case "TAI":
+                    return Speaker.TAIICHIRO;
+                case "TAN":
+                    return Speaker.TANIGUCHI;
+                case "TRY":
+                    return Speaker.TSURUYA;
+                default:
+                    return Speaker.UNKNOWN;
+            }
+        }
+    }
+
+    public enum Speaker
+    {
+        UNKNOWN = -3,
+        CHOICE = -2,
+        MONOLOGUE = -1,
+        KYON,
+        KYON2,
+        HARUHI,
+        NAGATO,
+        NAGATO2,
+        MIKURU,
+        MIKURU2,
+        KOIZUMI,
+        KOIZUMI2,
+        TSURUYA,
+        KYN_SIS,
+        MIKOTO,
+        MIKOTO2,
+        TAIICHIRO,
+        TAIICHIRO2,
+        CAPTAIN,
+        GUEST_M3,
+        GUEST_F3,
+        CREW_F,
+        CREW_M,
+        GUEST_M1,
+        GUEST_M2,
+        GUEST_F1,
+        GUEST_F2,
+        TANIGUCHI,
+        KUNIKIDA,
+        ANNOUNCEMENT,
+        CHAIRMAN,
+        SHOP_EMPLOYEE,
+        THREE_QUESTIONS,
+        ANOTHER_ONE,
+        ANOTHER_TWO,
+        CREW_32,
+    }
 }
