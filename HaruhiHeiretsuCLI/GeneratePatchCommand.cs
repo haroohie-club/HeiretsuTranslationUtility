@@ -11,7 +11,7 @@ namespace HaruhiHeiretsuCLI
 {
     public class GeneratePatchCommand : Command
     {
-        private string _outputDir;
+        private string _sourceDir, _outputDir;
 
         public GeneratePatchCommand() : base("generate-patch")
         {
@@ -40,22 +40,49 @@ namespace HaruhiHeiretsuCLI
             root.AppendChild(id);
 
             XmlElement options = xml.CreateElement("options");
-            XmlElement section = xml.CreateElement("section");
-            section.SetAttribute("name", "Heiretsu Translation");
-            XmlElement option = xml.CreateElement("option");
-            option.SetAttribute("name", "Heiretsu Translation");
-            XmlElement choice = xml.CreateElement("choice");
-            choice.SetAttribute("name", "Enabled");
-            XmlElement choicePatch = xml.CreateElement("patch");
-            choicePatch.SetAttribute("id", "HeiretsuFolder");
-            choice.AppendChild(choicePatch);
-            option.AppendChild(choice);
-            section.AppendChild(option);
-            options.AppendChild(section);
+
+            XmlElement tlSection = xml.CreateElement("section");
+            tlSection.SetAttribute("name", "Haroohie Translation Club Translation Patch");
+            XmlElement tlOption = xml.CreateElement("option");
+            tlOption.SetAttribute("name", "Full Game Translation");
+            XmlElement tlChoice = xml.CreateElement("choice");
+            tlChoice.SetAttribute("name", "Enabled");
+            XmlElement tlChoicePatch = xml.CreateElement("patch");
+            tlChoicePatch.SetAttribute("id", "HeiretsuTranslation");
+            tlChoice.AppendChild(tlChoicePatch);
+            tlOption.AppendChild(tlChoice);
+            tlSection.AppendChild(tlOption);
+            options.AppendChild(tlSection);
+
+            XmlElement restorationSection = xml.CreateElement("section");
+            restorationSection.SetAttribute("name", "Feature Restoration");
+
+            XmlElement spVerOption = xml.CreateElement("option");
+            spVerOption.SetAttribute("name", "Restore Special Version");
+            XmlElement spVerChoice = xml.CreateElement("choice");
+            spVerChoice.SetAttribute("name", "Enabled");
+            XmlElement spVerChoicePatch = xml.CreateElement("patch");
+            spVerChoicePatch.SetAttribute("id", "RestoreSpecialVersion");
+            spVerChoice.AppendChild(spVerChoicePatch);
+            spVerOption.AppendChild(spVerChoice);
+            restorationSection.AppendChild(spVerOption);
+
+            XmlElement commandOption = xml.CreateElement("option");
+            commandOption.SetAttribute("name", "Restore Some Commands");
+            XmlElement commandChoice = xml.CreateElement("choice");
+            commandChoice.SetAttribute("name", "Enabled");
+            XmlElement commandChoicePatch = xml.CreateElement("patch");
+            commandChoicePatch.SetAttribute("id", "RestoreCommands");
+            commandChoice.AppendChild(commandChoicePatch);
+            commandOption.AppendChild(commandChoice);
+            restorationSection.AppendChild(commandOption);
+
+            options.AppendChild(restorationSection);
+
             root.AppendChild(options);
 
             XmlElement patch = xml.CreateElement("patch");
-            patch.SetAttribute("id", "HeiretsuFolder");
+            patch.SetAttribute("id", "HeiretsuTranslation");
             XmlElement folderRecurse = xml.CreateElement("folder");
             folderRecurse.SetAttribute("external", "/Heiretsu/files");
             folderRecurse.SetAttribute("recursive", "true");
