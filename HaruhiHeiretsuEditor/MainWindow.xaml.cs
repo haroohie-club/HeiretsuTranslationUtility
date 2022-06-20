@@ -510,6 +510,7 @@ namespace HaruhiHeiretsuEditor
                         stackPanel.Children.Add(new TextBlock { Text = $"{selectedFile.WorldDataModelNames[i]}: " });
                         stackPanel.Children.Add(new TextBox { Text = $"{selectedFile.WorldDataEntries[i].X}" });
                         stackPanel.Children.Add(new TextBox { Text = $"{selectedFile.WorldDataEntries[i].Y}" });
+                        stackPanel.Children.Add(new TextBox { Text = $"{selectedFile.WorldDataEntries[i].Z}" });
                         stackPanel.Children.Add(new TextBox { Text = $"{string.Join(" ", selectedFile.WorldDataEntries[i].RemainingData.Select(b => $"{b:X2}"))}" });
 
                         graphicsEditStackPanel.Children.Add(stackPanel);
