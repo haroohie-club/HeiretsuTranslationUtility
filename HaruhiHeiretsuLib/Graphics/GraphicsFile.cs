@@ -505,13 +505,15 @@ namespace HaruhiHeiretsuLib.Graphics
     {
         public float X { get; set; }
         public float Y { get; set; }
+        public float Z { get; set; }
         public byte[] RemainingData { get; set; }
 
         public WorldDataEntry(IEnumerable<byte> data)
         {
-            X = Helpers.IntToFloat(BitConverter.ToInt32(data.Skip(8).Take(4).Reverse().ToArray()));
-            Y = Helpers.IntToFloat(BitConverter.ToInt32(data.Skip(12).Take(4).Reverse().ToArray()));
-            RemainingData = data.Skip(8).ToArray();
+            X = BitConverter.ToSingle(data.Skip(0).Take(4).ToArray());
+            Y = BitConverter.ToSingle(data.Skip(4).Take(4).ToArray());
+            Z = BitConverter.ToSingle(data.Skip(8).Take(4).ToArray());
+            RemainingData = data.Skip(12).ToArray();
         }
     }
 
