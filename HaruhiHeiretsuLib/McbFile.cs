@@ -15,10 +15,11 @@ namespace HaruhiHeiretsuLib
     public class McbFile
     {
         public Bln BlnFile { get; set; } = new Bln();
-        public List<IArchiveFileInfo> ArchiveFiles { get; set; }
+        public List<BlnArchiveFileInfo> ArchiveFiles { get; set; }
         public List<StringsFile> StringsFiles { get; set; } = new();
         public List<GraphicsFile> GraphicsFiles { get; set; } = new();
         public List<FileInArchive> LoadedFiles { get; set; } = new();
+        Dictionary<ArchiveIndex, Dictionary<int, int>> OffsetIndexDictionaries { get; set; } = new();
         public FontFile FontFile { get; set; }
 
         private MemoryStream _indexFileStream;
@@ -36,7 +37,7 @@ namespace HaruhiHeiretsuLib
         {
             _indexFileStream = new MemoryStream(File.ReadAllBytes(indexFile));
             _dataFileStream = new MemoryStream(File.ReadAllBytes(dataFile));
-            ArchiveFiles = (List<IArchiveFileInfo>)BlnFile.Load(_indexFileStream, _dataFileStream);
+            ArchiveFiles = BlnFile.Load(_indexFileStream, _dataFileStream).Select(a => (BlnArchiveFileInfo)a).ToList();
         }
 
         public async Task Save(string indexFile, string dataFile)
@@ -172,11 +173,107 @@ namespace HaruhiHeiretsuLib
             BlnFile.Save(indexFileStream, dataFileStream, ArchiveFiles);
         }
 
+        public async Task ResolveGraphicsFileNames()
+        {
+            Stream archiveFFFFStream = await ArchiveFiles[0].GetFileData();
+            BlnSub blnSub = new();
+            List<BlnSubArchiveFileInfo> blnSubFiles = blnSub.Load(archiveFFFFStream).Select(f => (BlnSubArchiveFileInfo)f).ToList();
+
+            byte[] textureNameMap = blnSubFiles[57].GetFileDataBytes();
+            int numTextures = BitConverter.ToInt32(textureNameMap.Skip(0x10).Take(4).Reverse().ToArray());
+
+            Dictionary<int, string> indexToNameMap = new();
+            for (int i = 0; i < numTextures; i++)
+            {
+                indexToNameMap.Add(BitConverter.ToInt32(textureNameMap.Skip(0x14 * (i + 1)).Take(4).Reverse().ToArray()), Encoding.ASCII.GetString(textureNameMap.Skip(0x14 * (i + 1) + 0x04).TakeWhile(b => b != 0x00).ToArray()));
+            }
+
+            foreach (GraphicsFile graphicsFile in GraphicsFiles)
+            {
+                graphicsFile.TryResolveName(OffsetIndexDictionaries[ArchiveIndex.GRP], indexToNameMap);
+            }
+        }
+
+        public async Task ResolveScriptFileName()
+        {
+            Stream archive4200Stream = await ArchiveFiles[75].GetFileData();
+            BlnSub blnSub = new();
+            List<BlnSubArchiveFileInfo> blnSubFiles = blnSub.Load(archive4200Stream).Select(f => (BlnSubArchiveFileInfo)f).ToList();
+
+            byte[] scriptNameList = blnSubFiles[1].GetFileDataBytes();
+            List<string> scriptNames = ScriptFile.ParseScriptListFile(scriptNameList);
+            Dictionary<int, string> indexToNameMap = scriptNames.ToDictionary(keySelector: n => scriptNames.IndexOf(n) + 1);
+
+            foreach (StringsFile stringsFile in StringsFiles)
+            {
+                if (stringsFile.GetType() == typeof(ScriptFile))
+                {
+                    ScriptFile scriptFile = (ScriptFile)stringsFile;
+                    scriptFile.Name = indexToNameMap[OffsetIndexDictionaries[ArchiveIndex.SCR][scriptFile.McbEntryData.archiveOffset]];
+                }
+            }
+        }
+
+        public void LoadIndexOffsetDictionary(string binArchiveFile)
+        {
+            var archive = ArchiveFile<FileInArchive>.FromFile(binArchiveFile);
+            switch (Path.GetFileName(binArchiveFile).ToLower())
+            {
+                case "grp.bin":
+                    if (!OffsetIndexDictionaries.ContainsKey(ArchiveIndex.GRP))
+                    {
+                        OffsetIndexDictionaries.Add(ArchiveIndex.GRP, new());
+                    }
+                    OffsetIndexDictionaries[ArchiveIndex.GRP] = new();
+                    foreach (var file in archive.Files)
+                    {
+                        OffsetIndexDictionaries[ArchiveIndex.GRP].Add(file.Offset, file.Index);
+                    }
+                    ResolveGraphicsFileNames().GetAwaiter().GetResult();
+                    break;
+                case "dat.bin":
+                    if (!OffsetIndexDictionaries.ContainsKey(ArchiveIndex.DAT))
+                    {
+                        OffsetIndexDictionaries.Add(ArchiveIndex.DAT, new());
+                    }
+                    OffsetIndexDictionaries[ArchiveIndex.DAT] = new();
+                    foreach (var file in archive.Files)
+                    {
+                        OffsetIndexDictionaries[ArchiveIndex.DAT].Add(file.Offset, file.Index);
+                    }
+                    break;
+                case "scr.bin":
+                    if (!OffsetIndexDictionaries.ContainsKey(ArchiveIndex.SCR))
+                    {
+                        OffsetIndexDictionaries.Add(ArchiveIndex.SCR, new());
+                    }
+                    OffsetIndexDictionaries[ArchiveIndex.SCR] = new();
+                    foreach (var file in archive.Files)
+                    {
+                        OffsetIndexDictionaries[ArchiveIndex.SCR].Add(file.Offset, file.Index);
+                    }
+                    ResolveScriptFileName().GetAwaiter().GetResult();
+                    break;
+                case "evt.bin":
+                    if (!OffsetIndexDictionaries.ContainsKey(ArchiveIndex.EVT))
+                    {
+                        OffsetIndexDictionaries.Add(ArchiveIndex.EVT, new());
+                    }
+                    OffsetIndexDictionaries[ArchiveIndex.EVT] = new();
+                    foreach (var file in archive.Files)
+                    {
+                        OffsetIndexDictionaries[ArchiveIndex.EVT].Add(file.Offset, file.Index);
+                    }
+                    break;
+            }
+
+        }
+
         public async Task<Dictionary<int, List<(int, int)>>> GetFileMap(string binArchiveFile)
         {
             Dictionary<int, List<(int, int)>> fileMap = new();
             int archiveIndexToSearch;
-            switch (Path.GetFileName(binArchiveFile))
+            switch (Path.GetFileName(binArchiveFile).ToLower())
             {
                 case "grp.bin":
                     archiveIndexToSearch = (int)ArchiveIndex.GRP;
@@ -251,7 +348,7 @@ namespace HaruhiHeiretsuLib
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
-                LoadedFiles.Add(new FileInArchive() { Data = subFileData.ToList(), Location = (parentLoc, childLoc), McbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id });
+                LoadedFiles.Add(new FileInArchive() { Data = subFileData.ToList(), Location = (parentLoc, childLoc), McbId = ArchiveFiles[parentLoc].Entry.id });
             }
         }
 
@@ -277,7 +374,7 @@ namespace HaruhiHeiretsuLib
                 BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, childLoc);
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
-                short mcbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id;
+                short mcbId = ArchiveFiles[parentLoc].Entry.id;
 
                 switch ((ArchiveIndex)blnSubFile.Entry.archiveIndex)
                 {
@@ -285,17 +382,19 @@ namespace HaruhiHeiretsuLib
                         ShadeStringsFile shadeStringsFile = new();
                         shadeStringsFile.Location = (parentLoc, childLoc);
                         shadeStringsFile.McbId = mcbId;
+                        shadeStringsFile.McbEntryData = (blnSubFile.Entry.archiveIndex, blnSubFile.Entry.archiveOffset);
                         shadeStringsFile.Initialize(subFileData);
                         StringsFiles.Add(shadeStringsFile);
                         break;
                     case ArchiveIndex.SCR:
                         ScriptFile scriptFile = new(parentLoc, childLoc, subFileData, mcbId);
                         scriptFile.AvailableCommands = scriptCommands;
+                        scriptFile.McbEntryData = (blnSubFile.Entry.archiveIndex, blnSubFile.Entry.archiveOffset);
                         scriptFile.PopulateCommandBlocks();
                         StringsFiles.Add(scriptFile);
                         break;
                     case ArchiveIndex.EVT:
-                        StringsFiles.Add(new EventFile(parentLoc, childLoc, subFileData, mcbId));
+                        StringsFiles.Add(new EventFile(parentLoc, childLoc, subFileData, mcbId) { McbEntryData = (blnSubFile.Entry.archiveIndex, blnSubFile.Entry.archiveOffset) });
                         break;
                 }
             }
@@ -324,7 +423,7 @@ namespace HaruhiHeiretsuLib
 
                 byte[] subFileData = blnSubFile.GetFileDataBytes();
 
-                GraphicsFile graphicsFile = new() { Location = (parentLoc, childLoc), McbId = ((BlnArchiveFileInfo)ArchiveFiles[parentLoc]).Entry.id };
+                GraphicsFile graphicsFile = new() { Location = (parentLoc, childLoc), McbEntryData = (blnSubFile.Entry.archiveIndex, blnSubFile.Entry.archiveOffset), McbId = ArchiveFiles[parentLoc].Entry.id };
                 graphicsFile.Initialize(subFileData, 0);
                 graphicsFile.Offset = (int)blnSubFile.Offset;
                 GraphicsFiles.Add(graphicsFile);
@@ -345,7 +444,7 @@ namespace HaruhiHeiretsuLib
                     {
                         byte[] fileData = blnSubFiles[child].GetFileDataBytes();
 
-                        GraphicsFile graphicsFile = new() { Location = (parent, child), McbId = ((BlnArchiveFileInfo)ArchiveFiles[parent]).Entry.id };
+                        GraphicsFile graphicsFile = new() { Location = (parent, child), McbEntryData = (blnSubFiles[child].Entry.archiveIndex, blnSubFiles[child].Entry.archiveOffset), McbId = ArchiveFiles[parent].Entry.id };
                         graphicsFile.Initialize(fileData, 0);
                         graphicsFile.Offset = (int)blnSubFiles[child].Offset;
                         GraphicsFiles.Add(graphicsFile);

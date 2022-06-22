@@ -1,4 +1,5 @@
 ﻿using HaruhiHeiretsuLib;
+using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
 using Mono.Options;
@@ -111,6 +112,74 @@ namespace HaruhiHeiretsuCLI
                     scr.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
 
                     CommandSet.Out.WriteLine($"Finished replacing {Path.GetFileName(file)} in MCB & SCR");
+                }
+                else if (file.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (Path.GetFileNameWithoutExtension(file).EndsWith("map"))
+                    {
+                        if (archive != "grp")
+                        {
+                            CommandSet.Out.WriteLine($"WARNING: Map CSV file {file} targets {archive}.bin rather than grp.bin, skipping...");
+                            continue;
+                        }
+
+                        string[] csvLines = File.ReadAllLines(file);
+                        List<MapEntry> mapEntries = csvLines.Skip(1).Select(l => new MapEntry(l)).ToList();
+
+                        grp.Files.First(f => f.Index == archiveIndex).SetMapData(mapEntries);
+
+                        int i = mcb.GraphicsFiles.Count;
+                        mcb.LoadGraphicsFiles(file.Split('_'));
+                        for (; i < mcb.GraphicsFiles.Count; i++)
+                        {
+                            mcb.GraphicsFiles[i].SetMapData(mapEntries);
+                        }
+
+                        archivesEdited[McbFile.ArchiveIndex.GRP] = true;
+
+                        CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
+                    }
+                    else
+                    {
+                        if (archive != "dat")
+                        {
+                            CommandSet.Out.WriteLine($"WARNING: CSV file {file} targets {archive}.bin rather than dat.bin, skipping...");
+                            continue;
+                        }
+
+                        FileInArchive currentFile = dat.Files.First(f => f.Index == archiveIndex);
+                        List<byte> data = new();
+
+                        if (archiveIndex == 36)
+                        {
+                            CameraDataFile cameraDataFile = new(File.ReadAllLines(file));
+                            data = cameraDataFile.GetBytes().ToList();
+                        }
+                        else if (archiveIndex == 58)
+                        {
+                            MapDefinitionsFile mapDefinitionsFile = new(File.ReadAllLines(file), currentFile.Index, currentFile.Offset);
+                            data = mapDefinitionsFile.GetBytes().ToList();
+                        }
+                        else
+                        {
+                            CommandSet.Out.WriteLine($"WARNING: CSV file {file} did not target a supported dat file, skipping...");
+                            continue;
+                        }
+
+                        dat.Files[dat.Files.IndexOf(currentFile)].Edited = true;
+                        dat.Files[dat.Files.IndexOf(currentFile)].Data = data;
+
+                        int i = mcb.LoadedFiles.Count;
+                        mcb.LoadFiles(file.Split('_'));
+                        for (; i < mcb.LoadedFiles.Count; i++)
+                        {
+                            mcb.LoadedFiles[i].Edited = true;
+                            mcb.LoadedFiles[i].Data = data;
+                        }
+
+                        archivesEdited[McbFile.ArchiveIndex.DAT] = true;
+                        CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & DAT");
+                    }
                 }
                 else if (file.EndsWith(".bin", StringComparison.OrdinalIgnoreCase))
                 {

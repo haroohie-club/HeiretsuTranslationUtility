@@ -1,5 +1,6 @@
 ﻿using FolderBrowserEx;
 using HaruhiHeiretsuLib;
+using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
 using Microsoft.Win32;
@@ -100,6 +101,23 @@ namespace HaruhiHeiretsuEditor
                     {
                         _mcb.AdjustOffsets(mcbSaveFileDialog.FileName, mcbSaveFileDialog.FileName.Replace("0", "1"), offsetOpenFileDialog.FileName).GetAwaiter().GetResult();
                     }
+                }
+            }
+        }
+
+        private void LoadBinArchiveHeader_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mcb is not null)
+            {
+                OpenFileDialog openFileDialog = new()
+                {
+                    Filter = "Any BIN file|*.bin"
+                };
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    _mcb.LoadIndexOffsetDictionary(openFileDialog.FileName);
+                    scriptsListBox.Items.Refresh();
+                    graphicsListBox.Items.Refresh();
                 }
             }
         }
@@ -420,8 +438,12 @@ namespace HaruhiHeiretsuEditor
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.SGE)
                 {
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes", Background = Brushes.White });
+                    foreach (SgeTexture tex in selectedFile.SgeTextures)
+                    {
+                        graphicsEditStackPanel.Children.Add(new TextBlock { Text = tex.Name });
+                    }
                 }
-                else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TILE_20AF30)
+                else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TEXTURE)
                 {
                     graphicsEditStackPanel.Background = Brushes.Gray;
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {selectedFile.Mode}", Background = Brushes.White });
@@ -432,7 +454,7 @@ namespace HaruhiHeiretsuEditor
                 {
                     graphicsEditStackPanel.Background = Brushes.Gray;
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"LAYOUT: {string.Join(' ', selectedFile.UnknownLayoutHeaderInt1.Select(b => $"{b:X2}"))}", Background = Brushes.White });
-                    MapButton loadButton = new() { Content = "Load Layout", Map = selectedFile };
+                    GraphicsButton loadButton = new() { Content = "Load Layout", Graphic = selectedFile };
                     loadButton.Click += LoadButton_Click;
 
                     graphicsEditStackPanel.Children.Add(loadButton);
@@ -502,29 +524,33 @@ namespace HaruhiHeiretsuEditor
 
                     graphicsEditStackPanel.Children.Add(grid);
                 }
-                else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.WORLD_DATA)
+                else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.MAP)
                 {
-                    for (int i = 0; i < 256; i++)
-                    {
-                        StackPanel stackPanel = new() { Orientation = Orientation.Horizontal };
-                        stackPanel.Children.Add(new TextBlock { Text = $"{selectedFile.WorldDataModelNames[i]}: " });
-                        stackPanel.Children.Add(new TextBox { Text = $"{selectedFile.WorldDataEntries[i].X}" });
-                        stackPanel.Children.Add(new TextBox { Text = $"{selectedFile.WorldDataEntries[i].Y}" });
-                        stackPanel.Children.Add(new TextBox { Text = $"{selectedFile.WorldDataEntries[i].Z}" });
-                        stackPanel.Children.Add(new TextBox { Text = $"{string.Join(" ", selectedFile.WorldDataEntries[i].RemainingData.Select(b => $"{b:X2}"))}" });
-
-                        graphicsEditStackPanel.Children.Add(stackPanel);
-                    }
+                    GraphicsButton mapButton = new() { Content = "Export to CSV", Graphic = selectedFile };
+                    mapButton.Click += MapButton_Click;
+                    graphicsEditStackPanel.Children.Add(mapButton);
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"Map Model: {selectedFile.MapModel}" });
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"Map Background Model: {selectedFile.MapBackgroundModel}" });
                 }
             }
         }
 
+        private void MapButton_Click(object sender, RoutedEventArgs e)
+        {
+            GraphicsFile map = ((GraphicsButton)sender).Graphic;
+            string csv = string.Join("\n", map.MapEntries.Select(e => e.GetCsvLine()));
+            csv = $"Model,X,Y,Z,Unknown0C,Unknown10,Unknown12,Unknown14,Unknown16,Unknown18,Unknown1A,Unknown1C,Unknown1E,Unknown20,Unknown22,Unknown24,Unknown26,Unknown28,Unknown2A\n{csv}";
+            string mapFile = Path.Combine(Path.GetTempPath(), $"{map.Location.parent:D3}-{map.Location.child:D3}-map.csv");
+            File.WriteAllText(mapFile, csv);
+            new Process { StartInfo = new ProcessStartInfo(mapFile) { UseShellExecute = true } }.Start();
+        }
+
         private void LoadButton_Click(object sender, RoutedEventArgs e)
         {
-            MapButton mapButton = (MapButton)sender;
+            GraphicsButton mapButton = (GraphicsButton)sender;
             //Dictionary<int, GraphicsFile> archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == selectedFile.Location.parent).ToDictionary(g => g.Location.child);
             List<GraphicsFile> archiveGraphicsFiles = new();
-            if (mapButton.Map.Location == (58, 57))
+            if (mapButton.Graphic.Location == (58, 57))
             {
                 archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 12)));
                 archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 12)));
@@ -538,9 +564,9 @@ namespace HaruhiHeiretsuEditor
             }
             else
             {
-                archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == mapButton.Map.Location.parent).ToList();
+                archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == mapButton.Graphic.Location.parent).ToList();
             }
-            MapPreviewWindow mapPreviewWindow = new(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(mapButton.Map.GetLayout(archiveGraphicsFiles)), MaxWidth = mapButton.Map.Width });
+            MapPreviewWindow mapPreviewWindow = new(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(mapButton.Graphic.GetLayout(archiveGraphicsFiles)), MaxWidth = mapButton.Graphic.Width });
             mapPreviewWindow.Show();
         }
 
@@ -581,16 +607,13 @@ namespace HaruhiHeiretsuEditor
 
         private void ExportGraphicsFileButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_loadedGraphicsFile is not null)
+            SaveFileDialog saveFileDialog = new()
             {
-                SaveFileDialog saveFileDialog = new()
-                {
-                    Filter = "BIN file|*.bin"
-                };
-                if (saveFileDialog.ShowDialog() == true)
-                {
-                    File.WriteAllBytes(saveFileDialog.FileName, _loadedGraphicsFile.Data.ToArray());
-                }
+                Filter = "BIN file|*.bin"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllBytes(saveFileDialog.FileName, ((GraphicsFile)graphicsListBox.SelectedItem).Data.ToArray());
             }
         }
 
@@ -681,6 +704,23 @@ namespace HaruhiHeiretsuEditor
             if (openFileDialog.ShowDialog() == true)
             {
                 _datFile = ArchiveFile<DataFile>.FromFile(openFileDialog.FileName);
+
+                DataFile currentMapDefFile = _datFile.Files.First(f => f.Index == 58);
+                MapDefinitionsFile mapDefFile = new();
+                mapDefFile.Initialize(currentMapDefFile.Data.ToArray(), currentMapDefFile.Offset);
+                mapDefFile.CompressedData = currentMapDefFile.CompressedData;
+                mapDefFile.Index = currentMapDefFile.Index;
+                mapDefFile.MagicInteger = currentMapDefFile.MagicInteger;
+                _datFile.Files[_datFile.Files.IndexOf(currentMapDefFile)] = mapDefFile;
+
+                DataFile currentCameraDataFile = _datFile.Files.First(f => f.Index == 36);
+                CameraDataFile cameraDataFile = new();
+                cameraDataFile.Initialize(currentCameraDataFile.Data.ToArray(), currentCameraDataFile.Offset);
+                cameraDataFile.CompressedData = currentCameraDataFile.CompressedData;
+                cameraDataFile.Index = currentCameraDataFile.Index;
+                cameraDataFile.MagicInteger = currentCameraDataFile.MagicInteger;
+                _datFile.Files[_datFile.Files.IndexOf(currentCameraDataFile)] = cameraDataFile;
+
                 dataListBox.ItemsSource = _datFile.Files;
                 dataListBox.Items.Refresh();
             }
@@ -742,7 +782,39 @@ namespace HaruhiHeiretsuEditor
                 DataFile selectedFile = (DataFile)dataListBox.SelectedItem;
                 dataEditStackPanel.Children.Add(new TextBlock { Text = $"{selectedFile.Data.Count} bytes" });
                 dataEditStackPanel.Children.Add(new TextBlock { Text = $"Actual compressed length: {selectedFile.CompressedData.Length:X}; Calculated length: {selectedFile.Length:X}" });
+
+                if (selectedFile.GetType() == typeof(MapDefinitionsFile))
+                {
+                    MapDefinitionButton mapDefButton = new() { Content = "Export to CSV", MapDefFile = (MapDefinitionsFile)selectedFile };
+                    mapDefButton.Click += MapDefButton_Click;
+                    dataEditStackPanel.Children.Add(mapDefButton);
+                }
+
+                if (selectedFile.GetType() == typeof(CameraDataFile))
+                {
+                    CameraDataButton camDataButton = new() { Content = "Export to CSV", CamDataFile = (CameraDataFile)selectedFile };
+                    camDataButton.Click += CamDataButton_Click;
+                    dataEditStackPanel.Children.Add(camDataButton);
+                }
             }
+        }
+
+        private void MapDefButton_Click(object sender, RoutedEventArgs e)
+        {
+            MapDefinitionsFile mapDefFile = ((MapDefinitionButton)sender).MapDefFile;
+
+            string tempFile = Path.Combine(Path.GetTempPath(), $"MapDefinitions.csv");
+            File.WriteAllText(tempFile, mapDefFile.GetCsv());
+            new Process { StartInfo = new ProcessStartInfo(tempFile) { UseShellExecute = true } }.Start();
+        }
+
+        private void CamDataButton_Click(object sender, RoutedEventArgs e)
+        {
+            CameraDataFile cameraDataFile = ((CameraDataButton)sender).CamDataFile;
+
+            string tempFile = Path.Combine(Path.GetTempPath(), $"CameraData.csv");
+            File.WriteAllText(tempFile, cameraDataFile.GetCsv());
+            new Process { StartInfo = new ProcessStartInfo(tempFile) { UseShellExecute = true } }.Start();
         }
     }
 }

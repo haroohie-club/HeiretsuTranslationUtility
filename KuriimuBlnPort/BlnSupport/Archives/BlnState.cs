@@ -68,7 +68,7 @@ namespace plugin_shade.Archives
                     break;
             }
 
-            _bln.Save(indexOutput, dataOutput, Files);
+            _bln.Save(indexOutput, dataOutput, Files.Select(a => (BlnArchiveFileInfo)a).ToList());
 
             return Task.CompletedTask;
         }

@@ -10,6 +10,7 @@ namespace HaruhiHeiretsuLib
     {
         public short McbId { get; set; }
         public (int parent, int child) Location { get; set; } = (-1, -1);
+        public (int archiveIndex, int archiveOffset) McbEntryData { get; set; }
         public uint MagicInteger { get; set; }
         public int Index { get; set; }
         public int Offset { get; set; }

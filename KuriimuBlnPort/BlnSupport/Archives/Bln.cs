@@ -40,13 +40,13 @@ namespace plugin_shade.Archives
             return result;
         }
 
-        public void Save(Stream indexOutput, Stream dataOutput, IList<IArchiveFileInfo> files, bool leaveOpen = false)
+        public void Save(Stream indexOutput, Stream dataOutput, IList<BlnArchiveFileInfo> files, bool leaveOpen = false)
         {
             // Write files
             using var indexBw = new BinaryWriterX(indexOutput, leaveOpen: leaveOpen);
 
             var offset = 0u;
-            foreach (var file in files.Cast<BlnArchiveFileInfo>())
+            foreach (var file in files)
             {
                 var dataSize = (uint)file.SaveFileData(dataOutput);
 

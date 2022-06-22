@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HaruhiHeiretsuLib
+namespace HaruhiHeiretsuLib.Data
 {
     public class DataFile : FileInArchive
     {
+        public string Name { get; set; }
+
         public override void Initialize(byte[] decompressedData, int offset)
         {
             Offset = offset;
@@ -18,7 +20,7 @@ namespace HaruhiHeiretsuLib
 
         public override string ToString()
         {
-            return $"{Index:X3} 0x{Offset:X8}";
+            return $"{Index:X3} 0x{Offset:X8} {Name}";
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using HaruhiHeiretsuLib;
+﻿using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
 using System;
@@ -21,8 +21,17 @@ namespace HaruhiHeiretsuEditor
         public ScriptFile Script { get; set; }
     }
 
-    public class MapButton : Button
+    public class GraphicsButton : Button
     {
-        public GraphicsFile Map { get; set; }
+        public GraphicsFile Graphic { get; set; }
+    }
+
+    public class MapDefinitionButton : Button
+    {
+        public MapDefinitionsFile MapDefFile { get; set; }
+    }
+    public class CameraDataButton : Button
+    {
+        public CameraDataFile CamDataFile { get; set; }
     }
 }
