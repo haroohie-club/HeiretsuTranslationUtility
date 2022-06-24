@@ -12,34 +12,9 @@ namespace HaruhiHeiretsuLib.Graphics
     public partial class GraphicsFile : FileInArchive
     {
         public GraphicsFileType FileType { get; set; }
-
-        // Texture File Properties
         public string Name { get; set; } = string.Empty;
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public ImageMode Mode  { get; set; }
-        public int PointerPointer { get; set; }
-        public int SizePointer { get; set; }
-        public int DataPointer { get; set; }
-
-        // Layout File Properties
-        public byte[] UnknownLayoutHeaderInt1 { get; set; }
-        public List<LayoutComponent> LayoutComponents { get; set; }
 
         // SGE Properties
-        public int SgeStartOffset { get; set; }
-        public int SgeFirstHeaderSectionLength { get; set; }
-        public int NumSgeTextures { get; set; }
-        public int SgeTextureDefStartOffset { get; set; }
-        public List<SgeTexture> SgeTextures { get; set; } = new();
-
-        // Map File Properties
-        public byte[] MapHeader { get; set; }
-        public string MapModel { get; set; }
-        public string MapBackgroundModel { get; set; }
-        public List<string> MapModelNames { get; set; } = new();
-        public List<MapEntry> MapEntries { get; set; } = new();
-        public List<byte[]> MapFooterEntries { get; set; } = new();
 
         public GraphicsFile()
         {
@@ -51,17 +26,8 @@ namespace HaruhiHeiretsuLib.Graphics
             Offset = offset;
             if (Encoding.ASCII.GetString(Data.Take(6).ToArray()) == "SGE008")
             {
-                // SGEs are little-endian so no need for .Reverse() here
                 FileType = GraphicsFileType.SGE;
-                SgeFirstHeaderSectionLength = BitConverter.ToInt32(Data.Skip(0x0C).Take(4).ToArray());
-                SgeStartOffset = BitConverter.ToInt32(Data.Skip(0x1C).Take(4).ToArray());
-                NumSgeTextures = BitConverter.ToInt32(Data.Skip(SgeStartOffset + 0x14).Take(4).ToArray());
-                SgeTextureDefStartOffset = BitConverter.ToInt32(Data.Skip(SgeStartOffset + 0x48).Take(4).ToArray()) + SgeStartOffset;
-                for (int i = 0; i < NumSgeTextures; i++)
-                {
-                    int nameOffset = SgeTextureDefStartOffset + i * 0x18;
-                    SgeTextures.Add(new() { NameOffset = nameOffset, Name = Encoding.ASCII.GetString(Data.Skip(nameOffset).TakeWhile(b => b != 0).ToArray()) });
-                }
+                SgeModel = new(Data);
             }
             else if (Data.Take(4).SequenceEqual(new byte[] { 0x00, 0x20, 0xAF, 0x30 }))
             {

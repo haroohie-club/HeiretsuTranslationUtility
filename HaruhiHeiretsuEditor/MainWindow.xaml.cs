@@ -437,10 +437,14 @@ namespace HaruhiHeiretsuEditor
                 }
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.SGE)
                 {
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes", Background = Brushes.White });
-                    foreach (SgeTexture tex in selectedFile.SgeTextures)
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes; {selectedFile.SgeModel.SgeHeader.BonesCount} bones and {selectedFile.SgeModel.SgeHeader.SubmeshCount} submeshes", Background = Brushes.White });
+                    foreach (SgeTexture tex in selectedFile.SgeModel.SgeTextures)
                     {
                         graphicsEditStackPanel.Children.Add(new TextBlock { Text = tex.Name });
+                        if (tex.File is not null)
+                        {
+                            graphicsEditStackPanel.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(tex.File.GetImage()), MaxWidth = 128 });
+                        }
                     }
                 }
                 else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TEXTURE)
@@ -705,21 +709,24 @@ namespace HaruhiHeiretsuEditor
             {
                 _datFile = ArchiveFile<DataFile>.FromFile(openFileDialog.FileName);
 
-                DataFile currentMapDefFile = _datFile.Files.First(f => f.Index == 58);
-                MapDefinitionsFile mapDefFile = new();
-                mapDefFile.Initialize(currentMapDefFile.Data.ToArray(), currentMapDefFile.Offset);
-                mapDefFile.CompressedData = currentMapDefFile.CompressedData;
-                mapDefFile.Index = currentMapDefFile.Index;
-                mapDefFile.MagicInteger = currentMapDefFile.MagicInteger;
-                _datFile.Files[_datFile.Files.IndexOf(currentMapDefFile)] = mapDefFile;
+                if (Path.GetFileName(openFileDialog.FileName) == "dat.bin")
+                {
+                    DataFile currentMapDefFile = _datFile.Files.First(f => f.Index == 58);
+                    MapDefinitionsFile mapDefFile = new();
+                    mapDefFile.Initialize(currentMapDefFile.Data.ToArray(), currentMapDefFile.Offset);
+                    mapDefFile.CompressedData = currentMapDefFile.CompressedData;
+                    mapDefFile.Index = currentMapDefFile.Index;
+                    mapDefFile.MagicInteger = currentMapDefFile.MagicInteger;
+                    _datFile.Files[_datFile.Files.IndexOf(currentMapDefFile)] = mapDefFile;
 
-                DataFile currentCameraDataFile = _datFile.Files.First(f => f.Index == 36);
-                CameraDataFile cameraDataFile = new();
-                cameraDataFile.Initialize(currentCameraDataFile.Data.ToArray(), currentCameraDataFile.Offset);
-                cameraDataFile.CompressedData = currentCameraDataFile.CompressedData;
-                cameraDataFile.Index = currentCameraDataFile.Index;
-                cameraDataFile.MagicInteger = currentCameraDataFile.MagicInteger;
-                _datFile.Files[_datFile.Files.IndexOf(currentCameraDataFile)] = cameraDataFile;
+                    DataFile currentCameraDataFile = _datFile.Files.First(f => f.Index == 36);
+                    CameraDataFile cameraDataFile = new();
+                    cameraDataFile.Initialize(currentCameraDataFile.Data.ToArray(), currentCameraDataFile.Offset);
+                    cameraDataFile.CompressedData = currentCameraDataFile.CompressedData;
+                    cameraDataFile.Index = currentCameraDataFile.Index;
+                    cameraDataFile.MagicInteger = currentCameraDataFile.MagicInteger;
+                    _datFile.Files[_datFile.Files.IndexOf(currentCameraDataFile)] = cameraDataFile;
+                }
 
                 dataListBox.ItemsSource = _datFile.Files;
                 dataListBox.Items.Refresh();

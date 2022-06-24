@@ -6,6 +6,9 @@ namespace HaruhiHeiretsuLib.Graphics
 {
     public partial class GraphicsFile
     {
+        public byte[] UnknownLayoutHeaderInt1 { get; set; }
+        public List<LayoutComponent> LayoutComponents { get; set; }
+
         public SKBitmap GetLayout(List<GraphicsFile> archiveGraphicsFiles)
         {
             if (FileType == GraphicsFileType.LAYOUT)

@@ -192,6 +192,13 @@ namespace HaruhiHeiretsuLib
             {
                 graphicsFile.TryResolveName(OffsetIndexDictionaries[ArchiveIndex.GRP], indexToNameMap);
             }
+            foreach (GraphicsFile graphicsFile in GraphicsFiles)
+            {
+                if (graphicsFile.FileType == GraphicsFile.GraphicsFileType.SGE)
+                {
+                    graphicsFile.SgeModel.ResolveTextures(GraphicsFiles);
+                }
+            }
         }
 
         public async Task ResolveScriptFileName()

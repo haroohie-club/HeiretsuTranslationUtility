@@ -23,10 +23,10 @@ namespace Kompression.Implementations.Encoders
 
         public void Encode(Stream input, Stream output, IEnumerable<Match> matches)
         {
-            output.Position += 0xC;
-            _encoder.Encode(input, output, matches);
+            byte[] bytes = input.ToArray();
+            byte[] compressedBytes = ShadeLzHeaderlessEncoder.CompressData(bytes);
 
-            WriteHeaderData(output, input.Length);
+            output.Write(compressedBytes);
         }
 
         private void WriteHeaderData(Stream output, long uncompressedLength)

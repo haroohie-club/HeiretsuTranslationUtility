@@ -8,6 +8,13 @@ namespace HaruhiHeiretsuLib.Graphics
 {
     public partial class GraphicsFile
     {
+        public byte[] MapHeader { get; set; }
+        public string MapModel { get; set; }
+        public string MapBackgroundModel { get; set; }
+        public List<string> MapModelNames { get; set; } = new();
+        public List<MapEntry> MapEntries { get; set; } = new();
+        public List<byte[]> MapFooterEntries { get; set; } = new();
+
         public void SetMapData(List<MapEntry> newMapEntries)
         {
             Edited = true;

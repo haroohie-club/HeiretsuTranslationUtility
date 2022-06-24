@@ -6,6 +6,13 @@ namespace HaruhiHeiretsuLib.Graphics
 {
     public partial class GraphicsFile
     {
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public ImageMode Mode { get; set; }
+        public int PointerPointer { get; set; }
+        public int SizePointer { get; set; }
+        public int DataPointer { get; set; }
+
         public SKBitmap GetImage()
         {
             if (FileType == GraphicsFileType.TEXTURE)
