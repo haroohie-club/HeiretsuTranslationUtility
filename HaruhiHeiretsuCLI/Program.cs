@@ -1,4 +1,4 @@
-﻿using HaruhiHeiretsuLib;
+﻿using HaruhiHeiretsuLib.Archive;
 using Mono.Options;
 using System.IO;
 
@@ -18,10 +18,6 @@ namespace HaruhiHeiretsuCLI
                 new ExportFileMapCommand(),
                 new ExportResxCommand(),
                 new ExtractArchiveCommand(),
-                new ExtractListOfFilesCommand(),
-                new ExtractSgeFilesCommand(),
-                new ExtractStringFilesCommand(),
-                new FindStringsCommand(),
                 new HexSearchCommand(),
                 new ReplaceFilesCommand(),
                 new ReplaceFontCommand(),
@@ -32,7 +28,7 @@ namespace HaruhiHeiretsuCLI
             return commands.Run(args);
         }
 
-        public static McbFile GetMcbFile(string mcbPath)
+        public static McbArchive GetMcbFile(string mcbPath)
         {
             string indexFile, dataFile;
             if (Path.GetFileName(mcbPath).Contains('0'))
@@ -46,7 +42,7 @@ namespace HaruhiHeiretsuCLI
                 dataFile = mcbPath;
             }
 
-            return new McbFile(indexFile, dataFile);
+            return new McbArchive(indexFile, dataFile);
         }
     }
 }

@@ -1,10 +1,7 @@
-﻿using HaruhiHeiretsuLib;
-using Kontract.Models.Archive;
+﻿using HaruhiHeiretsuLib.Archive;
 using Mono.Options;
-using plugin_shade.Archives;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuCLI
 {
@@ -28,27 +25,18 @@ namespace HaruhiHeiretsuCLI
 
         public override int Invoke(IEnumerable<string> arguments)
         {
-            return InvokeAsync(arguments).GetAwaiter().GetResult();
-        }
-
-        public async Task<int> InvokeAsync(IEnumerable<string> arguments)
-        {
             Options.Parse(arguments);
 
-            McbFile mcb = Program.GetMcbFile(_mcb);
+            McbArchive mcb = Program.GetMcbFile(_mcb);
 
             if (!Directory.Exists(_outputDirectory))
             {
                 Directory.CreateDirectory(_outputDirectory);
             }
 
-            using Stream archiveStream = await mcb.ArchiveFiles[_archiveIndex].GetFileData();
-            BlnSub blnSub = new();
-            List<IArchiveFileInfo> blnSubFiles = (List<IArchiveFileInfo>)blnSub.Load(archiveStream);
-
-            for (int i = 0; i < blnSubFiles.Count; i++)
+            for (int i = 0; i < mcb.McbSubArchives[_archiveIndex].Files.Count; i++)
             {
-                File.WriteAllBytes(Path.Combine(_outputDirectory, $"{i:D3}.bin"), blnSubFiles[i].GetFileDataBytes());
+                File.WriteAllBytes(Path.Combine(_outputDirectory, $"{i:D3}.bin"), mcb.McbSubArchives[_archiveIndex].Files[i].GetBytes());
             }
 
             return 0;

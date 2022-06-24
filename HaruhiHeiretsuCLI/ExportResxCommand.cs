@@ -1,4 +1,4 @@
-﻿using HaruhiHeiretsuLib;
+﻿using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Strings;
 using Mono.Options;
 using System;
@@ -32,9 +32,9 @@ namespace HaruhiHeiretsuCLI
             Options.Parse(arguments);
 
             string[] files = File.ReadAllLines(_stringFileMap);
-            ArchiveFile<ShadeStringsFile> dat = ArchiveFile<ShadeStringsFile>.FromFile(_dat);
-            ArchiveFile<EventFile> evt = ArchiveFile<EventFile>.FromFile(_evt);
-            ArchiveFile<ScriptFile> scr = ArchiveFile<ScriptFile>.FromFile(_scr);
+            BinArchive<ShadeStringsFile> dat = BinArchive<ShadeStringsFile>.FromFile(_dat);
+            BinArchive<EventFile> evt = BinArchive<EventFile>.FromFile(_evt);
+            BinArchive<ScriptFile> scr = BinArchive<ScriptFile>.FromFile(_scr);
 
             List<(string, string, int)> binMap = files.Select(f =>
             {

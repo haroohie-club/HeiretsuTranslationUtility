@@ -1,12 +1,8 @@
-﻿using HaruhiHeiretsuLib;
-using HaruhiHeiretsuLib.Graphics;
+﻿using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Strings;
 using Mono.Options;
-using SkiaSharp;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -34,17 +30,12 @@ namespace HaruhiHeiretsuCLI
 
         public override int Invoke(IEnumerable<string> arguments)
         {
-            return InvokeAsync(arguments).GetAwaiter().GetResult();
-        }
-
-        public async Task<int> InvokeAsync(IEnumerable<string> arguments)
-        {
             Options.Parse(arguments);
-            McbFile mcb = Program.GetMcbFile(_mcb);
-            ArchiveFile<ShadeStringsFile> dat = ArchiveFile<ShadeStringsFile>.FromFile(_dat);
-            ArchiveFile<EventFile> evt = ArchiveFile<EventFile>.FromFile(_evt);
-            ArchiveFile<ScriptFile> scr = ArchiveFile<ScriptFile>.FromFile(_scr);
-            Dictionary<McbFile.ArchiveIndex, bool> archivesEdited = new() { { McbFile.ArchiveIndex.DAT, false }, { McbFile.ArchiveIndex.EVT, false }, { McbFile.ArchiveIndex.SCR, false } };
+            McbArchive mcb = Program.GetMcbFile(_mcb);
+            BinArchive<ShadeStringsFile> dat = BinArchive<ShadeStringsFile>.FromFile(_dat);
+            BinArchive<EventFile> evt = BinArchive<EventFile>.FromFile(_evt);
+            BinArchive<ScriptFile> scr = BinArchive<ScriptFile>.FromFile(_scr);
+            Dictionary<McbArchive.ArchiveIndex, bool> archivesEdited = new() { { McbArchive.ArchiveIndex.DAT, false }, { McbArchive.ArchiveIndex.EVT, false }, { McbArchive.ArchiveIndex.SCR, false } };
 
             Regex archiveRegex = new(@"(?<archiveName>dat|evt|grp|scr)-(?<archiveIndex>\d{4})");
             foreach (string file in Directory.GetFiles(_resxDir, $"*.{_langCode}.resx", SearchOption.AllDirectories))
@@ -61,7 +52,7 @@ namespace HaruhiHeiretsuCLI
                 mcb.LoadStringsFiles(file.Split('_'));
                 for (; i < mcb.StringsFiles.Count; i++)
                 {
-                    
+
                 }
 
                 switch (archive)
@@ -82,29 +73,38 @@ namespace HaruhiHeiretsuCLI
                 }
             }
 
-            await mcb.Save(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"));
-            CommandSet.Out.WriteLine("Finished saving MCB");
-
-            if (archivesEdited[McbFile.ArchiveIndex.DAT])
+            if (archivesEdited[McbArchive.ArchiveIndex.DAT])
             {
                 File.WriteAllBytes(Path.Combine(_outputDir, "dat.bin"), dat.GetBytes(out Dictionary<int, int> offsetAdjustments));
                 CommandSet.Out.WriteLine("Finished saving DAT");
-                await mcb.AdjustOffsets(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"), "dat.bin", offsetAdjustments);
+                mcb.AdjustOffsets("dat.bin", offsetAdjustments);
                 CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
+                (byte[] mcb0, byte[] mcb1) = mcb.GetBytes();
+                File.WriteAllBytes(Path.Combine(_outputDir, "mcb0.bln"), mcb0);
+                File.WriteAllBytes(Path.Combine(_outputDir, "mcb1.bln"), mcb1);
+                CommandSet.Out.WriteLine("Finished saving MCB");
             }
-            if (archivesEdited[McbFile.ArchiveIndex.EVT])
+            if (archivesEdited[McbArchive.ArchiveIndex.EVT])
             {
                 File.WriteAllBytes(Path.Combine(_outputDir, "evt.bin"), evt.GetBytes(out Dictionary<int, int> offsetAdjustments));
                 CommandSet.Out.WriteLine("Finished saving EVT");
-                await mcb.AdjustOffsets(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"), "evt.bin", offsetAdjustments);
+                mcb.AdjustOffsets("evt.bin", offsetAdjustments);
                 CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
+                (byte[] mcb0, byte[] mcb1) = mcb.GetBytes();
+                File.WriteAllBytes(Path.Combine(_outputDir, "mcb0.bln"), mcb0);
+                File.WriteAllBytes(Path.Combine(_outputDir, "mcb1.bln"), mcb1);
+                CommandSet.Out.WriteLine("Finished saving MCB");
             }
-            if (archivesEdited[McbFile.ArchiveIndex.SCR])
+            if (archivesEdited[McbArchive.ArchiveIndex.SCR])
             {
                 File.WriteAllBytes(Path.Combine(_outputDir, "scr.bin"), scr.GetBytes(out Dictionary<int, int> offsetAdjustments));
                 CommandSet.Out.WriteLine("Finished saving SCR");
-                await mcb.AdjustOffsets(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"), "scr.bin", offsetAdjustments);
+                mcb.AdjustOffsets("scr.bin", offsetAdjustments);
                 CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
+                (byte[] mcb0, byte[] mcb1) = mcb.GetBytes();
+                File.WriteAllBytes(Path.Combine(_outputDir, "mcb0.bln"), mcb0);
+                File.WriteAllBytes(Path.Combine(_outputDir, "mcb1.bln"), mcb1);
+                CommandSet.Out.WriteLine("Finished saving MCB");
             }
 
             return 0;

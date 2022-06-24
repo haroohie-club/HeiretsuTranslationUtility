@@ -1,7 +1,6 @@
-﻿using HaruhiHeiretsuLib;
+﻿using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Graphics;
 using Mono.Options;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -35,14 +34,9 @@ namespace HaruhiHeiretsuCLI
 
         public override int Invoke(IEnumerable<string> arguments)
         {
-            return InvokeAsync(arguments).GetAwaiter().GetResult();
-        }
-
-        public async Task<int> InvokeAsync(IEnumerable<string> arguments)
-        {
             Options.Parse(arguments);
-            McbFile mcb = Program.GetMcbFile(_mcb);
-            ArchiveFile<GraphicsFile> grp = ArchiveFile<GraphicsFile>.FromFile(_grp);
+            McbArchive mcb = Program.GetMcbFile(_mcb);
+            BinArchive<GraphicsFile> grp = BinArchive<GraphicsFile>.FromFile(_grp);
 
             Encoding encoding;
             if (string.IsNullOrEmpty(_encoding))
@@ -61,11 +55,13 @@ namespace HaruhiHeiretsuCLI
             grp.Files[0].Data = mcb.FontFile.GetBytes().ToList();
             grp.Files[0].Edited = true;
 
-            await mcb.Save(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"));
             CommandSet.Out.WriteLine("Finished saving MCB");
             File.WriteAllBytes(Path.Combine(_outputDir, "grp.bin"), grp.GetBytes(out Dictionary<int, int> offsetAdjustments));
             CommandSet.Out.WriteLine("Finished saving GRP");
-            await mcb.AdjustOffsets(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"), "grp.bin", offsetAdjustments);
+            mcb.AdjustOffsets("grp.bin", offsetAdjustments);
+            (byte[] mcb0, byte[] mcb1) = mcb.GetBytes();
+            File.WriteAllBytes(Path.Combine(_outputDir, "mcb0.bln"), mcb0);
+            File.WriteAllBytes(Path.Combine(_outputDir, "mcb1.bln"), mcb1);
             CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
 
             return 0;

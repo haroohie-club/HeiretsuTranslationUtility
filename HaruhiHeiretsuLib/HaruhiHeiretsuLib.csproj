@@ -8,9 +8,5 @@
     <PackageReference Include="ResXResourceReader.NetStandard" Version="1.1.0" />
     <PackageReference Include="SkiaSharp" Version="2.80.3" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <ProjectReference Include="..\KuriimuBlnPort\Kuriimu2BlnPort.csproj" />
-  </ItemGroup>
 
 </Project>

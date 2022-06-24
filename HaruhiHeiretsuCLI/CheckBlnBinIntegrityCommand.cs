@@ -1,12 +1,10 @@
 ﻿using HaruhiHeiretsuLib;
+using HaruhiHeiretsuLib.Archive;
 using Mono.Options;
-using plugin_shade.Archives;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuCLI
 {
@@ -30,34 +28,25 @@ namespace HaruhiHeiretsuCLI
 
         public override int Invoke(IEnumerable<string> arguments)
         {
-            return InvokeAsync(arguments).GetAwaiter().GetResult();
-        }
-
-        public async Task<int> InvokeAsync(IEnumerable<string> arguments)
-        {
-
             Options.Parse(arguments);
 
-            McbFile mcb = Program.GetMcbFile(_mcb);
-            ArchiveFile<FileInArchive> dat = ArchiveFile<FileInArchive>.FromFile(_dat);
-            ArchiveFile<FileInArchive> evt = ArchiveFile<FileInArchive>.FromFile(_evt);
-            ArchiveFile<FileInArchive> grp = ArchiveFile<FileInArchive>.FromFile(_grp);
-            ArchiveFile<FileInArchive> scr = ArchiveFile<FileInArchive>.FromFile(_scr);
+            McbArchive mcb = Program.GetMcbFile(_mcb);
+            BinArchive<FileInArchive> dat = BinArchive<FileInArchive>.FromFile(_dat);
+            BinArchive<FileInArchive> evt = BinArchive<FileInArchive>.FromFile(_evt);
+            BinArchive<FileInArchive> grp = BinArchive<FileInArchive>.FromFile(_grp);
+            BinArchive<FileInArchive> scr = BinArchive<FileInArchive>.FromFile(_scr);
 
-            Dictionary<int, List<(int, int)>> datMap = await mcb.GetFileMap(_dat);
-            Dictionary<int, List<(int, int)>> evtMap = await mcb.GetFileMap(_evt);
-            Dictionary<int, List<(int, int)>> grpMap = await mcb.GetFileMap(_grp);
-            Dictionary<int, List<(int, int)>> scrMap = await mcb.GetFileMap(_scr);
+            Dictionary<int, List<(int, int)>> datMap = mcb.GetFileMap(_dat);
+            Dictionary<int, List<(int, int)>> evtMap = mcb.GetFileMap(_evt);
+            Dictionary<int, List<(int, int)>> grpMap = mcb.GetFileMap(_grp);
+            Dictionary<int, List<(int, int)>> scrMap = mcb.GetFileMap(_scr);
 
             foreach (int datIndex in datMap.Keys)
             {
                 string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(dat.Files.First(f => f.Index == datIndex).CompressedData)).Select(b => $"{b:X2}"));
                 foreach ((int parent, int child) in datMap[datIndex])
                 {
-                    using Stream blnSubStream = await mcb.ArchiveFiles[parent].GetFileData();
-                    BlnSub blnSub = new();
-                    BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(blnSubStream, child);
-                    List<byte> blnSubFileData = blnSubFile.GetFileDataBytes().ToList();
+                    List<byte> blnSubFileData = mcb.McbSubArchives[parent].Files[child].Data;
                     if (blnSubFileData.Count % 0x10 == 1 && blnSubFileData.Last() == 0x00)
                     {
                         blnSubFileData.RemoveAt(blnSubFileData.Count - 1);
@@ -80,10 +69,7 @@ namespace HaruhiHeiretsuCLI
                 string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(evt.Files.First(f => f.Index == evtIndex).CompressedData)).Select(b => $"{b:X2}"));
                 foreach ((int parent, int child) in evtMap[evtIndex])
                 {
-                    using Stream blnSubStream = await mcb.ArchiveFiles[parent].GetFileData();
-                    BlnSub blnSub = new();
-                    BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(blnSubStream, child);
-                    List<byte> blnSubFileData = blnSubFile.GetFileDataBytes().ToList();
+                    List<byte> blnSubFileData = mcb.McbSubArchives[parent].Files[child].Data;
                     if (blnSubFileData.Count % 0x10 == 1 && blnSubFileData.Last() == 0x00)
                     {
                         blnSubFileData.RemoveAt(blnSubFileData.Count - 1);
@@ -106,10 +92,7 @@ namespace HaruhiHeiretsuCLI
                 string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(grp.Files.First(f => f.Index == grpIndex).CompressedData)).Select(b => $"{b:X2}"));
                 foreach ((int parent, int child) in grpMap[grpIndex])
                 {
-                    using Stream blnSubStream = await mcb.ArchiveFiles[parent].GetFileData();
-                    BlnSub blnSub = new();
-                    BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(blnSubStream, child);
-                    List<byte> blnSubFileData = blnSubFile.GetFileDataBytes().ToList();
+                    List<byte> blnSubFileData = mcb.McbSubArchives[parent].Files[child].Data;
                     if (blnSubFileData.Count % 0x10 == 1 && blnSubFileData.Last() == 0x00)
                     {
                         blnSubFileData.RemoveAt(blnSubFileData.Count - 1);
@@ -132,10 +115,7 @@ namespace HaruhiHeiretsuCLI
                 string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(scr.Files.First(f => f.Index == scrIndex).CompressedData)).Select(b => $"{b:X2}"));
                 foreach ((int parent, int child) in scrMap[scrIndex])
                 {
-                    using Stream blnSubStream = await mcb.ArchiveFiles[parent].GetFileData();
-                    BlnSub blnSub = new();
-                    BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(blnSubStream, child);
-                    List<byte> blnSubFileData = blnSubFile.GetFileDataBytes().ToList();
+                    List<byte> blnSubFileData = mcb.McbSubArchives[parent].Files[child].Data;
                     if (blnSubFileData.Count % 0x10 == 1 && blnSubFileData.Last() == 0x00)
                     {
                         blnSubFileData.RemoveAt(blnSubFileData.Count - 1);

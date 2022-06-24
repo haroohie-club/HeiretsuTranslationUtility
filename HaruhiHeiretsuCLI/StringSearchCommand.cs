@@ -1,4 +1,4 @@
-﻿using HaruhiHeiretsuLib;
+﻿using HaruhiHeiretsuLib.Archive;
 using Mono.Options;
 using System.Collections.Generic;
 using System.IO;
@@ -23,15 +23,10 @@ namespace HaruhiHeiretsuCLI
 
         public override int Invoke(IEnumerable<string> arguments)
         {
-            return InvokeAsync(arguments).GetAwaiter().GetResult();
-        }
-
-        public async Task<int> InvokeAsync(IEnumerable<string> arguments)
-        {
             Options.Parse(arguments);
-            McbFile mcb = Program.GetMcbFile(_mcb);
-            
-            List<(int, int)> fileLocations = await mcb.FindStringInFiles(_search);
+            McbArchive mcb = Program.GetMcbFile(_mcb);
+
+            List<(int, int)> fileLocations = mcb.FindStringInFiles(_search);
             using StreamWriter fs = File.CreateText("search_result_locations.csv");
             foreach ((int file, int subFile) in fileLocations)
             {

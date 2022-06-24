@@ -21,7 +21,7 @@ namespace HaruhiHeiretsuLib.Strings
             ParseDialogue();
         }
 
-        public EventFile(int parent, int child, byte[] data, short mcbId = 0)
+        public EventFile(int parent, int child, byte[] data, ushort mcbId = 0)
         {
             Location = (parent, child);
             McbId = mcbId;

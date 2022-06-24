@@ -1,10 +1,10 @@
-﻿using FolderBrowserEx;
+﻿using HaruhiHeiretsuLib.Archive;
+using FolderBrowserEx;
 using HaruhiHeiretsuLib;
 using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
 using Microsoft.Win32;
-using plugin_shade.Archives;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -22,12 +22,12 @@ namespace HaruhiHeiretsuEditor
     /// </summary>
     public partial class MainWindow : Window
     {
-        private McbFile _mcb;
-        private ArchiveFile<DataFile> _datFile;
-        private ArchiveFile<ShadeStringsFile> _datStringsFile;
-        private ArchiveFile<EventFile> _evtFile;
-        private ArchiveFile<GraphicsFile> _grpFile;
-        private ArchiveFile<ScriptFile> _scrFile;
+        private McbArchive _mcb;
+        private BinArchive<DataFile> _datFile;
+        private BinArchive<ShadeStringsFile> _datStringsFile;
+        private BinArchive<EventFile> _evtFile;
+        private BinArchive<GraphicsFile> _grpFile;
+        private BinArchive<ScriptFile> _scrFile;
         private DolFile _dolFile;
         private FontFile _fontFile;
         private GraphicsFile _loadedGraphicsFile;
@@ -45,18 +45,15 @@ namespace HaruhiHeiretsuEditor
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                _mcb = new McbFile(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
-
-                using Stream archiveStream = _mcb.ArchiveFiles[75].GetFileData().GetAwaiter().GetResult();
-                BlnSub blnSub = new();
-                BlnSubArchiveFileInfo blnSubFile = (BlnSubArchiveFileInfo)blnSub.GetFile(archiveStream, 2);
-                byte[] commandsFileData = blnSubFile.GetFileDataBytes();
+                _mcb = new McbArchive(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
+                
+                byte[] commandsFileData = _mcb.McbSubArchives[75].Files[2].Data.ToArray();
 
                 _mcb.LoadStringsFiles(File.ReadAllText("string_file_locations.csv"), ScriptCommand.ParseScriptCommandFile(commandsFileData));
-                _mcb.LoadGraphicsFiles().GetAwaiter().GetResult();
+                _mcb.LoadGraphicsFiles();
                 _mcb.LoadFontFile();
-                scriptsListBox.ItemsSource = _mcb.StringsFiles;
-                graphicsListBox.ItemsSource = _mcb.GraphicsFiles;
+                scriptsListBox.ItemsSource = _mcb.StringsFiles.Select(f => (StringsFile)_mcb.McbSubArchives[f.parentLoc].Files[f.childLoc]);
+                graphicsListBox.ItemsSource = _mcb.GraphicsFiles.Select(f => (GraphicsFile)_mcb.McbSubArchives[f.parentLoc].Files[f.childLoc]);
                 fontListBox.ItemsSource = _mcb.FontFile.Characters;
             }
         }
@@ -71,7 +68,9 @@ namespace HaruhiHeiretsuEditor
             {
                 try
                 {
-                    _mcb.Save(saveFileDialog.FileName, saveFileDialog.FileName.Replace("0", "1")).GetAwaiter().GetResult();
+                    (byte[] mcb0, byte[] mcb1) = _mcb.GetBytes();
+                    File.WriteAllBytes(saveFileDialog.FileName, mcb0);
+                    File.WriteAllBytes(saveFileDialog.FileName.Replace("0", "1"), mcb1);
                     MessageBox.Show("Save completed!");
                 }
                 catch (InvalidOperationException exc)
@@ -99,7 +98,10 @@ namespace HaruhiHeiretsuEditor
                     };
                     if (offsetOpenFileDialog.ShowDialog() == true)
                     {
-                        _mcb.AdjustOffsets(mcbSaveFileDialog.FileName, mcbSaveFileDialog.FileName.Replace("0", "1"), offsetOpenFileDialog.FileName).GetAwaiter().GetResult();
+                        _mcb.AdjustOffsets(offsetOpenFileDialog.FileName);
+                        (byte[] mcb0, byte[] mcb1) = _mcb.GetBytes();
+                        File.WriteAllBytes(mcbSaveFileDialog.FileName, mcb0);
+                        File.WriteAllBytes(mcbSaveFileDialog.FileName.Replace("0", "1"), mcb1);
                     }
                 }
             }
@@ -130,7 +132,7 @@ namespace HaruhiHeiretsuEditor
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                _scrFile = ArchiveFile<ScriptFile>.FromFile(openFileDialog.FileName);
+                _scrFile = BinArchive<ScriptFile>.FromFile(openFileDialog.FileName);
                 List<string> scriptFileNames = ScriptFile.ParseScriptListFile(_scrFile.Files[0].Data.ToArray());
                 List<ScriptCommand> availableCommands = ScriptCommand.ParseScriptCommandFile(_scrFile.Files[1].Data.ToArray());
                 for (int i = 0; i < _scrFile.Files.Count; i++)
@@ -175,7 +177,7 @@ namespace HaruhiHeiretsuEditor
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                _datStringsFile = ArchiveFile<ShadeStringsFile>.FromFile(openFileDialog.FileName);
+                _datStringsFile = BinArchive<ShadeStringsFile>.FromFile(openFileDialog.FileName);
                 scriptsListBox.ItemsSource = _datStringsFile.Files;
                 scriptsListBox.Items.Refresh();
             }
@@ -189,7 +191,7 @@ namespace HaruhiHeiretsuEditor
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                _evtFile = ArchiveFile<EventFile>.FromFile(openFileDialog.FileName);
+                _evtFile = BinArchive<EventFile>.FromFile(openFileDialog.FileName);
                 scriptsListBox.ItemsSource = _evtFile.Files;
                 scriptsListBox.Items.Refresh();
             }
@@ -222,8 +224,8 @@ namespace HaruhiHeiretsuEditor
             {
                 ShadeStringsFile shadeStringsFile = new();
                 shadeStringsFile.Initialize(File.ReadAllBytes(openFileDialog.FileName));
-                shadeStringsFile.Location = _mcb.StringsFiles[scriptsListBox.SelectedIndex].Location;
-                _mcb.StringsFiles[scriptsListBox.SelectedIndex] = shadeStringsFile;
+                shadeStringsFile.Location = _mcb.StringsFiles[scriptsListBox.SelectedIndex];
+                _mcb.McbSubArchives[shadeStringsFile.Location.parent].Files[shadeStringsFile.Location.child] = shadeStringsFile;
                 scriptsListBox.Items.Refresh();
             }
         }
@@ -243,7 +245,7 @@ namespace HaruhiHeiretsuEditor
                 scriptFile.AvailableCommands = currentFile.AvailableCommands;
                 scriptFile.Edited = true;
                 scriptFile.Compile(File.ReadAllText(openFileDialog.FileName));
-                _mcb.StringsFiles[scriptsListBox.SelectedIndex] = scriptFile;
+                _mcb.McbSubArchives[scriptFile.Location.parent].Files[scriptFile.Location.child] = scriptFile;
                 scriptsListBox.Items.Refresh();
             }
         }
@@ -284,7 +286,7 @@ namespace HaruhiHeiretsuEditor
             commandsEditStackPanel.Children.Clear();
             if (_mcb is not null)
             {
-                scriptEditStackPanel.Children.Add(new TextBlock { Text = $"{_mcb.StringsFiles.Sum(s => s.DialogueLines.Count)}" });
+                scriptEditStackPanel.Children.Add(new TextBlock { Text = $"{_mcb.StringsFiles.Select(f => (StringsFile)_mcb.McbSubArchives[f.parentLoc].Files[f.childLoc]).Sum(s => s.DialogueLines.Count)}" });
             }
             else
             {
@@ -355,7 +357,7 @@ namespace HaruhiHeiretsuEditor
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                _grpFile = ArchiveFile<GraphicsFile>.FromFile(openFileDialog.FileName);
+                _grpFile = BinArchive<GraphicsFile>.FromFile(openFileDialog.FileName);
                 graphicsListBox.ItemsSource = _grpFile.Files;
                 graphicsListBox.Items.Refresh();
                 _fontFile = new FontFile(_grpFile.Files[0].Data.ToArray());
@@ -556,19 +558,19 @@ namespace HaruhiHeiretsuEditor
             List<GraphicsFile> archiveGraphicsFiles = new();
             if (mapButton.Graphic.Location == (58, 57))
             {
-                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 12)));
-                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 12)));
-                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 42)));
-                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 42)));
-                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (58, 0)));
-                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (58, 55)));
-                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (69, 33)));
-                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 11)));
-                archiveGraphicsFiles.Add(_mcb.GraphicsFiles.First(g => g.Location == (0, 26)));
+                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[12]);
+                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[12]);
+                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[42]);
+                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[42]);
+                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[58].Files[0]);
+                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[58].Files[55]);
+                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[69].Files[33]);
+                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[11]);
+                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[26]);
             }
             else
             {
-                archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == mapButton.Graphic.Location.parent).ToList();
+                // do nothing, this doesn't work anyway
             }
             MapPreviewWindow mapPreviewWindow = new(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(mapButton.Graphic.GetLayout(archiveGraphicsFiles)), MaxWidth = mapButton.Graphic.Width });
             mapPreviewWindow.Show();
@@ -707,7 +709,7 @@ namespace HaruhiHeiretsuEditor
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                _datFile = ArchiveFile<DataFile>.FromFile(openFileDialog.FileName);
+                _datFile = BinArchive<DataFile>.FromFile(openFileDialog.FileName);
 
                 if (Path.GetFileName(openFileDialog.FileName) == "dat.bin")
                 {

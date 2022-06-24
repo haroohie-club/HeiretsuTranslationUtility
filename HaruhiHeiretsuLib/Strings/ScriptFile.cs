@@ -33,7 +33,7 @@ namespace HaruhiHeiretsuLib.Strings
         {
         }
 
-        public ScriptFile(int parent, int child, byte[] data, short mcbId = 0)
+        public ScriptFile(int parent, int child, byte[] data, ushort mcbId = 0)
         {
             Location = (parent, child);
             McbId = mcbId;
@@ -407,8 +407,6 @@ namespace HaruhiHeiretsuLib.Strings
         public List<ushort> Parameters { get; set; } = new();
         public int DefinitionLength { get; set; }
 
-        public static ScriptCommand DeletedScriptCommand => new() { Name = "DELETED", Index = -1 };
-
         private ScriptCommand()
         {
         }
@@ -629,14 +627,7 @@ namespace HaruhiHeiretsuLib.Strings
         {
             for (int i = 0; i < Invocations.Count; i++)
             {
-                if (Invocations[i].CommandCode < 0)
-                {
-                    Invocations[i].Command = ScriptCommand.DeletedScriptCommand;
-                }
-                else
-                {
-                    Invocations[i].Command = availableCommands[Invocations[i].CommandCode];
-                }
+                Invocations[i].Command = availableCommands[Invocations[i].CommandCode];
             }
         }
 

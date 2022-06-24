@@ -1,4 +1,4 @@
-﻿using HaruhiHeiretsuLib;
+﻿using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuCLI
 {
@@ -34,19 +33,13 @@ namespace HaruhiHeiretsuCLI
         }
 
         public override int Invoke(IEnumerable<string> arguments)
-        {
-            return InvokeAsync(arguments).GetAwaiter().GetResult();
-        }
-
-        public async Task<int> InvokeAsync(IEnumerable<string> arguments)
-        {
-            Options.Parse(arguments);
-            McbFile mcb = Program.GetMcbFile(_mcb);
-            ArchiveFile<FileInArchive> dat = ArchiveFile<FileInArchive>.FromFile(_dat);
-            ArchiveFile<EventFile> evt = ArchiveFile<EventFile>.FromFile(_evt);
-            ArchiveFile<GraphicsFile> grp = ArchiveFile<GraphicsFile>.FromFile(_grp);
-            ArchiveFile<ScriptFile> scr = ArchiveFile<ScriptFile>.FromFile(_scr);
-            Dictionary<McbFile.ArchiveIndex, bool> archivesEdited = new() { { McbFile.ArchiveIndex.DAT, false }, { McbFile.ArchiveIndex.EVT, false }, { McbFile.ArchiveIndex.GRP, false }, { McbFile.ArchiveIndex.SCR, false } };
+        {Options.Parse(arguments);
+            McbArchive mcb = Program.GetMcbFile(_mcb);
+            BinArchive<FileInArchive> dat = BinArchive<FileInArchive>.FromFile(_dat);
+            BinArchive<EventFile> evt = BinArchive<EventFile>.FromFile(_evt);
+            BinArchive<GraphicsFile> grp = BinArchive<GraphicsFile>.FromFile(_grp);
+            BinArchive<ScriptFile> scr = BinArchive<ScriptFile>.FromFile(_scr);
+            Dictionary<McbArchive.ArchiveIndex, bool> archivesEdited = new() { { McbArchive.ArchiveIndex.DAT, false }, { McbArchive.ArchiveIndex.EVT, false }, { McbArchive.ArchiveIndex.GRP, false }, { McbArchive.ArchiveIndex.SCR, false } };
 
             Regex archiveRegex = new(@"(?<archiveName>dat|evt|grp|scr)-(?<archiveIndex>\d{4})");
             foreach (string file in Directory.GetFiles(_replacementDir, "*", SearchOption.AllDirectories))
@@ -79,10 +72,10 @@ namespace HaruhiHeiretsuCLI
                     mcb.LoadGraphicsFiles(file.Split('_'));
                     for (; i < mcb.GraphicsFiles.Count; i++)
                     {
-                        mcb.GraphicsFiles[i].Set20AF30Image(bitmap);
+                        ((GraphicsFile)mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc]).Set20AF30Image(bitmap);
                     }
 
-                    archivesEdited[McbFile.ArchiveIndex.GRP] = true;
+                    archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
 
                     CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
                 }
@@ -99,15 +92,14 @@ namespace HaruhiHeiretsuCLI
                     scriptFile.Compile(File.ReadAllText(file));
                     List<byte> data = scriptFile.Data;
 
-                    int i = mcb.LoadedFiles.Count;
-                    mcb.LoadFiles(file.Split('_'));
-                    for (; i < mcb.LoadedFiles.Count; i++)
+                    List<(int, int)> loadedFileLocations = McbArchive.GetFilesToLoad(file.Split('_'));
+                    foreach((int parentLoc, int childLoc) in loadedFileLocations)
                     {
-                        mcb.LoadedFiles[i].Edited = true;
-                        mcb.LoadedFiles[i].Data = data.ToList();
+                        mcb.McbSubArchives[parentLoc].Files[childLoc].Edited = true;
+                        mcb.McbSubArchives[parentLoc].Files[childLoc].Data = data.ToList();
                     }
 
-                    archivesEdited[McbFile.ArchiveIndex.SCR] = true;
+                    archivesEdited[McbArchive.ArchiveIndex.SCR] = true;
                     scr.Files.First(f => f.Index == archiveIndex).Edited = true;
                     scr.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
 
@@ -132,10 +124,10 @@ namespace HaruhiHeiretsuCLI
                         mcb.LoadGraphicsFiles(file.Split('_'));
                         for (; i < mcb.GraphicsFiles.Count; i++)
                         {
-                            mcb.GraphicsFiles[i].SetMapData(mapEntries);
+                            ((GraphicsFile)mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc]).SetMapData(mapEntries);
                         }
 
-                        archivesEdited[McbFile.ArchiveIndex.GRP] = true;
+                        archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
 
                         CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
                     }
@@ -169,15 +161,14 @@ namespace HaruhiHeiretsuCLI
                         dat.Files[dat.Files.IndexOf(currentFile)].Edited = true;
                         dat.Files[dat.Files.IndexOf(currentFile)].Data = data;
 
-                        int i = mcb.LoadedFiles.Count;
-                        mcb.LoadFiles(file.Split('_'));
-                        for (; i < mcb.LoadedFiles.Count; i++)
+                        List<(int, int)> loadedFileLocations = McbArchive.GetFilesToLoad(file.Split('_'));
+                        foreach ((int parentLoc, int childLoc) in loadedFileLocations)
                         {
-                            mcb.LoadedFiles[i].Edited = true;
-                            mcb.LoadedFiles[i].Data = data;
+                            mcb.McbSubArchives[parentLoc].Files[childLoc].Edited = true;
+                            mcb.McbSubArchives[parentLoc].Files[childLoc].Data = data.ToList();
                         }
 
-                        archivesEdited[McbFile.ArchiveIndex.DAT] = true;
+                        archivesEdited[McbArchive.ArchiveIndex.DAT] = true;
                         CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & DAT");
                     }
                 }
@@ -185,33 +176,32 @@ namespace HaruhiHeiretsuCLI
                 {
                     byte[] data = File.ReadAllBytes(file);
 
-                    int i = mcb.LoadedFiles.Count;
-                    mcb.LoadFiles(file.Split('_'));
-                    for (; i < mcb.LoadedFiles.Count; i++)
+                    List<(int, int)> loadedFileLocations = McbArchive.GetFilesToLoad(file.Split('_'));
+                    foreach ((int parentLoc, int childLoc) in loadedFileLocations)
                     {
-                        mcb.LoadedFiles[i].Edited = true;
-                        mcb.LoadedFiles[i].Data = data.ToList();
+                        mcb.McbSubArchives[parentLoc].Files[childLoc].Edited = true;
+                        mcb.McbSubArchives[parentLoc].Files[childLoc].Data = data.ToList();
                     }
 
                     switch (archive)
                     {
                         case "dat":
-                            archivesEdited[McbFile.ArchiveIndex.DAT] = true;
+                            archivesEdited[McbArchive.ArchiveIndex.DAT] = true;
                             dat.Files.First(f => f.Index == archiveIndex).Edited = true;
                             dat.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
                             break;
                         case "evt":
-                            archivesEdited[McbFile.ArchiveIndex.EVT] = true;
+                            archivesEdited[McbArchive.ArchiveIndex.EVT] = true;
                             evt.Files.First(f => f.Index == archiveIndex).Edited = true;
                             evt.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
                             break;
                         case "grp":
-                            archivesEdited[McbFile.ArchiveIndex.GRP] = true;
+                            archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
                             grp.Files.First(f => f.Index == archiveIndex).Edited = true;
                             grp.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
                             break;
                         case "scr":
-                            archivesEdited[McbFile.ArchiveIndex.SCR] = true;
+                            archivesEdited[McbArchive.ArchiveIndex.SCR] = true;
                             scr.Files.First(f => f.Index == archiveIndex).Edited = true;
                             scr.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
                             break;
@@ -221,37 +211,41 @@ namespace HaruhiHeiretsuCLI
                 }
             }
 
-            await mcb.Save(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"));
-            CommandSet.Out.WriteLine("Finished saving MCB");
 
-            if (archivesEdited[McbFile.ArchiveIndex.DAT])
+
+            if (archivesEdited[McbArchive.ArchiveIndex.DAT])
             {
                 File.WriteAllBytes(Path.Combine(_outputDir, "dat.bin"), dat.GetBytes(out Dictionary<int, int> offsetAdjustments));
                 CommandSet.Out.WriteLine("Finished saving DAT");
-                await mcb.AdjustOffsets(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"), "dat.bin", offsetAdjustments);
+                mcb.AdjustOffsets("dat.bin", offsetAdjustments);
                 CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
             }
-            if (archivesEdited[McbFile.ArchiveIndex.EVT])
+            if (archivesEdited[McbArchive.ArchiveIndex.EVT])
             {
                 File.WriteAllBytes(Path.Combine(_outputDir, "evt.bin"), evt.GetBytes(out Dictionary<int, int> offsetAdjustments));
                 CommandSet.Out.WriteLine("Finished saving EVT");
-                await mcb.AdjustOffsets(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"), "evt.bin", offsetAdjustments);
+                mcb.AdjustOffsets("evt.bin", offsetAdjustments);
                 CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
             }
-            if (archivesEdited[McbFile.ArchiveIndex.GRP])
+            if (archivesEdited[McbArchive.ArchiveIndex.GRP])
             {
                 File.WriteAllBytes(Path.Combine(_outputDir, "grp.bin"), grp.GetBytes(out Dictionary<int, int> offsetAdjustments));
                 CommandSet.Out.WriteLine("Finished saving GRP");
-                await mcb.AdjustOffsets(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"), "grp.bin", offsetAdjustments);
+                mcb.AdjustOffsets("grp.bin", offsetAdjustments);
                 CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
             }
-            if (archivesEdited[McbFile.ArchiveIndex.SCR])
+            if (archivesEdited[McbArchive.ArchiveIndex.SCR])
             {
                 File.WriteAllBytes(Path.Combine(_outputDir, "scr.bin"), scr.GetBytes(out Dictionary<int, int> offsetAdjustments));
                 CommandSet.Out.WriteLine("Finished saving SCR");
-                await mcb.AdjustOffsets(Path.Combine(_outputDir, "mcb0.bln"), Path.Combine(_outputDir, "mcb1.bln"), "scr.bin", offsetAdjustments);
+                mcb.AdjustOffsets("scr.bin", offsetAdjustments);
                 CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
             }
+
+            (byte[] mcb0, byte[] mcb1) = mcb.GetBytes();
+            File.WriteAllBytes(Path.Combine(_outputDir, "mcb0.bln"), mcb0);
+            File.WriteAllBytes(Path.Combine(_outputDir, "mcb1.bln"), mcb1);
+            CommandSet.Out.WriteLine("Finished saving MCB");
 
             return 0;
         }

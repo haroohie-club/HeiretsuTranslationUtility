@@ -1,4 +1,4 @@
-﻿using HaruhiHeiretsuLib;
+﻿using HaruhiHeiretsuLib.Archive;
 using Mono.Options;
 using System.Collections.Generic;
 using System.IO;
@@ -25,16 +25,11 @@ namespace HaruhiHeiretsuCLI
 
         public override int Invoke(IEnumerable<string> arguments)
         {
-            return InvokeAsync(arguments).GetAwaiter().GetResult();
-        }
-
-        public async Task<int> InvokeAsync(IEnumerable<string> arguments)
-        {
             Options.Parse(arguments);
 
-            McbFile mcb = Program.GetMcbFile(_mcb);
+            McbArchive mcb = Program.GetMcbFile(_mcb);
 
-            Dictionary<int, List<(int, int)>> fileMap = await mcb.GetFileMap(_binFile);
+            Dictionary<int, List<(int, int)>> fileMap = mcb.GetFileMap(_binFile);
             string binIdentifier = Path.GetFileNameWithoutExtension(_binFile);
             List<string> fileNames = new();
 
