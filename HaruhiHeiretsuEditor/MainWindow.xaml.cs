@@ -49,7 +49,7 @@ namespace HaruhiHeiretsuEditor
             if (openFileDialog.ShowDialog() == true)
             {
                 _mcb = new McbArchive(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
-                
+
                 byte[] commandsFileData = _mcb.McbSubArchives[75].Files[2].Data.ToArray();
 
                 _mcb.LoadStringsFiles(File.ReadAllText("string_file_locations.csv"), ScriptCommand.ParseScriptCommandFile(commandsFileData));
@@ -301,7 +301,7 @@ namespace HaruhiHeiretsuEditor
                 {
                     scriptEditStackPanel.Children.Add(new TextBlock { Text = $"EVT {_evtFile.Files.Where(e => e.Index > 0xB3 || e.Index < 0xB1).Sum(e => e.DialogueLines.Count)}" });
                 }
-            } 
+            }
             if (scriptsListBox.SelectedIndex >= 0)
             {
                 var selectedFile = (StringsFile)scriptsListBox.SelectedItem;
@@ -556,12 +556,20 @@ namespace HaruhiHeiretsuEditor
         {
             GraphicsFile graphicsFile = ((GraphicsButton)sender).Graphic;
 
-            graphicsFile.SgeModel.GetCollada();
-            OpenFileDialog fileDialog = new();
-            if (fileDialog.ShowDialog() == true)
+            SaveFileDialog saveFileDialog = new()
             {
-                graphicsFile.SgeModel.Test(fileDialog.FileName);
+                Filter = "SGE JSON file|*.sge.json"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllText(saveFileDialog.FileName, graphicsFile.SgeModel.DumpJson());
             }
+
+            //OpenFileDialog fileDialog = new();
+            //if (fileDialog.ShowDialog() == true)
+            //{
+            //    graphicsFile.SgeModel.Test(fileDialog.FileName);
+            //}
 
             //SgeWindow sgeWindow = new(640, 480, graphicsFile.SgeModel);
             //sgeWindow.Run();

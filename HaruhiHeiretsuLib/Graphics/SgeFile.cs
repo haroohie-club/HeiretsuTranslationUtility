@@ -1,12 +1,10 @@
-﻿using Assimp;
-using HaruhiHeiretsuLib.Graphics.Renderer;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace HaruhiHeiretsuLib.Graphics
 {
@@ -23,7 +21,9 @@ namespace HaruhiHeiretsuLib.Graphics
         public SgeHeader SgeHeader { get; set; }
         public List<SgeSubmeshTableEntry> SubmeshTableEntries { get; set; } = new();
         public List<SgeMaterial> SgeMaterials { get; set; } = new();
+        [JsonIgnore]
         public List<SgeBone> SgeBones { get; set; } = new();
+        public SgeArmature SgeArmature { get; set; }
         public List<SgeVertex> SgeVertices { get; set; } = new();
         public List<SgeMesh> SgeMeshes { get; set; } = new();
         public List<SgeFace> SgeFaces { get; set; } = new();
@@ -51,6 +51,8 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 bone.ResolveConnections(SgeBones);
             }
+            SgeArmature = new(SgeBones);
+
             foreach (SgeSubmeshTableEntry submeshTableEntry in SubmeshTableEntries)
             {
                 if (submeshTableEntry.Address > 0 && submeshTableEntry.Address % 4 == 0 && submeshTableEntry.SubmeshCount > 0 && submeshTableEntry.VertexAddress > 0)
@@ -92,36 +94,35 @@ namespace HaruhiHeiretsuLib.Graphics
             }
         }
 
-        public string GetCollada()
+        public string DumpJson(string texDirectory = "")
         {
-            SgeColladaRenderer renderer = new() {  Sge = this };
-            using MemoryStream stream = renderer.Render();
-            string text = Encoding.UTF8.GetString(stream.ToArray());
-            return text;
+            if (string.IsNullOrEmpty(texDirectory))
+            {
+                texDirectory = Path.Combine(Path.GetTempPath(), "sge-tex");
+            }
+            if (!Directory.Exists(texDirectory))
+            {
+                Directory.CreateDirectory(texDirectory);
+            }
+
+            foreach (SgeMaterial material in SgeMaterials)
+            {
+                string fileName = Path.Combine(texDirectory, $"{material.Name}.png");
+                File.WriteAllBytes(fileName, material.Texture.GetImage().Bytes);
+                material.TexturePath = fileName;
+            }
+
+            //return JsonSerializer.Serialize(this);
+            using StringWriter stringWriter = new();
+            JsonSerializer serializer = new();
+            serializer.Serialize(stringWriter, this);
+
+            return stringWriter.ToString();
         }
 
         public void Test(string file)
         {
-            AssimpContext context = new();
-            if (file.EndsWith("fbx"))
-            {
-                context.ConvertFromFileToFile(file, $"{file}.dae", "collada");
-            }
-            else
-            {
-                string fileText = Regex.Replace(File.ReadAllText(file), @"<((\w+)( .+)?)/>", "<$1></$2>");
-                string tempFile = Path.GetTempFileName();
-                File.WriteAllText(tempFile, fileText);
-                try
-                {
-                    Scene scene = context.ImportFile(tempFile);
-                    context.ConvertFromFileToFile(tempFile, $"{file}.fbx", "fbx");
-                }
-                finally
-                {
-                    File.Delete(tempFile);
-                }
-            }
+            
         }
     }
 
@@ -241,6 +242,64 @@ namespace HaruhiHeiretsuLib.Graphics
         }
     }
 
+    public class SgeArmature
+    {
+        public SgeArmatureBone RootBone { get; set; }
+        public SgeArmature(IEnumerable<SgeBone> bones)
+        {
+            IEnumerable<SgeBone> orphanBones = bones.Where(b => b.Parent is null);
+            if (orphanBones.Count() > 1)
+            {
+                throw new Exception();
+            }
+            RootBone = new(orphanBones.First());
+            RootBone.ChildBones = BuildArmature(orphanBones.First(), bones);
+        }
+
+        private List<SgeArmatureBone> BuildArmature(SgeBone bone, IEnumerable<SgeBone> bones)
+        {
+            List<SgeArmatureBone> armature = new();
+
+            IEnumerable<SgeBone> childBones = bones.Where(b => b.ParentAddress == bone.Address);
+            if (childBones.Count() > 0)
+            {
+                foreach (SgeBone childBone in childBones)
+                {
+                    SgeArmatureBone childArmatureBone = new(childBone);
+                    childArmatureBone.ChildBones.AddRange(BuildArmature(childBone, bones));
+                    armature.Add(childArmatureBone);
+                }
+            }
+            else
+            {
+                armature.Add(new(bone));
+            }
+
+            return armature;
+        }
+    }
+
+    public class SgeArmatureBone
+    {
+        public int Address { get; set; }
+        public Vector3 Unknown00 { get; set; }
+        public Vector3 Position { get; set; }
+        public int AddressToBone1 { get; set; }
+        public int AddressToBone2 { get; set; }
+        public int Count { get; set; }
+        public List<SgeArmatureBone> ChildBones { get; set; } = new();
+
+        public SgeArmatureBone(SgeBone bone)
+        {
+            Address = bone.Address;
+            Unknown00 = bone.Unknown00;
+            AddressToBone1 = bone.AddressToBone1;
+            AddressToBone2 = bone.AddressToBone2;
+            Position = bone.Position;
+            Count = bone.Count;
+        }
+    }
+
     public class SgeBone
     {
         public SgeBone Parent { get; set; }
@@ -248,9 +307,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public Vector3 Unknown00 { get; set; }      // 1
         public Vector3 Position { get; set; } 
         public int ParentAddress { get; set; }
-        public SgeBone Bone1 { get; set; }
         public int AddressToBone1 { get; set; }     // 4
-        public SgeBone Bone2 { get; set; }
         public int AddressToBone2 { get; set; }     // 5
         public int Count { get; set; }              // 6
 
@@ -262,8 +319,8 @@ namespace HaruhiHeiretsuLib.Graphics
                 BitConverter.ToSingle(data.Skip(offset + 0x04).Take(4).ToArray()),
                 BitConverter.ToSingle(data.Skip(offset + 0x08).Take(4).ToArray()));
             Position = new Vector3(
-                BitConverter.ToSingle(data.Skip(offset + 0x0C).Take(4).ToArray()) * SgeModel.MODEL_SCALE,
-                BitConverter.ToSingle(data.Skip(offset + 0x10).Take(4).ToArray()) * SgeModel.MODEL_SCALE,
+                BitConverter.ToSingle(data.Skip(offset + 0x0C).Take(4).ToArray()),
+                BitConverter.ToSingle(data.Skip(offset + 0x10).Take(4).ToArray()),
                 BitConverter.ToSingle(data.Skip(offset + 0x14).Take(4).ToArray())) * SgeModel.MODEL_SCALE;
             ParentAddress = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).ToArray());
             AddressToBone1 = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).ToArray());
@@ -277,14 +334,14 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 Parent = bones.First(b => b.Address == ParentAddress);
             }
-            if (AddressToBone1 != 0)
-            {
-                Bone1 = bones.First(b => b.Address == AddressToBone1);
-            }
-            if (AddressToBone2 != 0)
-            {
-                Bone2 = bones.First(b => b.Address == AddressToBone2);
-            }
+            //if (AddressToBone1 != 0)
+            //{
+            //    Bone1 = bones.First(b => b.Address == AddressToBone1);
+            //}
+            //if (AddressToBone2 != 0)
+            //{
+            //    Bone2 = bones.First(b => b.Address == AddressToBone2);
+            //}
         }
     }
 
@@ -380,24 +437,14 @@ namespace HaruhiHeiretsuLib.Graphics
     {
         public int Index { get; set; }
         public string Name { get; set; }
+        [JsonIgnore]
         public GraphicsFile Texture { get; set; }
+        public string TexturePath { get; set; }
 
         public SgeMaterial(int index, string name)
         {
             Index = index;
             Name = name;
-        }
-
-        public Material GetMaterial(string texturesDirectory)
-        {
-            string textureFileName = Path.Combine(texturesDirectory, $"{Name}.png");
-            if (!File.Exists(textureFileName))
-            {
-                File.WriteAllBytes(textureFileName, Texture.GetImage().Bytes);
-            }
-            Material material = new() { TextureDiffuse = new TextureSlot(textureFileName, TextureType.Diffuse, Index, TextureMapping.FromUV, Index, 1.0f, TextureOperation.Multiply, TextureWrapMode.Wrap, TextureWrapMode.Wrap, 0) };
-
-            return material;
         }
 
         public override string ToString()
