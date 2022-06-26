@@ -151,7 +151,8 @@ namespace HaruhiHeiretsuLib.Archive
             {
                 if (((GraphicsFile)McbSubArchives[parentLoc].Files[childLoc]).FileType == GraphicsFile.GraphicsFileType.SGE)
                 {
-                    ((GraphicsFile)McbSubArchives[parentLoc].Files[childLoc]).SgeModel.ResolveTextures(GraphicsFiles.Select(i => (GraphicsFile)McbSubArchives[i.parentLoc].Files[i.childLoc]).ToList());
+                    ((GraphicsFile)McbSubArchives[parentLoc].Files[childLoc]).SgeModel.ResolveTextures(((GraphicsFile)McbSubArchives[parentLoc].Files[childLoc]).Name,
+                        GraphicsFiles.Select(i => (GraphicsFile)McbSubArchives[i.parentLoc].Files[i.childLoc]).ToList());
                 }
             }
         }

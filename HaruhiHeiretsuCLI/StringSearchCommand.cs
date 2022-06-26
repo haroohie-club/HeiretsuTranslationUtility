@@ -2,7 +2,7 @@
 using Mono.Options;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
+using System.Text;
 
 namespace HaruhiHeiretsuCLI
 {
@@ -26,6 +26,7 @@ namespace HaruhiHeiretsuCLI
             Options.Parse(arguments);
             McbArchive mcb = Program.GetMcbFile(_mcb);
 
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             List<(int, int)> fileLocations = mcb.FindStringInFiles(_search);
             using StreamWriter fs = File.CreateText("search_result_locations.csv");
             foreach ((int file, int subFile) in fileLocations)

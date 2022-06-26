@@ -1,10 +1,13 @@
-﻿using HaruhiHeiretsuLib.Archive;
-using FolderBrowserEx;
+﻿using FolderBrowserEx;
 using HaruhiHeiretsuLib;
+using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
 using Microsoft.Win32;
+using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
+using OpenTK.Wpf;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -440,13 +443,21 @@ namespace HaruhiHeiretsuEditor
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.SGE)
                 {
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes; {selectedFile.SgeModel.SgeHeader.BonesCount} bones and {selectedFile.SgeModel.SgeHeader.SubmeshCount} submeshes", Background = Brushes.White });
-                    foreach (SgeTexture tex in selectedFile.SgeModel.SgeTextures)
+                    foreach (SgeMaterial mat in selectedFile.SgeModel.SgeMaterials)
                     {
-                        graphicsEditStackPanel.Children.Add(new TextBlock { Text = tex.Name });
-                        if (tex.File is not null)
-                        {
-                            graphicsEditStackPanel.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(tex.File.GetImage()), MaxWidth = 128 });
-                        }
+                        graphicsEditStackPanel.Children.Add(new TextBlock { Text = mat.Name });
+                    }
+                    if (selectedFile.SgeModel.SgeMaterials.FirstOrDefault()?.Texture is not null)
+                    {
+                        GraphicsButton sgeButton = new() { Content = "Test", Graphic = selectedFile };
+                        sgeButton.Click += SgeButton_Click;
+                        graphicsEditStackPanel.Children.Add(sgeButton);
+
+                        //GLWpfControlSettings settings = new() { MajorVersion = 4, MinorVersion = 2 };
+                        //GLWpfControl glwpf = new() { Width = 480, Height = 640 };
+
+                        //graphicsEditStackPanel.Children.Add(glwpf);
+                        //glwpf.Start(settings);
                     }
                 }
                 else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TEXTURE)
@@ -539,6 +550,21 @@ namespace HaruhiHeiretsuEditor
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"Map Background Model: {selectedFile.MapBackgroundModel}" });
                 }
             }
+        }
+
+        private void SgeButton_Click(object sender, RoutedEventArgs e)
+        {
+            GraphicsFile graphicsFile = ((GraphicsButton)sender).Graphic;
+
+            graphicsFile.SgeModel.GetCollada();
+            OpenFileDialog fileDialog = new();
+            if (fileDialog.ShowDialog() == true)
+            {
+                graphicsFile.SgeModel.Test(fileDialog.FileName);
+            }
+
+            //SgeWindow sgeWindow = new(640, 480, graphicsFile.SgeModel);
+            //sgeWindow.Run();
         }
 
         private void MapButton_Click(object sender, RoutedEventArgs e)
