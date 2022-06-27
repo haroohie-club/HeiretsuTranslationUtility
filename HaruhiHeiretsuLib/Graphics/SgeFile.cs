@@ -106,9 +106,6 @@ namespace HaruhiHeiretsuLib.Graphics
             foreach (SgeMaterial material in SgeMaterials)
             {
                 string fileName = Path.Combine(texDirectory, $"{material.Name}.png");
-                SKBitmap bitmap = material.Texture.GetImage();
-                using FileStream fs = new(fileName, FileMode.Create);
-                bitmap.Encode(fs, SKEncodedImageFormat.Png, 300);
                 material.TexturePath = fileName;
             }
 
@@ -389,6 +386,23 @@ namespace HaruhiHeiretsuLib.Graphics
         {
             Index = index;
             Name = name;
+        }
+
+        public void ExportTexture(string fileName)
+        {
+            SKBitmap bitmap = Texture.GetImage().FlipBitmap();
+            for (int x = 0; x < bitmap.Width; x++)
+            {
+                for (int y = 0; y < bitmap.Height; y++)
+                {
+                    if (bitmap.GetPixel(x, y) == SKColors.Black)
+                    {
+                        bitmap.SetPixel(x, y, SKColors.Transparent);
+                    }
+                }
+            }
+            using FileStream fs = new(fileName, FileMode.Create);
+            bitmap.Encode(fs, SKEncodedImageFormat.Png, 300);
         }
 
         public override string ToString()

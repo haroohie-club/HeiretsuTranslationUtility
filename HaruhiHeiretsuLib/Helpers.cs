@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -30,6 +31,15 @@ namespace HaruhiHeiretsuLib
             double d31 = d1 * BitConverter.UInt64BitsToDouble(F0);
 
             return (float)d31;
+        }
+
+        public static SKBitmap FlipBitmap(this SKBitmap bitmap)
+        {
+            SKBitmap flippedBitmap = new(bitmap.Width, bitmap.Height);
+            using SKCanvas canvas = new(flippedBitmap);
+            canvas.Scale(1, -1, 0, bitmap.Height / 2);
+            canvas.DrawBitmap(bitmap, 0, 0);
+            return flippedBitmap;
         }
 
         // redmean color distance formula with alpha term
@@ -347,191 +357,6 @@ namespace HaruhiHeiretsuLib
                 decompressedData.Add(0x00);
             }
             return decompressedData.ToArray();
-        }
-    }
-
-    public class AsmDecompressionSimulator
-    {
-        private int z, c, l, n;
-        private List<byte> _output = new();
-        private byte[] _data;
-
-        public byte[] Output { get { return _output.ToArray(); } }
-
-        public AsmDecompressionSimulator(byte[] data)
-        {
-            _data = data;
-            z = 0;
-            Lxx_2026198();
-        }
-
-        private void Lxx_2026198()
-        {
-            if (z >= _data.Length)
-            {
-                return;
-            }
-            c = _data[z++];     // ldrb     r3,[r0],1h
-            if (c == 0)         // cmp      r3,0h
-            {
-                return;         // beq      Lxx_20262A0h
-            }
-            if ((c & 0x80) == 0)
-            {
-                Lxx_2026224();
-            }
-            if (z >= _data.Length)
-            {
-                return;
-            }
-            l = _data[z++];                 // ldrb     r12,[r0],1h
-            n = c & 0x60;                   // and      r14,r3,60h
-            c = (int)((uint)c << 0x1B);     // mov      r3,r3,lsl 1Bh
-            n >>= 0x05;                     // mov      r14,r14,asr 5h
-            c = l | (int)((uint)c >> 0x13); // orr      r3,r12,r3,lsr 13h
-            l = n + 4;                      // add      r12,r14,4h
-            n = _output.Count - c;          // sub      r14,r1,r3
-            Lxx_20261C8();
-        }
-
-        private void Lxx_20261C8()
-        {
-            while (l > 0)               // bgt      Lxx_20261C8h
-            {
-                if (n >= _output.Count)
-                {
-                    return;
-                }
-                c = _output[n++];       // ldrb     r3,[r14],1h
-                l--;                    // sub      r12,r12,1h
-                _output.Add((byte)c);   // strb     r3,[r1],1h     
-            }
-            c = _data[z];               // ldrb     r3,[r0]
-            c &= 0xE0;                  // and      r3,r3,0E0h
-            if (c != 0x60)              // cmp      r3,60h
-            {
-                Lxx_2026198();          // bne      Lxx_2026198h
-            }
-            Lxx_20261EC();
-        }
-
-        private void Lxx_20261EC()
-        {
-            if (z >= _data.Length)
-            {
-                return;
-            }
-            c = _data[z++];             // ldrb     r3,[r0],1h
-            l = c & 0x1F;               // and      r12,r3,1Fh
-            if (l <= 0)                 // cmp      r12,0h
-            {
-                Lxx_2026210();          // ble      Lxx_2026210h
-            }
-            Lxx_20261FC();
-        }
-
-        private void Lxx_20261FC()
-        {
-            while (l > 0)               // bgt      Lxx_20261FCh (self)
-            {
-                c = _output[n++];       // ldrb     r3,[r14],1h
-                l--;                    // sub      r12,r12,1h
-                _output.Add((byte)c);   // strb     r3,[r1],1h
-            }
-            Lxx_2026210();
-        }
-
-        private void Lxx_2026210()
-        {
-            if (z >= _data.Length)
-            {
-                return;
-            }
-            c = _data[z];               // ldrb     r3,[r0]
-            c &= 0xE0;                  // and      r3,r3,0E0h
-            if (c == 0x60)              // cmp      r3,60h
-            {
-                Lxx_20261EC();          // beq      Lxx_20261ECh
-            }
-            Lxx_2026198();              // b        Lxx_2026198h
-        }
-
-        private void Lxx_2026224()
-        {
-            if ((c & 0x40) == 0)            // tst      r3,40h
-            {
-                Lxx_2026268();              // beq      Lxx_2026268h
-            }
-            if ((c & 0x10) == 0)            // tst      r3,10h
-            {
-                c &= 0x0F;                  // andeq    r3,r3,0Fh
-                Lxx_2026244();              // beq      Lxx_2026244h
-            }
-            if (z >= _data.Length)
-            {
-                return;
-            }
-            l = _data[z++];                 // ldrb     r12,[r0],1h
-            c = (int)((uint)c << 0x1C);     // mov      r3,r3,lsl 1Ch
-            c = l | (int)((uint)c >> 0x14); // orr      r3,r12,r3,lsr 14h
-            Lxx_2026244();
-        }
-
-        private void Lxx_2026244()
-        {
-            l = c + 4;                  // add      r12,r3,4h
-            if (z >= _data.Length)
-            {
-                return;
-            }
-            c = _data[z++];             // ldrb     r3,[r0],1h
-            if (l <= 0)                 // cmp      r12,0h
-            {
-                Lxx_2026198();          // ble      Lxx_2026198h
-            }
-            Lxx_2026254();
-        }
-
-        private void Lxx_2026254()
-        {
-            while (l > 0)               // bgt      Lxx_2026254h
-            {
-                l--;                    // sub      r12,r12,1h
-                _output.Add((byte)c);   // strb     r3,[r1],1h
-            }
-            Lxx_2026198();              // b        Lxx_2026198h
-        }
-
-        private void Lxx_2026268()
-        {
-            if ((c & 0x20) == 0)        // tst      r3,20h
-            {
-                l = c & 0x1F;           // andeq    r12,r3,1Fh
-                Lxx_2026280();          // beq      Lxx_2026280h
-            }
-            if (z >= _data.Length)
-            {
-                return;
-            }
-            l = _data[z++];             // ldrb     r12,[r0],1h
-            c = (int)((uint)c << 0x1B); // mov      r3,r3,lsl 1Bh
-            l |= (int)((uint)c >> 0x13);// orr      r12,r12,r3,lsr 13h
-            Lxx_2026280();
-        }
-
-        private void Lxx_2026280()
-        {
-            if (l <= 0)                 // cmp      r12,0h
-            {
-                Lxx_2026198();          // ble      Lxx_2026198h
-            }
-            while (l > 0)               // bgt      Lxx_2026288h
-            {
-                c = _data[z++];         // ldrb     r3,[r0],1h
-                l--;                    // sub      r12,r12,1h
-                _output.Add((byte)c);   // strb     r3,[r1],1h
-            }
-            Lxx_2026198();
         }
     }
 }
