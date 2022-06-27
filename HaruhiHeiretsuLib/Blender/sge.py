@@ -9,13 +9,14 @@ def construct_materials(sge):
     for sge_material in sge['SgeMaterials']:
         material = bpy.data.materials.new(sge_material['Name'])
         material.use_nodes = True
-        material_output = material.node_tree.nodes.get('Material Output')
         bsdf = material.node_tree.nodes['Principled BSDF']
         if len(sge_material['TexturePath']) > 0:
             img = bpy.data.images.load(sge_material['TexturePath'])
             texture = material.node_tree.nodes.new('ShaderNodeTexImage')
             texture.image = img
-            material.node_tree.links.new(texture.outputs[0], bsdf.inputs[0])
+            material.node_tree.links.new(texture.outputs['Color'], bsdf.inputs['Base Color'])
+            material.node_tree.links.new(texture.outputs['Alpha'], bsdf.inputs['Alpha'])
+            material.blend_method = 'CLIP'
         materials.append(material)
     return materials
 
