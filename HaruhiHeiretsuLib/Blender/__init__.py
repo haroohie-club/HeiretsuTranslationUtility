@@ -21,7 +21,7 @@ class ImportSgeJson(bpy.types.Operator, ImportHelper):
     filter_glob = StringProperty(default="*.sge.json", options={'HIDDEN'})
 
     def execute(self, context):
-        "Don't do anything yet"
+        return sge.main(self.filepath)
 
 def menu_func_import(self, context):
     self.layout.operator(ImportSgeJson.bl_idname, text="SGE JSON (.sge.json)")
