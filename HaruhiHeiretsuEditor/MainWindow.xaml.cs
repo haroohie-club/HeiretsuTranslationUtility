@@ -442,12 +442,12 @@ namespace HaruhiHeiretsuEditor
                 }
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.SGE)
                 {
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes; {selectedFile.SgeModel.SgeHeader.BonesCount} bones and {selectedFile.SgeModel.SgeHeader.SubmeshCount} submeshes", Background = Brushes.White });
-                    foreach (SgeMaterial mat in selectedFile.SgeModel.SgeMaterials)
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes; {selectedFile.Sge.SgeHeader.BonesCount} bones and {selectedFile.Sge.SgeHeader.Unknown0C} meshes", Background = Brushes.White });
+                    foreach (SgeMaterial mat in selectedFile.Sge.SgeMaterials)
                     {
                         graphicsEditStackPanel.Children.Add(new TextBlock { Text = mat.Name });
                     }
-                    if (selectedFile.SgeModel.SgeMaterials.FirstOrDefault()?.Texture is not null)
+                    if (selectedFile.Sge.SgeMaterials.FirstOrDefault()?.Texture is not null)
                     {
                         GraphicsButton sgeButton = new() { Content = "Test", Graphic = selectedFile };
                         sgeButton.Click += SgeButton_Click;
@@ -562,7 +562,7 @@ namespace HaruhiHeiretsuEditor
             };
             if (saveFileDialog.ShowDialog() == true)
             {
-                File.WriteAllText(saveFileDialog.FileName, graphicsFile.SgeModel.DumpJson());
+                File.WriteAllText(saveFileDialog.FileName, graphicsFile.Sge.DumpJson());
             }
 
             //OpenFileDialog fileDialog = new();
