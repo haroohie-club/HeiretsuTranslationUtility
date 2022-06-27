@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,9 +22,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public SgeHeader SgeHeader { get; set; }
         public List<SgeSubmeshTableEntry> SubmeshTableEntries { get; set; } = new();
         public List<SgeMaterial> SgeMaterials { get; set; } = new();
-        [JsonIgnore]
         public List<SgeBone> SgeBones { get; set; } = new();
-        public SgeArmature SgeArmature { get; set; }
         public List<SgeVertex> SgeVertices { get; set; } = new();
         public List<SgeMesh> SgeMeshes { get; set; } = new();
         public List<SgeFace> SgeFaces { get; set; } = new();
@@ -51,7 +50,6 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 bone.ResolveConnections(SgeBones);
             }
-            SgeArmature = new(SgeBones);
 
             foreach (SgeSubmeshTableEntry submeshTableEntry in SubmeshTableEntries)
             {
@@ -78,7 +76,7 @@ namespace HaruhiHeiretsuLib.Graphics
                     {
                         for (int i = 0; i < mesh.NumFaces && faceIndex < numFaces / 3; i++)
                         {
-                            SgeFaces.Add(new(sgeData.Skip(facesStartAddress + faceIndex++ * 0x0C).Take(0x0C), mesh.Material));
+                            SgeFaces.Add(new(sgeData.Skip(facesStartAddress + faceIndex++ * 0x0C).Take(0x0C), mesh.Material, mesh.FaceOffset));
                         }
                     }
                 }
@@ -108,11 +106,12 @@ namespace HaruhiHeiretsuLib.Graphics
             foreach (SgeMaterial material in SgeMaterials)
             {
                 string fileName = Path.Combine(texDirectory, $"{material.Name}.png");
-                File.WriteAllBytes(fileName, material.Texture.GetImage().Bytes);
+                SKBitmap bitmap = material.Texture.GetImage();
+                using FileStream fs = new(fileName, FileMode.Create);
+                bitmap.Encode(fs, SKEncodedImageFormat.Png, 300);
                 material.TexturePath = fileName;
             }
 
-            //return JsonSerializer.Serialize(this);
             using StringWriter stringWriter = new();
             JsonSerializer serializer = new();
             serializer.Serialize(stringWriter, this);
@@ -242,66 +241,9 @@ namespace HaruhiHeiretsuLib.Graphics
         }
     }
 
-    public class SgeArmature
-    {
-        public SgeArmatureBone RootBone { get; set; }
-        public SgeArmature(IEnumerable<SgeBone> bones)
-        {
-            IEnumerable<SgeBone> orphanBones = bones.Where(b => b.Parent is null);
-            if (orphanBones.Count() > 1)
-            {
-                throw new Exception();
-            }
-            RootBone = new(orphanBones.First());
-            RootBone.ChildBones = BuildArmature(orphanBones.First(), bones);
-        }
-
-        private List<SgeArmatureBone> BuildArmature(SgeBone bone, IEnumerable<SgeBone> bones)
-        {
-            List<SgeArmatureBone> armature = new();
-
-            IEnumerable<SgeBone> childBones = bones.Where(b => b.ParentAddress == bone.Address);
-            if (childBones.Count() > 0)
-            {
-                foreach (SgeBone childBone in childBones)
-                {
-                    SgeArmatureBone childArmatureBone = new(childBone);
-                    childArmatureBone.ChildBones.AddRange(BuildArmature(childBone, bones));
-                    armature.Add(childArmatureBone);
-                }
-            }
-            else
-            {
-                armature.Add(new(bone));
-            }
-
-            return armature;
-        }
-    }
-
-    public class SgeArmatureBone
-    {
-        public int Address { get; set; }
-        public Vector3 Unknown00 { get; set; }
-        public Vector3 Position { get; set; }
-        public int AddressToBone1 { get; set; }
-        public int AddressToBone2 { get; set; }
-        public int Count { get; set; }
-        public List<SgeArmatureBone> ChildBones { get; set; } = new();
-
-        public SgeArmatureBone(SgeBone bone)
-        {
-            Address = bone.Address;
-            Unknown00 = bone.Unknown00;
-            AddressToBone1 = bone.AddressToBone1;
-            AddressToBone2 = bone.AddressToBone2;
-            Position = bone.Position;
-            Count = bone.Count;
-        }
-    }
-
     public class SgeBone
     {
+        [JsonIgnore]
         public SgeBone Parent { get; set; }
         public int Address { get; set; }
         public Vector3 Unknown00 { get; set; }      // 1
@@ -400,7 +342,9 @@ namespace HaruhiHeiretsuLib.Graphics
     {
         public Vector3 Position { get; set; }
         public Vector4 Weight { get; set; }
+        [JsonIgnore]
         public byte[] BoneIds { get; set; }
+        public int[] BoneIndices { get => BoneIds.Select(i => (int)i).ToArray(); set => BoneIds = value.Select(i => (byte)i).ToArray(); }
         public Vector3 Normal { get; set; }
         public int Unknown { get; set; } // color maybe
         public Vector2 UVCoords { get; set; }
@@ -426,9 +370,9 @@ namespace HaruhiHeiretsuLib.Graphics
         public List<int> Polygon { get; set; }
         public SgeMaterial Material { get; set; }
         
-        public SgeFace(IEnumerable<byte> data, SgeMaterial material)
+        public SgeFace(IEnumerable<byte> data, SgeMaterial material, int faceOffset)
         {
-            Polygon = new List<int> { BitConverter.ToInt32(data.Skip(0x00).Take(4).ToArray()), BitConverter.ToInt32(data.Skip(0x04).Take(4).ToArray()), BitConverter.ToInt32(data.Skip(0x08).Take(4).ToArray()) };
+            Polygon = new List<int> { BitConverter.ToInt32(data.Skip(0x00).Take(4).ToArray()) + faceOffset, BitConverter.ToInt32(data.Skip(0x04).Take(4).ToArray()) + faceOffset, BitConverter.ToInt32(data.Skip(0x08).Take(4).ToArray()) + faceOffset };
             Material = material;
         }
     }
