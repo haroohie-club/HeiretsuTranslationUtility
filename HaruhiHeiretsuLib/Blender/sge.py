@@ -70,7 +70,8 @@ def construct_mesh(sge, materials):
             uvlayer.data[loop_idx].uv = uvcoords[vert_idx]
     
     for i in range(len(mesh.polygons)):
-        mesh.polygons[i].material_index = sge['SgeFaces'][i]['Material']['Index']
+        if sge['SgeFaces'][i]['Material'] is not None:
+            mesh.polygons[i].material_index = sge['SgeFaces'][i]['Material']['Index']
     mesh.update()
 
     return obj
