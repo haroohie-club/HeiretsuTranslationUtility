@@ -40,7 +40,8 @@ def construct_armature(sge):
         for potential_child in sge['SgeBones']:
             if ("Bone" + str(potential_child['ParentAddress']) == bone.name):
                 armature.edit_bones[i].parent = bone
-                armature.edit_bones[i].tail = bone.head
+                armature.edit_bones[i].tail = armature.edit_bones[i].head
+                armature.edit_bones[i].head = bone.tail
             i += 1
 
 def construct_mesh(sge, materials):
