@@ -40,9 +40,9 @@ def construct_armature(sge):
         for potential_child in sge['SgeBones']:
             if ("Bone" + str(potential_child['ParentAddress']) == bone.name):
                 armature.edit_bones[i].parent = bone
-                armature.edit_bones[i].tail = armature.edit_bones[i].head
-                armature.edit_bones[i].head = bone.tail
+                armature.edit_bones[i].tail = bone.head
             i += 1
+    return obj
 
 def construct_mesh(sge, materials):
     print('Constructing mesh...')
@@ -74,7 +74,11 @@ def construct_mesh(sge, materials):
         if sge['SgeFaces'][i]['Material'] is not None:
             mesh.polygons[i].material_index = sge['SgeFaces'][i]['Material']['Index']
     mesh.update()
-
+    
+    for bone in sge['SgeBones']:
+        bone_vertex_group = obj.vertex_groups.new(name='Bone' + str(bone['Address']))
+        for vertex in bone['VertexGroup']:
+            bone_vertex_group.add([int(vertex)], bone['VertexGroup'][vertex], 'ADD')
     return obj
 
 def json_vector_to_vector(json_vector):
@@ -88,11 +92,15 @@ def main(filename):
     f = open(filename)
     sge = json.load(f)
     materials = construct_materials(sge)
-    construct_armature(sge)
+    armature = construct_armature(sge)
     mesh = construct_mesh(sge, materials)
 
     sge_collection = bpy.data.collections.new('sge_collection')
     bpy.context.scene.collection.children.link(sge_collection)
     sge_collection.objects.link(mesh)
+
+    mesh.parent = armature
+    modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
+    modifier.object = armature
 
 main('D:\\ROMHacking\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\seagull_complex.sge.json')

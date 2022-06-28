@@ -51,16 +51,16 @@ namespace HaruhiHeiretsuLib.Graphics
                 bone.ResolveConnections(SgeBones);
             }
 
-            foreach (SgeMesh submeshTableEntry in SgeMeshes)
+            foreach (SgeMesh meshTableEntry in SgeMeshes)
             {
-                if (submeshTableEntry.Address > 0 && submeshTableEntry.Address % 4 == 0 && submeshTableEntry.SubmeshCount > 0 && submeshTableEntry.VertexAddress > 0)
+                if (meshTableEntry.Address > 0 && meshTableEntry.Address % 4 == 0 && meshTableEntry.SubmeshCount > 0 && meshTableEntry.VertexAddress > 0)
                 {
-                    for (int i = 0; i < submeshTableEntry.SubmeshCount; i++)
+                    for (int i = 0; i < meshTableEntry.SubmeshCount; i++)
                     {
-                        SgeSubmeshes.Add(new(sgeData, submeshTableEntry.Address + i * 0x64, SgeMaterials, SgeBones));
+                        SgeSubmeshes.Add(new(sgeData, meshTableEntry.Address + i * 0x64, SgeMaterials, SgeBones));
                     }
 
-                    int vertexTableAddress = BitConverter.ToInt32(sgeData.Skip(submeshTableEntry.VertexAddress).Take(4).ToArray());
+                    int vertexTableAddress = BitConverter.ToInt32(sgeData.Skip(meshTableEntry.VertexAddress).Take(4).ToArray());
                     int numVertices = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress).Take(4).ToArray());
                     int vertexStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x04).Take(4).ToArray());
                     int numFaces = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x08).Take(4).ToArray());
@@ -72,11 +72,31 @@ namespace HaruhiHeiretsuLib.Graphics
                     }
 
                     int faceIndex = 0;
-                    foreach (SgeSubmesh mesh in SgeSubmeshes)
+                    foreach (SgeSubmesh submesh in SgeSubmeshes)
                     {
-                        for (int i = 0; i < mesh.NumFaces && faceIndex < numFaces / 3; i++)
+                        for (int i = 0; i < submesh.NumFaces && faceIndex < numFaces / 3; i++)
                         {
-                            SgeFaces.Add(new(sgeData.Skip(facesStartAddress + faceIndex++ * 0x0C).Take(0x0C), mesh.Material, mesh.FaceOffset));
+                            SgeFaces.Add(new(sgeData.Skip(facesStartAddress + faceIndex++ * 0x0C).Take(0x0C), submesh.Material, submesh.FaceOffset));
+
+                            IEnumerable<(int, SgeBone, float)> attachedBones = SgeFaces.Last().Polygon.SelectMany(v => SgeVertices[v].BoneIds.Select(b =>
+                            {
+                                int boneIndex = submesh.BonePalette[b];
+                                if (boneIndex >= 0)
+                                {
+                                    return (v, SgeBones[boneIndex], SgeVertices[v].Weight[Array.IndexOf(SgeVertices[v].BoneIds, b)]);
+                                }
+                                return (v, null, 0);
+                            }));
+                            foreach ((int vertexIndex, SgeBone bone, float weight) in attachedBones)
+                            {
+                                if (bone is not null)
+                                {
+                                    if (!bone.VertexGroup.ContainsKey(vertexIndex) && weight > 0)
+                                    {
+                                        bone.VertexGroup.Add(vertexIndex, weight);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -254,6 +274,8 @@ namespace HaruhiHeiretsuLib.Graphics
         public int AddressToBone2 { get; set; }     // 5
         public int Count { get; set; }              // 6
 
+        public Dictionary<int, float> VertexGroup { get; set; } = new();
+
         public SgeBone(IEnumerable<byte> data, int offset)
         {
             Address = offset;
@@ -342,7 +364,7 @@ namespace HaruhiHeiretsuLib.Graphics
     public class SgeVertex
     {
         public Vector3 Position { get; set; }
-        public Vector4 Weight { get; set; }
+        public float[] Weight { get; set; }
         [JsonIgnore]
         public byte[] BoneIds { get; set; }
         public int[] BoneIndices { get => BoneIds.Select(i => (int)i).ToArray(); set => BoneIds = value.Select(i => (byte)i).ToArray(); }
@@ -354,10 +376,10 @@ namespace HaruhiHeiretsuLib.Graphics
         public SgeVertex(IEnumerable<byte> data)
         {
             Position = new Vector3(BitConverter.ToSingle(data.Skip(0x00).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray())) * Sge.MODEL_SCALE;
-            float weightX = BitConverter.ToSingle(data.Skip(0x0C).Take(4).ToArray());
-            float weightY = BitConverter.ToSingle(data.Skip(0x10).Take(4).ToArray());
-            float weightZ = BitConverter.ToSingle(data.Skip(0x14).Take(4).ToArray());
-            Weight = new Vector4(weightX, weightY, weightZ, 1 - (weightX + weightY + weightZ));
+            float weight1 = BitConverter.ToSingle(data.Skip(0x0C).Take(4).ToArray());
+            float weight2 = BitConverter.ToSingle(data.Skip(0x10).Take(4).ToArray());
+            float weight3 = BitConverter.ToSingle(data.Skip(0x14).Take(4).ToArray());
+            Weight = new float[] { weight1, weight2, weight3, 1 - (weight1 + weight2 + weight3) };
             BoneIds = new byte[] { data.ElementAt(0x18), data.ElementAt(0x19), data.ElementAt(0x1A), data.ElementAt(0x1B) };
             Normal = new Vector3(BitConverter.ToSingle(data.Skip(0x1C).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x20).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x24).Take(4).ToArray()));
             Unknown = BitConverter.ToInt32(data.Skip(0x28).Take(4).ToArray());
