@@ -5,15 +5,13 @@ using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
 using Microsoft.Win32;
-using OpenTK.Graphics.OpenGL;
-using OpenTK.Mathematics;
-using OpenTK.Wpf;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -449,7 +447,7 @@ namespace HaruhiHeiretsuEditor
                     }
                     if (selectedFile.Sge.SgeMaterials.FirstOrDefault()?.Texture is not null)
                     {
-                        GraphicsButton sgeButton = new() { Content = "Test", Graphic = selectedFile };
+                        GraphicsButton sgeButton = new() { Content = "Export SGE JSON", Graphic = selectedFile };
                         sgeButton.Click += SgeButton_Click;
                         graphicsEditStackPanel.Children.Add(sgeButton);
 
@@ -458,6 +456,10 @@ namespace HaruhiHeiretsuEditor
 
                         //graphicsEditStackPanel.Children.Add(glwpf);
                         //glwpf.Start(settings);
+
+                        Button statsButton = new() { Content = "SGE Stats" };
+                        statsButton.Click += StatsButton_Click;
+                        graphicsEditStackPanel.Children.Add(statsButton);
                     }
                 }
                 else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TEXTURE)
@@ -516,7 +518,7 @@ namespace HaruhiHeiretsuEditor
                     {
                         grid.RowDefinitions.Add(new RowDefinition());
                         grid.Children.Add(new TextBox { Text = $"{mapComponent.UnknownShort1}" });
-                        grid.Children.Add(new TextBox { Text = $"{mapComponent.RelativeFileIndex}" });
+                        grid.Children.Add(new TextBox { Text = $"{mapComponent.Index}" });
                         grid.Children.Add(new TextBox { Text = $"{mapComponent.UnknownShort2}" });
                         grid.Children.Add(new TextBox { Text = $"{mapComponent.ScreenX}" });
                         grid.Children.Add(new TextBox { Text = $"{mapComponent.ScreenY}" });
@@ -564,15 +566,84 @@ namespace HaruhiHeiretsuEditor
             {
                 File.WriteAllText(saveFileDialog.FileName, graphicsFile.Sge.DumpJson());
             }
+        }
 
-            //OpenFileDialog fileDialog = new();
-            //if (fileDialog.ShowDialog() == true)
-            //{
-            //    graphicsFile.SgeModel.Test(fileDialog.FileName);
-            //}
+        private void StatsButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "CSV file|*.csv"
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                List<SgeHeader> headers = new();
+                foreach ((int parent, int child) in _mcb.GraphicsFiles)
+                {
+                    if (((GraphicsFile)_mcb.McbSubArchives[parent].Files[child]).FileType == GraphicsFile.GraphicsFileType.SGE)
+                    {
+                        headers.Add(((GraphicsFile)_mcb.McbSubArchives[parent].Files[child]).Sge.SgeHeader);
+                    }
+                }
 
-            //SgeWindow sgeWindow = new(640, 480, graphicsFile.SgeModel);
-            //sgeWindow.Run();
+                string csv = "Unknown00\n";
+                string valueLine = string.Empty;
+                string percentageLine = string.Empty;
+                var unknown00HeaderValues = headers.GroupBy(h => h.Version).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                foreach (var header00 in unknown00HeaderValues)
+                {
+                    valueLine += $"{header00.Key},";
+                    percentageLine += $"{(double)header00.Count() / headers.Count * 100:F2}%,";
+                }
+                csv += $"{valueLine}\n{percentageLine}\n\n";
+
+                csv += "Unknown02\n";
+                valueLine = string.Empty;
+                percentageLine = string.Empty;
+                var unknown02HeaderValues = headers.GroupBy(h => h.ModelType).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                foreach (var header02 in unknown02HeaderValues)
+                {
+                    valueLine += $"{header02.Key},";
+                    percentageLine += $"{(double)header02.Count() / headers.Count * 100:F2}%,";
+                }
+                csv += $"{valueLine}\n{percentageLine}\n\n";
+
+                File.WriteAllText(saveFileDialog.FileName, csv);
+
+                csv += "Unknown04\n";
+                valueLine = string.Empty;
+                percentageLine = string.Empty;
+                var unknown04HeaderValues = headers.GroupBy(h => h.Unknown04).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                foreach (var header04 in unknown04HeaderValues)
+                {
+                    valueLine += $"{header04.Key},";
+                    percentageLine += $"{(double)header04.Count() / headers.Count * 100:F2}%,";
+                }
+                csv += $"{valueLine}\n{percentageLine}\n\n";
+
+                csv += "Unknown08\n";
+                valueLine = string.Empty;
+                percentageLine = string.Empty;
+                var unknown08HeaderValues = headers.GroupBy(h => h.Unknown08).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                foreach (var header08 in unknown08HeaderValues)
+                {
+                    valueLine += $"{header08.Key},";
+                    percentageLine += $"{(double)header08.Count() / headers.Count * 100:F2}%,";
+                }
+                csv += $"{valueLine}\n{percentageLine}\n\n";
+
+                csv += "Unknown0C\n";
+                valueLine = string.Empty;
+                percentageLine = string.Empty;
+                var unknown0CHeaderValues = headers.GroupBy(h => h.Unknown0C).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                foreach (var header0C in unknown0CHeaderValues)
+                {
+                    valueLine += $"{header0C.Key},";
+                    percentageLine += $"{(double)header0C.Count() / headers.Count * 100:F2}%,";
+                }
+                csv += $"{valueLine}\n{percentageLine}\n\n";
+
+                File.WriteAllText(saveFileDialog.FileName, csv);
+            }
         }
 
         private void MapButton_Click(object sender, RoutedEventArgs e)
@@ -588,25 +659,28 @@ namespace HaruhiHeiretsuEditor
         private void LoadButton_Click(object sender, RoutedEventArgs e)
         {
             GraphicsButton mapButton = (GraphicsButton)sender;
-            //Dictionary<int, GraphicsFile> archiveGraphicsFiles = _mcb.GraphicsFiles.Where(g => g.Location.parent == selectedFile.Location.parent).ToDictionary(g => g.Location.child);
-            List<GraphicsFile> archiveGraphicsFiles = new();
-            if (mapButton.Graphic.Location == (58, 57))
+            List<GraphicsFile> archiveGraphicsFiles;
+            if (_mcb is not null)
             {
-                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[12]);
-                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[12]);
-                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[42]);
-                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[42]);
-                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[58].Files[0]);
-                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[58].Files[55]);
-                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[69].Files[33]);
-                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[11]);
-                archiveGraphicsFiles.Add((GraphicsFile)_mcb.McbSubArchives[0].Files[26]);
+                if (mapButton.Graphic.Location.parent == 58) // main title screen
+                {
+                    archiveGraphicsFiles = KnownLayoutGraphicsSets.TitleScreenGraphics.Select(s => (GraphicsFile)_mcb.McbSubArchives[s.McbLocation.parent].Files[s.McbLocation.child]).ToList();
+                }
+                else if (mapButton.Graphic.Location.parent == 69) // special version screen
+                {
+                    archiveGraphicsFiles = KnownLayoutGraphicsSets.SpecialVersionGraphics.Select(s => (GraphicsFile)_mcb.McbSubArchives[s.McbLocation.parent].Files[s.McbLocation.child]).ToList();
+                }
+                else
+                {
+                    archiveGraphicsFiles = null;
+                }
             }
             else
             {
-                // do nothing, this doesn't work anyway
+                archiveGraphicsFiles = null;
             }
-            MapPreviewWindow mapPreviewWindow = new(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(mapButton.Graphic.GetLayout(archiveGraphicsFiles)), MaxWidth = mapButton.Graphic.Width });
+            MapPreviewWindow mapPreviewWindow = new() { Width = 640 };
+            Task.Factory.StartNew(() => mapButton.Graphic.GetLayout(archiveGraphicsFiles)).ContinueWith(task => mapPreviewWindow.CompleteLayoutLoad(task.Result));
             mapPreviewWindow.Show();
         }
 

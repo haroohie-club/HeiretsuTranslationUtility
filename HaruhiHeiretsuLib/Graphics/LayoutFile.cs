@@ -1,6 +1,8 @@
 ﻿using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuLib.Graphics
 {
@@ -8,6 +10,8 @@ namespace HaruhiHeiretsuLib.Graphics
     {
         public byte[] UnknownLayoutHeaderInt1 { get; set; }
         public List<LayoutComponent> LayoutComponents { get; set; }
+
+        public delegate SKBitmap GetLayoutAsync(List<GraphicsFile> archiveGraphicsFiles);
 
         public SKBitmap GetLayout(List<GraphicsFile> archiveGraphicsFiles)
         {
@@ -32,20 +36,12 @@ namespace HaruhiHeiretsuLib.Graphics
                         Bottom = layout.ScreenY + Math.Abs(layout.ScreenHeight),
                     };
 
-                    if (layout.RelativeFileIndex == -1)
+                    if (layout.Index == -1)
                     {
                         continue;
                     }
 
-                    int grpIndex = 0;
-                    for (int i = 0; i <= layout.RelativeFileIndex && grpIndex < archiveGraphicsFiles.Count; grpIndex++)
-                    {
-                        if (archiveGraphicsFiles[grpIndex].FileType == GraphicsFileType.TEXTURE)
-                        {
-                            i++;
-                        }
-                    }
-                    GraphicsFile grpFile = archiveGraphicsFiles[grpIndex];
+                    GraphicsFile grpFile = archiveGraphicsFiles[layout.Index];
 
                     SKBitmap texture = grpFile.GetImage();
                     SKBitmap tile = new((int)Math.Abs(boundingBox.Right - boundingBox.Left), (int)Math.Abs(boundingBox.Bottom - boundingBox.Top));
@@ -73,7 +69,7 @@ namespace HaruhiHeiretsuLib.Graphics
                     canvas.DrawBitmap(tile, destination);
                 }
 
-                return bitmap;
+               return bitmap;
             }
             else
             {
@@ -85,7 +81,7 @@ namespace HaruhiHeiretsuLib.Graphics
     public class LayoutComponent
     {
         public short UnknownShort1 { get; set; }
-        public short RelativeFileIndex { get; set; }
+        public short Index { get; set; }
         public short UnknownShort2 { get; set; }
         public short ScreenX { get; set; }
         public short ScreenY { get; set; }
@@ -100,5 +96,48 @@ namespace HaruhiHeiretsuLib.Graphics
         public byte RedTint { get; set; }
         public byte GreenTint { get; set; }
         public byte BlueTint { get; set; }
+    }
+
+    public static class KnownLayoutGraphicsSets
+    {
+        public static LayoutGraphic[] TitleScreenGraphics = new LayoutGraphic[10]
+        {
+            new(0x6B, (58, 0)),
+            new(0x1E, (58, 1)),
+            new(0x1C, (58, 2)),
+            new(0x1D, (58, 3)),
+            new(0x0E, (58, 4)),
+            new(0x0F, (58, 5)),
+            new(0x10, (58, 6)),
+            new(0x11, (58, 7)),
+            new(0x12, (58, 8)),
+            new(0x1B, (58, 9))
+        };
+
+        public static LayoutGraphic[] SpecialVersionGraphics = new LayoutGraphic[10]
+        {
+            new(0x6B, (69, 0)),
+            new(0x1E, (69, 1)),
+            new(0xCE, (69, 2)),
+            new(0xCB, (69, 3)),
+            new(0x1C, (69, 4)),
+            new(0x0E, (69, 5)),
+            new(0x0F, (69, 6)),
+            new(0x10, (69, 7)),
+            new(0x11, (69, 8)),
+            new(0x12, (69, 9)),
+        };
+    }
+
+    public struct LayoutGraphic
+    {
+        public int GrpIndex { get; }
+        public (int parent, int child) McbLocation { get; }
+
+        public LayoutGraphic(int grpIndex, (int, int) mcbLoc)
+        {
+            GrpIndex = grpIndex;
+            McbLocation = mcbLoc;
+        }
     }
 }

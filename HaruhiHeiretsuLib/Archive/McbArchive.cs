@@ -134,13 +134,13 @@ namespace HaruhiHeiretsuLib.Archive
 
         public void ResolveGraphicsFileNames()
         {
-            byte[] textureNameMap = McbSubArchives[0].Files[57].GetBytes();
-            int numTextures = BitConverter.ToInt32(textureNameMap.Skip(0x10).Take(4).Reverse().ToArray());
+            byte[] graphicsFileNameMap = McbSubArchives[0].Files[57].GetBytes();
+            int numGraphicsFiles = BitConverter.ToInt32(graphicsFileNameMap.Skip(0x10).Take(4).Reverse().ToArray());
 
             Dictionary<int, string> indexToNameMap = new();
-            for (int i = 0; i < numTextures; i++)
+            for (int i = 0; i < numGraphicsFiles; i++)
             {
-                indexToNameMap.Add(BitConverter.ToInt32(textureNameMap.Skip(0x14 * (i + 1)).Take(4).Reverse().ToArray()), Encoding.ASCII.GetString(textureNameMap.Skip(0x14 * (i + 1) + 0x04).TakeWhile(b => b != 0x00).ToArray()));
+                indexToNameMap.Add(BitConverter.ToInt32(graphicsFileNameMap.Skip(0x14 * (i + 1)).Take(4).Reverse().ToArray()), Encoding.ASCII.GetString(graphicsFileNameMap.Skip(0x14 * (i + 1) + 0x04).TakeWhile(b => b != 0x00).ToArray()));
             }
 
             foreach ((int parentLoc, int childLoc) in GraphicsFiles)

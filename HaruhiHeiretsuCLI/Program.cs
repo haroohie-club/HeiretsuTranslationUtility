@@ -17,6 +17,7 @@ namespace HaruhiHeiretsuCLI
                 new CheckBlnBinIntegrityCommand(),
                 new ExportFileMapCommand(),
                 new ExportResxCommand(),
+                new ExportSgeJsonCommand(),
                 new ExtractArchiveCommand(),
                 new HexSearchCommand(),
                 new ReplaceFilesCommand(),

@@ -10,7 +10,7 @@ def construct_materials(sge):
         material = bpy.data.materials.new(sge_material['Name'])
         material.use_nodes = True
         bsdf = material.node_tree.nodes['Principled BSDF']
-        if len(sge_material['TexturePath']) > 0:
+        if sge_material['TexturePath'] is not None and len(sge_material['TexturePath']) > 0:
             img = bpy.data.images.load(sge_material['TexturePath'])
             texture = material.node_tree.nodes.new('ShaderNodeTexImage')
             texture.image = img

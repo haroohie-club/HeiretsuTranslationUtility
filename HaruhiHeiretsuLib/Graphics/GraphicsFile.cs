@@ -48,7 +48,7 @@ namespace HaruhiHeiretsuLib.Graphics
                     LayoutComponents.Add(new LayoutComponent
                     {
                         UnknownShort1 = BitConverter.ToInt16(Data.Skip(i).Take(2).ToArray()),
-                        RelativeFileIndex = BitConverter.ToInt16(Data.Skip(i + 0x02).Take(2).ToArray()),
+                        Index = BitConverter.ToInt16(Data.Skip(i + 0x02).Take(2).ToArray()),
                         UnknownShort2 = BitConverter.ToInt16(Data.Skip(i + 0x04).Take(2).ToArray()),
                         ScreenX = BitConverter.ToInt16(Data.Skip(i + 0x06).Take(2).ToArray()),
                         ScreenY = BitConverter.ToInt16(Data.Skip(i + 0x08).Take(2).ToArray()),
@@ -106,6 +106,14 @@ namespace HaruhiHeiretsuLib.Graphics
         public void TryResolveName(Dictionary<int, int> offsetIndexDictionary, Dictionary<int, string> textureNameDictionary)
         {
             if (textureNameDictionary.TryGetValue(offsetIndexDictionary[McbEntryData.archiveOffset], out string name))
+            {
+                Name = name;
+            }
+        }
+
+        public void TryResolveName(Dictionary<int, string> textureNameDictionary)
+        {
+            if (textureNameDictionary.TryGetValue(Index, out string name))
             {
                 Name = name;
             }

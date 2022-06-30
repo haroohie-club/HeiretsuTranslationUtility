@@ -11,7 +11,7 @@ namespace HaruhiHeiretsuCLI
 {
     public class GeneratePatchCommand : Command
     {
-        private string _sourceDir, _outputDir;
+        private string _outputDir;
 
         public GeneratePatchCommand() : base("generate-patch")
         {
