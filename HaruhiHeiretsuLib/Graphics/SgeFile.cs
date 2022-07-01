@@ -102,7 +102,7 @@ namespace HaruhiHeiretsuLib.Graphics
                     int faceIndex = 0;
                     foreach (SgeSubmesh submesh in SgeSubmeshes)
                     {
-                        for (int i = 0; i < submesh.EndFace;)
+                        for (int i = 0; i < submesh.FacesCount;)
                         {
                             if (triStripped)
                             {
@@ -409,7 +409,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public int StartVertex { get; set; }
         public int EndVertex { get; set; }      // 12
         public int StartFace { get; set; }             // 13
-        public int EndFace { get; set; }
+        public int FacesCount { get; set; }
         public List<short> BonePalette { get; set; } = new();
         public float Unknown54 { get; set; }          // 23
         public float Unknown58 { get; set; }          // 24
@@ -433,7 +433,7 @@ namespace HaruhiHeiretsuLib.Graphics
             StartVertex = BitConverter.ToInt32(data.Skip(offset + 0x24).Take(4).ToArray());
             EndVertex = BitConverter.ToInt32(data.Skip(offset + 0x28).Take(4).ToArray());
             StartFace = BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).ToArray());
-            EndFace = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).ToArray());
+            FacesCount = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).ToArray());
             for (int i = 0; i < 16; i++)
             {
                 BonePalette.Add(BitConverter.ToInt16(data.Skip(offset + 0x34 + i * 2).Take(2).ToArray()));
