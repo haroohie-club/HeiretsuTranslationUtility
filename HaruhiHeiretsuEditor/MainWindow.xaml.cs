@@ -5,6 +5,7 @@ using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
 using Microsoft.Win32;
+using Newtonsoft.Json;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -194,6 +195,11 @@ namespace HaruhiHeiretsuEditor
             {
                 _evtFile = BinArchive<EventFile>.FromFile(openFileDialog.FileName);
                 scriptsListBox.ItemsSource = _evtFile.Files;
+                // TODO: REMOVE
+                JsonSerializer serializer = JsonSerializer.Create(new() { MaxDepth = 10 });
+                using FileStream fs = File.OpenWrite("evt.json");
+                using StreamWriter sw = new(fs);
+                serializer.Serialize(sw, _evtFile.Files.Select(f => f.CutsceneData));
                 scriptsListBox.Items.Refresh();
             }
         }
