@@ -4,6 +4,8 @@ using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
+using HaruhiHeiretsuLib.Strings.Events;
+using HaruhiHeiretsuLib.Strings.Scripts;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using SkiaSharp;

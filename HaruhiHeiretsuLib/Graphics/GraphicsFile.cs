@@ -24,7 +24,7 @@ namespace HaruhiHeiretsuLib.Graphics
             if (Encoding.ASCII.GetString(Data.Take(6).ToArray()) == "SGE008")
             {
                 FileType = GraphicsFileType.SGE;
-                Sge = new(Data);
+                Sge = new(Data, Location);
             }
             else if (Data.Take(4).SequenceEqual(new byte[] { 0x00, 0x20, 0xAF, 0x30 }))
             {

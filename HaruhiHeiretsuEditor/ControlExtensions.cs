@@ -1,6 +1,7 @@
 ﻿using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
+using HaruhiHeiretsuLib.Strings.Scripts;
 using System;
 using System.Collections.Generic;
 using System.Linq;

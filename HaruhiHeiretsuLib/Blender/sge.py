@@ -47,7 +47,7 @@ def construct_armature(sge):
 def construct_mesh(sge, materials):
     print('Constructing mesh...')
     mesh = bpy.data.meshes.new(sge['Name'] + "_Mesh")
-    obj = bpy.data.objects.new(sge['Name'], mesh)
+    obj = bpy.data.objects.new(sge['Name'] + "_Mesh", mesh)
     for material in materials:
         obj.data.materials.append(material)
 

@@ -1,7 +1,8 @@
 ﻿using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
-using HaruhiHeiretsuLib.Strings;
+using HaruhiHeiretsuLib.Strings.Events;
+using HaruhiHeiretsuLib.Strings.Scripts;
 using Mono.Options;
 using SkiaSharp;
 using System;
