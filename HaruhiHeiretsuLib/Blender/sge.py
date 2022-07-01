@@ -63,7 +63,7 @@ def construct_mesh(sge, materials):
         colors.append(sge_vertex['Color'])
     faces = []
     for sge_face in sge['SgeFaces']:
-        faces.append((sge_face['Polygon'][2], sge_face['Polygon'][1], sge_face['Polygon'][0])) # Faces are inverted so this is the correct order
+        faces.append((sge_face['Polygon'][0], sge_face['Polygon'][1], sge_face['Polygon'][2])) # Faces are inverted so this is the correct order
 
     mesh.from_pydata(vertices, [], faces) # Edges are autocalculated by blender so we can pass a blank array
     mesh.normals_split_custom_set_from_vertices(normals)
