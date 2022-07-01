@@ -44,11 +44,11 @@ def construct_armature(sge):
             i += 1
     return obj
 
-def construct_mesh(sge, materials):
+def construct_mesh(submesh, materials, name):
     print('Constructing mesh...')
-    mesh = bpy.data.meshes.new(sge['Name'] + "_Mesh")
+    mesh = bpy.data.meshes.new(name)
     mesh.validate(verbose=True)
-    obj = bpy.data.objects.new(sge['Name'] + "_Mesh", mesh)
+    obj = bpy.data.objects.new(name, mesh)
     for material in materials:
         obj.data.materials.append(material)
 
@@ -56,13 +56,13 @@ def construct_mesh(sge, materials):
     normals = []
     uvcoords = []
     colors = []
-    for sge_vertex in sge['SgeVertices']:
+    for sge_vertex in submesh['SubmeshVertices']:
         vertices.append(json_vector_to_vector(sge_vertex['Position']))
         normals.append(json_vector_to_vector(sge_vertex['Normal']))
         uvcoords.append(json_vector2_to_vector2(sge_vertex['UVCoords']))
         colors.append(sge_vertex['Color'])
     faces = []
-    for sge_face in sge['SgeFaces']:
+    for sge_face in submesh['SubmeshFaces']:
         faces.append((sge_face['Polygon'][0], sge_face['Polygon'][1], sge_face['Polygon'][2])) # Faces are inverted so this is the correct order
 
     mesh.from_pydata(vertices, [], faces) # Edges are autocalculated by blender so we can pass a blank array
@@ -79,14 +79,14 @@ def construct_mesh(sge, materials):
         color_layer.data
     
     for i in range(len(mesh.polygons)):
-        if sge['SgeFaces'][i]['Material'] is not None:
-            mesh.polygons[i].material_index = sge['SgeFaces'][i]['Material']['Index']
+        if submesh['SubmeshFaces'][i]['Material'] is not None:
+            mesh.polygons[i].material_index = submesh['SubmeshFaces'][i]['Material']['Index']
     mesh.update()
     
-    for bone in sge['SgeBones']:
-        bone_vertex_group = obj.vertex_groups.new(name='Bone' + str(bone['Address']))
-        for vertex in bone['VertexGroup']:
-            bone_vertex_group.add([int(vertex)], bone['VertexGroup'][vertex], 'ADD')
+    # for bone in sge['SgeBones']:
+    #     bone_vertex_group = obj.vertex_groups.new(name='Bone' + str(bone['Address']))
+    #     for vertex in bone['VertexGroup']:
+    #         bone_vertex_group.add([int(vertex)], bone['VertexGroup'][vertex], 'ADD')
     return obj
 
 def json_vector_to_vector(json_vector):
@@ -101,14 +101,18 @@ def main(filename):
     sge = json.load(f)
     materials = construct_materials(sge)
     armature = construct_armature(sge)
-    mesh = construct_mesh(sge, materials)
 
-    sge_collection = bpy.data.collections.new('sge_collection')
-    bpy.context.scene.collection.children.link(sge_collection)
-    sge_collection.objects.link(mesh)
+    i = 0
+    for submesh in sge['SgeSubmeshes']:
+        mesh = construct_mesh(submesh, materials, sge['Name'] + "_Mesh" + str(i))
+        i += 1
 
-    mesh.parent = armature
-    modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
-    modifier.object = armature
+        sge_collection = bpy.data.collections.new('sge_collection')
+        bpy.context.scene.collection.children.link(sge_collection)
+        sge_collection.objects.link(mesh)
+
+    # mesh.parent = armature
+    # modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
+    # modifier.object = armature
 
 main('D:\\ROMHacking\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\seagull_complex.sge.json')
