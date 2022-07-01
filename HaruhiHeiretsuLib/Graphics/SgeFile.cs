@@ -27,7 +27,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public List<SgeSubmesh> SgeSubmeshes { get; set; } = new();
         public List<SgeFace> SgeFaces { get; set; } = new();
 
-        public Sge(IEnumerable<byte> data, (int, int) location)
+        public Sge(IEnumerable<byte> data)
         {
             // SGEs are little-endian so no need for .Reverse() here
             SgeStartOffset = BitConverter.ToInt32(data.Skip(0x1C).Take(4).ToArray());
@@ -60,54 +60,26 @@ namespace HaruhiHeiretsuLib.Graphics
                         SgeSubmeshes.Add(new(sgeData, meshTableEntry.SubmeshAddress + i * 0x64, SgeMaterials, SgeBones));
                     }
 
-                    List<(int numVertices, int startAddress)> vertexTables = new();
-                    List<(int numFaces, int startAddress)> faceTables = new();
-                    
-                    for (int i = 0; i < 2; i++)
+                    List<int> vertexTableAddresses = new();
+                    List<int> facesStartAddresses = new();
+
+                    int vertexTableAddress = BitConverter.ToInt32(sgeData.Skip(meshTableEntry.VertexAddress).Take(4).ToArray());
+                    int numVertices = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress).Take(4).ToArray());
+                    int vertexStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x04).Take(4).ToArray());
+                    int numFaces = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x08).Take(4).ToArray());
+                    int facesStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x0C).Take(4).ToArray());
+
+                    for (int i = 0; i < numVertices; i++)
                     {
-                        int vertexTableAddress = BitConverter.ToInt32(sgeData.Skip(meshTableEntry.VertexAddress + i * 4).Take(4).ToArray());
-                        int numVertices = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress).Take(4).ToArray());
-                        int vertexStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x04).Take(4).ToArray());
-                        if (numVertices == vertexStartAddress) // tell tale sign that we're actually at the end of the file
-                        {
-                            break;
-                        }
-                        vertexTables.Add((numVertices, vertexStartAddress));
-                        int numFaces = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x08).Take(4).ToArray());
-                        int facesStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x0C).Take(4).ToArray());
-                        if (facesStartAddress == 0) // another sign that things are amiss
-                        {
-                            vertexTables.RemoveAt(1);
-                            break;
-                        }
-                        faceTables.Add((numFaces, facesStartAddress));
+                        SgeVertices.Add(new(sgeData.Skip(vertexStartAddress + i * 0x38).Take(0x38)));
                     }
 
-                    foreach ((int numVertices, int startAddress) in vertexTables)
-                    {
-                        for (int i = 0; i < numVertices; i++)
-                        {
-                            SgeVertices.Add(new(sgeData.Skip(startAddress + i * 0x38).Take(0x38)));
-                        }
-                    }
-
-                    int faceIndex = 0;
-                    int currentTable = 0;
+                    int faceIndex = 1;
                     foreach (SgeSubmesh submesh in SgeSubmeshes)
                     {
-                        for (int i = 0; i < submesh.NumFaces && currentTable < faceTables.Count; i++)
+                        for (int i = 0; i < submesh.NumFaces && faceIndex < numFaces / 3; i++)
                         {
-                            if (faceIndex >= faceTables[currentTable].numFaces / 3)
-                            {
-                                faceIndex = 0;
-                                currentTable++;
-                                if (currentTable >= faceTables.Count)
-                                {
-                                    break;
-                                }
-                            }
-
-                            SgeFaces.Add(new(sgeData.Skip(faceTables[currentTable].startAddress + faceIndex++ * 0x0C).Take(0x0C), submesh.Material, submesh.FaceOffset));
+                            SgeFaces.Add(new(sgeData.Skip(facesStartAddress + faceIndex++ * 0x0C).Take(0x0C), submesh.Material, submesh.FaceOffset));
 
                             IEnumerable<(int, SgeBone, float)> attachedBones = SgeFaces.Last().Polygon.SelectMany(v => SgeVertices[v].BoneIds.Select(b =>
                             {
@@ -443,7 +415,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public byte[] BoneIds { get; set; }
         public int[] BoneIndices { get => BoneIds.Select(i => (int)i).ToArray(); set => BoneIds = value.Select(i => (byte)i).ToArray(); }
         public Vector3 Normal { get; set; }
-        public int Unknown { get; set; } // color maybe
+        public VertexColor Color { get; set; }
         public Vector2 UVCoords { get; set; }
         public int Unknown2 { get; set; }
 
@@ -456,7 +428,8 @@ namespace HaruhiHeiretsuLib.Graphics
             Weight = new float[] { weight1, weight2, weight3, 1 - (weight1 + weight2 + weight3) };
             BoneIds = new byte[] { data.ElementAt(0x18), data.ElementAt(0x19), data.ElementAt(0x1A), data.ElementAt(0x1B) };
             Normal = new Vector3(BitConverter.ToSingle(data.Skip(0x1C).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x20).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x24).Take(4).ToArray()));
-            Unknown = BitConverter.ToInt32(data.Skip(0x28).Take(4).ToArray());
+            int color = BitConverter.ToInt32(data.Skip(0x28).Take(4).ToArray());
+            Color = new VertexColor(((color & 0x00FF0000) >> 16) / 255.0f, ((color & 0x0000FF00) >> 8) / 255.0f, (color & 0x000000FF) / 255.0f, ((color & 0xFF000000) >> 24) / 255.0f);
             UVCoords = new Vector2(BitConverter.ToSingle(data.Skip(0x2C).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x30).Take(4).ToArray()));
             Unknown2 = BitConverter.ToInt32(data.Skip(0x34).Take(4).ToArray());
         }
@@ -498,6 +471,22 @@ namespace HaruhiHeiretsuLib.Graphics
         public override string ToString()
         {
             return Name;
+        }
+    }
+
+    public struct VertexColor
+    {
+        public float R { get; set; }
+        public float G { get; set; }
+        public float B { get; set; }
+        public float A { get; set; }
+
+        public VertexColor(float r, float g, float b, float a)
+        {
+            R = r;
+            G = g;
+            B = b;
+            A = a;
         }
     }
 }

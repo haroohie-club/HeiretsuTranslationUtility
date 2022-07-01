@@ -47,6 +47,7 @@ def construct_armature(sge):
 def construct_mesh(sge, materials):
     print('Constructing mesh...')
     mesh = bpy.data.meshes.new(sge['Name'] + "_Mesh")
+    mesh.validate(verbose=True)
     obj = bpy.data.objects.new(sge['Name'] + "_Mesh", mesh)
     for material in materials:
         obj.data.materials.append(material)
@@ -54,21 +55,28 @@ def construct_mesh(sge, materials):
     vertices = []
     normals = []
     uvcoords = []
+    colors = []
     for sge_vertex in sge['SgeVertices']:
         vertices.append(json_vector_to_vector(sge_vertex['Position']))
         normals.append(json_vector_to_vector(sge_vertex['Normal']))
         uvcoords.append(json_vector2_to_vector2(sge_vertex['UVCoords']))
+        colors.append(sge_vertex['Color'])
     faces = []
     for sge_face in sge['SgeFaces']:
-        faces.append((sge_face['Polygon'][0], sge_face['Polygon'][1], sge_face['Polygon'][2]))
+        faces.append((sge_face['Polygon'][2], sge_face['Polygon'][1], sge_face['Polygon'][0])) # Faces are inverted so this is the correct order
 
     mesh.from_pydata(vertices, [], faces) # Edges are autocalculated by blender so we can pass a blank array
     mesh.normals_split_custom_set_from_vertices(normals)
 
     uvlayer = mesh.uv_layers.new()
+    color_layer = mesh.vertex_colors.new()
     for face in mesh.polygons:
         for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+            color_layer.data[vert_idx].color = (colors[vert_idx]['R'], colors[vert_idx]['G'], colors[vert_idx]['B'], colors[vert_idx]['A'])
             uvlayer.data[loop_idx].uv = uvcoords[vert_idx]
+
+    for vertex in mesh.vertices:
+        color_layer.data
     
     for i in range(len(mesh.polygons)):
         if sge['SgeFaces'][i]['Material'] is not None:
