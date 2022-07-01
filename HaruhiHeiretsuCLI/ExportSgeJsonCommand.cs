@@ -57,7 +57,7 @@ namespace HaruhiHeiretsuCLI
             {
                 foreach (GraphicsFile file in grp.Files)
                 {
-                    if (file.FileType == GraphicsFile.GraphicsFileType.SGE)
+                    if (file.FileType == GraphicsFile.GraphicsFileType.SGE && file.Sge is not null)
                     {
                         file.Sge.ResolveTextures(file.Name, grp.Files);
                     }

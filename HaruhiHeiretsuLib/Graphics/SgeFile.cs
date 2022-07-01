@@ -60,26 +60,62 @@ namespace HaruhiHeiretsuLib.Graphics
                         SgeSubmeshes.Add(new(sgeData, meshTableEntry.SubmeshAddress + i * 0x64, SgeMaterials, SgeBones));
                     }
 
-                    List<int> vertexTableAddresses = new();
-                    List<int> facesStartAddresses = new();
+                    List<(int numVertices, int startAddress)> vertexTables = new();
+                    List<(int numFaces, int startAddress)> faceTables = new();
 
-                    int vertexTableAddress = BitConverter.ToInt32(sgeData.Skip(meshTableEntry.VertexAddress).Take(4).ToArray());
-                    int numVertices = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress).Take(4).ToArray());
-                    int vertexStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x04).Take(4).ToArray());
-                    int numFaces = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x08).Take(4).ToArray());
-                    int facesStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x0C).Take(4).ToArray());
-
-                    for (int i = 0; i < numVertices; i++)
+                    for (int i = 0; i < 2; i++)
                     {
-                        SgeVertices.Add(new(sgeData.Skip(vertexStartAddress + i * 0x38).Take(0x38)));
+                        int vertexTableAddress = BitConverter.ToInt32(sgeData.Skip(meshTableEntry.VertexAddress + i * 4).Take(4).ToArray());
+                        int numVertices = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress).Take(4).ToArray());
+                        int vertexStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x04).Take(4).ToArray());
+                        if (numVertices == vertexStartAddress) // tell tale sign that we're actually at the end of the file
+                        {
+                            break;
+                        }
+                        vertexTables.Add((numVertices, vertexStartAddress));
+                        int numFaces = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x08).Take(4).ToArray());
+                        int facesStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x0C).Take(4).ToArray());
+                        if (facesStartAddress == 0) // another sign that things are amiss
+                        {
+                            vertexTables.RemoveAt(1);
+                            break;
+                        }
+                        faceTables.Add((numFaces, facesStartAddress));
+                    }
+                    foreach ((int numVertices, int startAddress) in vertexTables)
+                    {
+                        for (int i = 0; i < numVertices; i++)
+                        {
+                            SgeVertices.Add(new(sgeData.Skip(startAddress + i * 0x38).Take(0x38)));
+                        }
                     }
 
-                    int faceIndex = 1;
+                    bool triStripped = true;
+                    int faceIndex = 0;
+                    int currentTable = 0;
                     foreach (SgeSubmesh submesh in SgeSubmeshes)
                     {
-                        for (int i = 0; i < submesh.NumFaces && faceIndex < numFaces / 3; i++)
+                        for (int i = 0; i < submesh.NumFaces; i++)
                         {
-                            SgeFaces.Add(new(sgeData.Skip(facesStartAddress + faceIndex++ * 0x0C).Take(0x0C), submesh.Material, submesh.FaceOffset));
+                            if (faceIndex >= faceTables[currentTable].numFaces)
+                            {
+                                faceIndex = 0;
+                                currentTable++;
+                                SgeFaces.RemoveAt(SgeFaces.Count - 1);
+                                if (currentTable >= faceTables.Count)
+                                {
+                                    break;
+                                }
+                            }
+
+                            if (triStripped)
+                            {
+                                SgeFaces.Add(new(sgeData.Skip(faceTables[currentTable].startAddress + faceIndex++ * 0x04).Take(0x0C), submesh.Material, submesh.FaceOffset, faceIndex & 1));
+                            }
+                            else
+                            {
+                                SgeFaces.Add(new(sgeData.Skip(faceTables[currentTable].startAddress + faceIndex++ * 0x04).Take(0x0C), submesh.Material, submesh.FaceOffset));
+                            }
 
                             IEnumerable<(int, SgeBone, float)> attachedBones = SgeFaces.Last().Polygon.SelectMany(v => SgeVertices[v].BoneIds.Select(b =>
                             {
@@ -440,9 +476,16 @@ namespace HaruhiHeiretsuLib.Graphics
         public List<int> Polygon { get; set; }
         public SgeMaterial Material { get; set; }
         
-        public SgeFace(IEnumerable<byte> data, SgeMaterial material, int faceOffset)
+        public SgeFace(IEnumerable<byte> data, SgeMaterial material, int faceOffset, int evenOdd = 0)
         {
-            Polygon = new List<int> { BitConverter.ToInt32(data.Skip(0x00).Take(4).ToArray()) + faceOffset, BitConverter.ToInt32(data.Skip(0x04).Take(4).ToArray()) + faceOffset, BitConverter.ToInt32(data.Skip(0x08).Take(4).ToArray()) + faceOffset };
+            if (evenOdd == 0)
+            {
+                Polygon = new List<int> { BitConverter.ToInt32(data.Skip(0x00).Take(4).ToArray()) + faceOffset, BitConverter.ToInt32(data.Skip(0x04).Take(4).ToArray()) + faceOffset, BitConverter.ToInt32(data.Skip(0x08).Take(4).ToArray()) + faceOffset };
+            }
+            else
+            {
+                Polygon = new List<int> { BitConverter.ToInt32(data.Skip(0x04).Take(4).ToArray()) + faceOffset, BitConverter.ToInt32(data.Skip(0x00).Take(4).ToArray()) + faceOffset, BitConverter.ToInt32(data.Skip(0x08).Take(4).ToArray()) + faceOffset };
+            }
             Material = material;
         }
     }
