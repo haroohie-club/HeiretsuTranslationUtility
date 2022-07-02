@@ -105,13 +105,14 @@ def main(filename):
     materials = construct_materials(sge)
     armature = construct_armature(sge)
 
+    sge_collection = bpy.data.collections.new('sge_collection')
+    bpy.context.scene.collection.children.link(sge_collection)
+    
     i = 0
     for submesh in sge['SgeSubmeshes']:
         mesh = construct_mesh(sge, submesh, materials, i)
         i += 1
 
-        sge_collection = bpy.data.collections.new('sge_collection')
-        bpy.context.scene.collection.children.link(sge_collection)
         sge_collection.objects.link(mesh)
 
         mesh.parent = armature
