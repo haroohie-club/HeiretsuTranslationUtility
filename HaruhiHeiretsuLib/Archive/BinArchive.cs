@@ -19,10 +19,10 @@ namespace HaruhiHeiretsuLib.Archive
         public int MagicIntegerLsbMultiplier { get; set; }
         public int MagicIntegerLsbAnd { get; set; }
         public int MagicIntegerMsbShift { get; set; }
-        public List<uint> HeaderPointers { get; set; } = new();
-        public List<uint> SecondHeaderNumbers { get; set; } = new();
-        public List<T> Files { get; set; } = new();
-        public Dictionary<int, int> LengthToMagicIntegerMap { get; private set; } = new();
+        public List<uint> HeaderPointers { get; set; } = new List<uint>();
+        public List<uint> SecondHeaderNumbers { get; set; } = new List<uint>();
+        public List<T> Files { get; set; } = new List<T>();
+        public Dictionary<int, int> LengthToMagicIntegerMap { get; private set; } = new Dictionary<int, int>();
 
         public static BinArchive<T> FromFile(string fileName)
         {
@@ -78,7 +78,7 @@ namespace HaruhiHeiretsuLib.Archive
             for (int i = firstFileOffset; i < archiveBytes.Length;)
             {
                 int offset = i;
-                List<byte> fileBytes = new();
+                List<byte> fileBytes = new List<byte>();
                 byte[] nextLine = archiveBytes.Skip(i).Take(0x10).ToArray();
                 // compression means that there won't be more than three repeated bytes, so if we see more than three zeroes we've reached the end of a file
                 for (i += 0x10; nextLine.BytesInARowLessThan(3, 0x00); i += 0x10)
@@ -89,8 +89,10 @@ namespace HaruhiHeiretsuLib.Archive
                 fileBytes.AddRange(nextLine);
                 if (fileBytes.Count > 0)
                 {
-                    T file = new();
-                    file.Offset = offset;
+                    T file = new T
+                    {
+                        Offset = offset
+                    };
                     file.MagicInteger = GetMagicInteger(file.Offset);
                     if (file.MagicInteger == 0)
                     {
@@ -209,9 +211,11 @@ namespace HaruhiHeiretsuLib.Archive
 
         public byte[] GetBytes(out Dictionary<int, int> offsetAdjustments)
         {
-            List<byte> bytes = new();
-            offsetAdjustments = new();
-            offsetAdjustments.Add(Files[0].Offset, Files[0].Offset);
+            var bytes = new List<byte>();
+            offsetAdjustments = new Dictionary<int, int>
+            {
+                { Files[0].Offset, Files[0].Offset }
+            };
 
             bytes.AddRange(Header);
             for (int i = 0; i < Files.Count; i++)

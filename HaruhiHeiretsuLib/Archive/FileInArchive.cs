@@ -39,7 +39,7 @@ namespace HaruhiHeiretsuLib.Archive
     {
         public static T FromCompressedData(byte[] compressedData, int offset = 0, uint magicInteger = 0, int index = -1, int length = -1)
         {
-            T created = new();
+            T created = new T();
             created.MagicInteger = magicInteger;
             created.Index = index;
             created.Length = length;

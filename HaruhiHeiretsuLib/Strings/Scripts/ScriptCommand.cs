@@ -10,7 +10,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public short Index { get; set; }
         public ushort NumberOfParameters => (ushort)Parameters.Count;
         public string Name { get; set; }
-        public List<ushort> Parameters { get; set; } = new();
+        public List<ushort> Parameters { get; set; } = new List<ushort>();
         public int DefinitionLength { get; set; }
 
         private ScriptCommand()
@@ -33,11 +33,11 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public static List<ScriptCommand> ParseScriptCommandFile(byte[] scriptCommandFileData)
         {
             int numCommands = BitConverter.ToInt32(scriptCommandFileData.Take(4).Reverse().ToArray());
-            List<ScriptCommand> scriptCommands = new();
+            List<ScriptCommand> scriptCommands = new List<ScriptCommand>();
 
             for (int i = 4; scriptCommands.Count < numCommands;)
             {
-                ScriptCommand scriptCommand = new(scriptCommandFileData.Skip(i));
+                ScriptCommand scriptCommand = new ScriptCommand(scriptCommandFileData.Skip(i));
                 scriptCommands.Add(scriptCommand);
                 i += scriptCommand.DefinitionLength;
             }
@@ -141,7 +141,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             UNKNOWN2A = 42,
         }
 
-        public static readonly Dictionary<string, byte> ComparisonOperatorToCodeMap = new()
+        public static readonly Dictionary<string, byte> ComparisonOperatorToCodeMap = new Dictionary<string, byte>()
         {
             { "==", 0x83 },
             { "!=", 0x84 },
@@ -151,7 +151,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             { "<=", 0x88 },
         };
 
-        public static readonly Dictionary<string, int> TransitionToCodeMap = new()
+        public static readonly Dictionary<string, int> TransitionToCodeMap = new Dictionary<string, int>()
         {
             { "HARD_CUT", 0 },
             { "CROSS_DISSOLVE", 1 },
@@ -171,7 +171,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             { "FADE_TO_BLACK", 500 },
         };
 
-        public static readonly Dictionary<byte, string> LipSyncMap = new()
+        public static readonly Dictionary<byte, string> LipSyncMap = new Dictionary<byte, string>()
         {
             { 0x01, "s" },
             { 0x02, "a" },

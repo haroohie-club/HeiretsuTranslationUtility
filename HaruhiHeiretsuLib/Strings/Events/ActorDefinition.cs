@@ -13,7 +13,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public string ModelName { get; set; }
         public short ActionsCount { get; set; }
         public int ActionsTableAddress { get; set; }
-        public List<ActionDefinition> ActionsTable { get; set; } = new();
+        public List<ActionDefinition> ActionsTable { get; set; } = new List<ActionDefinition>();
 
         public ActorDefinition(IEnumerable<byte> data, int offset)
         {
@@ -33,13 +33,13 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
             for (int i = 0; i < ActionsCount; i++)
             {
-                ActionsTable.Add(new(data, ActionsTableAddress + 0x38 * i));
+                ActionsTable.Add(new ActionDefinition(data, ActionsTableAddress + 0x38 * i));
             }
         }
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
+            List<byte> bytes = new List<byte>();
 
             bytes.AddRange(BitConverter.GetBytes(ChapterDefinitionOffset));
             bytes.AddRange(BitConverter.GetBytes(Unknown04));

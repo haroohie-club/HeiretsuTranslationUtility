@@ -23,7 +23,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public short CommandCode { get; set; }
         public ScriptCommand Command { get; set; }
         public List<string> ScriptObjects { get; set; }
-        public List<Parameter> Parameters { get; set; } = new();
+        public List<Parameter> Parameters { get; set; } = new List<Parameter>();
         public int Length => 12 + Parameters.Sum(p => 2 + p.Value.Length);
 
         public List<ScriptCommandInvocation> AllOtherInvocations { get; set; }
@@ -41,7 +41,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public override string ToString()
         {
-            if (Command is not null)
+            if (Command != null)
             {
                 return Command.ToString();
             }
@@ -53,7 +53,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public byte[] GetBytes()
         {
-            List<byte> bytes = new();
+            var bytes = new List<byte>();
 
             bytes.AddRange(BitConverter.GetBytes(LineNumber).Reverse());
             bytes.AddRange(BitConverter.GetBytes(CharacterEntity).Reverse());
@@ -63,7 +63,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
             bytes.AddRange(Parameters.SelectMany(p =>
             {
-                List<byte> bytes = new();
+                var bytes = new List<byte>();
                 bytes.AddRange(BitConverter.GetBytes((short)p.Type).Reverse());
                 bytes.AddRange(p.Value);
                 return bytes;
@@ -98,7 +98,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public void ParseInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, List<(string label, int lineNumber)> labels)
         {
-            Regex labelRegex = new(@"^{(?<label>[\w\d]+)}");
+            var labelRegex = new Regex(@"^{(?<label>[\w\d]+)}");
 
             Match lineLabelMatch = Regex.Match(invocation, @"^(?<label>[\w\d]+): ");
             if (lineLabelMatch.Success)
@@ -141,7 +141,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 CharacterEntity = -1;
             }
 
-            Parameters = new();
+            Parameters = new List<Parameter>();
             for (int i = 0; i < parameters.Length;)
             {
                 try
@@ -158,22 +158,22 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
                         if (int.TryParse(parameter, out int varLineNumber))
                         {
-                            List<byte> bytes = new(new byte[] { 0 });
+                            var bytes = new List<byte>(new byte[] { 0 });
                             bytes.AddRange(BitConverter.GetBytes(varLineNumber).Reverse().Skip(1)); // skip the first byte to keep us at four bytes; this makes us a 24-bit integer :D
-                            Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = bytes.ToArray(), LineNumber = LineNumber });
+                            Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.ADDRESS, Value = bytes.ToArray(), LineNumber = LineNumber });
                             i += parameter.Length + 2;
                             continue;
                         }
                     }
                     else if (labelMatch.Success)
                     {
-                        List<byte> bytes = new(new byte[] { 1 });
+                        var bytes = new List<byte>(new byte[] { 1 });
                         if (!labels.Any(l => l.label == labelMatch.Groups["label"].Value))
                         {
                             labels.Add((labelMatch.Groups["label"].Value, 0));
                         }
                         bytes.AddRange(BitConverter.GetBytes(labels.IndexOf(labels.First(l => l.label == labelMatch.Groups["label"].Value))).Reverse().Skip(1)); // another 24-bit integer
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.ADDRESS, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += labelMatch.Length + 1;
                         continue;
                     }
@@ -186,7 +186,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         string line = trimmedParameters[(firstQuote + 1)..(secondQuote + 1)].Replace("\\n", "\n").Replace("\\\"", "\"");
 
                         objects.Add(line);
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.DIALOGUE, Value = BitConverter.GetBytes((short)(objects.Count - 1)).Reverse().ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.DIALOGUE, Value = BitConverter.GetBytes((short)(objects.Count - 1)).Reverse().ToArray(), LineNumber = LineNumber });
 
                         i += line.Replace("\n", "\\n").Replace("\"", "\\\"").Length + 4;
                         continue;
@@ -196,7 +196,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     // TODO: Add support for more than one condition
                     if (trimmedParameters.StartsWith("if ", StringComparison.OrdinalIgnoreCase))
                     {
-                        List<byte> bytes = new();
+                        var bytes = new List<byte>();
                         bytes.AddRange(BitConverter.GetBytes((short)22).Reverse()); // Add length
                         bytes.AddRange(BitConverter.GetBytes((short)1).Reverse()); // Add number of conditions
                         string parameter = trimmedParameters.Split(',')[0];
@@ -216,7 +216,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                             bytes.AddRange(firstOperand);
                             bytes.AddRange(CalculateControlStructure("lit", "1", objects));
                         }
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.CONDITIONAL, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.CONDITIONAL, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += parameter.Length + 5;
                         continue;
                     }
@@ -224,7 +224,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     // See if it's a time
                     if (trimmedParameters.StartsWith("time_", StringComparison.OrdinalIgnoreCase))
                     {
-                        List<byte> bytes = new();
+                        var bytes = new List<byte>();
                         string parameter = trimmedParameters.Split(',')[0];
                         string[] components = parameter.Split(' ');
 
@@ -239,7 +239,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         }
 
                         bytes.AddRange(CalculateControlStructure(components[1], components[2], objects));
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.TIMESPAN, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.TIMESPAN, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += parameter.Length + 2;
                         continue;
                     }
@@ -247,7 +247,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     // Is it a Vector2?
                     if (trimmedParameters.StartsWith("Vector2(", StringComparison.OrdinalIgnoreCase))
                     {
-                        List<byte> bytes = new();
+                        var bytes = new List<byte>();
                         string[] vectorComponents = trimmedParameters[8..].Split(')')[0].Split(',');
                         foreach (string vectorComponent in vectorComponents)
                         {
@@ -256,7 +256,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                             bytes.AddRange(CalculateControlStructure(parts[0], parts[1], objects));
                         }
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR2, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.VECTOR2, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += vectorComponents.Sum(c => c.Length) + 11;
                         continue;
                     }
@@ -264,7 +264,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     // Is it a transition?
                     if (trimmedParameters.StartsWith("Transition[", StringComparison.OrdinalIgnoreCase))
                     {
-                        List<byte> bytes = new();
+                        var bytes = new List<byte>();
                         string parameter = trimmedParameters.Split(',')[0][11..^1].ToUpper();
                         if (ScriptCommand.TransitionToCodeMap.TryGetValue(parameter, out int transition))
                         {
@@ -276,7 +276,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                             bytes.AddRange(CalculateControlStructure(controlSplit[0], controlSplit[1], objects));
                         }
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.TRANSITION, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.TRANSITION, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += parameter.Length + 13;
                         continue;
                     }
@@ -284,7 +284,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     // Is it an indexed address?
                     if (trimmedParameters.StartsWith("("))
                     {
-                        List<byte> bytes = new();
+                        var bytes = new List<byte>();
                         string[] components = trimmedParameters.Split(')')[0].Split(',');
 
                         Match indexedLabelMatch = labelRegex.Match(components[0][1..]);
@@ -307,7 +307,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         string[] controlCodeComponents = components[2].Trim().Split(' ');
                         bytes.AddRange(CalculateControlStructure(controlCodeComponents[0], controlCodeComponents[1], objects));
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.INDEXEDADDRESS, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.INDEXEDADDRESS, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += trimmedParameters.Split(')')[0].Length + 2;
                         continue;
                     }
@@ -318,7 +318,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         string parameter = trimmedParameters.Split(',')[0];
                         string[] components = parameter.Split(' ');
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.ANGLE, Value = CalculateControlStructure(components[1], components[2], objects), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.ANGLE, Value = CalculateControlStructure(components[1], components[2], objects), LineNumber = LineNumber });
                         i += parameter.Length + 2;
                         continue;
                     }
@@ -330,7 +330,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
                         bool boolean = bool.Parse(parameter);
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.BOOL, Value = boolean ? BitConverter.GetBytes(1).Reverse().ToArray() : BitConverter.GetBytes(0).Reverse().ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.BOOL, Value = boolean ? BitConverter.GetBytes(1).Reverse().ToArray() : BitConverter.GetBytes(0).Reverse().ToArray(), LineNumber = LineNumber });
                         i += parameter.Length + 2;
                         continue;
                     }
@@ -340,7 +340,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     {
                         string[] volumeComponents = trimmedParameters.Split(',')[0][7..^1].Split(' ');
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VOLUME, Value = CalculateControlStructure(volumeComponents[0], volumeComponents[1], objects), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.VOLUME, Value = CalculateControlStructure(volumeComponents[0], volumeComponents[1], objects), LineNumber = LineNumber });
                         i += volumeComponents.Sum(v => v.Length) + 10;
                         continue;
                     }
@@ -353,7 +353,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
                         int color = int.Parse(components[2], NumberStyles.HexNumber);
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.COLOR, Value = CalculateControlStructure(components[1], $"{color}", objects), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.COLOR, Value = CalculateControlStructure(components[1], $"{color}", objects), LineNumber = LineNumber });
                         i += parameter.Length + 2;
                         continue;
                     }
@@ -364,7 +364,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         string characterName = trimmedParameters.Split(',')[0][10..^1].ToUpper();
                         int characterEntity = GetCharacterEntity(characterName);
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.CHARACTER, Value = CalculateControlStructure("lit", $"{characterEntity}", objects), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.CHARACTER, Value = CalculateControlStructure("lit", $"{characterEntity}", objects), LineNumber = LineNumber });
                         i += characterName.Length + 12;
                         continue;
                     }
@@ -375,7 +375,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         string parameter = trimmedParameters.Split(',')[0][7..^1];
                         string[] components = parameter.Split(' ');
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.PREVEC, Value = CalculateControlStructure(components[0], components[1], objects), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.PREVEC, Value = CalculateControlStructure(components[0], components[1], objects), LineNumber = LineNumber });
                         i += parameter.Length + 9;
                         continue;
                     }
@@ -383,7 +383,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     // Is it a float?
                     if (trimmedParameters.StartsWith("float ", StringComparison.OrdinalIgnoreCase))
                     {
-                        List<byte> bytes = new();
+                        var bytes = new List<byte>();
                         string[] components = trimmedParameters.Split(',')[0].Split(' ');
 
                         if (components[1] == "lit")
@@ -395,7 +395,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                             bytes.AddRange(CalculateControlStructure(components[1], components[2], objects));
                         }
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.FLOAT, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.FLOAT, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += components.Sum(c => c.Length) + 4;
                         continue;
                     }
@@ -403,7 +403,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     // Is it a Vector3?
                     if (trimmedParameters.StartsWith("Vector3(", StringComparison.OrdinalIgnoreCase))
                     {
-                        List<byte> bytes = new();
+                        var bytes = new List<byte>();
                         string[] vectorComponents = trimmedParameters[8..].Split(')')[0].Split(',');
                         foreach (string vectorComponent in vectorComponents)
                         {
@@ -412,7 +412,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                             bytes.AddRange(CalculateControlStructure(parts[1], $"{Helpers.FloatToInt(float.Parse(parts[2]))}", objects));
                         }
 
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VECTOR3, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.VECTOR3, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += vectorComponents.Sum(c => c.Length) + 12;
                         continue;
                     }
@@ -426,7 +426,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         {
                             objects.Add(scriptObject);
                         }
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.VARINDEX, Value = BitConverter.GetBytes((short)objects.IndexOf(scriptObject)).Reverse().ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.VARINDEX, Value = BitConverter.GetBytes((short)objects.IndexOf(scriptObject)).Reverse().ToArray(), LineNumber = LineNumber });
                         i += scriptObject.Length + 2;
                         continue;
                     }
@@ -434,7 +434,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     // Is it an int array?
                     if (trimmedParameters.StartsWith('['))
                     {
-                        List<byte> bytes = new();
+                        var bytes = new List<byte>();
                         string[] arrayStrings = trimmedParameters[1..].Split(']')[0].Split(',');
                         bytes.AddRange(BitConverter.GetBytes(arrayStrings.Length).Reverse());
                         foreach (string arrayString in arrayStrings)
@@ -445,14 +445,14 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         }
 
                         i += arrayStrings.Sum(a => a.Length) + 4;
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.INTARRAY, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.INTARRAY, Value = bytes.ToArray(), LineNumber = LineNumber });
                         continue;
                     }
 
                     // Is it lip sync data?
                     if (trimmedParameters.StartsWith("LIPSYNC[", StringComparison.OrdinalIgnoreCase))
                     {
-                        List<byte> bytes = new();
+                        List<byte> bytes = new List<byte>();
                         string lipSyncString = trimmedParameters.Split(']')[0][8..];
 
                         bytes.AddRange(EncodeLipSyncData(lipSyncString));
@@ -462,14 +462,14 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         bytes.InsertRange(0, BitConverter.GetBytes(bytes.Count + 4).Reverse());
 
                         i += lipSyncString.Length + 11;
-                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.LIPSYNCDATA, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.LIPSYNCDATA, Value = bytes.ToArray(), LineNumber = LineNumber });
                         continue;
                     }
 
                     // Is it unknown?
                     if (trimmedParameters.StartsWith("UNKNOWN", StringComparison.OrdinalIgnoreCase))
                     {
-                        List<byte> bytes = new();
+                        var bytes = new List<byte>();
                         string parameter = trimmedParameters.Split(',')[0];
                         int typeCode = int.Parse(parameter[7..9], NumberStyles.HexNumber);
                         string[] components = parameter.Split(' ');
@@ -479,7 +479,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                             bytes.Add(byte.Parse(components[j], NumberStyles.HexNumber));
                         }
 
-                        Parameters.Add(new() { Type = (ScriptCommand.ParameterType)typeCode, Value = bytes.ToArray(), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = (ScriptCommand.ParameterType)typeCode, Value = bytes.ToArray(), LineNumber = LineNumber });
                         i += parameter.Length + 2;
                         continue;
                     }
@@ -489,14 +489,14 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     {
                         string[] parameter = trimmedParameters[2..].Split(',')[0].Split(' ');
 
-                        Parameters.Add(new() { Type = (ScriptCommand.ParameterType)type, Value = CalculateControlStructure(parameter[0], parameter[1], objects), LineNumber = LineNumber });
+                        Parameters.Add(new Parameter() { Type = (ScriptCommand.ParameterType)type, Value = CalculateControlStructure(parameter[0], parameter[1], objects), LineNumber = LineNumber });
                         i += parameter.Sum(p => p.Length) + 4;
                         continue;
                     }
 
                     // It's a regular int
                     string[] intParams = trimmedParameters.Split(',')[0].Split(' ');
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.INT, Value = CalculateControlStructure(intParams[0], intParams[1], objects), LineNumber = LineNumber });
+                    Parameters.Add(new Parameter() { Type = ScriptCommand.ParameterType.INT, Value = CalculateControlStructure(intParams[0], intParams[1], objects), LineNumber = LineNumber });
                     i += intParams.Sum(p => p.Length) + 2;
                 }
                 catch (Exception e)
@@ -517,13 +517,13 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     int lineNumber;
                     if (Parameters[i].Value[0] == 0x00)
                     {
-                        List<byte> tempBytes = new(new byte[] { 0 });
+                        var tempBytes = new List<byte>(new byte[] { 0 });
                         tempBytes.AddRange(Parameters[i].Value[1..]);
                         lineNumber = BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray()); // why dear god did you do this? bc roslyn won't let me do it w/ List.Reverse() existing
                     }
                     else
                     {
-                        List<byte> tempBytes = new(new byte[] { 0 });
+                        List<byte> tempBytes = new List<byte>(new byte[] { 0 });
                         tempBytes.AddRange(Parameters[i].Value[1..4]);
                         lineNumber = labels[BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray())].lineNumber;
                     }
@@ -537,17 +537,17 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 }
                 else if (Parameters[i].Type == ScriptCommand.ParameterType.INDEXEDADDRESS)
                 {
-                    List<byte> parameterBytes = new(Parameters[i].Value);
+                    var parameterBytes = new List<byte>(Parameters[i].Value);
                     int lineNumber;
                     if (Parameters[i].Value[0] == 0x00)
                     {
-                        List<byte> tempBytes = new(new byte[] { 0 });
+                        List<byte> tempBytes = new List<byte>(new byte[] { 0 });
                         tempBytes.AddRange(Parameters[i].Value[1..4]);
                         lineNumber = BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray());
                     }
                     else
                     {
-                        List<byte> tempBytes = new(new byte[] { 0 });
+                        List<byte> tempBytes = new List<byte>(new byte[] { 0 });
                         tempBytes.AddRange(Parameters[i].Value[1..4]);
                         lineNumber = labels[BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray())].lineNumber;
                     }
@@ -606,7 +606,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 case ScriptCommand.ParameterType.VARINDEX:
                     return $"${ScriptObjects[BitConverter.ToInt16(parameter.Value.Reverse().ToArray())]}";
                 case ScriptCommand.ParameterType.INTARRAY:
-                    List<string> values = new();
+                    var values = new List<string>();
                     int numValues = Helpers.GetIntFromByteArray(parameter.Value, 0);
                     for (int i = 1; i <= numValues; i++)
                     {
@@ -645,7 +645,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public static byte[] CalculateControlStructure(string controlCode, string value, List<string> objects)
         {
-            List<byte> bytes = new();
+            var bytes = new List<byte>();
 
             switch (controlCode)
             {
@@ -810,7 +810,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             {
                 int parsedInt = int.Parse(parameter[4..]);
                 string transition = ScriptCommand.TransitionToCodeMap.FirstOrDefault(t => t.Value == parsedInt).Key;
-                if (transition is not null)
+                if (transition != null)
                 {
                     return $"Transition[{transition}]";
                 }
@@ -873,8 +873,8 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public static List<byte> EncodeLipSyncData(string lipSyncString)
         {
-            List<byte> bytes = new();
-            Regex lipSyncRegex = new(@"(?<lipFlap>[saiueonN])(?<length>\d+)");
+            var bytes = new List<byte>();
+            var lipSyncRegex = new Regex(@"(?<lipFlap>[saiueonN])(?<length>\d+)");
 
             for (int j = 0; j < lipSyncString.Length;)
             {

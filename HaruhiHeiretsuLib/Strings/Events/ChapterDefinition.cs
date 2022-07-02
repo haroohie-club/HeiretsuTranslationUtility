@@ -12,7 +12,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public int Unknown08 { get; set; }
         public ushort ActorDefTableEntryCount { get; set; }
         public int ActorDefTableOffset { get; set; }
-        public List<ActorDefinition> ActorDefinitionTable { get; set; } = new();
+        public List<ActorDefinition> ActorDefinitionTable { get; set; } = new List<ActorDefinition>();
 
         public ChapterDefinition(IEnumerable<byte> data, int offset)
         {
@@ -24,7 +24,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
             for (int i = 0; i < ActorDefTableEntryCount; i++)
             {
-                ActorDefinitionTable.Add(new(data, ActorDefTableOffset + i * 0x3C));
+                ActorDefinitionTable.Add(new ActorDefinition(data, ActorDefTableOffset + i * 0x3C));
             }
         }
     }

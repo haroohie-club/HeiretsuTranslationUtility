@@ -44,7 +44,7 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
 
         public override List<byte> GetBytes()
         {
-            List<byte> bytes = new();
+            var bytes = new List<byte>();
             bytes.AddRange(GetHeaderBytes());
             bytes.AddRange(BitConverter.GetBytes(Unknown0C));
             bytes.AddRange(BitConverter.GetBytes(Unknown10));

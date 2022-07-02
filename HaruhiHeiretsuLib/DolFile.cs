@@ -9,7 +9,7 @@ namespace HaruhiHeiretsuLib
 {
     public class DolFile
     {
-        public List<GraphicsFile> GraphicsFiles { get; set; } = new();
+        public List<GraphicsFile> GraphicsFiles { get; set; } = new List<GraphicsFile>();
 
         public DolFile(byte[] dolBytes)
         {
@@ -46,7 +46,7 @@ namespace HaruhiHeiretsuLib
                             break;
                     }
 
-                    GraphicsFile graphicsFile = new();
+                    GraphicsFile graphicsFile = new GraphicsFile();
                     graphicsFile.Initialize(dolBytes.Skip(i).Take(numBytes).ToArray(), i);
                     GraphicsFiles.Add(graphicsFile);
                 }

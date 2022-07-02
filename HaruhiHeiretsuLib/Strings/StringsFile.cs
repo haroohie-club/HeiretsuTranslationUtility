@@ -11,7 +11,7 @@ namespace HaruhiHeiretsuLib.Strings
     {
         public const string VOICE_REGEX = @"(CL|V)(\w\d{2}\w)?\w{3}\d{3}(?<characterCode>[A-Z]{3})";
 
-        public List<DialogueLine> DialogueLines { get; set; } = new();
+        public List<DialogueLine> DialogueLines { get; set; } = new List<DialogueLine>();
 
         public virtual void EditDialogue(int index, string newLine)
         {
@@ -39,7 +39,7 @@ namespace HaruhiHeiretsuLib.Strings
                 "System.Resources.NetStandard.ResXResourceReader, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
             TextReader textReader = new StringReader(resxContents);
 
-            using ResXResourceReader resxReader = new(textReader);
+            using var resxReader = new ResXResourceReader(textReader);
             foreach (DictionaryEntry d in resxReader)
             {
                 int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
@@ -58,7 +58,7 @@ namespace HaruhiHeiretsuLib.Strings
 
         public void WriteResxFile(string fileName)
         {
-            using ResXResourceWriter resxWriter = new(fileName);
+            using var resxWriter = new ResXResourceWriter(fileName);
             for (int i = 0; i < DialogueLines.Count; i++)
             {
                 if (!string.IsNullOrWhiteSpace(DialogueLines[i].Line) && DialogueLines[i].Length > 1)
@@ -90,7 +90,7 @@ namespace HaruhiHeiretsuLib.Strings
         public int Length => Encoding.GetEncoding("Shift-JIS").GetByteCount(Line);
         public int NumPaddingZeroes { get; set; } = 1;
 
-        public List<string> Metadata { get; set; } = new();
+        public List<string> Metadata { get; set; } = new List<string>();
 
         public override string ToString()
         {

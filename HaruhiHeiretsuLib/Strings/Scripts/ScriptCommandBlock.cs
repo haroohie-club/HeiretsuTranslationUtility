@@ -12,7 +12,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public string Name { get; set; }
         public ushort NumInvocations { get; set; }
         public int BlockOffset { get; set; } // Location of the actual script command block
-        public List<ScriptCommandInvocation> Invocations { get; set; } = new();
+        public List<ScriptCommandInvocation> Invocations { get; set; } = new List<ScriptCommandInvocation>();
         public int Length => Invocations.Sum(i => i.Length);
 
         public ScriptCommandBlock(int address, int endAddress, IEnumerable<byte> data, List<string> objects)
@@ -25,7 +25,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
             for (int i = BlockOffset; i < endAddress - 8;)
             {
-                ScriptCommandInvocation invocation = new(objects, i);
+                ScriptCommandInvocation invocation = new ScriptCommandInvocation(objects, i);
                 invocation.LineNumber = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
                 i += 2;
                 invocation.CharacterEntity = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
@@ -60,7 +60,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public int ParseBlock(int lineNumber, string[] lines, List<ScriptCommand> allCommands, List<string> objects, List<(string, int)> labels)
         {
-            Regex nameRegex = new(@"== (?<name>.+) ==");
+            var nameRegex = new Regex(@"== (?<name>.+) ==");
             Match nameMatch = nameRegex.Match(lines[0]);
             if (!nameMatch.Success)
             {

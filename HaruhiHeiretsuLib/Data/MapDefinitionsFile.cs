@@ -8,7 +8,7 @@ namespace HaruhiHeiretsuLib.Data
 {
     public class MapDefinitionsFile : DataFile
     {
-        public List<MapDefinitionSection> Sections { get; set; } = new();
+        public List<MapDefinitionSection> Sections { get; set; } = new List<MapDefinitionSection>();
 
         public MapDefinitionsFile()
         {
@@ -27,7 +27,7 @@ namespace HaruhiHeiretsuLib.Data
                 int sectionPointer = BitConverter.ToInt32(Data.Skip(0x0C + i * 8).Take(4).Reverse().ToArray());
                 int sectionItemCount = BitConverter.ToInt32(Data.Skip(0x10 + i * 8).Take(4).Reverse().ToArray());
 
-                Sections.Add(new(Data, i + 2, sectionPointer, sectionItemCount));
+                Sections.Add(new MapDefinitionSection(Data, i + 2, sectionPointer, sectionItemCount));
             }
         }
 
@@ -41,9 +41,9 @@ namespace HaruhiHeiretsuLib.Data
 
         public override byte[] GetBytes()
         {
-            List<byte> bytes = new();
-            List<byte> sectionBytes = new();
-            List<int> endPointers = new();
+            var bytes = new List<byte>();
+            var sectionBytes = new List<byte>();
+            var endPointers = new List<int>();
             bytes.AddRange(BitConverter.GetBytes(Sections.Count).Reverse());
             bytes.AddRange(new byte[4]); // end pointer section, will be replaced later
 
@@ -87,14 +87,14 @@ namespace HaruhiHeiretsuLib.Data
     public class MapDefinitionSection
     {
         public int Index { get; set; }
-        public List<MapDefinition> MapDefinitions { get; set; } = new();
+        public List<MapDefinition> MapDefinitions { get; set; } = new List<MapDefinition>();
 
         public MapDefinitionSection(IEnumerable<byte> data, int index, int offset, int itemCount)
         {
             Index = index;
             for (int i = 0; i < itemCount; i++)
             {
-                MapDefinitions.Add(new(data, Index, i, offset + i * 0x68));
+                MapDefinitions.Add(new MapDefinition(data, Index, i, offset + i * 0x68));
             }
         }
 
@@ -104,16 +104,16 @@ namespace HaruhiHeiretsuLib.Data
 
             for (int i = 0; i < csvLines.Length; i++)
             {
-                MapDefinitions.Add(new(csvLines[i], Index, i));
+                MapDefinitions.Add(new MapDefinition(csvLines[i], Index, i));
             }
         }
 
         public List<byte> GetBytes(int mapDefinitionOffset, List<int> endPointers)
         {
-            List<byte> bytes = new();
+            var bytes = new List<byte>();
 
             int stringsOffset = mapDefinitionOffset + MapDefinitions.Count * 0x68;
-            List<byte> stringsSection = new();
+            var stringsSection = new List<byte>();
 
             foreach (MapDefinition mapDefinition in MapDefinitions)
             {

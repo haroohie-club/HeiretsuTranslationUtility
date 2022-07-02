@@ -13,9 +13,9 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public string Time { get; set; }
 
         public List<ScriptCommand> AvailableCommands { get; set; }
-        public List<ScriptCommandBlock> ScriptCommandBlocks { get; set; } = new();
+        public List<ScriptCommandBlock> ScriptCommandBlocks { get; set; } = new List<ScriptCommandBlock>();
 
-        public List<string> Objects { get; set; } = new();
+        public List<string> Objects { get; set; } = new List<string>();
 
         public int NumObjectssOffset { get; set; }
         public short NumObjects { get; set; }
@@ -106,7 +106,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 {
                     endAddress = BitConverter.ToInt32(Data.Skip(i + 12).Take(4).Reverse().ToArray());
                 }
-                ScriptCommandBlocks.Add(new(i, endAddress, Data, Objects));
+                ScriptCommandBlocks.Add(new ScriptCommandBlock(i, endAddress, Data, Objects));
             }
 
             DialogueLines = ScriptCommandBlocks
@@ -171,8 +171,8 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public void Compile(string code)
         {
-            List<byte> bytes = new();
-            List<(string, int)> labels = new();
+            var bytes = new List<byte>();
+            var labels = new List<(string, int)>();
             string[] lines = code.Split('\n');
             string[] info = lines[0].Split(' ');
             InternalName = info[0];
@@ -182,8 +182,8 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             bytes.AddRange(Helpers.GetStringBytes(Room));
             bytes.AddRange(Helpers.GetStringBytes(Time));
 
-            ScriptCommandBlocks = new();
-            Objects = new();
+            ScriptCommandBlocks = new List<ScriptCommandBlock>();
+            Objects = new List<string>();
 
             for (int lineNumber = 2; lineNumber < lines.Length;)
             {
@@ -194,7 +194,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 }
                 if (lines[lineNumber - 1].StartsWith("=="))
                 {
-                    ScriptCommandBlock commandBlock = new();
+                    ScriptCommandBlock commandBlock = new ScriptCommandBlock();
                     lineNumber = commandBlock.ParseBlock(lineNumber, lines[(lineNumber - 1)..], AvailableCommands, Objects, labels);
                     ScriptCommandBlocks.Add(commandBlock);
                 }
@@ -273,7 +273,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 for (int j = 0; j < ScriptCommandBlocks[i].Invocations.Count; j++)
                 {
                     ScriptCommandBlocks[i].Invocations[j].AllOtherInvocations = allInvocations;
-                    List<Parameter> addressParams = new();
+                    var addressParams = new List<Parameter>();
                     addressParams.AddRange(ScriptCommandBlocks[i].Invocations[j].Parameters.Where(p => p.Type == ScriptCommand.ParameterType.ADDRESS));
                     addressParams.AddRange(ScriptCommandBlocks[i].Invocations[j].Parameters.Where(p => p.Type == ScriptCommand.ParameterType.INDEXEDADDRESS));
 
@@ -296,7 +296,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         {
             Parameter[] dialogueParams = GetDialogueParameters();
             ScriptCommandInvocation[] allInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToArray();
-            Dictionary<int, int> NumChoicesPerInvocationIndex = new();
+            var NumChoicesPerInvocationIndex = new Dictionary<int, int>();
 
             for (int i = 0; i < DialogueLines.Count; i++)
             {
@@ -372,7 +372,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public static List<string> ParseScriptListFile(byte[] scriptListFileData)
         {
-            List<string> scriptList = new();
+            var scriptList = new List<string>();
 
             int numScripts = BitConverter.ToInt32(scriptListFileData.Take(4).Reverse().ToArray());
 

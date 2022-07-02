@@ -11,19 +11,19 @@ namespace HaruhiHeiretsuLib.Graphics
         public byte[] MapHeader { get; set; }
         public string MapModel { get; set; }
         public string MapBackgroundModel { get; set; }
-        public List<string> MapModelNames { get; set; } = new();
-        public List<MapEntry> MapEntries { get; set; } = new();
-        public List<byte[]> MapFooterEntries { get; set; } = new();
+        public List<string> MapModelNames { get; set; } = new List<string>();
+        public List<MapEntry> MapEntries { get; set; } = new List<MapEntry>();
+        public List<byte[]> MapFooterEntries { get; set; } = new List<byte[]>();
 
         public void SetMapData(List<MapEntry> newMapEntries)
         {
             Edited = true;
 
             List<string> names = newMapEntries.Select(l => l.Name).Distinct().ToList();
-            MapModelNames = new();
-            MapEntries = new();
+            MapModelNames = new List<string>();
+            MapEntries = new List<MapEntry>();
 
-            List<byte> bytes = new();
+            List<byte> bytes = new List<byte>();
             bytes.AddRange(MapHeader);
             bytes.AddRange(Encoding.ASCII.GetBytes(MapModel));
             bytes.AddRange(new byte[bytes.Count % 0x10 == 0 ? 0 : 0x10 - bytes.Count % 0x10]);
@@ -149,7 +149,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public byte[] GetBytes(List<string> modelNames)
         {
-            List<byte> bytes = new();
+            List<byte> bytes = new List<byte>();
 
             short nameIndex;
             if (string.IsNullOrEmpty(Name))

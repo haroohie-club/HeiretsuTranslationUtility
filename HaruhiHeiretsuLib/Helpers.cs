@@ -2,11 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuLib
 {
@@ -17,8 +14,8 @@ namespace HaruhiHeiretsuLib
 
         public static int FloatToInt(float value)
         {
-            double d1 = value / BitConverter.UInt64BitsToDouble(F0);
-            ulong f1 = BitConverter.DoubleToUInt64Bits(d1 + BitConverter.UInt64BitsToDouble(F2));
+            double d1 = value / BitConverter.Int64BitsToDouble((long)F0);
+            ulong f1 = (ulong)BitConverter.DoubleToInt64Bits(d1 + BitConverter.Int64BitsToDouble((long)F2));
             uint adjustedInt = (uint)f1;
             return (int)(adjustedInt ^ 0x80000000);
         }
@@ -27,16 +24,16 @@ namespace HaruhiHeiretsuLib
         {
             uint adjustedInt = (uint)startingInt ^ 0x80000000;
             ulong f1 = (F2 & 0xFFFFFFFF00000000L) | adjustedInt;
-            double d1 = BitConverter.UInt64BitsToDouble(f1) - BitConverter.UInt64BitsToDouble(F2);
-            double d31 = d1 * BitConverter.UInt64BitsToDouble(F0);
+            double d1 = BitConverter.Int64BitsToDouble((long)f1) - BitConverter.Int64BitsToDouble((long)F2);
+            double d31 = d1 * BitConverter.Int64BitsToDouble((long)F0);
 
             return (float)d31;
         }
 
         public static SKBitmap FlipBitmap(this SKBitmap bitmap)
         {
-            SKBitmap flippedBitmap = new(bitmap.Width, bitmap.Height);
-            using SKCanvas canvas = new(flippedBitmap);
+            SKBitmap flippedBitmap = new SKBitmap(bitmap.Width, bitmap.Height);
+            using SKCanvas canvas = new SKCanvas(flippedBitmap);
             canvas.Scale(1, -1, 0, bitmap.Height / 2);
             canvas.DrawBitmap(bitmap, 0, 0);
             return flippedBitmap;
@@ -84,7 +81,7 @@ namespace HaruhiHeiretsuLib
 
         public static byte[] GetStringBytes(string str)
         {
-            List<byte> bytes = new();
+            List<byte> bytes = new List<byte>();
 
             byte[] stringBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(str);
             bytes.AddRange(BitConverter.GetBytes(stringBytes.Length + 1).Reverse());
@@ -97,14 +94,14 @@ namespace HaruhiHeiretsuLib
         public static byte[] CompressData(byte[] decompressedData)
         {
             // nonsense hack to deal with a rare edge case where the last byte of a file could get dropped
-            List<byte> temp = decompressedData.ToList();
+            var temp = decompressedData.ToList();
             temp.Add(0x00);
             decompressedData = temp.ToArray();
 
-            List<byte> compressedData = new();
+            List<byte> compressedData = new List<byte>();
 
             int directBytesToWrite = 0;
-            Dictionary<LookbackEntry, List<int>> lookbackDictionary = new();
+            Dictionary<LookbackEntry, List<int>> lookbackDictionary = new Dictionary<LookbackEntry, List<int>>();
             for (int i = 0; i < decompressedData.Length;)
             {
                 int numNext = Math.Min(decompressedData.Length - i - 1, 4);
@@ -114,7 +111,7 @@ namespace HaruhiHeiretsuLib
                 }
 
                 List<byte> nextBytes = decompressedData.Skip(i).Take(numNext).ToList();
-                LookbackEntry nextEntry = new(nextBytes, i);
+                var nextEntry = new LookbackEntry(nextBytes, i);
                 if (lookbackDictionary.ContainsKey(nextEntry) && (i - lookbackDictionary[nextEntry].Max()) <= 0x1FFF)
                 {
                     if (directBytesToWrite > 0)
@@ -129,7 +126,7 @@ namespace HaruhiHeiretsuLib
                     {
                         if (i - index <= 0x1FFF)
                         {
-                            List<byte> lookbackSequence = new();
+                            var lookbackSequence = new List<byte>();
                             for (int j = 0; i + j < decompressedData.Length && decompressedData[index + j] == decompressedData[i + j]; j++)
                             {
                                 lookbackSequence.Add(decompressedData[lookbackIndex + j]);
@@ -272,7 +269,7 @@ namespace HaruhiHeiretsuLib
 
         public static byte[] DecompressData(byte[] compressedData)
         {
-            List<byte> decompressedData = new();
+            var decompressedData = new List<byte>();
 
             // documentation note: bits 1234 5678 in a byte
             for (int z = 0; z < compressedData.Length;)

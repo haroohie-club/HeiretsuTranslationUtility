@@ -24,7 +24,7 @@ namespace HaruhiHeiretsuLib.Graphics
             if (Encoding.ASCII.GetString(Data.Take(6).ToArray()) == "SGE008")
             {
                 FileType = GraphicsFileType.SGE;
-                Sge = new(Data);
+                Sge = new Sge(Data);
             }
             else if (Data.Take(4).SequenceEqual(new byte[] { 0x00, 0x20, 0xAF, 0x30 }))
             {
@@ -42,7 +42,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 Width = 640;
                 Height = 480;
                 UnknownLayoutHeaderInt1 = Data.Skip(4).Take(4).ToArray();
-                LayoutComponents = new();
+                LayoutComponents = new List<LayoutComponent>();
                 for (int i = 8; i < Data.Count - 0x1C; i += 0x1C)
                 {
                     LayoutComponents.Add(new LayoutComponent
@@ -82,11 +82,11 @@ namespace HaruhiHeiretsuLib.Graphics
                     if (nameIndex > 0)
                     {
                         string name = MapModelNames[nameIndex - 1];
-                        MapEntries.Add(new(Data.Skip(i * 0x2C + 0x1100).Take(0x2C), name));
+                        MapEntries.Add(new MapEntry(Data.Skip(i * 0x2C + 0x1100).Take(0x2C), name));
                     }
                     else
                     {
-                        MapEntries.Add(new(Data.Skip(i * 0x2C + 0x1100).Take(0x2C)));
+                        MapEntries.Add(new MapEntry(Data.Skip(i * 0x2C + 0x1100).Take(0x2C)));
                     }
 
                     MapFooterEntries.Add(Data.Skip(i * 0x18 + 0x6900).Take(0x18).ToArray());

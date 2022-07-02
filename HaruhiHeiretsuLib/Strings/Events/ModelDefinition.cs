@@ -48,7 +48,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public short UnknownShort2 { get; set; } // *Unknown64 + 18
         public short UnknownShort3 { get; set; } // *Unknown64 + 20
         public short CharacterDetailsSubEntryCount { get; set; } // *Unknown64 + 22
-        public List<ModelDetailsSubEntry> CharacterDetailsSubEntries { get; set; } = new();
+        public List<ModelDetailsSubEntry> CharacterDetailsSubEntries { get; set; } = new List<ModelDetailsSubEntry>();
 
         public ModelDefinitionDetails(IEnumerable<byte> data, int offset)
         {
@@ -69,7 +69,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
             for (int i = 0; i < CharacterDetailsSubEntryCount; i++)
             {
-                CharacterDetailsSubEntries.Add(new(data.Skip(CharacterDetailsSubEntriesOffset + i * 0x28).Take(0x28)));
+                CharacterDetailsSubEntries.Add(new ModelDetailsSubEntry(data.Skip(CharacterDetailsSubEntriesOffset + i * 0x28).Take(0x28)));
             }
         }
 

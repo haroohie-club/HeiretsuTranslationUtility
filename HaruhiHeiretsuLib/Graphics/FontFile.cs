@@ -11,11 +11,11 @@ namespace HaruhiHeiretsuLib.Graphics
     {
         public byte[] CompressedData { get; set; }
         public int NumCharacters { get; set; }
-        public List<int> UnknownInts { get; set; } = new();
-        public List<Character> Characters { get; set; } = new();
+        public List<int> UnknownInts { get; set; } = new List<int>();
+        public List<Character> Characters { get; set; } = new List<Character>();
         public bool Edited { get; set; } = false;
 
-        private Dictionary<ushort, int> _codepointsToIndexes = new();
+        private Dictionary<ushort, int> _codepointsToIndexes = new Dictionary<ushort, int>();
 
         public FontFile(byte[] data)
         {
@@ -41,8 +41,8 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public byte[] GetBytes()
         {
-            List<byte> data = new();
-            List<int> pointers = new();
+            var data = new List<byte>();
+            var pointers = new List<int>();
             pointers.Add(((NumCharacters + 1) * 4) + (UnknownInts.Count * 4));
 
             data.AddRange(BitConverter.GetBytes(NumCharacters));
@@ -80,11 +80,11 @@ namespace HaruhiHeiretsuLib.Graphics
             SKFont skFont;
             if (font.EndsWith(".ttf") || font.EndsWith(".otf"))
             {
-                skFont = new(SKTypeface.FromFile(font), fontSize);
+                skFont = new SKFont(SKTypeface.FromFile(font), fontSize);
             }
             else
             {
-                skFont = new(SKTypeface.FromFamilyName(font), fontSize);
+                skFont = new SKFont(SKTypeface.FromFamilyName(font), fontSize);
             }
 
             for (ushort i = characterSpaceStart; i <= characterSpaceEnd; i++)

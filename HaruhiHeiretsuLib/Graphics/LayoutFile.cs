@@ -17,18 +17,18 @@ namespace HaruhiHeiretsuLib.Graphics
         {
             if (FileType == GraphicsFileType.LAYOUT)
             {
-                SKBitmap bitmap = new(Width, Height);
-                using SKCanvas canvas = new(bitmap);
+                var bitmap = new SKBitmap(Width, Height);
+                using var canvas = new SKCanvas(bitmap);
                 foreach (LayoutComponent layout in LayoutComponents)
                 {
-                    SKRect boundingBox = new()
+                    SKRect boundingBox = new SKRect()
                     {
                         Left = layout.ImageX,
                         Top = layout.ImageY,
                         Right = layout.ImageX + layout.ImageWidth,
                         Bottom = layout.ImageY + layout.ImageHeight,
                     };
-                    SKRect destination = new()
+                    SKRect destination = new SKRect()
                     {
                         Left = layout.ScreenX,
                         Top = layout.ScreenY,
@@ -44,8 +44,8 @@ namespace HaruhiHeiretsuLib.Graphics
                     GraphicsFile grpFile = archiveGraphicsFiles[layout.Index];
 
                     SKBitmap texture = grpFile.GetImage();
-                    SKBitmap tile = new((int)Math.Abs(boundingBox.Right - boundingBox.Left), (int)Math.Abs(boundingBox.Bottom - boundingBox.Top));
-                    SKCanvas transformCanvas = new(tile);
+                    SKBitmap tile = new SKBitmap((int)Math.Abs(boundingBox.Right - boundingBox.Left), (int)Math.Abs(boundingBox.Bottom - boundingBox.Top));
+                    SKCanvas transformCanvas = new SKCanvas(tile);
                     if (layout.ScreenWidth < 0)
                     {
                         transformCanvas.Scale(-1, 1, tile.Width / 2.0f, 0);
@@ -61,7 +61,7 @@ namespace HaruhiHeiretsuLib.Graphics
                         for (int y = 0; y < tile.Height; y++)
                         {
                             SKColor color = tile.GetPixel(x, y);
-                            SKColor newColor = new((byte)(color.Red * layout.RedTint / 128.0), (byte)(color.Green * layout.GreenTint / 128.0), (byte)(color.Blue * layout.BlueTint / 128.0), (byte)(color.Alpha * Math.Min(layout.AlphaTint, (byte)0x80) / 128.0));
+                            SKColor newColor = new SKColor((byte)(color.Red * layout.RedTint / 128.0), (byte)(color.Green * layout.GreenTint / 128.0), (byte)(color.Blue * layout.BlueTint / 128.0), (byte)(color.Alpha * Math.Min(layout.AlphaTint, (byte)0x80) / 128.0));
                             tile.SetPixel(x, y, newColor);
                         }
                     }
@@ -102,30 +102,30 @@ namespace HaruhiHeiretsuLib.Graphics
     {
         public static LayoutGraphic[] TitleScreenGraphics = new LayoutGraphic[10]
         {
-            new(0x6B, (58, 0)),
-            new(0x1E, (58, 1)),
-            new(0x1C, (58, 2)),
-            new(0x1D, (58, 3)),
-            new(0x0E, (58, 4)),
-            new(0x0F, (58, 5)),
-            new(0x10, (58, 6)),
-            new(0x11, (58, 7)),
-            new(0x12, (58, 8)),
-            new(0x1B, (58, 9))
+            new LayoutGraphic(0x6B, (58, 0)),
+            new LayoutGraphic(0x1E, (58, 1)),
+            new LayoutGraphic(0x1C, (58, 2)),
+            new LayoutGraphic(0x1D, (58, 3)),
+            new LayoutGraphic(0x0E, (58, 4)),
+            new LayoutGraphic(0x0F, (58, 5)),
+            new LayoutGraphic(0x10, (58, 6)),
+            new LayoutGraphic(0x11, (58, 7)),
+            new LayoutGraphic(0x12, (58, 8)),
+            new LayoutGraphic(0x1B, (58, 9))
         };
 
         public static LayoutGraphic[] SpecialVersionGraphics = new LayoutGraphic[10]
         {
-            new(0x6B, (69, 0)),
-            new(0x1E, (69, 1)),
-            new(0xCE, (69, 2)),
-            new(0xCB, (69, 3)),
-            new(0x1C, (69, 4)),
-            new(0x0E, (69, 5)),
-            new(0x0F, (69, 6)),
-            new(0x10, (69, 7)),
-            new(0x11, (69, 8)),
-            new(0x12, (69, 9)),
+            new LayoutGraphic(0x6B, (69, 0)),
+            new LayoutGraphic(0x1E, (69, 1)),
+            new LayoutGraphic(0xCE, (69, 2)),
+            new LayoutGraphic(0xCB, (69, 3)),
+            new LayoutGraphic(0x1C, (69, 4)),
+            new LayoutGraphic(0x0E, (69, 5)),
+            new LayoutGraphic(0x0F, (69, 6)),
+            new LayoutGraphic(0x10, (69, 7)),
+            new LayoutGraphic(0x11, (69, 8)),
+            new LayoutGraphic(0x12, (69, 9)),
         };
     }
 

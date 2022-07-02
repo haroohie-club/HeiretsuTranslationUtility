@@ -17,7 +17,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
             if (FileType == GraphicsFileType.TEXTURE)
             {
-                SKBitmap bitmap = new(Width, Height);
+                SKBitmap bitmap = new SKBitmap(Width, Height);
 
                 switch (Mode)
                 {
@@ -41,7 +41,7 @@ namespace HaruhiHeiretsuLib.Graphics
                                         byte colorByte = Data[ia4Index++];
                                         byte colorComponent = (byte)((colorByte & 0x0F) * 0x11);
                                         byte alphaComponent = (byte)((colorByte >> 4) * 0x11);
-                                        SKColor color = new(colorComponent, colorComponent, colorComponent, alphaComponent);
+                                        var color = new SKColor(colorComponent, colorComponent, colorComponent, alphaComponent);
 
                                         bitmap.SetPixel(x + col, y + row, color);
                                     }
@@ -71,7 +71,7 @@ namespace HaruhiHeiretsuLib.Graphics
                                         ia8Index += 2;
                                         byte colorComponent = colorBytes[1];
                                         byte alphaComponent = colorBytes[0];
-                                        SKColor color = new(colorComponent, colorComponent, colorComponent, alphaComponent);
+                                        var color = new SKColor(colorComponent, colorComponent, colorComponent, alphaComponent);
 
                                         bitmap.SetPixel(x + col, y + row, color);
                                     }
@@ -102,11 +102,11 @@ namespace HaruhiHeiretsuLib.Graphics
                                         SKColor color;
                                         if (colorData >> 15 == 0)
                                         {
-                                            color = new((byte)(((colorData >> 8) & 0x0F) * 0x11), (byte)(((colorData >> 4) & 0x0F) * 0x11), (byte)((colorData & 0x0F) * 0x11), (byte)(((colorData >> 12) & 0x07) * 0x20));
+                                            color = new SKColor((byte)(((colorData >> 8) & 0x0F) * 0x11), (byte)(((colorData >> 4) & 0x0F) * 0x11), (byte)((colorData & 0x0F) * 0x11), (byte)(((colorData >> 12) & 0x07) * 0x20));
                                         }
                                         else
                                         {
-                                            color = new((byte)(((colorData >> 10) & 0x1F) * 0x08), (byte)(((colorData >> 5) & 0x1F) * 0x08), (byte)((colorData & 0x1F) * 0x08), 0xFF);
+                                            color = new SKColor((byte)(((colorData >> 10) & 0x1F) * 0x08), (byte)(((colorData >> 5) & 0x1F) * 0x08), (byte)((colorData & 0x1F) * 0x08), 0xFF);
                                         }
 
                                         bitmap.SetPixel(x + col, y + row, color);
@@ -132,7 +132,7 @@ namespace HaruhiHeiretsuLib.Graphics
                                             continue;
                                         }
 
-                                        SKColor color = new(
+                                        var color = new SKColor(
                                             Data[index + 1],
                                             Data[index + 32],
                                             Data[index + 33],
@@ -169,16 +169,16 @@ namespace HaruhiHeiretsuLib.Graphics
                                         SKColor[] palette = new SKColor[4];
                                         for (int i = 0; i < paletteData.Length; i++)
                                         {
-                                            palette[i] = new((byte)(((paletteData[i] >> 11) & 0x1F) * 0x08), (byte)(((paletteData[i] >> 5) & 0x3F) * 0x04), (byte)((paletteData[i] & 0x1F) * 0x08), 0xFF);
+                                            palette[i] = new SKColor((byte)(((paletteData[i] >> 11) & 0x1F) * 0x08), (byte)(((paletteData[i] >> 5) & 0x3F) * 0x04), (byte)((paletteData[i] & 0x1F) * 0x08), 0xFF);
                                         }
                                         if (paletteData[0] > paletteData[1])
                                         {
-                                            palette[2] = new((byte)((palette[0].Red * 2 + palette[1].Red) / 3), (byte)((palette[0].Green * 2 + palette[1].Green) / 3), (byte)((palette[0].Blue * 2 + palette[1].Blue) / 3), 0xFF);
-                                            palette[3] = new((byte)((palette[0].Red + palette[1].Red * 2) / 3), (byte)((palette[0].Green + palette[1].Green * 2) / 3), (byte)((palette[0].Blue + palette[1].Blue * 2) / 3), 0xFF);
+                                            palette[2] = new SKColor((byte)((palette[0].Red * 2 + palette[1].Red) / 3), (byte)((palette[0].Green * 2 + palette[1].Green) / 3), (byte)((palette[0].Blue * 2 + palette[1].Blue) / 3), 0xFF);
+                                            palette[3] = new SKColor((byte)((palette[0].Red + palette[1].Red * 2) / 3), (byte)((palette[0].Green + palette[1].Green * 2) / 3), (byte)((palette[0].Blue + palette[1].Blue * 2) / 3), 0xFF);
                                         }
                                         else
                                         {
-                                            palette[2] = new((byte)((palette[0].Red + palette[1].Red) / 2), (byte)((palette[0].Green + palette[1].Green) / 2), (byte)((palette[0].Blue + palette[1].Blue) / 2), 0xFF);
+                                            palette[2] = new SKColor((byte)((palette[0].Red + palette[1].Red) / 2), (byte)((palette[0].Green + palette[1].Green) / 2), (byte)((palette[0].Blue + palette[1].Blue) / 2), 0xFF);
                                             palette[3] = SKColors.Transparent;
                                         }
                                         cmprIndex += 4;
@@ -204,7 +204,7 @@ namespace HaruhiHeiretsuLib.Graphics
             }
             else if (FileType == GraphicsFileType.FONT_CHARACTER)
             {
-                SKBitmap bitmap = new(Width, Height);
+                var bitmap = new SKBitmap(Width, Height);
                 int i = 0;
                 for (int y = 0; y < Height; y++)
                 {
@@ -212,13 +212,13 @@ namespace HaruhiHeiretsuLib.Graphics
                     {
                         byte alpha = (byte)(((Data[i] & 0xF0) >> 4) * 0x11);
                         byte grayscale = (byte)((Data[i] & 0x0F) * 0x11);
-                        bitmap.SetPixel(x, y, new(grayscale, grayscale, grayscale, alpha));
+                        bitmap.SetPixel(x, y, new SKColor(grayscale, grayscale, grayscale, alpha));
                         i++;
                     }
                 }
-                SKBitmap transformedBitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
-                using SKCanvas canvas = new(transformedBitmap);
-                SKRect dest = new(0, 0, transformedBitmap.Width, transformedBitmap.Height);
+                var transformedBitmap = new SKBitmap(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
+                using var canvas = new SKCanvas(transformedBitmap);
+                var dest = new SKRect(0, 0, transformedBitmap.Width, transformedBitmap.Height);
                 canvas.DrawBitmap(bitmap, dest);
                 return transformedBitmap;
             }
@@ -264,18 +264,18 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public void SetFontCharacterImage(string character, SKFont font, int fontSize)
         {
-            SKBitmap bitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
-            using SKCanvas canvas = new(bitmap);
-            SKPaint shadowPaint = new(font) { IsAntialias = true, Color = SKColors.Black };
-            SKPaint mainPaint = new(font) { IsAntialias = true, Color = SKColors.White };
+            var bitmap = new SKBitmap(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
+            using var canvas = new SKCanvas(bitmap);
+            var shadowPaint = new SKPaint(font) { IsAntialias = true, Color = SKColors.Black };
+            var mainPaint = new SKPaint(font) { IsAntialias = true, Color = SKColors.White };
 
             canvas.Clear();
             canvas.DrawText(character, 0, Character.SCALED_HEIGHT - fontSize / 5, shadowPaint);
             canvas.DrawText(character, 2, Character.SCALED_HEIGHT - fontSize / 5, mainPaint);
             canvas.Flush();
 
-            SKBitmap scaledBitmap = new(Width, Height);
-            using SKCanvas scaledCanvas = new(scaledBitmap);
+            var scaledBitmap = new SKBitmap(Width, Height);
+            using var scaledCanvas = new SKCanvas(scaledBitmap);
             scaledCanvas.DrawBitmap(bitmap, new SKRect(0, 0, Width, Height));
             scaledCanvas.Flush();
 

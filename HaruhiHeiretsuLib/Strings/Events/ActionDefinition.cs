@@ -13,7 +13,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public ushort OpCode { get; set; }
         public ushort ParametersCount { get; set; }
         public int ParametersAddress { get; set; }
-        public List<ActionParameter> Parameters { get; set; } = new();
+        public List<ActionParameter> Parameters { get; set; } = new List<ActionParameter>();
 
         public ActionDefinition(IEnumerable<byte> data, int offset)
         {
@@ -31,7 +31,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
                         Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
                         break;
                     default:
-                        Parameters.Add(new(data, currentPosition, OpCode));
+                        Parameters.Add(new ActionParameter(data, currentPosition, OpCode));
                         break;
                 }
                 currentPosition += Parameters.Last().Length;
@@ -40,7 +40,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
+            var bytes = new List<byte>();
 
             bytes.AddRange(BitConverter.GetBytes(ActorDefinitionAddress));
             bytes.AddRange(BitConverter.GetBytes(OpCode));
@@ -119,7 +119,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         protected List<byte> GetHeaderBytes()
         {
-            List<byte> bytes = new();
+            var bytes = new List<byte>();
             bytes.AddRange(BitConverter.GetBytes(ActionsTableEntryAddress));
             bytes.AddRange(BitConverter.GetBytes(StartFrame));
             bytes.AddRange(BitConverter.GetBytes(EndFrame));
@@ -128,7 +128,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         public virtual List<byte> GetBytes()
         {
-            List<byte> bytes = new();
+            var bytes = new List<byte>();
             bytes.AddRange(GetHeaderBytes());
             bytes.AddRange(Data);
             return bytes;

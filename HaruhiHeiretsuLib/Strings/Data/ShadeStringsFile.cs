@@ -8,13 +8,13 @@ namespace HaruhiHeiretsuLib.Strings
     // The same kind of string files found in Chokuretsu except big-endian
     public class ShadeStringsFile : StringsFile
     {
-        public List<int> FrontPointers { get; set; } = new();
+        public List<int> FrontPointers { get; set; } = new List<int>();
         public int PointerToNumEndPointers { get; set; }
-        public List<int> EndPointers { get; set; } = new();
-        public List<int> EndPointerPointers { get; set; } = new();
+        public List<int> EndPointers { get; set; } = new List<int>();
+        public List<int> EndPointerPointers { get; set; } = new List<int>();
         public string Title { get; set; }
 
-        public Dictionary<int, string> DramatisPersonae { get; set; } = new();
+        public Dictionary<int, string> DramatisPersonae { get; set; } = new Dictionary<int, string>();
         public int DialogueSectionPointer { get; set; }
 
         private static int[] ValidIndices = { 2, 4, 10, 14, 20, 30, 34, 40, 42, 44, 46, 48, 56, 58, 60, 64, 66, 72, 74, 76, 78, 84, 88 };
@@ -86,7 +86,7 @@ namespace HaruhiHeiretsuLib.Strings
             DialogueLines[index].NumPaddingZeroes = 4 - (DialogueLines[index].Length % 4);
             int lengthDifference = DialogueLines[index].Length + DialogueLines[index].NumPaddingZeroes - oldLength;
 
-            List<byte> toWrite = new();
+            List<byte> toWrite = new List<byte>();
             toWrite.AddRange(Encoding.GetEncoding("Shift-JIS").GetBytes(DialogueLines[index].Line));
             for (int i = 0; i < DialogueLines[index].NumPaddingZeroes; i++)
             {

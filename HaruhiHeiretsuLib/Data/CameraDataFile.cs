@@ -6,9 +6,9 @@ namespace HaruhiHeiretsuLib.Data
 {
     public class CameraDataFile : DataFile
     {
-        public List<float> Section1 { get; set; } = new();
-        public List<CameraDataEntry> CameraDataEntries { get; set; } = new();
-        public short StaticCameraIndex { get; set; } = new();
+        public List<float> Section1 { get; set; } = new List<float>();
+        public List<CameraDataEntry> CameraDataEntries { get; set; } = new List<CameraDataEntry>();
+        public short StaticCameraIndex { get; set; }
 
         public CameraDataFile()
         {
@@ -47,7 +47,7 @@ namespace HaruhiHeiretsuLib.Data
 
         public string GetCsv()
         {
-            List<string> csvLines = new();
+            var csvLines = new List<string>();
             csvLines.Add("Section1Floats");
             csvLines.Add(string.Join(',', Section1));
             csvLines.Add($"{nameof(CameraDataEntry.XPosition)},{nameof(CameraDataEntry.YPosition)},{nameof(CameraDataEntry.ZPosition)},{nameof(CameraDataEntry.XLook)},{nameof(CameraDataEntry.YLook)},{nameof(CameraDataEntry.ZLook)}," +
@@ -62,8 +62,8 @@ namespace HaruhiHeiretsuLib.Data
 
         public override byte[] GetBytes()
         {
-            List<byte> bytes = new();
-            List<byte> sectionBytes = new();
+            var bytes = new List<byte>();
+            var sectionBytes = new List<byte>();
             int startingOffset = 0x24;
 
             bytes.AddRange(BitConverter.GetBytes(3).Reverse());
@@ -146,7 +146,7 @@ namespace HaruhiHeiretsuLib.Data
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
+            var bytes = new List<byte>();
 
             bytes.AddRange(BitConverter.GetBytes(XPosition).Reverse());
             bytes.AddRange(BitConverter.GetBytes(YPosition).Reverse());

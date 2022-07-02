@@ -35,7 +35,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         {
             if (BitConverter.ToInt32(Data.Take(4).ToArray()) == 6)
             {
-                CutsceneData = new(Data);
+                CutsceneData = new CutsceneData(Data);
 
                 ParseDialogue();
             }
@@ -78,27 +78,27 @@ namespace HaruhiHeiretsuLib.Strings.Events
     public class CutsceneData
     {
         public EventFileHeader Header { get; set; }
-        public List<ModelDefinition> CharacterModelDefinitionTable { get; set; } = new();
-        public List<ChapterDefinition> ChapterDefinitionTable { get; set; } = new();
+        public List<ModelDefinition> CharacterModelDefinitionTable { get; set; } = new List<ModelDefinition>();
+        public List<ChapterDefinition> ChapterDefinitionTable { get; set; } = new List<ChapterDefinition>();
 
         public CutsceneData(IEnumerable<byte> data)
         {
-            Header = new(data.Take(0x40));
+            Header = new EventFileHeader(data.Take(0x40));
             for (int i = 0; i < Header.NumCharacters; i++)
             {
-                CharacterModelDefinitionTable.Add(new(data.Skip(Header.CharacterModelDefinitionOffset + i * 0x18).Take(0x18)));
-                CharacterModelDefinitionTable.Last().Details = new(data, CharacterModelDefinitionTable.Last().CharacterModelDataEntryOffset);
+                CharacterModelDefinitionTable.Add(new ModelDefinition(data.Skip(Header.CharacterModelDefinitionOffset + i * 0x18).Take(0x18)));
+                CharacterModelDefinitionTable.Last().Details = new ModelDefinitionDetails(data, CharacterModelDefinitionTable.Last().CharacterModelDataEntryOffset);
             }
 
             for (int i = 0; i < Header.ChaptersCount; i++)
             {
-                ChapterDefinitionTable.Add(new(data, Header.ChapterDefTableOffset + i * 0x14));
+                ChapterDefinitionTable.Add(new ChapterDefinition(data, Header.ChapterDefTableOffset + i * 0x14));
             }
         }
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
+            var bytes = new List<byte>();
 
             bytes.AddRange(Header.GetBytes());
 
@@ -145,7 +145,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
+            List<byte> bytes = new List<byte>();
 
             bytes.AddRange(BitConverter.GetBytes(Version));
             bytes.AddRange(BitConverter.GetBytes(TotalRuntimeInFrames));
