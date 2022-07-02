@@ -44,11 +44,11 @@ def construct_armature(sge):
             i += 1
     return obj
 
-def construct_mesh(submesh, materials, name):
+def construct_mesh(sge, submesh, materials, meshNum):
     print('Constructing mesh...')
-    mesh = bpy.data.meshes.new(name)
+    mesh = bpy.data.meshes.new(sge['Name'] + "_Mesh" + str(meshNum))
     mesh.validate(verbose=True)
-    obj = bpy.data.objects.new(name, mesh)
+    obj = bpy.data.objects.new(sge['Name'] + "_Mesh" + str(meshNum), mesh)
     for material in materials:
         obj.data.materials.append(material)
 
@@ -83,10 +83,13 @@ def construct_mesh(submesh, materials, name):
             mesh.polygons[i].material_index = submesh['SubmeshFaces'][i]['Material']['Index']
     mesh.update()
     
-    # for bone in sge['SgeBones']:
-    #     bone_vertex_group = obj.vertex_groups.new(name='Bone' + str(bone['Address']))
-    #     for vertex in bone['VertexGroup']:
-    #         bone_vertex_group.add([int(vertex)], bone['VertexGroup'][vertex], 'ADD')
+    for bone in sge['SgeBones']:
+        bone_vertex_group = obj.vertex_groups.new(name='Bone' + str(bone['Address']))
+        for attached_vertex in bone['VertexGroup']:
+            attached_vertex_split = attached_vertex.split(',')
+            (attached_vertex_mesh, attached_vertex_index) = (int(attached_vertex_split[0]), int(attached_vertex_split[1]))
+            if attached_vertex_mesh == meshNum:
+                bone_vertex_group.add([attached_vertex_index], bone['VertexGroup'][attached_vertex], 'ADD')
     return obj
 
 def json_vector_to_vector(json_vector):
@@ -104,15 +107,15 @@ def main(filename):
 
     i = 0
     for submesh in sge['SgeSubmeshes']:
-        mesh = construct_mesh(submesh, materials, sge['Name'] + "_Mesh" + str(i))
+        mesh = construct_mesh(sge, submesh, materials, i)
         i += 1
 
         sge_collection = bpy.data.collections.new('sge_collection')
         bpy.context.scene.collection.children.link(sge_collection)
         sge_collection.objects.link(mesh)
 
-    # mesh.parent = armature
-    # modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
-    # modifier.object = armature
+        mesh.parent = armature
+        modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
+        modifier.object = armature
 
 main('D:\\ROMHacking\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\seagull_complex.sge.json')

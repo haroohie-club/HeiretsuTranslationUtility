@@ -74,7 +74,7 @@ namespace HaruhiHeiretsuCLI
             {
                 _outputFile = $"{sgeFile.Name}";
             }
-            CommandSet.Out.WriteLine($"Dumping {sgeFile.Name} to {_outputFile}.sge.json...");
+            CommandSet.Out.WriteLine($"Dumping {sgeFile.Name} (GRP #{sgeFile.Index}) to {_outputFile}.sge.json...");
 
             File.WriteAllText($"{_outputFile}.sge.json", sgeFile.Sge.DumpJson());
 
