@@ -9,9 +9,9 @@ bl_info = {
 }
 
 import bpy
-import sge
-from bpy_extras.io_utils import ExportHelper, ImportHelper
-from bpy.props import StringProperty, BoolProperty, EnumProperty
+from . import sge_import
+from bpy_extras.io_utils import ImportHelper
+from bpy.props import StringProperty
 
 class ImportSgeJson(bpy.types.Operator, ImportHelper):
     bl_idname = "import.sge_json_data"
@@ -21,7 +21,7 @@ class ImportSgeJson(bpy.types.Operator, ImportHelper):
     filter_glob = StringProperty(default="*.sge.json", options={'HIDDEN'})
 
     def execute(self, context):
-        return sge.main(self.filepath)
+        return sge_import.main(self.filepath)
 
 def menu_func_import(self, context):
     self.layout.operator(ImportSgeJson.bl_idname, text="SGE JSON (.sge.json)")

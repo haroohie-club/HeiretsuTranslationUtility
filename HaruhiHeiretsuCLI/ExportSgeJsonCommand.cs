@@ -52,17 +52,17 @@ namespace HaruhiHeiretsuCLI
                 file.TryResolveName(indexToNameMap);
             }
 
+            foreach (GraphicsFile file in grp.Files)
+            {
+                if (file.FileType == GraphicsFile.GraphicsFileType.SGE && file.Sge is not null)
+                {
+                    file.Sge.ResolveTextures(file.Name, grp.Files);
+                }
+            }
+
             GraphicsFile sgeFile;
             if (!string.IsNullOrEmpty(_sgeName))
             {
-                foreach (GraphicsFile file in grp.Files)
-                {
-                    if (file.FileType == GraphicsFile.GraphicsFileType.SGE && file.Sge is not null)
-                    {
-                        file.Sge.ResolveTextures(file.Name, grp.Files);
-                    }
-                }
-
                 sgeFile = grp.Files.First(f => f.Name == _sgeName);
             }
             else
@@ -74,7 +74,7 @@ namespace HaruhiHeiretsuCLI
             {
                 _outputFile = $"{sgeFile.Name}";
             }
-            CommandSet.Out.WriteLine($"Dumping {sgeFile.Name} to {_outputFile}.sge.json...");
+            CommandSet.Out.WriteLine($"Dumping {sgeFile.Name} (GRP #{sgeFile.Index}) to {_outputFile}.sge.json...");
 
             File.WriteAllText($"{_outputFile}.sge.json", sgeFile.Sge.DumpJson());
 

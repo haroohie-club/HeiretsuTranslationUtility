@@ -1,7 +1,9 @@
-from re import U
 import bpy
-from mathutils import Vector, Matrix
+from mathutils import Vector
 import json
+import os
+from re import U
+import sys
 
 def construct_materials(sge):
     print('Constructing materials...')
@@ -44,11 +46,12 @@ def construct_armature(sge):
             i += 1
     return obj
 
-def construct_mesh(sge, materials):
+def construct_mesh(sge, submesh, materials, meshNum):
     print('Constructing mesh...')
-    mesh = bpy.data.meshes.new(sge['Name'] + "_Mesh")
+    mesh = bpy.data.meshes.new(sge['Name'] + "_Mesh" + str(meshNum))
     mesh.validate(verbose=True)
-    obj = bpy.data.objects.new(sge['Name'] + "_Mesh", mesh)
+    mesh.use_auto_smooth = True
+    obj = bpy.data.objects.new(sge['Name'] + "_Mesh" + str(meshNum), mesh)
     for material in materials:
         obj.data.materials.append(material)
 
@@ -56,13 +59,13 @@ def construct_mesh(sge, materials):
     normals = []
     uvcoords = []
     colors = []
-    for sge_vertex in sge['SgeVertices']:
+    for sge_vertex in submesh['SubmeshVertices']:
         vertices.append(json_vector_to_vector(sge_vertex['Position']))
         normals.append(json_vector_to_vector(sge_vertex['Normal']))
         uvcoords.append(json_vector2_to_vector2(sge_vertex['UVCoords']))
         colors.append(sge_vertex['Color'])
     faces = []
-    for sge_face in sge['SgeFaces']:
+    for sge_face in submesh['SubmeshFaces']:
         faces.append((sge_face['Polygon'][0], sge_face['Polygon'][1], sge_face['Polygon'][2])) # Faces are inverted so this is the correct order
 
     mesh.from_pydata(vertices, [], faces) # Edges are autocalculated by blender so we can pass a blank array
@@ -74,19 +77,19 @@ def construct_mesh(sge, materials):
         for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
             color_layer.data[vert_idx].color = (colors[vert_idx]['R'], colors[vert_idx]['G'], colors[vert_idx]['B'], colors[vert_idx]['A'])
             uvlayer.data[loop_idx].uv = uvcoords[vert_idx]
-
-    for vertex in mesh.vertices:
-        color_layer.data
     
     for i in range(len(mesh.polygons)):
-        if sge['SgeFaces'][i]['Material'] is not None:
-            mesh.polygons[i].material_index = sge['SgeFaces'][i]['Material']['Index']
+        if submesh['SubmeshFaces'][i]['Material'] is not None:
+            mesh.polygons[i].material_index = submesh['SubmeshFaces'][i]['Material']['Index']
     mesh.update()
     
     for bone in sge['SgeBones']:
         bone_vertex_group = obj.vertex_groups.new(name='Bone' + str(bone['Address']))
-        for vertex in bone['VertexGroup']:
-            bone_vertex_group.add([int(vertex)], bone['VertexGroup'][vertex], 'ADD')
+        for attached_vertex in bone['VertexGroup']:
+            attached_vertex_split = attached_vertex.split(',')
+            (attached_vertex_mesh, attached_vertex_index) = (int(attached_vertex_split[0]), int(attached_vertex_split[1]))
+            if attached_vertex_mesh == meshNum:
+                bone_vertex_group.add([attached_vertex_index], bone['VertexGroup'][attached_vertex], 'ADD')
     return obj
 
 def json_vector_to_vector(json_vector):
@@ -101,14 +104,41 @@ def main(filename):
     sge = json.load(f)
     materials = construct_materials(sge)
     armature = construct_armature(sge)
-    mesh = construct_mesh(sge, materials)
 
     sge_collection = bpy.data.collections.new('sge_collection')
     bpy.context.scene.collection.children.link(sge_collection)
-    sge_collection.objects.link(mesh)
 
-    mesh.parent = armature
-    modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
-    modifier.object = armature
+    i = 0
+    for submesh in sge['SgeSubmeshes']:
+        mesh = construct_mesh(sge, submesh, materials, i)
+        i += 1
 
-main('D:\\ROMHacking\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\seagull_complex.sge.json')
+        sge_collection.objects.link(mesh)
+
+        mesh.parent = armature
+        modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
+        modifier.object = armature
+    
+    return {'FINISHED'}
+
+if __name__ == '__main__':
+    # Clean scene
+    for o in bpy.context.scene.objects:
+        o.select_set(True)
+    bpy.ops.object.delete()
+
+    input_file = sys.argv[-2]
+    output_format = sys.argv[-1]
+
+    main(input_file)
+    output_file = os.path.join(os.path.dirname(input_file), os.path.splitext(os.path.basename(input_file))[0])
+
+    if output_format.lower() == 'gltf':
+        output_file += ".glb"
+        bpy.ops.export_scene.gltf(filepath=os.path.abspath(output_file), check_existing=False, export_format="GLB")
+    elif output_format.lower() == 'fbx':
+        output_file += '.fbx'
+        bpy.ops.export_scene.fbx(filepath=os.path.abspath(output_file), check_existing=False, path_mode='COPY', batch_mode='OFF', embed_textures=True)
+    else:
+        output_file += '.blend'
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(output_file), check_existing=False)

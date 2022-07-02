@@ -23,9 +23,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public List<SgeMesh> SgeMeshes { get; set; } = new();
         public List<SgeMaterial> SgeMaterials { get; set; } = new();
         public List<SgeBone> SgeBones { get; set; } = new();
-        public List<SgeVertex> SgeVertices { get; set; } = new();
         public List<SgeSubmesh> SgeSubmeshes { get; set; } = new();
-        public List<SgeFace> SgeFaces { get; set; } = new();
 
         public Sge(IEnumerable<byte> data)
         {
@@ -82,47 +80,85 @@ namespace HaruhiHeiretsuLib.Graphics
                         }
                         faceTables.Add((numFaces, facesStartAddress));
                     }
+                    List<List<SgeVertex>> vertexLists = new();
                     foreach ((int numVertices, int startAddress) in vertexTables)
                     {
+                        vertexLists.Add(new());
                         for (int i = 0; i < numVertices; i++)
                         {
-                            SgeVertices.Add(new(sgeData.Skip(startAddress + i * 0x38).Take(0x38)));
+                            vertexLists.Last().Add(new(sgeData.Skip(startAddress + i * 0x38).Take(0x38)));
                         }
                     }
-                    List<int> combinedFaceTable = new List<int>();
+
+                    int count = 0;
+                    int currentTable = 0;
+                    foreach (SgeSubmesh submesh in SgeSubmeshes)
+                    {
+                        if (count > vertexTables[currentTable].numVertices)
+                        {
+                            count = 0;
+                            currentTable++;
+                        }
+                        submesh.SubmeshVertices = vertexLists[currentTable].Skip(submesh.StartVertex).Take(submesh.EndVertex - submesh.StartVertex + 1).ToList();
+                        count += submesh.SubmeshVertices.Count;
+                    }
+
+                    List<List<int>> faceLists = new();
+                    currentTable = 0;
                     foreach ((int numFaces, int startAddress) in faceTables)
                     {
+                        faceLists.Add(new());
                         for (int i = 0; i < numFaces; i++)
                         {
-                            combinedFaceTable.Add(BitConverter.ToInt32(sgeData.Skip(startAddress + i * 4).Take(4).ToArray()));
+                            faceLists[currentTable].Add(BitConverter.ToInt32(sgeData.Skip(startAddress + i * 4).Take(4).ToArray()));
                         }
+                        currentTable++;
                     }
 
                     bool triStripped = SgeHeader.ModelType == 4;
-                    int faceIndex = 0;
+                    currentTable = 0;
+                    count = 0;
+                    int previousStartVertex = 0;
+                    int currentMesh = 0;
                     foreach (SgeSubmesh submesh in SgeSubmeshes)
                     {
-                        for (int i = 0; i < submesh.FacesCount;)
+                        for (int i = 0; (triStripped && i < submesh.FaceCount) || (!triStripped && i < submesh.FaceCount * 3);)
                         {
-                            if (triStripped)
+                            if (previousStartVertex > submesh.StartVertex || count > faceTables[currentTable].numFaces)
                             {
-                                SgeFaces.Add(new(combinedFaceTable[faceIndex], combinedFaceTable[faceIndex + 1], combinedFaceTable[faceIndex + 2], submesh.Material, submesh.StartVertex, faceIndex & 1));
-                                i++;
-                                faceIndex++;
+                                previousStartVertex = 0;
+                                count = 0;
+                                currentTable++;
                             }
                             else
                             {
-                                SgeFaces.Add(new(combinedFaceTable[faceIndex + 2], combinedFaceTable[faceIndex + 1], combinedFaceTable[faceIndex], submesh.Material, submesh.StartVertex));
-                                i += 3;
-                                faceIndex += 3;
+                                previousStartVertex = submesh.StartVertex;
                             }
 
-                            IEnumerable<(int, SgeBone, float)> attachedBones = SgeFaces.Last().Polygon.SelectMany(v => SgeVertices[v].BoneIds.Select(b =>
+                            if (triStripped)
+                            {
+                                submesh.SubmeshFaces.Add(new(faceLists[currentTable][submesh.StartFace + i + 2], faceLists[currentTable][submesh.StartFace + i + 1], faceLists[currentTable][submesh.StartFace + i], submesh.Material, i & 1));
+                                i++;
+                                count++;
+                            }
+                            else
+                            {
+                                submesh.SubmeshFaces.Add(new(faceLists[currentTable][submesh.StartFace + i + 2], faceLists[currentTable][submesh.StartFace + i + 1], faceLists[currentTable][submesh.StartFace + i], submesh.Material));
+                                i += 3;
+                                count += 3;
+                            }
+
+                            if (submesh.SubmeshFaces.Last().Polygon.Any(v => v >= submesh.SubmeshVertices.Count))
+                            {
+                                break;
+                            }
+
+                            IEnumerable<(int, SgeBone, float)> attachedBones = submesh.SubmeshFaces.Last().Polygon.SelectMany(v => submesh.SubmeshVertices[v].BoneIds.Select(b =>
                             {
                                 int boneIndex = submesh.BonePalette[b];
                                 if (boneIndex >= 0)
                                 {
-                                    return (v, SgeBones[boneIndex], SgeVertices[v].Weight[Array.IndexOf(SgeVertices[v].BoneIds, b)]);
+                                    return (v, SgeBones[boneIndex], submesh.SubmeshVertices[v].Weight[Array.IndexOf(submesh.SubmeshVertices[v].BoneIds, b)]);
                                 }
                                 return (v, null, 0);
                             }));
@@ -130,14 +166,15 @@ namespace HaruhiHeiretsuLib.Graphics
                             {
                                 if (bone is not null)
                                 {
-                                    if (!bone.VertexGroup.ContainsKey(vertexIndex) && weight > 0)
+                                    SgeBoneAttachedVertex attachedVertex = new(currentMesh, vertexIndex);
+                                    if (!bone.VertexGroup.ContainsKey(attachedVertex) && weight > 0)
                                     {
-                                        bone.VertexGroup.Add(vertexIndex, weight);
+                                        bone.VertexGroup.Add(attachedVertex, weight);
                                     }
                                 }
                             }
                         }
-                        faceIndex += 2; // Increment to avoid reusing indices from the previous submesh
+                        currentMesh++;
                     }
                 }
             }
@@ -184,7 +221,7 @@ namespace HaruhiHeiretsuLib.Graphics
     public class SgeHeader
     {
         public short Version { get; set; }    // 1
-        public short ModelType { get; set; }    // 2 -- value of 0, 3, 4 or 5; of 3 gives outline on character model
+        public short ModelType { get; set; }    // 2 -- value of 0, 3, 4 or 5; of 3 gives outline on character model; 4 is tristriped
         public int Unknown04 { get; set; }      // 3
         public int Unknown08 { get; set; }      // 4
         public int Unknown0C { get; set; }   // 5
@@ -357,7 +394,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public int AddressToBone2 { get; set; }     // 5
         public int Count { get; set; }              // 6
 
-        public Dictionary<int, float> VertexGroup { get; set; } = new();
+        public Dictionary<SgeBoneAttachedVertex, float> VertexGroup { get; set; } = new();
 
         public SgeBone(IEnumerable<byte> data, int offset)
         {
@@ -393,8 +430,28 @@ namespace HaruhiHeiretsuLib.Graphics
         }
     }
 
+    public struct SgeBoneAttachedVertex
+    {
+        public int Mesh { get; set; }
+        public int VertexIndex { get; set; }
+
+        public SgeBoneAttachedVertex(int mesh, int vertexIndex)
+        {
+            Mesh = mesh;
+            VertexIndex = vertexIndex;
+        }
+
+        public override string ToString()
+        {
+            return $"{Mesh},{VertexIndex}";
+        }
+    }
+
     public class SgeSubmesh
     {
+        public List<SgeVertex> SubmeshVertices { get; set; } = new();
+        public List<SgeFace> SubmeshFaces { get; set; } = new();
+
         public SgeMaterial Material { get; set; }
         public int Unknown00 { get; set; }          // 2
         public int Unknown04 { get; set; }          // 3
@@ -409,7 +466,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public int StartVertex { get; set; }
         public int EndVertex { get; set; }      // 12
         public int StartFace { get; set; }             // 13
-        public int FacesCount { get; set; }
+        public int FaceCount { get; set; }
         public List<short> BonePalette { get; set; } = new();
         public float Unknown54 { get; set; }          // 23
         public float Unknown58 { get; set; }          // 24
@@ -433,7 +490,7 @@ namespace HaruhiHeiretsuLib.Graphics
             StartVertex = BitConverter.ToInt32(data.Skip(offset + 0x24).Take(4).ToArray());
             EndVertex = BitConverter.ToInt32(data.Skip(offset + 0x28).Take(4).ToArray());
             StartFace = BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).ToArray());
-            FacesCount = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).ToArray());
+            FaceCount = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).ToArray());
             for (int i = 0; i < 16; i++)
             {
                 BonePalette.Add(BitConverter.ToInt16(data.Skip(offset + 0x34 + i * 2).Take(2).ToArray()));
@@ -471,6 +528,11 @@ namespace HaruhiHeiretsuLib.Graphics
             UVCoords = new Vector2(BitConverter.ToSingle(data.Skip(0x2C).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x30).Take(4).ToArray()));
             Unknown2 = BitConverter.ToInt32(data.Skip(0x34).Take(4).ToArray());
         }
+
+        public override string ToString()
+        {
+            return $"{Position}";
+        }
     }
 
     public class SgeFace
@@ -478,17 +540,22 @@ namespace HaruhiHeiretsuLib.Graphics
         public List<int> Polygon { get; set; }
         public SgeMaterial Material { get; set; }
         
-        public SgeFace(int first, int second, int third, SgeMaterial material, int faceOffset, int evenOdd = 0)
+        public SgeFace(int first, int second, int third, SgeMaterial material, int evenOdd = 0)
         {
             if (evenOdd == 0)
             {
-                Polygon = new List<int> { first + faceOffset, second + faceOffset, third + faceOffset };
+                Polygon = new List<int> { first, second, third };
             }
             else
             {
-                Polygon = new List<int> { second + faceOffset, first + faceOffset, third + faceOffset };
+                Polygon = new List<int> { second, first, third };
             }
             Material = material;
+        }
+
+        public override string ToString()
+        {
+            return $"{Material}: {Polygon[0]}, {Polygon[1]}, {Polygon[2]}";
         }
     }
 
@@ -532,6 +599,11 @@ namespace HaruhiHeiretsuLib.Graphics
             G = g;
             B = b;
             A = a;
+        }
+
+        public override string ToString()
+        {
+            return $"{R} {G} {B} {A}";
         }
     }
 }
