@@ -52,17 +52,17 @@ namespace HaruhiHeiretsuCLI
                 file.TryResolveName(indexToNameMap);
             }
 
+            foreach (GraphicsFile file in grp.Files)
+            {
+                if (file.FileType == GraphicsFile.GraphicsFileType.SGE && file.Sge is not null)
+                {
+                    file.Sge.ResolveTextures(file.Name, grp.Files);
+                }
+            }
+
             GraphicsFile sgeFile;
             if (!string.IsNullOrEmpty(_sgeName))
             {
-                foreach (GraphicsFile file in grp.Files)
-                {
-                    if (file.FileType == GraphicsFile.GraphicsFileType.SGE && file.Sge is not null)
-                    {
-                        file.Sge.ResolveTextures(file.Name, grp.Files);
-                    }
-                }
-
                 sgeFile = grp.Files.First(f => f.Name == _sgeName);
             }
             else

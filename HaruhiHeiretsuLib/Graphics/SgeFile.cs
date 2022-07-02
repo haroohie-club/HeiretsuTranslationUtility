@@ -137,7 +137,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
                             if (triStripped)
                             {
-                                submesh.SubmeshFaces.Add(new(faceLists[currentTable][submesh.StartFace + i], faceLists[currentTable][submesh.StartFace + i + 1], faceLists[currentTable][submesh.StartFace + i + 2], submesh.Material, i & 1));
+                                submesh.SubmeshFaces.Add(new(faceLists[currentTable][submesh.StartFace + i + 2], faceLists[currentTable][submesh.StartFace + i + 1], faceLists[currentTable][submesh.StartFace + i], submesh.Material, i & 1));
                                 i++;
                                 count++;
                             }

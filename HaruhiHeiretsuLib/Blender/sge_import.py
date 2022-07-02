@@ -1,7 +1,9 @@
-from re import U
 import bpy
-from mathutils import Vector, Matrix
+from mathutils import Vector
 import json
+import os
+from re import U
+import sys
 
 def construct_materials(sge):
     print('Constructing materials...')
@@ -48,6 +50,7 @@ def construct_mesh(sge, submesh, materials, meshNum):
     print('Constructing mesh...')
     mesh = bpy.data.meshes.new(sge['Name'] + "_Mesh" + str(meshNum))
     mesh.validate(verbose=True)
+    mesh.use_auto_smooth = True
     obj = bpy.data.objects.new(sge['Name'] + "_Mesh" + str(meshNum), mesh)
     for material in materials:
         obj.data.materials.append(material)
@@ -74,9 +77,6 @@ def construct_mesh(sge, submesh, materials, meshNum):
         for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
             color_layer.data[vert_idx].color = (colors[vert_idx]['R'], colors[vert_idx]['G'], colors[vert_idx]['B'], colors[vert_idx]['A'])
             uvlayer.data[loop_idx].uv = uvcoords[vert_idx]
-
-    for vertex in mesh.vertices:
-        color_layer.data
     
     for i in range(len(mesh.polygons)):
         if submesh['SubmeshFaces'][i]['Material'] is not None:
@@ -107,7 +107,7 @@ def main(filename):
 
     sge_collection = bpy.data.collections.new('sge_collection')
     bpy.context.scene.collection.children.link(sge_collection)
-    
+
     i = 0
     for submesh in sge['SgeSubmeshes']:
         mesh = construct_mesh(sge, submesh, materials, i)
@@ -118,5 +118,27 @@ def main(filename):
         mesh.parent = armature
         modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
         modifier.object = armature
+    
+    return {'FINISHED'}
 
-main('D:\\ROMHacking\\WiiHacking\\haruhi_heiretsu\\Heiretsu\\DATA\\files\\seagull_complex.sge.json')
+if __name__ == '__main__':
+    # Clean scene
+    for o in bpy.context.scene.objects:
+        o.select_set(True)
+    bpy.ops.object.delete()
+
+    input_file = sys.argv[-2]
+    output_format = sys.argv[-1]
+
+    main(input_file)
+    output_file = os.path.join(os.path.dirname(input_file), os.path.splitext(os.path.basename(input_file))[0])
+
+    if output_format.lower() == 'gltf':
+        output_file += ".glb"
+        bpy.ops.export_scene.gltf(filepath=os.path.abspath(output_file), check_existing=False, export_format="GLB")
+    elif output_format.lower() == 'fbx':
+        output_file += '.fbx'
+        bpy.ops.export_scene.fbx(filepath=os.path.abspath(output_file), check_existing=False, path_mode='COPY', batch_mode='OFF', embed_textures=True)
+    else:
+        output_file += '.blend'
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(output_file), check_existing=False)
