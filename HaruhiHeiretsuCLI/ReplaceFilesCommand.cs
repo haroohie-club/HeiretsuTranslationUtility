@@ -125,7 +125,8 @@ namespace HaruhiHeiretsuCLI
                         mcb.LoadGraphicsFiles(file.Split('_'));
                         for (; i < mcb.GraphicsFiles.Count; i++)
                         {
-                            ((GraphicsFile)mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc]).SetMapData(mapEntries);
+                            mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Data = grp.Files.First(f => f.Index == archiveIndex).Data;
+                            mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Edited = true;
                         }
 
                         archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
