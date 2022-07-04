@@ -194,7 +194,7 @@ namespace HaruhiHeiretsuLib.Graphics
             Name = name;
             foreach (SgeMaterial material in SgeMaterials)
             {
-                material.Texture = new();
+                material.Texture = new GraphicsFile();
                 material.Texture.Initialize(File.ReadAllBytes(graphicsFiles.FirstOrDefault(f => f.Contains(material.Name))), 0);
             }
         }
