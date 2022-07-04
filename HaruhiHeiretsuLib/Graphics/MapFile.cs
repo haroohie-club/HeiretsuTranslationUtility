@@ -73,7 +73,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public short ShouldProcess { get; set; } // values of zero or one indicate this entry should be processed
         public short NameIndex { get; set; }
         public string Name { get; set; }
-        public short Unknown10 { get; set; }
+        public short Rotation { get; set; }
         public short Unknown12 { get; set; }
         public short Unknown14 { get; set; }
         public short Unknown16 { get; set; }
@@ -106,7 +106,7 @@ namespace HaruhiHeiretsuLib.Graphics
             Z = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
             ShouldProcess = BitConverter.ToInt16(data.Skip(0x0C).Take(2).ToArray());
             NameIndex = BitConverter.ToInt16(data.Skip(0x0C).Take(2).ToArray());
-            Unknown10 = BitConverter.ToInt16(data.Skip(0x10).Take(2).ToArray());
+            Rotation = BitConverter.ToInt16(data.Skip(0x10).Take(2).ToArray());
             Unknown12 = BitConverter.ToInt16(data.Skip(0x12).Take(2).ToArray());
             Unknown14 = BitConverter.ToInt16(data.Skip(0x14).Take(2).ToArray());
             Unknown16 = BitConverter.ToInt16(data.Skip(0x16).Take(2).ToArray());
@@ -131,7 +131,7 @@ namespace HaruhiHeiretsuLib.Graphics
             Y = float.Parse(components[2]);
             Z = float.Parse(components[3]);
             ShouldProcess = short.Parse(components[4]);
-            Unknown10 = short.Parse(components[5]);
+            Rotation = short.Parse(components[5]);
             Unknown12 = short.Parse(components[6]);
             Unknown14 = short.Parse(components[7]);
             Unknown16 = short.Parse(components[8]);
@@ -173,7 +173,7 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(Z));
             bytes.AddRange(BitConverter.GetBytes(ShouldProcess));
             bytes.AddRange(BitConverter.GetBytes(nameIndex));
-            bytes.AddRange(BitConverter.GetBytes(Unknown10));
+            bytes.AddRange(BitConverter.GetBytes(Rotation));
             bytes.AddRange(BitConverter.GetBytes(Unknown12));
             bytes.AddRange(BitConverter.GetBytes(Unknown14));
             bytes.AddRange(BitConverter.GetBytes(Unknown16));
@@ -193,8 +193,14 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public string GetCsvLine()
         {
-            return $"{Name},{X},{Y},{Z},{ShouldProcess},{Unknown10},{Unknown12},{Unknown14},{Unknown16},{Unknown18},{Unknown1A},{Unknown1C},{Unknown1E}," +
+            return $"{Name},{X},{Y},{Z},{ShouldProcess},{Rotation},{Unknown12},{Unknown14},{Unknown16},{Unknown18},{Unknown1A},{Unknown1C},{Unknown1E}," +
                 $"{Unknown20},{Unknown22},{Unknown24},{Unknown26},{Unknown28},{Unknown2A}";
+        }
+
+        public static string GetCsvHeader()
+        {
+            return $"{nameof(Name)},{nameof(X)},{nameof(Y)},{nameof(Z)},{nameof(ShouldProcess)},{nameof(Rotation)},{nameof(Unknown12)},{nameof(Unknown14)},{nameof(Unknown16)},{nameof(Unknown18)},{nameof(Unknown1A)},{nameof(Unknown1C)}," +
+                $"{nameof(Unknown1E)},{nameof(Unknown20)},{nameof(Unknown22)},{nameof(Unknown24)},{nameof(Unknown26)},{nameof(Unknown28)},{nameof(Unknown2A)}\n";
         }
     }
 }

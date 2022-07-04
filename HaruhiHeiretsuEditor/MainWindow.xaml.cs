@@ -658,7 +658,7 @@ namespace HaruhiHeiretsuEditor
         {
             GraphicsFile map = ((GraphicsButton)sender).Graphic;
             string csv = string.Join("\n", map.MapEntries.Select(e => e.GetCsvLine()));
-            csv = $"Model,X,Y,Z,Unknown0C,Unknown10,Unknown12,Unknown14,Unknown16,Unknown18,Unknown1A,Unknown1C,Unknown1E,Unknown20,Unknown22,Unknown24,Unknown26,Unknown28,Unknown2A\n{csv}";
+            csv = $"{MapEntry.GetCsvHeader()}{csv}";
             string mapFile = Path.Combine(Path.GetTempPath(), $"{map.Location.parent:D3}-{map.Location.child:D3}-map.csv");
             File.WriteAllText(mapFile, csv);
             new Process { StartInfo = new ProcessStartInfo(mapFile) { UseShellExecute = true } }.Start();
