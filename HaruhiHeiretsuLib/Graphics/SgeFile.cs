@@ -183,9 +183,19 @@ namespace HaruhiHeiretsuLib.Graphics
         public void ResolveTextures(string name, List<GraphicsFile> textures)
         {
             Name = name;
-            foreach (SgeMaterial texture in SgeMaterials)
+            foreach (SgeMaterial material in SgeMaterials)
             {
-                texture.Texture = textures.FirstOrDefault(t => t.Name == texture.Name);
+                material.Texture = textures.FirstOrDefault(t => t.Name == material.Name);
+            }
+        }
+
+        public void ResolveTextures(string name, string[] graphicsFiles)
+        {
+            Name = name;
+            foreach (SgeMaterial material in SgeMaterials)
+            {
+                material.Texture = new();
+                material.Texture.Initialize(File.ReadAllBytes(graphicsFiles.FirstOrDefault(f => f.Contains(material.Name))), 0);
             }
         }
 
