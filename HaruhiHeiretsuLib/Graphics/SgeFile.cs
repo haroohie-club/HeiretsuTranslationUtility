@@ -194,8 +194,12 @@ namespace HaruhiHeiretsuLib.Graphics
             Name = name;
             foreach (SgeMaterial material in SgeMaterials)
             {
-                material.Texture = new GraphicsFile();
-                material.Texture.Initialize(File.ReadAllBytes(graphicsFiles.FirstOrDefault(f => f.Contains(material.Name))), 0);
+                string graphicsFile = graphicsFiles.FirstOrDefault(f => f.Contains(material.Name));
+                if (!string.IsNullOrEmpty(graphicsFile))
+                {
+                    material.Texture = new GraphicsFile();
+                    material.Texture.Initialize(File.ReadAllBytes(graphicsFile), 0);
+                }
             }
         }
 
