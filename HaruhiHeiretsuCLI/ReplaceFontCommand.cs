@@ -1,19 +1,17 @@
-﻿using HaruhiHeiretsuLib.Archive;
+﻿using HaruhiHeiretsuLib;
+using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Graphics;
 using Mono.Options;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuCLI
 {
     public class ReplaceFontCommand : Command
     {
-        private char _beginChar, _endChar;
         private int _fontSize;
-        private string _mcb, _grp, _fontPath, _encoding, _outputDir;
+        private string _mcb, _grp, _fontPath, _fontMap, _outputDir;
         public ReplaceFontCommand() : base("replace-font")
         {
             Options = new()
@@ -25,9 +23,7 @@ namespace HaruhiHeiretsuCLI
                 { "g|grp=", "Path to grp.bin", g => _grp = g },
                 { "f|font-file=", "Path to the font file", f => _fontPath = f },
                 { "s|font-size=", "The font size to draw", s => _fontSize = int.Parse(s) },
-                { "b|begin-char=", "The first character to replace", b => _beginChar = b[0] },
-                { "e|end-char=", "The last character to replace", e => _endChar = e[0] },
-                { "c|encoding=", "The name of the encoding to use (default is Latin-1)", c => _encoding = c },
+                { "r|replacement|font-replacement-map=", "The font replacement map JSON file", r => _fontMap = r },
                 { "o|output=", "The directory to save the MCB and grp.bin to", o => _outputDir = o },
             };
         }
@@ -38,31 +34,21 @@ namespace HaruhiHeiretsuCLI
             McbArchive mcb = Program.GetMcbFile(_mcb);
             BinArchive<GraphicsFile> grp = BinArchive<GraphicsFile>.FromFile(_grp);
 
-            Encoding encoding;
-            if (string.IsNullOrEmpty(_encoding))
-            {
-                encoding = Encoding.Latin1;
-            }
-            else
-            {
-                encoding = Encoding.GetEncoding(_encoding);
-            }
-
             CommandSet.Out.WriteLine("Loading font file...");
             mcb.LoadFontFile();
-            CommandSet.Out.WriteLine($"Replacing characters '{_beginChar}' through '{_endChar}' in font file with font {Path.GetFileName(_fontPath)} size {_fontSize}");
-            mcb.FontFile.OverwriteFont(_fontPath, _fontSize, _beginChar, _endChar, encoding);
+            CommandSet.Out.WriteLine($"Replacing characters from {Path.GetFileName(_fontMap)} in font file with font {SkiaSharp.SKTypeface.FromFile(_fontPath).FamilyName} size {_fontSize}...");
+            mcb.FontFile.OverwriteFont(_fontPath, _fontSize, FontReplacementMap.FromJson(File.ReadAllText(_fontMap)));
             grp.Files[0].Data = mcb.FontFile.GetBytes().ToList();
             grp.Files[0].Edited = true;
 
-            CommandSet.Out.WriteLine("Finished saving MCB");
             File.WriteAllBytes(Path.Combine(_outputDir, "grp.bin"), grp.GetBytes(out Dictionary<int, int> offsetAdjustments));
             CommandSet.Out.WriteLine("Finished saving GRP");
             mcb.AdjustOffsets("grp.bin", offsetAdjustments);
+            CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
             (byte[] mcb0, byte[] mcb1) = mcb.GetBytes();
             File.WriteAllBytes(Path.Combine(_outputDir, "mcb0.bln"), mcb0);
             File.WriteAllBytes(Path.Combine(_outputDir, "mcb1.bln"), mcb1);
-            CommandSet.Out.WriteLine("Finished adjusting MCB offsets");
+            CommandSet.Out.WriteLine("Finished saving MCB");
 
             return 0;
         }

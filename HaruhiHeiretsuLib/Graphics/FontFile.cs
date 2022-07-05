@@ -61,21 +61,9 @@ namespace HaruhiHeiretsuLib.Graphics
             return data.ToArray();
         }
 
-        public void OverwriteFont(string font, int fontSize, char startingChar, char endingChar, Encoding encoding)
+        public void OverwriteFont(string font, int fontSize, FontReplacementMap fontReplacementMap)
         {
             Edited = true;
-            List<byte> startingTemp = encoding.GetBytes($"{startingChar}").Reverse().ToList();
-            List<byte> endingTemp = encoding.GetBytes($"{endingChar}").Reverse().ToList();
-            if (startingTemp.Count == 1)
-            {
-                startingTemp.Add(0);
-            }
-            if (endingTemp.Count == 1)
-            {
-                endingTemp.Add(0);
-            }
-            ushort characterSpaceStart = BitConverter.ToUInt16(startingTemp.ToArray());
-            ushort characterSpaceEnd = BitConverter.ToUInt16(endingTemp.ToArray());
 
             SKFont skFont;
             if (font.EndsWith(".ttf") || font.EndsWith(".otf"))
@@ -87,19 +75,9 @@ namespace HaruhiHeiretsuLib.Graphics
                 skFont = new(SKTypeface.FromFamilyName(font), fontSize);
             }
 
-            for (ushort i = characterSpaceStart; i <= characterSpaceEnd; i++)
+            foreach ((ushort codepoint, FontReplacementCharacter replacement) in fontReplacementMap.Map)
             {
-                List<byte> codepage = BitConverter.GetBytes(i).Reverse().ToList();
-                if (codepage[0] == 0x00 && codepage.Count > 0 && encoding != Encoding.Unicode)
-                {
-                    codepage.RemoveAt(0);
-                }
-
-                string character = encoding.GetString(codepage.ToArray());
-                if (character.Length > 0)
-                {
-                    Characters.First(c => c.Codepoints.Contains(i)).SetFontCharacterImage(character, skFont, fontSize);
-                }
+                Characters.First(c => c.Codepoints.Contains(codepoint)).SetFontCharacterImage(replacement.Character, skFont, fontSize);
             }
         }
     }

@@ -19,11 +19,12 @@ namespace HaruhiHeiretsuCLI
                 new ExportResxCommand(),
                 new ExportSgeJsonCommand(),
                 new ExtractArchiveCommand(),
+                new GenerateFontReplacementCommand(),
+                new GeneratePatchCommand(),
                 new HexSearchCommand(),
                 new ReplaceFilesCommand(),
                 new ReplaceFontCommand(),
                 new StringSearchCommand(),
-                new GeneratePatchCommand(),
             };
 
             return commands.Run(args);

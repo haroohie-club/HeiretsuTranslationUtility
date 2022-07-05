@@ -793,28 +793,28 @@ namespace HaruhiHeiretsuEditor
 
         private void ReplaceFontFileButton_Click(object sender, RoutedEventArgs e)
         {
-            FontReplacementDialogBox fontReplacementDialogBox = new();
-            if (fontReplacementDialogBox.ShowDialog() == true)
-            {
-                if (_fontFile is not null)
-                {
-                    _fontFile.OverwriteFont(
-                        fontReplacementDialogBox.SelectedFontFamily,
-                        fontReplacementDialogBox.SelectedFontSize,
-                        fontReplacementDialogBox.StartingChar,
-                        fontReplacementDialogBox.EndingChar,
-                        fontReplacementDialogBox.SelectedEncoding);
-                }
-                else if (_mcb is not null)
-                {
-                    _mcb.FontFile.OverwriteFont(
-                        fontReplacementDialogBox.SelectedFontFamily,
-                        fontReplacementDialogBox.SelectedFontSize,
-                        fontReplacementDialogBox.StartingChar,
-                        fontReplacementDialogBox.EndingChar,
-                        fontReplacementDialogBox.SelectedEncoding);
-                }
-            }
+            //FontReplacementDialogBox fontReplacementDialogBox = new();
+            //if (fontReplacementDialogBox.ShowDialog() == true)
+            //{
+            //    if (_fontFile is not null)
+            //    {
+            //        _fontFile.OverwriteFont(
+            //            fontReplacementDialogBox.SelectedFontFamily,
+            //            fontReplacementDialogBox.SelectedFontSize,
+            //            fontReplacementDialogBox.StartingChar,
+            //            fontReplacementDialogBox.EndingChar,
+            //            fontReplacementDialogBox.SelectedEncoding);
+            //    }
+            //    else if (_mcb is not null)
+            //    {
+            //        _mcb.FontFile.OverwriteFont(
+            //            fontReplacementDialogBox.SelectedFontFamily,
+            //            fontReplacementDialogBox.SelectedFontSize,
+            //            fontReplacementDialogBox.StartingChar,
+            //            fontReplacementDialogBox.EndingChar,
+            //            fontReplacementDialogBox.SelectedEncoding);
+            //    }
+            //}
         }
 
         private void OpenDataFileButton_Click(object sender, RoutedEventArgs e)

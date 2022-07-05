@@ -197,6 +197,7 @@ namespace HaruhiHeiretsuLib
                     if (directBytesToWrite + numNext > 0x1FFF)
                     {
                         WriteDirectBytes(decompressedData, compressedData, i, directBytesToWrite);
+                        directBytesToWrite = 0;
                     }
                     if (!lookbackDictionary.ContainsKey(nextEntry))
                     {
