@@ -230,6 +230,35 @@ namespace HaruhiHeiretsuLib.Graphics
             Edited = true;
             switch (Mode)
             {
+                case ImageMode.IA8:
+                    int ia8Index = DataPointer;
+                    for (int y = 0; y < Height; y += 4)
+                    {
+                        int widthMod = (4 - (Width % 4)) == 4 ? 0 : 4 - (Width % 4);
+                        for (int x = 0; x < Width + widthMod; x += 4)
+                        {
+                            for (int row = 0; row < 4; row++)
+                            {
+                                for (int col = 0; col < 4; col++)
+                                {
+                                    if (ia8Index + 1 >= Data.Count || x + col >= Width || y + row >= Height)
+                                    {
+                                        ia8Index += 2;
+                                        continue;
+                                    }
+
+                                    SKColor color = bitmap.GetPixel(x + col, y + row);
+                                    byte grayscale = (byte)((color.Red / 3) + (color.Blue / 3) + (color.Green / 3));
+                                    byte alpha = color.Alpha;
+
+                                    Data[ia8Index] = alpha;
+                                    Data[ia8Index + 1] = grayscale;
+                                    ia8Index += 2;
+                                }
+                            }
+                        }
+                    }
+                    break;
                 case ImageMode.RGBA8:
                     int rgba8HeightMod = (4 - (Height % 4)) == 4 ? 0 : 4 - (Height % 4);
                     for (int y = 0; y < Height + rgba8HeightMod; y += 4)
@@ -254,35 +283,6 @@ namespace HaruhiHeiretsuLib.Graphics
                                     Data[index + 1] = color.Red;
                                     Data[index + 32] = color.Green;
                                     Data[index + 33] = color.Blue;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                case ImageMode.IA8:
-                    int ia8Index = DataPointer;
-                    for (int y = 0; y < Height; y += 4)
-                    {
-                        int widthMod = (4 - (Width % 4)) == 4 ? 0 : 4 - (Width % 4);
-                        for (int x = 0; x < Width + widthMod; x += 4)
-                        {
-                            for (int row = 0; row < 4; row++)
-                            {
-                                for (int col = 0; col < 4; col++)
-                                {
-                                    if (ia8Index + 1 >= Data.Count || x + col >= Width || y + row >= Height)
-                                    {
-                                        ia8Index += 2;
-                                        continue;
-                                    }
-
-                                    SKColor color = bitmap.GetPixel(x + col, y + row);
-                                    byte grayscale = (byte) ((color.Red / 3) + (color.Blue / 3) + (color.Green / 3));
-                                    byte alpha = color.Alpha;
-
-                                    Data[ia8Index] = alpha;
-                                    Data[ia8Index + 1] = grayscale;
-                                    ia8Index += 2;
                                 }
                             }
                         }
