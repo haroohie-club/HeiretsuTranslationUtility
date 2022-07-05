@@ -1,13 +1,11 @@
 ﻿using HaruhiHeiretsuLib;
 using Mono.Options;
-using Newtonsoft.Json;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuCLI
 {
@@ -52,7 +50,9 @@ namespace HaruhiHeiretsuCLI
             for (int i = 0; i <  _extendedCharacters.Length; i++)
             {
                 string encodedCharacter = "";
-                while (encodedCharacter == "" || fontReplacementMap.ContainsKey(encodedCharacter))
+                // 0x8163 is an exception case in code and it's easier to just not use it than it is to try to hack around it (-1 is to compensate for the ++)
+                // If encodedCharacter is empty, that means there is no Shift-JIS character at that codepoint
+                while (codePoint - 1 == 0x8163 || encodedCharacter == "" || fontReplacementMap.ContainsKey(encodedCharacter))
                 {
                     encodedCharacter = Encoding.GetEncoding("Shift-JIS").GetString(BitConverter.GetBytes(codePoint++).Reverse().ToArray()).Replace("\0", "");
                 }
