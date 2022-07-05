@@ -32,6 +32,24 @@ namespace HaruhiHeiretsuLib.Archive
         public FileInArchive()
         {
         }
+
+        public T CastTo<T>() where T : FileInArchive, new()
+        {
+            T newFile = new();
+            newFile.McbId = McbId;
+            newFile.Location = Location;
+            newFile.McbEntryData = McbEntryData;
+            newFile.MagicInteger = MagicInteger;
+            newFile.Index = Index;
+            newFile.Offset = Offset;
+            newFile.Length = Length;
+            newFile.Data = Data;
+            newFile.CompressedData = CompressedData;
+            newFile.Edited = Edited;
+            newFile.Initialize(Data.ToArray(), Offset);
+
+            return newFile;
+        }
     }
 
     public static class FileManager<T>

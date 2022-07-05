@@ -59,7 +59,7 @@ namespace HaruhiHeiretsuLib
                 cFile += $"            return {grouping.Key};\n";
             }
             cFile += @"        default:
-            return 144;
+            return 354;
     }
 }";
             return cFile;
@@ -80,5 +80,10 @@ namespace HaruhiHeiretsuLib
     {
         public string Character { get; set; }
         public int Spacing { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Character} ({Spacing} units)";
+        }
     }
 }
