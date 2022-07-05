@@ -277,11 +277,11 @@ namespace HaruhiHeiretsuLib.Graphics
                                     }
 
                                     SKColor color = bitmap.GetPixel(x + col, y + row);
-                                    byte grayscale = color.Red;
+                                    byte grayscale = (byte) ((color.Red / 3) + (color.Blue / 3) + (color.Green / 3));
                                     byte alpha = color.Alpha;
 
-                                    Data[ia8Index] = grayscale;
-                                    Data[ia8Index + 1] = alpha;
+                                    Data[ia8Index] = alpha;
+                                    Data[ia8Index + 1] = grayscale;
                                     ia8Index += 2;
                                 }
                             }
