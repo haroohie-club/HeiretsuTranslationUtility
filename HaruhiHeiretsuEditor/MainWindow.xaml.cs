@@ -830,19 +830,11 @@ namespace HaruhiHeiretsuEditor
                 if (Path.GetFileName(openFileDialog.FileName) == "dat.bin")
                 {
                     DataFile currentMapDefFile = _datFile.Files.First(f => f.Index == 58);
-                    MapDefinitionsFile mapDefFile = new();
-                    mapDefFile.Initialize(currentMapDefFile.Data.ToArray(), currentMapDefFile.Offset);
-                    mapDefFile.CompressedData = currentMapDefFile.CompressedData;
-                    mapDefFile.Index = currentMapDefFile.Index;
-                    mapDefFile.MagicInteger = currentMapDefFile.MagicInteger;
+                    MapDefinitionsFile mapDefFile = currentMapDefFile.CastTo<MapDefinitionsFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentMapDefFile)] = mapDefFile;
 
                     DataFile currentCameraDataFile = _datFile.Files.First(f => f.Index == 36);
-                    CameraDataFile cameraDataFile = new();
-                    cameraDataFile.Initialize(currentCameraDataFile.Data.ToArray(), currentCameraDataFile.Offset);
-                    cameraDataFile.CompressedData = currentCameraDataFile.CompressedData;
-                    cameraDataFile.Index = currentCameraDataFile.Index;
-                    cameraDataFile.MagicInteger = currentCameraDataFile.MagicInteger;
+                    CameraDataFile cameraDataFile = currentCameraDataFile.CastTo<CameraDataFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentCameraDataFile)] = cameraDataFile;
                 }
 
