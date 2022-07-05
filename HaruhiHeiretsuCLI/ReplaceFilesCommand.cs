@@ -73,7 +73,10 @@ namespace HaruhiHeiretsuCLI
                     mcb.LoadGraphicsFiles(file.Split('_'));
                     for (; i < mcb.GraphicsFiles.Count; i++)
                     {
-                        ((GraphicsFile)mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc]).Set20AF30Image(bitmap);
+                        GraphicsFile graphicsFile = new GraphicsFile();
+                        graphicsFile.Initialize(mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Data.ToArray(), 0);
+                        graphicsFile.Set20AF30Image(bitmap);
+                        mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc] = graphicsFile;
                     }
 
                     archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
