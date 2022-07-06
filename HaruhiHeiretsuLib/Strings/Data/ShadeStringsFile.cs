@@ -72,7 +72,7 @@ namespace HaruhiHeiretsuLib.Strings
                 {
                     Line = Encoding.GetEncoding("Shift-JIS").GetString(lineData),
                     Offset = EndPointerPointers[i],
-                    Speaker = Speaker.ANNOUNCEMENT,
+                    Speaker = ScriptFileSpeaker.ANNOUNCEMENT.ToString(),
                     NumPaddingZeroes = 4 - (lineData.Length % 4),
                 });
             }

@@ -1,4 +1,5 @@
-﻿using HaruhiHeiretsuLib.Graphics;
+﻿using HaruhiHeiretsuLib.Data;
+using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
 using HaruhiHeiretsuLib.Strings.Events;
 using HaruhiHeiretsuLib.Strings.Scripts;
@@ -297,6 +298,9 @@ namespace HaruhiHeiretsuLib.Archive
                 int parentLoc = int.Parse(lineSplit[0]);
                 int childLoc = int.Parse(lineSplit[1]);
 
+                MapDefinitionsFile mapDefinitionsFile = McbSubArchives[0].Files[79].CastTo<MapDefinitionsFile>();
+                MapDefinition mapDef = mapDefinitionsFile.Sections[((McbSubArchives[parentLoc].Id >> 8) ^ 0x40) - 2].MapDefinitions[McbSubArchives[parentLoc].Id & 0xFF];
+
                 switch ((ArchiveIndex)McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveIndex)
                 {
                     case ArchiveIndex.DAT:
@@ -314,7 +318,7 @@ namespace HaruhiHeiretsuLib.Archive
                         scriptFile.AvailableCommands = scriptCommands;
                         scriptFile.McbEntryData = (McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveIndex, McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveOffset);
                         scriptFile.CompressedData = McbSubArchives[parentLoc].Files[childLoc].CompressedData;
-                        scriptFile.PopulateCommandBlocks();
+                        scriptFile.PopulateCommandBlocks(mapDef.Evts);
                         StringsFiles.Add((parentLoc, childLoc));
                         McbSubArchives[parentLoc].Files[childLoc] = scriptFile;
                         break;

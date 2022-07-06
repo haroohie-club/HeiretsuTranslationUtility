@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace HaruhiHeiretsuLib.Strings.Scripts
 {
-    public struct Parameter
+    public class Parameter
     {
         public ScriptCommand.ParameterType Type { get; set; }
         public byte[] Value { get; set; }
@@ -696,7 +696,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         {
             if (characterCode <= 32)
             {
-                return ((Speaker)characterCode).ToString();
+                return ((ScriptFileSpeaker)characterCode).ToString();
             }
             else
             {
@@ -725,7 +725,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             }
             else
             {
-                return (short)((int)Enum.Parse(typeof(Speaker), character));
+                return (short)((int)Enum.Parse(typeof(ScriptFileSpeaker), character));
             }
         }
 

@@ -17,7 +17,7 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
         public ushort Unknown26 { get; set; }
         public ushort Unknown28 { get; set; }
         public ushort Unknown2A { get; set; }
-        public Speaker SpeakingCharacter { get; set; }
+        public EventFileSpeaker SpeakingCharacter { get; set; }
         public string VoiceFile { get; set; }
         public string Dialogue { get; set; }
         public string LipSyncData { get; set; } = string.Empty;
@@ -32,7 +32,7 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
             Unknown26 = BitConverter.ToUInt16(data.Skip(offset + 0x26).Take(2).ToArray());
             Unknown28 = BitConverter.ToUInt16(data.Skip(offset + 0x28).Take(2).ToArray());
             Unknown2A = BitConverter.ToUInt16(data.Skip(offset + 0x2A).Take(2).ToArray());
-            SpeakingCharacter = (Speaker)BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).ToArray());
+            SpeakingCharacter = (EventFileSpeaker)BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).ToArray());
             VoiceFile = Encoding.ASCII.GetString(data.Skip(offset + 0x30).TakeWhile(b => b != 0x00).ToArray());
             Dialogue = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(offset + 0x50).TakeWhile(b => b != 0x00).ToArray());
             byte[] lipSyncData = data.Skip(offset + 0xD0).TakeWhile(b => b != 0x00).ToArray();

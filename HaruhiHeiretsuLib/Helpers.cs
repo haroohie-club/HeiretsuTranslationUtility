@@ -11,6 +11,18 @@ namespace HaruhiHeiretsuLib
         private const ulong F2 = 0x4330000080000000L;
         private const ulong F0 = 0x3F50000000000000L;
 
+        public static short? ToShortOrDefault(IEnumerable<byte> bytes)
+        {
+            if (bytes is null || bytes.Count() != 2)
+            {
+                return null;
+            }
+            else
+            {
+                return BitConverter.ToInt16(bytes.Reverse().ToArray());
+            }
+        }
+
         public static int FloatToInt(float value)
         {
             double d1 = value / BitConverter.UInt64BitsToDouble(F0);

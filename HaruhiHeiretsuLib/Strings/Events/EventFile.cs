@@ -1,8 +1,8 @@
-﻿using System;
+﻿using HaruhiHeiretsuLib.Strings.Events.Parameters;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace HaruhiHeiretsuLib.Strings.Events
 {
@@ -44,18 +44,43 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public void ParseDialogue()
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-            var matches = Regex.Matches(Encoding.ASCII.GetString(Data.ToArray()), VOICE_REGEX);
-            foreach (Match match in matches)
+
+            IEnumerable<(ChapterDefinition, IEnumerable<DialogueParameter>)> parameters = CutsceneData.ChapterDefinitionTable
+                .Select(c => (c, c.ActorDefinitionTable
+                .SelectMany(d => d.ActionsTable
+                .SelectMany(a => a.Parameters
+                .Where(p => p.GetType() == typeof(DialogueParameter))
+                .Select(p => (DialogueParameter)p)))));
+
+            int i = 0;
+            foreach ((ChapterDefinition chapter, IEnumerable<DialogueParameter> dialogue) in parameters)
             {
-                Speaker speaker = DialogueLine.GetSpeaker(match.Groups["characterCode"].Value);
-                string line = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(match.Index + 32).TakeWhile(b => b != 0x00).ToArray());
-                DialogueLines.Add(new DialogueLine { Offset = match.Index + 32, Line = line, Speaker = speaker });
+                int j = 0;
+                foreach (DialogueParameter parameter in dialogue)
+                {
+                    DialogueLines.Add(new() { Line = parameter.Dialogue, Speaker = parameter.SpeakingCharacter.ToString(), Offset = parameter.Address + 0x50 });
+                    if (j == 0)
+                    {
+                        DialogueLines.Last().Metadata.Add($"Chapter {i} Start");
+                    }
+                    DialogueLines.Last().Metadata.Add(parameter.VoiceFile);
+                    j++;
+                }
+                i++;
             }
         }
 
         public override void EditDialogue(int index, string newLine)
         {
             (_, byte[] newLineData) = DialogueEditSetUp(index, newLine);
+
+            if (newLineData.Length < DialogueLines[index].Length)
+            {
+                List<byte> temp = new();
+                temp.AddRange(newLineData);
+                temp.AddRange(new byte[DialogueLines[index].Length - newLineData.Length]);
+                newLineData = temp.ToArray();
+            }
 
             Data.RemoveRange(DialogueLines[index].Offset, newLineData.Length);
             Data.InsertRange(DialogueLines[index].Offset, newLineData);

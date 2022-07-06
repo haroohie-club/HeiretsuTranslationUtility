@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Resources.NetStandard;
 using System.Text;
 
 namespace HaruhiHeiretsuLib.Strings.Scripts
@@ -26,6 +29,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public int ScriptCommandBlockDefinitionsEndOffset { get; set; }
         public int ScriptCommandBlockDefinitionsEnd { get; set; }
 
+        public const int DIALOGUE_LINE_LENGTH = int.MaxValue;
 
         public ScriptFile()
         {
@@ -109,31 +113,134 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 ScriptCommandBlocks.Add(new(i, endAddress, Data, Objects));
             }
 
-            DialogueLines = ScriptCommandBlocks
-                .SelectMany(b => b.Invocations.Where(i => i.CommandCode != 0x4B) // TL_ADD (4B) does not have real dialogue, just references
+            (ScriptCommandBlock commandBlock, DialogueLine[] dialogue)[] dialogueLines = ScriptCommandBlocks
+                .Select(b => (b, b.Invocations.Where(i => i.CommandCode != 0x4B) // TL_ADD (4B) does not have real dialogue, just references
                 .SelectMany(i => i.Parameters.Where(p => p.Type == ScriptCommand.ParameterType.DIALOGUE)
                 .Select(p => new DialogueLine()
                 {
                     Line = Objects[BitConverter.ToInt16(p.Value.Reverse().ToArray())],
-                    Speaker = i.CommandCode >= 0x2E && i.CommandCode <= 0x31 ? Speaker.CHOICE : (Speaker)i.CharacterEntity
-                }))).ToList();
+                    Speaker = (i.CommandCode >= 0x2E && i.CommandCode <= 0x31 ? ScriptFileSpeaker.CHOICE : (ScriptFileSpeaker)i.CharacterEntity).ToString(),
+                    Offset = i.Address,
+                })).ToArray())).ToArray();
+
+            // Add voice file metadata
+            for (int i = 0; i < dialogueLines.Length; i++)
+            {
+                if (dialogueLines[i].dialogue.Length > 0)
+                {
+                    dialogueLines[i].dialogue[0].Metadata.Add($"Block '{dialogueLines[i].commandBlock.Name}' Start");
+
+                    for (int j = 0; j < dialogueLines[i].dialogue.Length; j++)
+                    {
+                        string voiceFile = Objects.ElementAtOrDefault(Helpers.ToShortOrDefault(ScriptCommandBlocks
+                            .SelectMany(b => (b.Invocations
+                            .FirstOrDefault(inv => (inv?.Address ?? -1) == dialogueLines[i].dialogue[j].Offset)?.Parameters ?? new List<Parameter>())
+                            .FirstOrDefault(p => p.Type == ScriptCommand.ParameterType.VARINDEX)?.Value ?? Array.Empty<byte>())) ?? -1);
+                        if (!string.IsNullOrEmpty(voiceFile))
+                        {
+                            dialogueLines[i].dialogue[j].Metadata.Add(voiceFile);
+                        }
+                    }
+                }
+            }
+
+            DialogueLines = dialogueLines.SelectMany(k => k.dialogue).ToList();
         }
 
         private Parameter[] GetDialogueParameters()
         {
             return ScriptCommandBlocks.SelectMany(b => b.Invocations.Where(i => i.CommandCode != 0x4B)
-            .SelectMany(i => i.Parameters.Where(p => p.Type == ScriptCommand.ParameterType.DIALOGUE))).ToArray();
+                .SelectMany(i => i.Parameters.Where(p => p.Type == ScriptCommand.ParameterType.DIALOGUE))).ToArray();
         }
 
         public override void EditDialogue(int index, string newLine)
         {
             DialogueLines[index].Line = newLine;
-            Objects.Add(newLine);
+            Objects.Add(newLine); // add new line to the script objects collection; when recompiling, the old line will be removed if it is not referenced elsewhere in the script
 
             Parameter[] dialogueParams = GetDialogueParameters();
-            dialogueParams[index].Value = BitConverter.GetBytes((short)(Objects.Count - 1)).Reverse().ToArray();
+            dialogueParams[index].Value = BitConverter.GetBytes((short)(Objects.Count - 1)).Reverse().ToArray(); // change the dialogue pointer to the new script object
 
             Recompile();
+        }
+
+        public override void ImportResxFile(string fileName, FontReplacementMap fontReplacementMap)
+        {
+            base.ImportResxFile(fileName, fontReplacementMap);
+
+
+            string resxContents = File.ReadAllText(fileName);
+            resxContents = resxContents.Replace("System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                "System.Resources.NetStandard.ResXResourceWriter, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            resxContents = resxContents.Replace("System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                "System.Resources.NetStandard.ResXResourceReader, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            TextReader textReader = new StringReader(resxContents);
+
+            using ResXResourceReader resxReader = new(textReader);
+            foreach (DictionaryEntry d in resxReader)
+            {
+                int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
+                string dialogueText = (string)d.Value;
+
+                // Replace all faux-ellipses with an ellipsis character
+                dialogueText = dialogueText.Replace("...", "…");
+                // Replace all faux-em-dashes with actual em-dash characters
+                dialogueText = dialogueText.Replace("--", "—");
+                // Consolidate Unix/Windows newlines to just \n
+                dialogueText = dialogueText.Replace("\r\n", "\n");
+                // We start by replacing all quotes with the open quotes, then will replace them with closed quotes as we go
+                dialogueText = dialogueText.Replace("\"", "“");
+
+                int lineLength = 0;
+                for (int i = 0; i < dialogueText.Length; i++)
+                {
+                    if (dialogueText[i] == '#' && dialogueText.Length - i >= 3)
+                    {
+                        // skip replacement/line length increment for operators
+                        if (dialogueText[i + 1] == 'b' && dialogueText[i + 2] == 'w' || dialogueText[i + 1] == 'F')
+                        {
+                            i += 2;
+                            continue;
+                        }
+                        else if (dialogueText.Length - i >= 5 && dialogueText[i + 1] == 'b' && dialogueText[i + 2] == 't')
+                        {
+                            i += 2;
+                            IEnumerable<char> nums = dialogueText.Skip(i + 2).TakeWhile(c => char.IsNumber(c));
+                            i += nums.Count();
+                            continue;
+                        }
+                    }
+
+                    if (dialogueText[i] == '“' && (i == dialogueText.Length - 1
+                        || dialogueText[i + 1] == ' ' || dialogueText[i + 1] == '!' || dialogueText[i + 1] == '?' || dialogueText[i + 1] == '.' || dialogueText[i + 1] == '…' || dialogueText[i + 1] == '\n'))
+                    {
+                        dialogueText.Remove(i, 1);
+                        dialogueText.Insert(i, "”");
+                    }
+
+                    if (fontReplacementMap.ContainsReplacement($"{dialogueText[i]}"))
+                    {
+                        lineLength += fontReplacementMap.GetReplacementCharacterWidth($"{dialogueText[i]}");
+                        dialogueText.Remove(i, 1);
+                        dialogueText.Insert(i, fontReplacementMap.GetStartCharacterForReplacement($"{dialogueText[i]}"));
+                    }
+
+                    if (dialogueText[i] == '\n')
+                    {
+                        lineLength = 0;
+                    }
+
+                    if (dialogueText[i] != ' ' && lineLength > DIALOGUE_LINE_LENGTH)
+                    {
+                        int indexOfMostRecentSpace = dialogueText[0..i].LastIndexOf(' ');
+                        dialogueText = dialogueText.Remove(indexOfMostRecentSpace, 1);
+                        dialogueText = dialogueText.Insert(indexOfMostRecentSpace, "\n");
+                        lineLength = 0;
+                    }
+                }
+
+                EditDialogue(dialogueIndex, dialogueText);
+            }
         }
 
         public void Recompile()
@@ -263,7 +370,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             Data = bytes;
         }
 
-        public void PopulateCommandBlocks()
+        public void PopulateCommandBlocks(short[] eventFileIndices = null)
         {
             List<ScriptCommandInvocation> allInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToList();
             int numLabels = 0;
@@ -288,8 +395,14 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     }
                 }
             }
-
-            TagDialogueWithVjumpMetadata();
+            if (DialogueLines.Count > 0)
+            {
+                TagDialogueWithVjumpMetadata();
+                if (eventFileIndices is not null)
+                {
+                    TagDialogueWithEventFileMetadata(eventFileIndices);
+                }
+            }
         }
 
         private void TagDialogueWithVjumpMetadata()
@@ -300,7 +413,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
             for (int i = 0; i < DialogueLines.Count; i++)
             {
-                if (DialogueLines[i].Speaker == Speaker.CHOICE)
+                if (DialogueLines[i].Speaker == ScriptFileSpeaker.CHOICE.ToString())
                 {
                     int selectIndex = Array.IndexOf(allInvocations, allInvocations.First(v => v.LineNumber == dialogueParams[i].LineNumber));
                     if (NumChoicesPerInvocationIndex.ContainsKey(selectIndex))
@@ -370,6 +483,47 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             }
         }
 
+        public void TagDialogueWithEventFileMetadata(short[] scriptEventFiles)
+        {
+            ScriptCommandInvocation[] allInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToArray();
+
+            for (int i = 0; i < allInvocations.Length; i++)
+            {
+                if (allInvocations[i].Command.Name == "EV_START")
+                {
+                    int eventId = scriptEventFiles[int.Parse(allInvocations[i].CalculateIntParameter(Helpers.GetIntFromByteArray(allInvocations[i].Parameters.First(p => p.Type == ScriptCommand.ParameterType.INT).Value, 0),
+                        Helpers.GetIntFromByteArray(allInvocations[i].Parameters.First(p => p.Type == ScriptCommand.ParameterType.INT).Value, 1))[4..])];
+                    List<int> chapters = new();
+                    byte[] chaptersParam = allInvocations[i].Parameters.FirstOrDefault(p => p.Type == ScriptCommand.ParameterType.INTARRAY)?.Value;
+                    if (chaptersParam is not null)
+                    {
+                        int numValues = Helpers.GetIntFromByteArray(chaptersParam, 0);
+                        for (int j = 1; j <= numValues; j++)
+                        {
+                            chapters.Add(int.Parse(allInvocations[i].CalculateIntParameter(Helpers.GetIntFromByteArray(chaptersParam, j * 2 - 1), Helpers.GetIntFromByteArray(chaptersParam, j * 2))[4..]));
+                        }
+                    }
+
+                    int minDistance = int.MaxValue;
+                    int minDistanceLine = 0;
+                    for (int j = 0; j < DialogueLines.Count; j++)
+                    {
+                        int distanceBetweenDialogueLineAndEventStart = allInvocations.Where(inv => inv.Address == DialogueLines[j].Offset)
+                            .Select(inv => Math.Abs(inv.LineNumber - allInvocations[i].LineNumber)).FirstOrDefault();
+                        if (distanceBetweenDialogueLineAndEventStart < minDistance)
+                        {
+                            minDistance = distanceBetweenDialogueLineAndEventStart;
+                            minDistanceLine = j;
+                        }
+                    }
+
+                    string beforeAfter = DialogueLines[minDistanceLine].Offset > allInvocations[i].Address ? "before" : "after";
+                    string chaptersString = chapters.Count > 0 ? $" (ch {string.Join(", ", chapters)})" : "";
+                    DialogueLines[minDistanceLine].Metadata.Add($"Event evt-{eventId:D4}{chaptersString} starts {beforeAfter}");
+                }
+            }
+        }
+
         public static List<string> ParseScriptListFile(byte[] scriptListFileData)
         {
             List<string> scriptList = new();
@@ -395,5 +549,5 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 return $"{Index:X3} {Index:D4} 0x{Offset:X8} {Name}";
             }
         }
-    }    
+    }
 }

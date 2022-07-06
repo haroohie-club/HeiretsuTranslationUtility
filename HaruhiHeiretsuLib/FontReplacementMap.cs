@@ -40,6 +40,21 @@ namespace HaruhiHeiretsuLib
             kv => kv.Value);
         }
 
+        public bool ContainsReplacement(string replacement)
+        {
+            return Map.Any(kv => kv.Value.Character == replacement);
+        }
+
+        public string GetStartCharacterForReplacement(string replacement)
+        {
+            return Encoding.GetEncoding("Shift-JIS").GetString(BitConverter.GetBytes(Map.First(kv => kv.Value.Character == replacement).Key).Reverse().ToArray());
+        }
+
+        public int GetReplacementCharacterWidth(string replacement)
+        {
+            return Map.First(kv => kv.Value.Character == replacement).Value.Spacing;
+        }
+
         public string GetFontHackCFile()
         {
             string cFile = @"int font_offset(unsigned short character)
@@ -52,9 +67,9 @@ namespace HaruhiHeiretsuLib
 
             foreach (IGrouping<int, KeyValuePair<ushort, FontReplacementCharacter>> grouping in switchGroup)
             {
-                foreach ((ushort start, FontReplacementCharacter replacement) in grouping)
+                foreach ((ushort startingValue, _) in grouping)
                 {
-                    cFile += $"        case 0x{start:X4}:\n";
+                    cFile += $"        case 0x{startingValue:X4}:\n";
                 }
                 cFile += $"            return {grouping.Key};\n";
             }

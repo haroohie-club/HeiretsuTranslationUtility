@@ -29,31 +29,9 @@ namespace HaruhiHeiretsuLib.Strings
             return (oldLength, newLineData);
         }
 
-        public void ImportResxFile(string fileName)
+        public virtual void ImportResxFile(string fileName, FontReplacementMap fontReplacementMap)
         {
             Edited = true;
-            string resxContents = File.ReadAllText(fileName);
-            resxContents = resxContents.Replace("System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-                "System.Resources.NetStandard.ResXResourceWriter, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-            resxContents = resxContents.Replace("System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-                "System.Resources.NetStandard.ResXResourceReader, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-            TextReader textReader = new StringReader(resxContents);
-
-            using ResXResourceReader resxReader = new(textReader);
-            foreach (DictionaryEntry d in resxReader)
-            {
-                int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
-                string dialogueText = (string)d.Value;
-
-                // Replace all faux-ellipses with an ellipsis character
-                dialogueText = dialogueText.Replace("...", "…");
-                // Replace all faux-em-dashes with actual em-dash characters
-                dialogueText = dialogueText.Replace("--", "—");
-                // Consolidate Unix/Windows newlines to just \n
-                dialogueText = dialogueText.Replace("\r\n", "\n");
-
-                int lineLength = 0;
-            }
         }
 
         public void WriteResxFile(string fileName)
@@ -63,7 +41,7 @@ namespace HaruhiHeiretsuLib.Strings
             {
                 if (!string.IsNullOrWhiteSpace(DialogueLines[i].Line) && DialogueLines[i].Length > 1)
                 {
-                    resxWriter.AddResource(new ResXDataNode($"{i:D4} ({Path.GetFileNameWithoutExtension(fileName)}) {DialogueLines[i].Speaker}",
+                    resxWriter.AddResource(new ResXDataNode($"{i:D4} ({Path.GetFileNameWithoutExtension(fileName)}) {DialogueLines[i].Speaker}{(DialogueLines[i].Metadata.Count > 0 ? $" - {string.Join(", ", DialogueLines[i].Metadata)}" : "")}",
                         DialogueLines[i].Line));
                 }
             }
@@ -85,7 +63,7 @@ namespace HaruhiHeiretsuLib.Strings
     public class DialogueLine
     {
         public string Line { get; set; }
-        public Speaker Speaker { get; set; }
+        public string Speaker { get; set; }
         public int Offset { get; set; }
         public int Length => Encoding.GetEncoding("Shift-JIS").GetByteCount(Line);
         public int NumPaddingZeroes { get; set; } = 1;
@@ -97,65 +75,65 @@ namespace HaruhiHeiretsuLib.Strings
             return $"{Speaker}: {Line}";
         }
 
-        public static Speaker GetSpeaker(string code)
+        public static ScriptFileSpeaker GetSpeaker(string code)
         {
             switch (code)
             {
                 case "ANN":
-                    return Speaker.ANNOUNCEMENT;
+                    return ScriptFileSpeaker.ANNOUNCEMENT;
                 case "CAP":
-                    return Speaker.CAPTAIN;
+                    return ScriptFileSpeaker.CAPTAIN;
                 case "CRF":
-                    return Speaker.CREW_F;
+                    return ScriptFileSpeaker.CREW_F;
                 case "CRM":
-                    return Speaker.CREW_M;
+                    return ScriptFileSpeaker.CREW_M;
                 case "GF1":
-                    return Speaker.GUEST_F1;
+                    return ScriptFileSpeaker.GUEST_F1;
                 case "GF2":
-                    return Speaker.GUEST_F2;
+                    return ScriptFileSpeaker.GUEST_F2;
                 case "GF3":
-                    return Speaker.GUEST_F3;
+                    return ScriptFileSpeaker.GUEST_F3;
                 case "GM1":
-                    return Speaker.GUEST_M1;
+                    return ScriptFileSpeaker.GUEST_M1;
                 case "GM2":
-                    return Speaker.GUEST_M2;
+                    return ScriptFileSpeaker.GUEST_M2;
                 case "GM3":
-                    return Speaker.GUEST_M3;
+                    return ScriptFileSpeaker.GUEST_M3;
                 case "HRH":
-                    return Speaker.HARUHI;
+                    return ScriptFileSpeaker.HARUHI;
                 case "KZM":
-                    return Speaker.KOIZUMI;
+                    return ScriptFileSpeaker.KOIZUMI;
                 case "KUN":
-                    return Speaker.KUNIKIDA;
+                    return ScriptFileSpeaker.KUNIKIDA;
                 case "KYN":
-                    return Speaker.KYON;
+                    return ScriptFileSpeaker.KYON;
                 case "KY2":
-                    return Speaker.KYON2;
+                    return ScriptFileSpeaker.KYON2;
                 case "MKT":
-                    return Speaker.MIKOTO;
+                    return ScriptFileSpeaker.MIKOTO;
                 case "MKR":
-                    return Speaker.MIKURU;
+                    return ScriptFileSpeaker.MIKURU;
                 case "MNL":
-                    return Speaker.MONOLOGUE;
+                    return ScriptFileSpeaker.MONOLOGUE;
                 case "NGT":
-                    return Speaker.NAGATO;
+                    return ScriptFileSpeaker.NAGATO;
                 case "NG2":
-                    return Speaker.NAGATO2;
+                    return ScriptFileSpeaker.NAGATO2;
                 case "SIS":
-                    return Speaker.KYN_SIS;
+                    return ScriptFileSpeaker.KYN_SIS;
                 case "TAI":
-                    return Speaker.TAIICHIRO;
+                    return ScriptFileSpeaker.TAIICHIRO;
                 case "TAN":
-                    return Speaker.TANIGUCHI;
+                    return ScriptFileSpeaker.TANIGUCHI;
                 case "TRY":
-                    return Speaker.TSURUYA;
+                    return ScriptFileSpeaker.TSURUYA;
                 default:
-                    return Speaker.UNKNOWN;
+                    return ScriptFileSpeaker.UNKNOWN;
             }
         }
     }
 
-    public enum Speaker
+    public enum ScriptFileSpeaker
     {
         UNKNOWN = -3,
         CHOICE = -2,
@@ -193,5 +171,30 @@ namespace HaruhiHeiretsuLib.Strings
         ANOTHER_ONE,
         ANOTHER_TWO,
         CREW_32,
+    }
+
+    public enum EventFileSpeaker
+    {
+        MONOLOGUE = -1,
+        KYON = 0,
+        HARUHI = 1,
+        NAGATO = 2,
+        MIKURU = 3,
+        KOIZUMI = 4,
+        TSURUYA = 5,
+        KYN_SIS = 6,
+        MIKOTO = 7,
+        TAIICHIRO = 8,
+        KYON2 = 9,
+        NAGATO2 = 10,
+        MIKURU2 = 11, // guess
+        KOIZUMI2 = 12, // guess
+        CAPTAIN = 14,
+        CREW_FEMALE = 17,
+        CREW_MALE = 18,
+        GUEST_MALE2 = 20,
+        GUEST_FEMALE1 = 21,
+        TANIGUCHI = 23,
+        KUNIKIDA = 24,
     }
 }

@@ -56,6 +56,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
     {
         private ushort _opCode;
         public int ActionsTableEntryAddress { get; set; }
+        public int Address { get; set; }
         public float StartFrame { get; set; }
         public float EndFrame { get; set; }
         [JsonIgnore]
@@ -110,6 +111,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         public ActionParameter(IEnumerable<byte> data, int offset, ushort opCode)
         {
+            Address = offset;
             _opCode = opCode;
             ActionsTableEntryAddress = BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
             StartFrame = BitConverter.ToSingle(data.Skip(offset + 0x04).Take(4).ToArray());
