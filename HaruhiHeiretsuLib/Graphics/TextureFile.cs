@@ -1,5 +1,6 @@
 ﻿using SkiaSharp;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace HaruhiHeiretsuLib.Graphics
@@ -115,6 +116,7 @@ namespace HaruhiHeiretsuLib.Graphics
                             }
                         }
                         break;
+
                     case ImageMode.RGBA8:
                         int rgba8HeightMod = (4 - (Height % 4)) == 4 ? 0 : 4 - (Height % 4);
                         for (int y = 0; y < Height + rgba8HeightMod; y += 4)
@@ -230,9 +232,38 @@ namespace HaruhiHeiretsuLib.Graphics
             Edited = true;
             switch (Mode)
             {
+                case ImageMode.IA4:
+                    int ia4Index = DataPointer;
+                    for (int y = 0; y < Height; y += 4)
+                    {
+                        int widthMod = (8 - (Width % 8)) == 8 ? 0 : 8 - (Width % 8);
+                        for (int x = 0; x < Width + widthMod; x += 8)
+                        {
+                            for (int row = 0; row < 4; row++)
+                            {
+                                for (int col = 0; col < 8; col++)
+                                {
+                                    if (ia4Index >= Data.Count || x + col >= Width || y + row >= Height)
+                                    {
+                                        ia4Index++;
+                                        continue;
+                                    }
+
+                                    SKColor color = bitmap.GetPixel(x + col, y + row);
+
+                                    byte colorComponent = (byte)(((color.Red / 3) + (color.Blue / 3) + (color.Green / 3)) / 0x11);
+                                    byte alphaComponent = (byte)(color.Alpha / 0x11);
+                                    Data[ia4Index++] = (byte)((alphaComponent << 4) | colorComponent);
+                                }
+                            }
+                        }
+                    }
+                    break;
+
                 case ImageMode.IA8:
                     int ia8Index = DataPointer;
-                    for (int y = 0; y < Height; y += 4)
+                    int ia8HeightMod = (4 - (Height % 4)) == 4 ? 0 : 4 - (Height % 4);
+                    for (int y = 0; y < Height + ia8HeightMod; y += 4)
                     {
                         int widthMod = (4 - (Width % 4)) == 4 ? 0 : 4 - (Width % 4);
                         for (int x = 0; x < Width + widthMod; x += 4)
@@ -257,6 +288,55 @@ namespace HaruhiHeiretsuLib.Graphics
                         }
                     }
                     break;
+
+                case ImageMode.RGB5A3:
+                    int rgb5a3Index = DataPointer;
+                    bool useAlpha = bitmap.Pixels.Any(p => p.Alpha < 0xFF); // if the alpha channel is used, we want to set top bit to 0
+                    for (int y = 0; y < Height; y += 4)
+                    {
+                        int widthMod = (4 - (Width % 4)) == 4 ? 0 : 4 - (Width % 4);
+                        for (int x = 0; x < Width + widthMod; x += 4)
+                        {
+                            for (int row = 0; row < 4; row++)
+                            {
+                                for (int col = 0; col < 4; col++)
+                                {
+                                    if (rgb5a3Index + 1 >= Data.Count || x + col >= Width || y + row >= Height)
+                                    {
+                                        rgb5a3Index += 2;
+                                        continue;
+                                    }
+
+                                    SKColor color = bitmap.GetPixel(x + col, y + row);
+
+                                    if (useAlpha)
+                                    {
+                                        byte alphaComponent = (byte)(color.Alpha / 0x20);
+                                        byte redComponent = (byte)(color.Red / 0x11);
+                                        byte greenComponent = (byte)(color.Green / 0x11);
+                                        byte blueComponent = (byte)(color.Blue / 0x11);
+
+                                        Data[rgb5a3Index] = (byte)((alphaComponent << 4) | redComponent);
+                                        Data[rgb5a3Index + 1] = (byte)((greenComponent << 4) | blueComponent);
+                                    }
+                                    else
+                                    {
+                                        byte topBit = 0x80;
+                                        byte redComponent = (byte)(color.Red / 0x08);
+                                        byte greenComponent = (byte)(color.Green / 0x08);
+                                        byte blueComponent = (byte)(color.Blue / 0x08);
+
+                                        Data[rgb5a3Index] = (byte)(topBit | (redComponent << 2) | (greenComponent >> 3));
+                                        Data[rgb5a3Index + 1] = (byte)((greenComponent & 0x07) << 5 | blueComponent);
+                                    }
+
+                                    rgb5a3Index += 2;
+                                }
+                            }
+                        }
+                    }
+                    break;
+
                 case ImageMode.RGBA8:
                     int rgba8HeightMod = (4 - (Height % 4)) == 4 ? 0 : 4 - (Height % 4);
                     for (int y = 0; y < Height + rgba8HeightMod; y += 4)
@@ -274,13 +354,81 @@ namespace HaruhiHeiretsuLib.Graphics
                                         continue;
                                     }
 
-
                                     SKColor color = bitmap.GetPixel(x + col, y + row);
 
                                     Data[index] = color.Alpha;
                                     Data[index + 1] = color.Red;
                                     Data[index + 32] = color.Green;
                                     Data[index + 33] = color.Blue;
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case ImageMode.CMPR:
+                    int cmprIndex = DataPointer;
+                    for (int y = 0; y < Height; y += 8)
+                    {
+                        int widthMod = (8 - (Width % 8)) == 8 ? 0 : 8 - (Width % 8);
+                        for (int x = 0; x < Width + widthMod; x += 8)
+                        {
+                            // 8x8 bytes, 4x4 sub-blocks
+                            for (int row = 0; row < 8; row += 4)
+                            {
+                                for (int col = 0; col < 8; col += 4)
+                                {
+                                    if (cmprIndex >= Data.Count)
+                                    {
+                                        break;
+                                    }
+
+                                    List<SKColor> texel = new();
+                                    for (int tY = 0; tY < 4; tY++)
+                                    {
+                                        for (int tX = 0; tX < 4; tX++)
+                                        {
+                                            texel.Add(bitmap.GetPixel(x + col + tX, y + row + tY));
+                                        }
+                                    }
+
+                                    SKColor[] palette = new SKColor[4];
+                                    palette[0] = new(texel.Max(p => p.Red), texel.Max(p => p.Green), texel.Max(p => p.Blue), 0xFF);
+                                    palette[1] = new(texel.Min(p => p.Red), texel.Min(p => p.Green), texel.Min(p => p.Blue), 0xFF);
+
+                                    if (texel.Any(p => p.Alpha < 0x80)) // arbitrary alpha clipping cutoff
+                                    {
+                                        (palette[1], palette[0]) = (palette[0], palette[1]);
+                                        palette[2] = new((byte)((palette[0].Red + palette[1].Red) / 2), (byte)((palette[0].Green + palette[1].Green) / 2), (byte)((palette[0].Blue + palette[1].Blue) / 2), 0xFF);
+                                        palette[3] = SKColors.Transparent;
+                                    }
+                                    else
+                                    {
+                                        palette[2] = new((byte)((palette[0].Red * 2 + palette[1].Red) / 3), (byte)((palette[0].Green * 2 + palette[1].Green) / 3), (byte)((palette[0].Blue * 2 + palette[1].Blue) / 3), 0xFF);
+                                        palette[3] = new((byte)((palette[0].Red + palette[1].Red * 2) / 3), (byte)((palette[0].Green + palette[1].Green * 2) / 3), (byte)((palette[0].Blue + palette[1].Blue * 2) / 3), 0xFF);
+                                    }
+
+                                    ushort[] paletteData = new ushort[2];
+                                    for (int i = 0; i < paletteData.Length; i++)
+                                    {
+                                        paletteData[i] = (ushort)(((palette[i].Red / 0x08) << 11) | ((palette[i].Green / 0x04) << 5) | ((palette[i].Blue / 0x08)));
+                                    }
+
+                                    byte[] paletteDataBytes = paletteData.SelectMany(s => BitConverter.GetBytes(s).Reverse()).ToArray();
+                                    Data[cmprIndex] = paletteDataBytes[0];
+                                    Data[cmprIndex + 1] = paletteDataBytes[1];
+                                    Data[cmprIndex + 2] = paletteDataBytes[2];
+                                    Data[cmprIndex + 3] = paletteDataBytes[3];
+                                    cmprIndex += 4;
+
+                                    for (int subRow = 0; subRow < 4; subRow++)
+                                    {
+                                        Data[cmprIndex++] = 
+                                            (byte)((Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4]) << 6)
+                                            | (Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4 + 1]) << 4)
+                                            | (Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4 + 2]) << 2)
+                                            | Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4 + 3]));
+                                    }
                                 }
                             }
                         }

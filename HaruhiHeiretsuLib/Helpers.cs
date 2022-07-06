@@ -1,12 +1,8 @@
 ﻿using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuLib
 {
@@ -43,17 +39,17 @@ namespace HaruhiHeiretsuLib
         }
 
         // redmean color distance formula with alpha term
-        public static double ColorDistance(Color color1, Color color2)
+        public static double ColorDistance(SKColor color1, SKColor color2)
         {
-            double redmean = (color1.R + color2.R) / 2.0;
+            double redmean = (color1.Red + color2.Red) / 2.0;
 
-            return Math.Sqrt((2 + redmean / 256) * Math.Pow(color1.R - color2.R, 2)
-                + 4 * Math.Pow(color1.G - color2.G, 2)
-                + (2 + (255 - redmean) / 256) * Math.Pow(color1.B - color2.B, 2)
-                + Math.Pow(color1.A - color2.A, 2));
+            return Math.Sqrt((2 + redmean / 256) * Math.Pow(color1.Red - color2.Red, 2)
+                + 4 * Math.Pow(color1.Green - color2.Green, 2)
+                + (2 + (255 - redmean) / 256) * Math.Pow(color1.Blue - color2.Blue, 2)
+                + Math.Pow(color1.Alpha - color2.Alpha, 2));
         }
 
-        public static int ClosestColorIndex(List<Color> colors, Color color)
+        public static int ClosestColorIndex(List<SKColor> colors, SKColor color)
         {
             var colorDistances = colors.Select(c => ColorDistance(c, color)).ToList();
 
