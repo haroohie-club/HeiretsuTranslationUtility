@@ -74,6 +74,24 @@ namespace HaruhiHeiretsuCLI
                                     topicsAndFlagsFile.ImportResxFile(file, fontReplacementMap);
                                     mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = topicsAndFlagsFile.DataFile;
                                     break;
+
+                                case DataStringsFileLocations.NAMEPLATES_MCB_INDEX:
+                                    DataStringsFile<NameplatesFile> nameplatesFile = mcbFile.CastTo<DataStringsFile<NameplatesFile>>();
+                                    nameplatesFile.ImportResxFile(file, fontReplacementMap);
+                                    mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = nameplatesFile.DataFile;
+                                    break;
+
+                                case DataStringsFileLocations.TIMELINE_MCB_INDEX:
+                                    DataStringsFile<TimelineFile> timelineFile = mcbFile.CastTo<DataStringsFile<TimelineFile>>();
+                                    timelineFile.ImportResxFile(file, fontReplacementMap);
+                                    mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = timelineFile.DataFile;
+                                    break;
+
+                                case DataStringsFileLocations.CLUBROOM_MCB_INDEX:
+                                    DataStringsFile<ClubroomFile> clubroomFile = mcbFile.CastTo<DataStringsFile<ClubroomFile>>();
+                                    clubroomFile.ImportResxFile(file, fontReplacementMap);
+                                    mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = clubroomFile.DataFile;
+                                    break;
                             }
                             break;
 
@@ -112,6 +130,18 @@ namespace HaruhiHeiretsuCLI
                                 DataStringsFile<NameplatesFile> nameplatesFile = dat.Files[archiveIndex].CastTo<DataStringsFile<NameplatesFile>>();
                                 nameplatesFile.ImportResxFile(file, fontReplacementMap);
                                 dat.Files[archiveIndex] = nameplatesFile.DataFile;
+                                break;
+
+                            case DataStringsFileLocations.TIMELINE_INDEX:
+                                DataStringsFile<TimelineFile> timelineFile = dat.Files[archiveIndex].CastTo<DataStringsFile<TimelineFile>>();
+                                timelineFile.ImportResxFile(file, fontReplacementMap);
+                                dat.Files[archiveIndex] = timelineFile.DataFile;
+                                break;
+
+                            case DataStringsFileLocations.CLUBROOM_INDEX:
+                                DataStringsFile<ClubroomFile> clubroomFile = dat.Files[archiveIndex].CastTo<DataStringsFile<ClubroomFile>>();
+                                clubroomFile.ImportResxFile(file, fontReplacementMap);
+                                dat.Files[archiveIndex] = clubroomFile.DataFile;
                                 break;
                         }
                         break;

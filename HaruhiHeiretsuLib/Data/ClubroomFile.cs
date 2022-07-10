@@ -46,10 +46,41 @@ namespace HaruhiHeiretsuLib.Data
             int startPointer = 12 + 8 * 2;
             bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
             bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
+            bytes.AddRange(BitConverter.GetBytes(ClubroomThings.Count).Reverse());
 
-            foreach (ClubroomThing clubroomThing in ClubroomThings)
+            List<byte> clubroomThingStringBytes = new();
+            int clubroomStringsStartPointer = startPointer + ClubroomThings.Count * 0x60;
+            for (int i = 0; i < ClubroomThings.Count; i++)
             {
+                (List<byte> thingDataBytes, List<byte> thingStringBytes) = ClubroomThings[i].GetBytes(startPointer + dataBytes.Count, clubroomStringsStartPointer + clubroomThingStringBytes.Count, endPointers);
+                dataBytes.AddRange(thingDataBytes);
+                clubroomThingStringBytes.AddRange(thingStringBytes);
+            }
+            dataBytes.AddRange(clubroomThingStringBytes);
 
+            int clubroomThings2StartPointer = startPointer + dataBytes.Count;
+            bytes.AddRange(BitConverter.GetBytes(clubroomThings2StartPointer).Reverse());
+            bytes.AddRange(BitConverter.GetBytes(ClubroomThing2s.Count).Reverse());
+
+            List<byte> clubroomThing2StringBytes = new();
+            int clubroom2StringsStartPointer = clubroomThings2StartPointer + ClubroomThing2s.Count * 0x24;
+            for (int i = 0; i < ClubroomThing2s.Count; i++)
+            {
+                (List<byte> thing2DataBytes, List<byte> thing2StringBytes) = ClubroomThing2s[i].GetBytes(startPointer + dataBytes.Count, clubroom2StringsStartPointer + clubroomThing2StringBytes.Count, endPointers);
+                dataBytes.AddRange(thing2DataBytes);
+                clubroomThing2StringBytes.AddRange(thing2StringBytes);
+            }
+            dataBytes.AddRange(clubroomThing2StringBytes);
+
+            bytes.AddRange(dataBytes);
+
+            bytes.RemoveRange(4, 4);
+            bytes.InsertRange(4, BitConverter.GetBytes(bytes.Count + 4).Reverse());
+
+            bytes.AddRange(BitConverter.GetBytes(endPointers.Count).Reverse());
+            foreach (int endPointer in endPointers)
+            {
+                bytes.AddRange(BitConverter.GetBytes(endPointer).Reverse());
             }
 
             return bytes.ToArray();
@@ -218,6 +249,58 @@ namespace HaruhiHeiretsuLib.Data
             Unknown58 = BitConverter.ToInt32(data.Skip(offset + 0x58).Take(4).Reverse().ToArray());
             Unknown5C = BitConverter.ToInt32(data.Skip(offset + 0x5C).Take(4).Reverse().ToArray());
         }
+
+        public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int currentOffset, int currentStringsOffset, List<int> endPointers)
+        {
+            List<byte> dataBytes = new();
+            List<byte> stringBytes = new();
+
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Title));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Chapter));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Flag));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(VoiceFile1));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Speaker1));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Line1));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(VoiceFile2));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Speaker2));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Line2));
+
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown24).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown28).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown2C).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown30).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown34).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown38).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown3C).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown40).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown44).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown48).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown4C).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown50).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown54).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown58).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown5C).Reverse());
+
+            return (dataBytes, stringBytes);
+        }
     }
 
     public class ClubroomThing2
@@ -251,6 +334,40 @@ namespace HaruhiHeiretsuLib.Data
             int line2Offset = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).Reverse().ToArray());
             Line2 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(line2Offset).TakeWhile(b => b != 0x00).ToArray());
             Unknown = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).Reverse().ToArray());
+        }
+
+        public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int currentOffset, int currentStringsOffset, List<int> endPointers)
+        {
+            List<byte> dataBytes = new();
+            List<byte> stringBytes = new();
+
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Title));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Flag));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(VoiceFile1));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Speaker1));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Line1));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(VoiceFile2));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Speaker2));
+            endPointers.Add(currentOffset + dataBytes.Count);
+            dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Line2));
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown).Reverse());
+
+            return (dataBytes, stringBytes);
         }
     }
 }

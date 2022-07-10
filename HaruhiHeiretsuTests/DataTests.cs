@@ -13,6 +13,7 @@ namespace HaruhiHeiretsuTests
         private const string TopicsFlagsFilePath = @"inputs\topicsFlags.bin";
         private const string NameplatesFilePath = @"inputs\nameplates.bin";
         private const string TimelineFilePath = @"inputs\timeline.bin";
+        private const string ClubroomFilePath = @"inputs\clubroom.bin";
 
         [SetUp]
         public void Setup()
@@ -70,7 +71,6 @@ namespace HaruhiHeiretsuTests
             TopicsAndFlagsFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
-
             Assert.AreEqual(initialBytes, generatedBytes);
         }
 
@@ -85,7 +85,6 @@ namespace HaruhiHeiretsuTests
             NameplatesFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
-
             Assert.AreEqual(initialBytes, generatedBytes);
         }
 
@@ -93,15 +92,28 @@ namespace HaruhiHeiretsuTests
         public void TimelineFileParsingIsReversible()
         {
             byte[] initialBytes = File.ReadAllBytes(TimelineFilePath);
-            TimelineFile timelienFile = new();
-            timelienFile.Initialize(initialBytes, 0);
+            TimelineFile timelineFile = new();
+            timelineFile.Initialize(initialBytes, 0);
 
-            byte[] generatedBytes = timelienFile.GetBytes();
-            File.WriteAllBytes("output/timeline-initial.bin", initialBytes);
-            File.WriteAllBytes("output/timeline-generated.bin", generatedBytes);
+            byte[] generatedBytes = timelineFile.GetBytes();
             TimelineFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
+            Assert.AreEqual(initialBytes, generatedBytes);
+        }
+
+        [Test]
+        public void ClubroomFileParsingIsReversible()
+        {
+            byte[] initialBytes = File.ReadAllBytes(ClubroomFilePath);
+            ClubroomFile clubroomFile = new();
+            clubroomFile.Initialize(initialBytes, 0);
+
+            byte[] generatedBytes = clubroomFile.GetBytes();
+            File.WriteAllBytes("output/clubroom-initial.bin", initialBytes);
+            File.WriteAllBytes("output/clubroom-generated.bin", generatedBytes);
+            ClubroomFile generatedFile = new();
+            generatedFile.Initialize(generatedBytes, 0);
 
             Assert.AreEqual(initialBytes, generatedBytes);
         }

@@ -74,6 +74,9 @@ namespace HaruhiHeiretsuCLI
                             case DataStringsFileLocations.TIMELINE_INDEX:
                                 dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<TimelineFile>>().WriteResxFile(fileName);
                                 break;
+                            case DataStringsFileLocations.CLUBROOM_INDEX:
+                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<ClubroomFile>>().WriteResxFile(fileName);
+                                break;
                             default:
                                 dat.Files.Last(f => f.Index == index).CastTo<ShadeStringsFile>().WriteResxFile(fileName);
                                 break;

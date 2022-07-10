@@ -323,6 +323,16 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         continue;
                     }
 
+                    // Is it a facial expression?
+                    if (trimmedParameters.StartsWith("EXPRESSION[", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string[] expressionComponents = trimmedParameters.Split(',')[0][11..^1].Split(' ');
+
+                        Parameters.Add(new() { Type = ScriptCommand.ParameterType.FACIALEXPRESSION, Value = CalculateControlStructure(expressionComponents[0], expressionComponents[1], objects), LineNumber = LineNumber });
+                        i += expressionComponents.Sum(v => v.Length) + 14;
+                        continue;
+                    }
+
                     // Is it a boolean?
                     if (trimmedParameters.StartsWith("TRUE", StringComparison.OrdinalIgnoreCase) || trimmedParameters.StartsWith("FALSE", StringComparison.OrdinalIgnoreCase))
                     {
