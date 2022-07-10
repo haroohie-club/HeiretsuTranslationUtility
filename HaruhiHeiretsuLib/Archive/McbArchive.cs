@@ -1,6 +1,6 @@
 ﻿using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
-using HaruhiHeiretsuLib.Strings;
+using HaruhiHeiretsuLib.Strings.Data;
 using HaruhiHeiretsuLib.Strings.Events;
 using HaruhiHeiretsuLib.Strings.Scripts;
 using System;
@@ -299,33 +299,56 @@ namespace HaruhiHeiretsuLib.Archive
                 int childLoc = int.Parse(lineSplit[1]);
 
                 MapDefinitionsFile mapDefinitionsFile = McbSubArchives[0].Files[79].CastTo<MapDefinitionsFile>();
-                MapDefinition mapDef = mapDefinitionsFile.Sections[((McbSubArchives[parentLoc].Id >> 8) ^ 0x40) - 2].MapDefinitions[McbSubArchives[parentLoc].Id & 0xFF];
+                MapDefinition mapDef;
+                if (parentLoc != 0)
+                {
+                    mapDef = mapDefinitionsFile.Sections[((McbSubArchives[parentLoc].Id >> 8) ^ 0x40) - 2].MapDefinitions[McbSubArchives[parentLoc].Id & 0xFF];
+                }
+                else
+                {
+                    mapDef = null;
+                }
 
                 switch ((ArchiveIndex)McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveIndex)
                 {
                     case ArchiveIndex.DAT:
-                        ShadeStringsFile shadeStringsFile = new();
-                        shadeStringsFile.Location = (parentLoc, childLoc);
-                        shadeStringsFile.McbId = McbSubArchives[parentLoc].Id;
-                        shadeStringsFile.McbEntryData = (McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveIndex, McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveOffset);
-                        shadeStringsFile.CompressedData = McbSubArchives[parentLoc].Files[childLoc].CompressedData;
-                        shadeStringsFile.Initialize(McbSubArchives[parentLoc].Files[childLoc].Data.ToArray());
                         StringsFiles.Add((parentLoc, childLoc));
-                        McbSubArchives[parentLoc].Files[childLoc] = shadeStringsFile;
+                        switch ((parentLoc, childLoc))
+                        {
+                            case (0, DataStringsFileLocations.MAP_DEFINITION_MCB_INDEX):
+                                McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<MapDefinitionsFile>>();
+                                break;
+
+                            case (0, DataStringsFileLocations.TOPICS_FLAG_MCB_INDEX):
+                                McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<TopicsAndFlagsFile>>();
+                                break;
+
+                            case (0, DataStringsFileLocations.NAMEPLATES_MCB_INDEX):
+                                McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<NameplatesFile>>();
+                                break;
+
+                            case (0, DataStringsFileLocations.TIMELINE_MCB_INDEX):
+                                McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<TimelineFile>>();
+                                break;
+
+                            case (0, DataStringsFileLocations.CLUBROOM_MCB_INDEX):
+                                McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<ClubroomFile>>();
+                                break;
+
+                            default:
+                                McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<ShadeStringsFile>();
+                                break;
+                        }
                         break;
                     case ArchiveIndex.SCR:
-                        ScriptFile scriptFile = new(parentLoc, childLoc, McbSubArchives[parentLoc].Files[childLoc].Data.ToArray(), McbSubArchives[parentLoc].Id);
-                        scriptFile.AvailableCommands = scriptCommands;
-                        scriptFile.McbEntryData = (McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveIndex, McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveOffset);
-                        scriptFile.CompressedData = McbSubArchives[parentLoc].Files[childLoc].CompressedData;
-                        scriptFile.PopulateCommandBlocks(mapDef.Evts);
                         StringsFiles.Add((parentLoc, childLoc));
-                        McbSubArchives[parentLoc].Files[childLoc] = scriptFile;
+                        McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<ScriptFile>();
+                        ((ScriptFile)McbSubArchives[parentLoc].Files[childLoc]).AvailableCommands = scriptCommands;
+                        ((ScriptFile)McbSubArchives[parentLoc].Files[childLoc]).PopulateCommandBlocks(mapDef?.Evts);
                         break;
                     case ArchiveIndex.EVT:
                         StringsFiles.Add((parentLoc, childLoc));
-                        McbSubArchives[parentLoc].Files[childLoc] = new EventFile(parentLoc, childLoc, McbSubArchives[parentLoc].Files[childLoc].Data.ToArray(), McbSubArchives[parentLoc].Id)
-                            { McbEntryData = (McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveIndex, McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveOffset), CompressedData = McbSubArchives[parentLoc].Files[childLoc].CompressedData };
+                        McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<EventFile>();
                         break;
                 }
             }

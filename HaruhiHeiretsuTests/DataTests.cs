@@ -10,6 +10,9 @@ namespace HaruhiHeiretsuTests
     {
         private const string MapDefinitionsFilePath = @"inputs\mapdef.bin";
         private const string CameraDataFilePath = @"inputs\cameradata.bin";
+        private const string TopicsFlagsFilePath = @"inputs\topicsFlags.bin";
+        private const string NameplatesFilePath = @"inputs\nameplates.bin";
+        private const string TimelineFilePath = @"inputs\timeline.bin";
 
         [SetUp]
         public void Setup()
@@ -52,10 +55,54 @@ namespace HaruhiHeiretsuTests
             generatedFile.Initialize(generatedBytes, 0);
             string generatedCsv = generatedFile.GetCsv();
 
-            File.WriteAllBytes("output/camdef-initial.bin", initialBytes);
-            File.WriteAllBytes("output/camdef-generated.bin", generatedBytes);
-
             Assert.AreEqual(initialCsv, generatedCsv);
+            Assert.AreEqual(initialBytes, generatedBytes);
+        }
+
+        [Test]
+        public void TopicsFlagsFileParsingIsReversible()
+        {
+            byte[] initialBytes = File.ReadAllBytes(TopicsFlagsFilePath);
+            TopicsAndFlagsFile topicsAndFlagsFile = new();
+            topicsAndFlagsFile.Initialize(initialBytes, 0);
+
+            byte[] generatedBytes = topicsAndFlagsFile.GetBytes();
+            TopicsAndFlagsFile generatedFile = new();
+            generatedFile.Initialize(generatedBytes, 0);
+
+
+            Assert.AreEqual(initialBytes, generatedBytes);
+        }
+
+        [Test]
+        public void NameplatesFileParsingIsReversible()
+        {
+            byte[] initialBytes = File.ReadAllBytes(NameplatesFilePath);
+            NameplatesFile nameplatesFile = new();
+            nameplatesFile.Initialize(initialBytes, 0);
+
+            byte[] generatedBytes = nameplatesFile.GetBytes();
+            NameplatesFile generatedFile = new();
+            generatedFile.Initialize(generatedBytes, 0);
+
+
+            Assert.AreEqual(initialBytes, generatedBytes);
+        }
+
+        [Test]
+        public void TimelineFileParsingIsReversible()
+        {
+            byte[] initialBytes = File.ReadAllBytes(TimelineFilePath);
+            TimelineFile timelienFile = new();
+            timelienFile.Initialize(initialBytes, 0);
+
+            byte[] generatedBytes = timelienFile.GetBytes();
+            File.WriteAllBytes("output/timeline-initial.bin", initialBytes);
+            File.WriteAllBytes("output/timeline-generated.bin", generatedBytes);
+            TimelineFile generatedFile = new();
+            generatedFile.Initialize(generatedBytes, 0);
+
+
             Assert.AreEqual(initialBytes, generatedBytes);
         }
     }

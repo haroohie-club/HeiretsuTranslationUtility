@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Resources.NetStandard;
 using System.Text;
 
@@ -57,6 +58,79 @@ namespace HaruhiHeiretsuLib.Strings
             {
                 return $"{Index:X3} {Index:D4} 0x{Offset:X8}";
             }
+        }
+
+        public static TextReader GetResxReader(string fileName)
+        {
+            string resxContents = File.ReadAllText(fileName);
+            resxContents = resxContents.Replace("System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                "System.Resources.NetStandard.ResXResourceWriter, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            resxContents = resxContents.Replace("System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+                "System.Resources.NetStandard.ResXResourceReader, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
+            return new StringReader(resxContents);
+        }
+
+        public static string NormalizeDialogueLine(string dialogueText)
+        {
+            // Replace all faux-ellipses with an ellipsis character
+            dialogueText = dialogueText.Replace("...", "…");
+            // Replace all faux-em-dashes with actual em-dash characters
+            dialogueText = dialogueText.Replace("--", "—");
+            // Consolidate Unix/Windows newlines to just \n
+            dialogueText = dialogueText.Replace("\r\n", "\n");
+            // We start by replacing all quotes with the open quotes, then will replace them with closed quotes as we go
+            return dialogueText.Replace("\"", "“");
+        }
+
+        public static string ProcessDialogueLineWithFontReplacement(string dialogueText, FontReplacementMap fontReplacementMap, int dialogueLineLength)
+        {
+            int lineLength = 0;
+            for (int i = 0; i < dialogueText.Length; i++)
+            {
+                if (dialogueText[i] == '#' && dialogueText.Length - i >= 3)
+                {
+                    // skip replacement/line length increment for operators
+                    if (dialogueText[i + 1] == 'b' && dialogueText[i + 2] == 'w' || dialogueText[i + 1] == 'F')
+                    {
+                        i += 2;
+                        continue;
+                    }
+                    else if (dialogueText.Length - i >= 5 && dialogueText[i + 1] == 'b' && dialogueText[i + 2] == 't')
+                    {
+                        i += 2 + dialogueText.Skip(i + 2).TakeWhile(c => char.IsNumber(c)).Count();
+                        continue;
+                    }
+                }
+
+                if (dialogueText[i] == '“' && (i == dialogueText.Length - 1
+                    || dialogueText[i + 1] == ' ' || dialogueText[i + 1] == '!' || dialogueText[i + 1] == '?' || dialogueText[i + 1] == '.' || dialogueText[i + 1] == '…' || dialogueText[i + 1] == '\n'))
+                {
+                    dialogueText = dialogueText.Remove(i, 1);
+                    dialogueText = dialogueText.Insert(i, "”");
+                }
+
+                if (fontReplacementMap.ContainsReplacement($"{dialogueText[i]}"))
+                {
+                    lineLength += fontReplacementMap.GetReplacementCharacterWidth($"{dialogueText[i]}");
+                    dialogueText = dialogueText.Remove(i, 1);
+                    dialogueText = dialogueText.Insert(i, fontReplacementMap.GetStartCharacterForReplacement($"{dialogueText[i]}"));
+                }
+
+                if (dialogueText[i] == '\n')
+                {
+                    lineLength = 0;
+                }
+
+                if (dialogueText[i] != ' ' && lineLength > dialogueLineLength)
+                {
+                    int indexOfMostRecentSpace = dialogueText[0..i].LastIndexOf(' ');
+                    dialogueText = dialogueText.Remove(indexOfMostRecentSpace, 1);
+                    dialogueText = dialogueText.Insert(indexOfMostRecentSpace, "\n");
+                    lineLength = 0;
+                }
+            }
+
+            return dialogueText;
         }
     }
 
@@ -120,7 +194,7 @@ namespace HaruhiHeiretsuLib.Strings
                 case "NG2":
                     return ScriptFileSpeaker.NAGATO2;
                 case "SIS":
-                    return ScriptFileSpeaker.KYN_SIS;
+                    return ScriptFileSpeaker.KYNSIS;
                 case "TAI":
                     return ScriptFileSpeaker.TAIICHIRO;
                 case "TAN":
@@ -148,7 +222,7 @@ namespace HaruhiHeiretsuLib.Strings
         KOIZUMI,
         KOIZUMI2,
         TSURUYA,
-        KYN_SIS,
+        KYNSIS,
         MIKOTO,
         MIKOTO2,
         TAIICHIRO,
@@ -182,7 +256,7 @@ namespace HaruhiHeiretsuLib.Strings
         MIKURU = 3,
         KOIZUMI = 4,
         TSURUYA = 5,
-        KYN_SIS = 6,
+        KYNSIS = 6,
         MIKOTO = 7,
         TAIICHIRO = 8,
         KYON2 = 9,

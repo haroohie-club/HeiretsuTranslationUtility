@@ -1,12 +1,12 @@
-﻿using System;
+﻿using HaruhiHeiretsuLib.Strings;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuLib.Data
 {
-    public class MapDefinitionsFile : DataFile
+    public class MapDefinitionsFile : DataFile, IDataStringsFile
     {
         public List<MapDefinitionSection> Sections { get; set; } = new();
 
@@ -82,6 +82,46 @@ namespace HaruhiHeiretsuLib.Data
                 $"{nameof(MapDefinition.MapFlag)},{nameof(MapDefinition.Unknown64)}";
             return $"{csv}\n{string.Join('\n', Sections.Select(s => s.GetCsv()))}";
         }
+
+        public List<DialogueLine> GetDialogueLines()
+        {
+            List<DialogueLine> lines = new();
+
+            foreach (MapDefinitionSection section in Sections)
+            {
+                foreach (MapDefinition definition in section.MapDefinitions)
+                {
+                    DialogueLine line = new()
+                    {
+                        Line = definition.ScriptDescription,
+                        Speaker = $"{definition.ScriptName} at {definition.LocString}"
+                    };
+                    line.Metadata.Add($"{definition.ParentIndex}");
+                    line.Metadata.Add($"{definition.Index}");
+                    lines.Add(line);
+                }
+            }
+
+            return lines;
+        }
+
+        public void ReplaceDialogueLine(DialogueLine line)
+        {
+            int parentIndex = int.Parse(line.Metadata[0]);
+            int index = int.Parse(line.Metadata[1]);
+                
+            for (int i = 0; i < Sections.Count; i++)
+            {
+                for (int j = 0; j < Sections[i].MapDefinitions.Count; j++)
+                {
+                    if (Sections[i].MapDefinitions[j].ParentIndex == parentIndex && Sections[i].MapDefinitions[j].Index == index)
+                    {
+                        Sections[i].MapDefinitions[j].ScriptDescription = line.Line;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     public class MapDefinitionSection
@@ -127,7 +167,7 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     endPointers.Add(mapDefinitionOffset + bytes.Count);
                     bytes.AddRange(BitConverter.GetBytes(stringsOffset + stringsSection.Count).Reverse());
-                    stringsSection.AddRange(GetPaddedByteArrayFromString(mapDefinition.LocString));
+                    stringsSection.AddRange(Helpers.GetPaddedByteArrayFromString(mapDefinition.LocString));
                 }
                 else
                 {
@@ -137,7 +177,7 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     endPointers.Add(mapDefinitionOffset + bytes.Count);
                     bytes.AddRange(BitConverter.GetBytes(stringsOffset + stringsSection.Count).Reverse());
-                    stringsSection.AddRange(GetPaddedByteArrayFromString(mapDefinition.ScriptDescription));
+                    stringsSection.AddRange(Helpers.GetPaddedByteArrayFromString(mapDefinition.ScriptDescription));
                 }
                 else
                 {
@@ -156,7 +196,7 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     endPointers.Add(mapDefinitionOffset + bytes.Count);
                     bytes.AddRange(BitConverter.GetBytes(stringsOffset + stringsSection.Count).Reverse());
-                    stringsSection.AddRange(GetPaddedByteArrayFromString(mapDefinition.SoundGroupName));
+                    stringsSection.AddRange(Helpers.GetPaddedByteArrayFromString(mapDefinition.SoundGroupName));
                 }
                 else
                 {
@@ -166,7 +206,7 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     endPointers.Add(mapDefinitionOffset + bytes.Count);
                     bytes.AddRange(BitConverter.GetBytes(stringsOffset + stringsSection.Count).Reverse());
-                    stringsSection.AddRange(GetPaddedByteArrayFromString(mapDefinition.ScriptName));
+                    stringsSection.AddRange(Helpers.GetPaddedByteArrayFromString(mapDefinition.ScriptName));
                 }
                 else
                 {
@@ -178,7 +218,7 @@ namespace HaruhiHeiretsuLib.Data
                     {
                         endPointers.Add(mapDefinitionOffset + bytes.Count);
                         bytes.AddRange(BitConverter.GetBytes(stringsOffset + stringsSection.Count).Reverse());
-                        stringsSection.AddRange(GetPaddedByteArrayFromString(mapDefinition.DispFlags[i]));
+                        stringsSection.AddRange(Helpers.GetPaddedByteArrayFromString(mapDefinition.DispFlags[i]));
                     }
                     else
                     {
@@ -211,7 +251,7 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     endPointers.Add(mapDefinitionOffset + bytes.Count);
                     bytes.AddRange(BitConverter.GetBytes(stringsOffset + stringsSection.Count).Reverse());
-                    stringsSection.AddRange(GetPaddedByteArrayFromString(mapDefinition.MapFlag));
+                    stringsSection.AddRange(Helpers.GetPaddedByteArrayFromString(mapDefinition.MapFlag));
                 }
                 else
                 {
@@ -227,13 +267,6 @@ namespace HaruhiHeiretsuLib.Data
         public string GetCsv()
         {
             return string.Join('\n', MapDefinitions.Select(m => m.GetCsvLine()));
-        }
-
-        private List<byte> GetPaddedByteArrayFromString(string text)
-        {
-            List<byte> stringBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(text).ToList();
-            stringBytes.AddRange(new byte[(stringBytes.Count % 4) == 0 ? 4 : 4 - (stringBytes.Count % 4)]);
-            return stringBytes;
         }
     }
 

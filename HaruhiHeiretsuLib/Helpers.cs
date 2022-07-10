@@ -50,6 +50,13 @@ namespace HaruhiHeiretsuLib
             return flippedBitmap;
         }
 
+        public static List<byte> GetPaddedByteArrayFromString(string text)
+        {
+            List<byte> stringBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(text).ToList();
+            stringBytes.AddRange(new byte[(stringBytes.Count % 4) == 0 ? 4 : 4 - (stringBytes.Count % 4)]);
+            return stringBytes;
+        }
+
         // redmean color distance formula with alpha term
         public static double ColorDistance(SKColor color1, SKColor color2)
         {

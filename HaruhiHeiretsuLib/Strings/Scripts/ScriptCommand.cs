@@ -116,7 +116,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             TRANSITION = 6,
             INDEXEDADDRESS = 7,
             ANGLE = 8,
-            UNKNOWN09 = 9,
+            FACIALEXPRESSION = 9,
             BOOL = 10,
             VOLUME = 11,
             COLOR = 12,

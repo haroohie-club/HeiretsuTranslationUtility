@@ -587,6 +587,8 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     return ParseIndexedAddress(parameter.Value);
                 case ScriptCommand.ParameterType.ANGLE:
                     return $"degrees {CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}";
+                case ScriptCommand.ParameterType.FACIALEXPRESSION:
+                    return $"EXPRESSION[{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}]";
                 case ScriptCommand.ParameterType.BOOL:
                     return ParseBoolean(parameter.Value);
                 case ScriptCommand.ParameterType.VOLUME:

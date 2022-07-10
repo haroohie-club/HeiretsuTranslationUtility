@@ -1,7 +1,10 @@
 ﻿using HaruhiHeiretsuLib.Strings.Events.Parameters;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Resources.NetStandard;
 using System.Text;
 
 namespace HaruhiHeiretsuLib.Strings.Events
@@ -13,6 +16,8 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public EventFile()
         {
         }
+
+        public const int DIALOGUE_LINE_LENGTH = int.MaxValue;
 
         public override void Initialize(byte[] decompressedData, int offset)
         {
@@ -58,7 +63,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
                 int j = 0;
                 foreach (DialogueParameter parameter in dialogue)
                 {
-                    DialogueLines.Add(new() { Line = parameter.Dialogue, Speaker = parameter.SpeakingCharacter.ToString(), Offset = parameter.Address + 0x50 });
+                    DialogueLines.Add(new() { Line = parameter.Dialogue.Replace("\\n", "\n"), Speaker = parameter.SpeakingCharacter.ToString(), Offset = parameter.Address + 0x50 });
                     if (j == 0)
                     {
                         DialogueLines.Last().Metadata.Add($"Chapter {i} Start");
@@ -70,8 +75,22 @@ namespace HaruhiHeiretsuLib.Strings.Events
             }
         }
 
+        public override byte[] GetBytes()
+        {
+            if (CutsceneData is null)
+            {
+                return base.GetBytes();
+            }
+            else
+            {
+                return base.GetBytes();
+                //return CutsceneData.GetBytes().ToArray();
+            }
+        }
+
         public override void EditDialogue(int index, string newLine)
         {
+            newLine.Replace("\n", "\\n");
             (_, byte[] newLineData) = DialogueEditSetUp(index, newLine);
 
             if (newLineData.Length < DialogueLines[index].Length)
@@ -86,16 +105,19 @@ namespace HaruhiHeiretsuLib.Strings.Events
             Data.InsertRange(DialogueLines[index].Offset, newLineData);
         }
 
-        public override byte[] GetBytes()
+        public override void ImportResxFile(string fileName, FontReplacementMap fontReplacementMap)
         {
-            if (CutsceneData is null)
+            base.ImportResxFile(fileName, fontReplacementMap);
+
+            TextReader textReader = GetResxReader(fileName);
+
+            using ResXResourceReader resxReader = new(textReader);
+            foreach (DictionaryEntry d in resxReader)
             {
-                return base.GetBytes();
-            }
-            else
-            {
-                return base.GetBytes();
-                //return CutsceneData.GetBytes().ToArray();
+                int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
+                string dialogueText = ProcessDialogueLineWithFontReplacement(NormalizeDialogueLine((string)d.Value), fontReplacementMap, DIALOGUE_LINE_LENGTH);
+
+                EditDialogue(dialogueIndex, dialogueText);
             }
         }
     }

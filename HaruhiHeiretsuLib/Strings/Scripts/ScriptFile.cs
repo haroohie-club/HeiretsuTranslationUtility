@@ -168,76 +168,13 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         {
             base.ImportResxFile(fileName, fontReplacementMap);
 
-
-            string resxContents = File.ReadAllText(fileName);
-            resxContents = resxContents.Replace("System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-                "System.Resources.NetStandard.ResXResourceWriter, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-            resxContents = resxContents.Replace("System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
-                "System.Resources.NetStandard.ResXResourceReader, System.Resources.NetStandard, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null");
-            TextReader textReader = new StringReader(resxContents);
+            TextReader textReader = GetResxReader(fileName);
 
             using ResXResourceReader resxReader = new(textReader);
             foreach (DictionaryEntry d in resxReader)
             {
                 int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
-                string dialogueText = (string)d.Value;
-
-                // Replace all faux-ellipses with an ellipsis character
-                dialogueText = dialogueText.Replace("...", "…");
-                // Replace all faux-em-dashes with actual em-dash characters
-                dialogueText = dialogueText.Replace("--", "—");
-                // Consolidate Unix/Windows newlines to just \n
-                dialogueText = dialogueText.Replace("\r\n", "\n");
-                // We start by replacing all quotes with the open quotes, then will replace them with closed quotes as we go
-                dialogueText = dialogueText.Replace("\"", "“");
-
-                int lineLength = 0;
-                for (int i = 0; i < dialogueText.Length; i++)
-                {
-                    if (dialogueText[i] == '#' && dialogueText.Length - i >= 3)
-                    {
-                        // skip replacement/line length increment for operators
-                        if (dialogueText[i + 1] == 'b' && dialogueText[i + 2] == 'w' || dialogueText[i + 1] == 'F')
-                        {
-                            i += 2;
-                            continue;
-                        }
-                        else if (dialogueText.Length - i >= 5 && dialogueText[i + 1] == 'b' && dialogueText[i + 2] == 't')
-                        {
-                            i += 2;
-                            IEnumerable<char> nums = dialogueText.Skip(i + 2).TakeWhile(c => char.IsNumber(c));
-                            i += nums.Count();
-                            continue;
-                        }
-                    }
-
-                    if (dialogueText[i] == '“' && (i == dialogueText.Length - 1
-                        || dialogueText[i + 1] == ' ' || dialogueText[i + 1] == '!' || dialogueText[i + 1] == '?' || dialogueText[i + 1] == '.' || dialogueText[i + 1] == '…' || dialogueText[i + 1] == '\n'))
-                    {
-                        dialogueText.Remove(i, 1);
-                        dialogueText.Insert(i, "”");
-                    }
-
-                    if (fontReplacementMap.ContainsReplacement($"{dialogueText[i]}"))
-                    {
-                        lineLength += fontReplacementMap.GetReplacementCharacterWidth($"{dialogueText[i]}");
-                        dialogueText.Remove(i, 1);
-                        dialogueText.Insert(i, fontReplacementMap.GetStartCharacterForReplacement($"{dialogueText[i]}"));
-                    }
-
-                    if (dialogueText[i] == '\n')
-                    {
-                        lineLength = 0;
-                    }
-
-                    if (dialogueText[i] != ' ' && lineLength > DIALOGUE_LINE_LENGTH)
-                    {
-                        int indexOfMostRecentSpace = dialogueText[0..i].LastIndexOf(' ');
-                        dialogueText = dialogueText.Remove(indexOfMostRecentSpace, 1);
-                        dialogueText = dialogueText.Insert(indexOfMostRecentSpace, "\n");
-                        lineLength = 0;
-                    }
-                }
+                string dialogueText = ProcessDialogueLineWithFontReplacement(NormalizeDialogueLine((string)d.Value), fontReplacementMap, DIALOGUE_LINE_LENGTH);
 
                 EditDialogue(dialogueIndex, dialogueText);
             }

@@ -4,6 +4,7 @@ using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings;
+using HaruhiHeiretsuLib.Strings.Data;
 using HaruhiHeiretsuLib.Strings.Events;
 using HaruhiHeiretsuLib.Strings.Scripts;
 using Microsoft.Win32;
@@ -829,13 +830,17 @@ namespace HaruhiHeiretsuEditor
 
                 if (Path.GetFileName(openFileDialog.FileName) == "dat.bin")
                 {
-                    DataFile currentMapDefFile = _datFile.Files.First(f => f.Index == 58);
-                    MapDefinitionsFile mapDefFile = currentMapDefFile.CastTo<MapDefinitionsFile>();
-                    _datFile.Files[_datFile.Files.IndexOf(currentMapDefFile)] = mapDefFile;
-
                     DataFile currentCameraDataFile = _datFile.Files.First(f => f.Index == 36);
                     CameraDataFile cameraDataFile = currentCameraDataFile.CastTo<CameraDataFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentCameraDataFile)] = cameraDataFile;
+
+                    DataFile currentTopicsAndFlagsFile = _datFile.Files.First(f => f.Index == 56);
+                    TopicsAndFlagsFile topicsAndFlagsFile = currentTopicsAndFlagsFile.CastTo<TopicsAndFlagsFile>();
+                    _datFile.Files[_datFile.Files.IndexOf(currentTopicsAndFlagsFile)] = topicsAndFlagsFile;
+
+                    DataFile currentMapDefFile = _datFile.Files.First(f => f.Index == 58);
+                    MapDefinitionsFile mapDefFile = currentMapDefFile.CastTo<MapDefinitionsFile>();
+                    _datFile.Files[_datFile.Files.IndexOf(currentMapDefFile)] = mapDefFile;
                 }
 
                 dataListBox.ItemsSource = _datFile.Files;

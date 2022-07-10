@@ -1,6 +1,6 @@
 ﻿using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Data;
-using HaruhiHeiretsuLib.Strings;
+using HaruhiHeiretsuLib.Strings.Data;
 using HaruhiHeiretsuLib.Strings.Events;
 using HaruhiHeiretsuLib.Strings.Scripts;
 using Mono.Options;
@@ -37,8 +37,7 @@ namespace HaruhiHeiretsuCLI
 
             string[] files = File.ReadAllLines(_stringFileMap);
             McbArchive mcb = Program.GetMcbFile(_mcb);
-            BinArchive<DataFile> datData = BinArchive<DataFile>.FromFile(_dat);
-            BinArchive<ShadeStringsFile> dat = BinArchive<ShadeStringsFile>.FromFile(_dat);
+            BinArchive<DataFile> dat = BinArchive<DataFile>.FromFile(_dat);
             BinArchive<EventFile> evt = BinArchive<EventFile>.FromFile(_evt);
             BinArchive<ScriptFile> scr = BinArchive<ScriptFile>.FromFile(_scr);
 
@@ -47,7 +46,7 @@ namespace HaruhiHeiretsuCLI
             Dictionary<int, string> indexToNameMap = scriptNames.ToDictionary(keySelector: n => scriptNames.IndexOf(n) + 1);
             List<ScriptCommand> commands = ScriptCommand.ParseScriptCommandFile(scr.Files[1].GetBytes());
 
-            MapDefinitionsFile mapDefinitionsFile = datData.Files.First(f => f.Index == 58).CastTo<MapDefinitionsFile>();
+            MapDefinitionsFile mapDefinitionsFile = dat.Files.First(f => f.Index == 58).CastTo<MapDefinitionsFile>();
 
             List<(string, string, int)> binMap = files.Select(f =>
             {
@@ -61,7 +60,24 @@ namespace HaruhiHeiretsuCLI
                 switch (bin.ToLower())
                 {
                     case "dat":
-                        dat.Files.Last(f => f.Index == index).WriteResxFile(fileName);
+                        switch (index)
+                        {
+                            case DataStringsFileLocations.MAP_DEFINITION_INDEX:
+                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<MapDefinitionsFile>>().WriteResxFile(fileName);
+                                break;
+                            case DataStringsFileLocations.TOPICS_FLAGS_INDEX:
+                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<TopicsAndFlagsFile>>().WriteResxFile(fileName);
+                                break;
+                            case DataStringsFileLocations.NAMEPLATES_INDEX:
+                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<NameplatesFile>>().WriteResxFile(fileName);
+                                break;
+                            case DataStringsFileLocations.TIMELINE_INDEX:
+                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<TimelineFile>>().WriteResxFile(fileName);
+                                break;
+                            default:
+                                dat.Files.Last(f => f.Index == index).CastTo<ShadeStringsFile>().WriteResxFile(fileName);
+                                break;
+                        }
                         break;
 
                     case "evt":

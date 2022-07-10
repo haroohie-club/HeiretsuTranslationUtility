@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace HaruhiHeiretsuLib.Strings
+namespace HaruhiHeiretsuLib.Strings.Data
 {
     // The same kind of string files found in Chokuretsu except big-endian
     public class ShadeStringsFile : StringsFile
