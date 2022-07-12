@@ -208,6 +208,10 @@ namespace HaruhiHeiretsuEditor
                 DataStringsFile<ExtrasClfClaFile> extrasClfClaFile = currentExtrasClfClaFile.CastTo<DataStringsFile<ExtrasClfClaFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentExtrasClfClaFile)] = extrasClfClaFile;
 
+                ShadeStringsFile currentExtrasCldFfile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.EXTRAS_CLD_INDEX);
+                DataStringsFile<ExtrasCldFile> extrasCldFile = currentExtrasCldFfile.CastTo<DataStringsFile<ExtrasCldFile>>();
+                _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentExtrasCldFfile)] = extrasCldFile;
+
                 scriptsListBox.ItemsSource = _datStringsFile.Files;
                 scriptsListBox.Items.Refresh();
             }

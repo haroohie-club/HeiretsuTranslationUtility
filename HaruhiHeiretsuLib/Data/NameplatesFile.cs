@@ -13,9 +13,8 @@ namespace HaruhiHeiretsuLib.Data
 
         public override void Initialize(byte[] decompressedData, int offset)
         {
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
             base.Initialize(decompressedData, offset);
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             int numNameplates = BitConverter.ToInt32(Data.Skip(0x10).Take(4).Reverse().ToArray());
 

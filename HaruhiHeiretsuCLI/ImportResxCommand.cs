@@ -149,6 +149,12 @@ namespace HaruhiHeiretsuCLI
                                 extrasClfClaFile.ImportResxFile(file, fontReplacementMap);
                                 dat.Files[archiveIndex] = extrasClfClaFile.DataFile;
                                 break;
+
+                            case DataStringsFileLocations.EXTRAS_CLD_INDEX:
+                                DataStringsFile<ExtrasCldFile> extrasCldFile = dat.Files[archiveIndex].CastTo<DataStringsFile<ExtrasCldFile>>();
+                                extrasCldFile.ImportResxFile(file, fontReplacementMap);
+                                dat.Files[archiveIndex] = extrasCldFile.DataFile;
+                                break;
                         }
                         break;
 

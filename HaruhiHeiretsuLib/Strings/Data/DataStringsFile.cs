@@ -92,6 +92,6 @@ namespace HaruhiHeiretsuLib.Strings.Data
 
         public const int EXTRAS_CLF_CLA_INDEX = 76;
 
-        public const int CLD_INDEX = 78;
+        public const int EXTRAS_CLD_INDEX = 78;
     }
 }

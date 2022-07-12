@@ -80,6 +80,9 @@ namespace HaruhiHeiretsuCLI
                             case DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX:
                                 dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<ExtrasClfClaFile>>().WriteResxFile(fileName);
                                 break;
+                            case DataStringsFileLocations.EXTRAS_CLD_INDEX:
+                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<ExtrasCldFile>>().WriteResxFile(fileName);
+                                break;
                             default:
                                 dat.Files.Last(f => f.Index == index).CastTo<ShadeStringsFile>().WriteResxFile(fileName);
                                 break;
