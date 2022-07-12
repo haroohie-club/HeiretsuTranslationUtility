@@ -89,5 +89,9 @@ namespace HaruhiHeiretsuLib.Strings.Data
 
         public const int CLUBROOM_MCB_INDEX = 86;
         public const int CLUBROOM_INDEX = 72;
+
+        public const int EXTRAS_CLF_CLA_INDEX = 76;
+
+        public const int CLD_INDEX = 78;
     }
 }

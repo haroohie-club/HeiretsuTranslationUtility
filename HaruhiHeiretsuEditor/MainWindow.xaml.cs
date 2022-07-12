@@ -183,6 +183,31 @@ namespace HaruhiHeiretsuEditor
             if (openFileDialog.ShowDialog() == true)
             {
                 _datStringsFile = BinArchive<ShadeStringsFile>.FromFile(openFileDialog.FileName);
+
+                ShadeStringsFile currentTopicsAndFlagsFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.TOPICS_FLAGS_INDEX);
+                DataStringsFile<TopicsAndFlagsFile> topicsAndFlagsFile = currentTopicsAndFlagsFile.CastTo<DataStringsFile<TopicsAndFlagsFile>>();
+                _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentTopicsAndFlagsFile)] = topicsAndFlagsFile;
+
+                ShadeStringsFile currentMapDefFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.MAP_DEFINITION_INDEX);
+                DataStringsFile<MapDefinitionsFile> mapDefFile = currentMapDefFile.CastTo<DataStringsFile<MapDefinitionsFile>>();
+                _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentMapDefFile)] = mapDefFile;
+
+                ShadeStringsFile currentTimelineFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.TIMELINE_INDEX);
+                DataStringsFile<TimelineFile> timelineFile = currentTimelineFile.CastTo<DataStringsFile<TimelineFile>>();
+                _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentTimelineFile)] = timelineFile;
+
+                ShadeStringsFile currentNameplatesFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.NAMEPLATES_INDEX);
+                DataStringsFile<NameplatesFile> nameplatesFile = currentNameplatesFile.CastTo<DataStringsFile<NameplatesFile>>();
+                _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentNameplatesFile)] = nameplatesFile;
+
+                ShadeStringsFile currentClubroomFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.CLUBROOM_INDEX);
+                DataStringsFile<ClubroomFile> clubroomFile = currentClubroomFile.CastTo<DataStringsFile<ClubroomFile>>();
+                _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentClubroomFile)] = clubroomFile;
+
+                ShadeStringsFile currentExtrasClfClaFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX);
+                DataStringsFile<ExtrasClfClaFile> extrasClfClaFile = currentExtrasClfClaFile.CastTo<DataStringsFile<ExtrasClfClaFile>>();
+                _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentExtrasClfClaFile)] = extrasClfClaFile;
+
                 scriptsListBox.ItemsSource = _datStringsFile.Files;
                 scriptsListBox.Items.Refresh();
             }
@@ -834,13 +859,17 @@ namespace HaruhiHeiretsuEditor
                     CameraDataFile cameraDataFile = currentCameraDataFile.CastTo<CameraDataFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentCameraDataFile)] = cameraDataFile;
 
-                    DataFile currentTopicsAndFlagsFile = _datFile.Files.First(f => f.Index == 56);
+                    DataFile currentTopicsAndFlagsFile = _datFile.Files.First(f => f.Index == DataStringsFileLocations.TOPICS_FLAGS_INDEX);
                     TopicsAndFlagsFile topicsAndFlagsFile = currentTopicsAndFlagsFile.CastTo<TopicsAndFlagsFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentTopicsAndFlagsFile)] = topicsAndFlagsFile;
 
-                    DataFile currentMapDefFile = _datFile.Files.First(f => f.Index == 58);
+                    DataFile currentMapDefFile = _datFile.Files.First(f => f.Index == DataStringsFileLocations.MAP_DEFINITION_INDEX);
                     MapDefinitionsFile mapDefFile = currentMapDefFile.CastTo<MapDefinitionsFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentMapDefFile)] = mapDefFile;
+
+                    DataFile currentTimelineFile = _datFile.Files.First(f => f.Index == DataStringsFileLocations.TIMELINE_INDEX);
+                    TimelineFile timelineFile = currentMapDefFile.CastTo<TimelineFile>();
+                    _datFile.Files[_datFile.Files.IndexOf(currentTimelineFile)] = timelineFile;
                 }
 
                 dataListBox.ItemsSource = _datFile.Files;

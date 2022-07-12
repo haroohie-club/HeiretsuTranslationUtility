@@ -14,6 +14,7 @@ namespace HaruhiHeiretsuTests
         private const string NameplatesFilePath = @"inputs\nameplates.bin";
         private const string TimelineFilePath = @"inputs\timeline.bin";
         private const string ClubroomFilePath = @"inputs\clubroom.bin";
+        private const string ExtrasClfClaFilePath = @"inputs\extrasclfcla.bin";
 
         [SetUp]
         public void Setup()
@@ -110,9 +111,23 @@ namespace HaruhiHeiretsuTests
             clubroomFile.Initialize(initialBytes, 0);
 
             byte[] generatedBytes = clubroomFile.GetBytes();
-            File.WriteAllBytes("output/clubroom-initial.bin", initialBytes);
-            File.WriteAllBytes("output/clubroom-generated.bin", generatedBytes);
             ClubroomFile generatedFile = new();
+            generatedFile.Initialize(generatedBytes, 0);
+
+            Assert.AreEqual(initialBytes, generatedBytes);
+        }
+
+        [Test]
+        public void ExtrasClfClaFileParsingIsReversible()
+        {
+            byte[] initialBytes = File.ReadAllBytes(ExtrasClfClaFilePath);
+            ExtrasClfClaFile extrasClfClaFile = new();
+            extrasClfClaFile.Initialize(initialBytes, 0);
+
+            byte[] generatedBytes = extrasClfClaFile.GetBytes();
+            File.WriteAllBytes("output/extrasclfcla-initial.bin", initialBytes);
+            File.WriteAllBytes("output/extrasclfcla-generated.bin", generatedBytes);
+            ExtrasClfClaFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
             Assert.AreEqual(initialBytes, generatedBytes);

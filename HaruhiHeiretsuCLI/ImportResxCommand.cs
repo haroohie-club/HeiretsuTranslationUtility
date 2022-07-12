@@ -143,6 +143,12 @@ namespace HaruhiHeiretsuCLI
                                 clubroomFile.ImportResxFile(file, fontReplacementMap);
                                 dat.Files[archiveIndex] = clubroomFile.DataFile;
                                 break;
+
+                            case DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX:
+                                DataStringsFile<ExtrasClfClaFile> extrasClfClaFile = dat.Files[archiveIndex].CastTo<DataStringsFile<ExtrasClfClaFile>>();
+                                extrasClfClaFile.ImportResxFile(file, fontReplacementMap);
+                                dat.Files[archiveIndex] = extrasClfClaFile.DataFile;
+                                break;
                         }
                         break;
 
