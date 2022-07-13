@@ -112,8 +112,9 @@ namespace HaruhiHeiretsuLib.Strings
                 if (fontReplacementMap.ContainsReplacement($"{dialogueText[i]}"))
                 {
                     lineLength += fontReplacementMap.GetReplacementCharacterWidth($"{dialogueText[i]}");
+                    string replacement = $"{dialogueText[i]}";
                     dialogueText = dialogueText.Remove(i, 1);
-                    dialogueText = dialogueText.Insert(i, fontReplacementMap.GetStartCharacterForReplacement($"{dialogueText[i]}"));
+                    dialogueText = dialogueText.Insert(i, fontReplacementMap.GetStartCharacterForReplacement(replacement));
                 }
 
                 if (dialogueText[i] == '\n')

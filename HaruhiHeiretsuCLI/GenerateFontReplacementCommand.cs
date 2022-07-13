@@ -60,6 +60,12 @@ namespace HaruhiHeiretsuCLI
                     new() { Character = $"{_extendedCharacters[i]}", Spacing = extendedWidths[i] });
             }
 
+            // hardcode some manual adjustments
+            if (fontReplacementMap.Any(k => k.Value.Character == "…"))
+            {
+                fontReplacementMap[fontReplacementMap.First(k => k.Value.Character == "…").Key].VerticalOffset = 3;
+            }
+
             FontReplacementMap map = new(fontReplacementMap);
             File.WriteAllText(_outputJson, map.GetJson());
             File.WriteAllText(_outputHack, map.GetFontHackCFile());

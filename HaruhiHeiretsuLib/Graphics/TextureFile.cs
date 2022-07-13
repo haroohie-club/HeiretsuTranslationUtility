@@ -437,7 +437,7 @@ namespace HaruhiHeiretsuLib.Graphics
             }
         }
 
-        public void SetFontCharacterImage(string character, SKFont font, int fontSize)
+        public void SetFontCharacterImage(string character, SKFont font, int fontSize, int verticalOffset = 0)
         {
             SKBitmap bitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
             using SKCanvas canvas = new(bitmap);
@@ -445,8 +445,8 @@ namespace HaruhiHeiretsuLib.Graphics
             SKPaint mainPaint = new(font) { IsAntialias = true, Color = SKColors.White };
 
             canvas.Clear();
-            canvas.DrawText(character, 0, Character.SCALED_HEIGHT - fontSize / 5, shadowPaint);
-            canvas.DrawText(character, 2, Character.SCALED_HEIGHT - fontSize / 5, mainPaint);
+            canvas.DrawText(character, 0, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset, shadowPaint);
+            canvas.DrawText(character, 2, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset, mainPaint);
             canvas.Flush();
 
             SKBitmap scaledBitmap = new(Width, Height);

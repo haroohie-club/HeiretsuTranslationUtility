@@ -117,6 +117,11 @@ namespace HaruhiHeiretsuLib.Strings.Events
                 int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
                 string dialogueText = ProcessDialogueLineWithFontReplacement(NormalizeDialogueLine((string)d.Value), fontReplacementMap, DIALOGUE_LINE_LENGTH);
 
+                if (dialogueText.Count(c => c == '\n') > 1)
+                {
+                    Console.WriteLine($"Warning: file evt-{Index} has line too long: {dialogueIndex} (starts with '{dialogueText[0..30]}')");
+                }
+
                 EditDialogue(dialogueIndex, dialogueText);
             }
         }

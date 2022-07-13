@@ -1,4 +1,5 @@
-﻿using HaruhiHeiretsuLib.Archive;
+﻿using HaruhiHeiretsuLib;
+using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
 using HaruhiHeiretsuLib.Strings.Events;
@@ -15,19 +16,19 @@ namespace HaruhiHeiretsuCLI
 {
     public class ReplaceFilesCommand : Command
     {
-        private string _mcb, _dat, _evt, _grp, _scr, _replacementDir, _outputDir;
+        private string _mcb, _dat, _evt, _grp, _scr, _fontReplacement, _replacementDir, _outputDir;
         public ReplaceFilesCommand() : base("replace-files", "Replaces arbitrary files in the mcb and archives")
         {
             Options = new()
             {
                 "Replaces files in the mcb and bin archives",
-                "Usage: HaruhiHeiretsuCLI replace-files -m [MCB_PATH] -d [DAT_BIN] -e [EVT_BIN] -g [GRP_BIN] -s [SCR_BIN] -r [REPLACEMENT_FOLDER] -o [OUTPUT_FOLDER]",
                 "",
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
                 { "d|dat=", "Path to dat.bin", d => _dat = d },
                 { "e|evt=", "Path to evt.bin", e => _evt = e },
                 { "g|grp=", "Path to grp.bin", g => _grp = g },
                 { "s|scr=", "Path to scr.bin", s => _scr = s },
+                { "f|font-replacement=", "Path to font replacement JSON (optional, used in script compilation)", f => _fontReplacement = f },
                 { "r|replacement=", "Path to replacement directory", r => _replacementDir = r },
                 { "o|output=", "Path to output directory", o => _outputDir = o },
             };
@@ -90,9 +91,14 @@ namespace HaruhiHeiretsuCLI
                         continue;
                     }
 
-                    ScriptFile scriptFile = new();
-                    scriptFile.AvailableCommands = ScriptCommand.ParseScriptCommandFile(scr.Files[1].Data.ToArray());
-                    scriptFile.Compile(File.ReadAllText(file));
+                    FontReplacementMap fontReplacementMap = null;
+                    if (!string.IsNullOrEmpty(_fontReplacement))
+                    {
+                        fontReplacementMap = FontReplacementMap.FromJson(File.ReadAllText(_fontReplacement));
+                    }
+
+                    ScriptFile scriptFile = new() { AvailableCommands = ScriptCommand.ParseScriptCommandFile(scr.Files[1].Data.ToArray()) };
+                    scriptFile.Compile(File.ReadAllText(file), fontReplacementMap);
                     List<byte> data = scriptFile.Data;
 
                     List<(int, int)> loadedFileLocations = McbArchive.GetFilesToLoad(file.Split('_'));

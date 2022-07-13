@@ -29,7 +29,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public int ScriptCommandBlockDefinitionsEndOffset { get; set; }
         public int ScriptCommandBlockDefinitionsEnd { get; set; }
 
-        public const int DIALOGUE_LINE_LENGTH = int.MaxValue;
+        public const int DIALOGUE_LINE_LENGTH = 7038;
 
         public ScriptFile()
         {
@@ -176,6 +176,11 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
                 string dialogueText = ProcessDialogueLineWithFontReplacement(NormalizeDialogueLine((string)d.Value), fontReplacementMap, DIALOGUE_LINE_LENGTH);
 
+                if (dialogueText.Count(c => c == '\n') > 2)
+                {
+                    Console.WriteLine($"Warning: file scr-{Index}_{Name} has line too long: {dialogueIndex} (starts with '{dialogueText[0..30]}')");
+                }
+
                 EditDialogue(dialogueIndex, dialogueText);
             }
         }
@@ -185,7 +190,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             Compile(Decompile());
         }
 
-        public string Decompile()
+        public string Decompile(FontReplacementMap fontReplacementMap = null)
         {
             string script = "";
             int currentLine = 1;
@@ -205,7 +210,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         currentLine++;
                     }
 
-                    script += $"{invocation.GetInvocation()}\n";
+                    script += $"{invocation.GetInvocation(fontReplacementMap)}\n";
                     currentLine++;
                 }
             }
@@ -213,7 +218,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             return script;
         }
 
-        public void Compile(string code)
+        public void Compile(string code, FontReplacementMap fontReplacementMap = null)
         {
             List<byte> bytes = new();
             List<(string, int)> labels = new();
@@ -239,7 +244,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 if (lines[lineNumber - 1].StartsWith("=="))
                 {
                     ScriptCommandBlock commandBlock = new();
-                    lineNumber = commandBlock.ParseBlock(lineNumber, lines[(lineNumber - 1)..], AvailableCommands, Objects, labels);
+                    lineNumber = commandBlock.ParseBlock(lineNumber, lines[(lineNumber - 1)..], AvailableCommands, Objects, labels, fontReplacementMap);
                     ScriptCommandBlocks.Add(commandBlock);
                 }
             }

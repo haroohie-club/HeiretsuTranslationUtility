@@ -77,7 +77,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
             foreach ((ushort codepoint, FontReplacementCharacter replacement) in fontReplacementMap.Map)
             {
-                Characters.First(c => c.Codepoints.Contains(codepoint)).SetFontCharacterImage(replacement.Character, skFont, fontSize);
+                Characters.First(c => c.Codepoints.Contains(codepoint)).SetFontCharacterImage(replacement.Character, skFont, fontSize, replacement.VerticalOffset);
             }
         }
     }

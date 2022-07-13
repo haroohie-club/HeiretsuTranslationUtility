@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace HaruhiHeiretsuLib.Strings.Scripts
@@ -34,9 +35,9 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             Address = address;
         }
 
-        public ScriptCommandInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, List<(string, int)> labels)
+        public ScriptCommandInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, List<(string, int)> labels, FontReplacementMap fontReplacementMap = null)
         {
-            ParseInvocation(invocation, lineNumber, allCommands, objects, labels);
+            ParseInvocation(invocation, lineNumber, allCommands, objects, labels, fontReplacementMap);
         }
 
         public override string ToString()
@@ -72,7 +73,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             return bytes.ToArray();
         }
 
-        public string GetInvocation()
+        public string GetInvocation(FontReplacementMap fontReplacementMap = null)
         {
             string invocation = string.Empty;
             if (!string.IsNullOrEmpty(Label))
@@ -91,12 +92,12 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 {
                     invocation += ", ";
                 }
-                invocation += ParseParameter(Parameters[i]);
+                invocation += ParseParameter(Parameters[i], fontReplacementMap);
             }
             return $"{invocation})";
         }
 
-        public void ParseInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, List<(string label, int lineNumber)> labels)
+        public void ParseInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, List<(string label, int lineNumber)> labels, FontReplacementMap fontReplacementMap = null)
         {
             Regex labelRegex = new(@"^{(?<label>[\w\d]+)}");
 
@@ -183,12 +184,27 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     {
                         int firstQuote = trimmedParameters.IndexOf('"');
                         int secondQuote = Regex.Match(trimmedParameters[(firstQuote + 1)..], @"[^\\]""").Index + 1;
-                        string line = trimmedParameters[(firstQuote + 1)..(secondQuote + 1)].Replace("\\n", "\n").Replace("\\\"", "\"");
+                        string line = trimmedParameters[(firstQuote + 1)..(secondQuote + 1)];
+                        int lineLength = line.Length;
+                        line = line.Replace("\\n", "\n").Replace("\\\"", "\"");
+
+                        if (fontReplacementMap is not null)
+                        {
+                            for (int j = 0; j < line.Length; j++)
+                            {
+                                if (fontReplacementMap.ContainsReplacement($"{line[i]}"))
+                                {
+                                    string replacement = $"{line[i]}";
+                                    line = line.Remove(i, 1);
+                                    line = line.Insert(i, fontReplacementMap.GetStartCharacterForReplacement(replacement));
+                                }
+                            }
+                        }
 
                         objects.Add(line);
                         Parameters.Add(new() { Type = ScriptCommand.ParameterType.DIALOGUE, Value = BitConverter.GetBytes((short)(objects.Count - 1)).Reverse().ToArray(), LineNumber = LineNumber });
 
-                        i += line.Replace("\n", "\\n").Replace("\"", "\\\"").Length + 4;
+                        i += lineLength + 4;
                         continue;
                     }
 
@@ -575,14 +591,27 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             return resolvedAddress;
         }
 
-        public string ParseParameter(Parameter parameter)
+        public string ParseParameter(Parameter parameter, FontReplacementMap fontReplacementMap = null)
         {
             switch (parameter.Type)
             {
                 case ScriptCommand.ParameterType.ADDRESS:
                     return ParseAddress(parameter.Value);
                 case ScriptCommand.ParameterType.DIALOGUE:
-                    return $"\"{ScriptObjects[BitConverter.ToInt16(parameter.Value.Reverse().ToArray())].Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
+                    string dialogue = ScriptObjects[BitConverter.ToInt16(parameter.Value.Reverse().ToArray())];
+                    if (fontReplacementMap is not null)
+                    {
+                        for (int i = 0; i < dialogue.Length; i++)
+                        {
+                            ushort character = BitConverter.ToUInt16(Encoding.GetEncoding("Shift-JIS").GetBytes($"{dialogue[i]}"));
+                            if (fontReplacementMap.Map.ContainsKey(character))
+                            {
+                                dialogue = dialogue.Remove(i, 1);
+                                dialogue = dialogue.Insert(i, fontReplacementMap.Map[character].Character);
+                            }
+                        }
+                    }
+                    return $"\"{dialogue.Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
                 case ScriptCommand.ParameterType.CONDITIONAL:
                     return ParseConditional(parameter.Value);
                 case ScriptCommand.ParameterType.TIMESPAN:

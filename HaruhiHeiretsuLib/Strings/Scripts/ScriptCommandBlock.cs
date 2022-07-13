@@ -58,7 +58,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             }
         }
 
-        public int ParseBlock(int lineNumber, string[] lines, List<ScriptCommand> allCommands, List<string> objects, List<(string, int)> labels)
+        public int ParseBlock(int lineNumber, string[] lines, List<ScriptCommand> allCommands, List<string> objects, List<(string, int)> labels, FontReplacementMap fontReplacementMap = null)
         {
             Regex nameRegex = new(@"== (?<name>.+) ==");
             Match nameMatch = nameRegex.Match(lines[0]);
@@ -91,7 +91,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     continue;
                 }
 
-                Invocations.Add(new ScriptCommandInvocation(lines[i], (short)(i + lineNumber), allCommands, objects, labels));
+                Invocations.Add(new ScriptCommandInvocation(lines[i], (short)(i + lineNumber), allCommands, objects, labels, fontReplacementMap));
             }
 
             NumInvocations = (ushort)Invocations.Count;

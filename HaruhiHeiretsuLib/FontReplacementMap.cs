@@ -95,6 +95,7 @@ namespace HaruhiHeiretsuLib
     {
         public string Character { get; set; }
         public int Spacing { get; set; }
+        public int VerticalOffset { get; set; }
 
         public override string ToString()
         {
