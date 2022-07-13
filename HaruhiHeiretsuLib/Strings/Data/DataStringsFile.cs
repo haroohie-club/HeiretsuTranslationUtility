@@ -14,6 +14,14 @@ namespace HaruhiHeiretsuLib.Strings.Data
         {
             DataFile = new();
             DataFile.Initialize(decompressedData, offset);
+            DataFile.McbId = McbId;
+            DataFile.Location = Location;
+            DataFile.McbEntryData = McbEntryData;
+            DataFile.MagicInteger = MagicInteger;
+            DataFile.Index = Index;
+            DataFile.Offset = Offset;
+            DataFile.Length = Length;
+            DataFile.CompressedData = CompressedData;
             DialogueLines = DataFile.GetDialogueLines();
         }
 
@@ -75,11 +83,11 @@ namespace HaruhiHeiretsuLib.Strings.Data
 
     public static class DataStringsFileLocations
     {
-        public const int MAP_DEFINITION_MCB_INDEX = 79;
-        public const int MAP_DEFINITION_INDEX = 58;
-
         public const int TOPICS_FLAG_MCB_INDEX = 78;
         public const int TOPICS_FLAGS_INDEX = 56;
+
+        public const int MAP_DEFINITION_MCB_INDEX = 79;
+        public const int MAP_DEFINITION_INDEX = 58;
 
         public const int NAMEPLATES_MCB_INDEX = 82;
         public const int NAMEPLATES_INDEX = 64;

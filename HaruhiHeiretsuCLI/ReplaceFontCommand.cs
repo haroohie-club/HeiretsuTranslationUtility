@@ -31,6 +31,8 @@ namespace HaruhiHeiretsuCLI
         public override int Invoke(IEnumerable<string> arguments)
         {
             Options.Parse(arguments);
+
+            CommandSet.Out.WriteLine("Loading archives...");
             McbArchive mcb = Program.GetMcbFile(_mcb);
             BinArchive<GraphicsFile> grp = BinArchive<GraphicsFile>.FromFile(_grp);
 

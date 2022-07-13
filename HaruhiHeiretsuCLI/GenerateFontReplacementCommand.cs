@@ -37,6 +37,8 @@ namespace HaruhiHeiretsuCLI
             Options.Parse(arguments);
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
+            CommandSet.Out.Write("Generating font replacement map... ");
+
             SKPaint paint = new(new(SKTypeface.FromFile(_fontFile), size: _fontSize));
             int[] widths = paint.GetGlyphWidths(CHARACTERS).Select(w => (int)Math.Round(w * GAME_SCALE_FACTOR)).ToArray();
             int[] extendedWidths = paint.GetGlyphWidths(_extendedCharacters).Select(w => (int)Math.Round(w * GAME_SCALE_FACTOR)).ToArray();
@@ -65,11 +67,17 @@ namespace HaruhiHeiretsuCLI
             {
                 fontReplacementMap[fontReplacementMap.First(k => k.Value.Character == "…").Key].VerticalOffset = 3;
             }
+            if (fontReplacementMap.Any(k => k.Value.Character == "—"))
+            {
+                fontReplacementMap[fontReplacementMap.First(k => k.Value.Character == "—").Key].VerticalOffset = 3;
+            }
 
             FontReplacementMap map = new(fontReplacementMap);
             File.WriteAllText(_outputJson, map.GetJson());
             File.WriteAllText(_outputHack, map.GetFontHackCFile());
-            
+
+            CommandSet.Out.WriteLine("Done.");
+
             return 0;
         }
     }

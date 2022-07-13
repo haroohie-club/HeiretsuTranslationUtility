@@ -1,0 +1,1054 @@
+{
+  "Map": {
+    "32": {
+      "Character": " ",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "33": {
+      "Character": "!",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "34": {
+      "Character": "\"",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "35": {
+      "Character": "#",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "36": {
+      "Character": "$",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "37": {
+      "Character": "%",
+      "Spacing": 322,
+      "VerticalOffset": 0
+    },
+    "38": {
+      "Character": "&",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "39": {
+      "Character": "'",
+      "Spacing": 80,
+      "VerticalOffset": 0
+    },
+    "40": {
+      "Character": "(",
+      "Spacing": 126,
+      "VerticalOffset": 0
+    },
+    "41": {
+      "Character": ")",
+      "Spacing": 126,
+      "VerticalOffset": 0
+    },
+    "42": {
+      "Character": "*",
+      "Spacing": 150,
+      "VerticalOffset": 0
+    },
+    "43": {
+      "Character": "+",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "44": {
+      "Character": ",",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "45": {
+      "Character": "-",
+      "Spacing": 150,
+      "VerticalOffset": 0
+    },
+    "46": {
+      "Character": ".",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "47": {
+      "Character": "/",
+      "Spacing": 115,
+      "VerticalOffset": 0
+    },
+    "48": {
+      "Character": "0",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "49": {
+      "Character": "1",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "50": {
+      "Character": "2",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "51": {
+      "Character": "3",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "52": {
+      "Character": "4",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "53": {
+      "Character": "5",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "54": {
+      "Character": "6",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "55": {
+      "Character": "7",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "56": {
+      "Character": "8",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "57": {
+      "Character": "9",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "58": {
+      "Character": ":",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "59": {
+      "Character": ";",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "60": {
+      "Character": "<",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "61": {
+      "Character": "=",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "62": {
+      "Character": ">",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "63": {
+      "Character": "?",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "64": {
+      "Character": "@",
+      "Spacing": 322,
+      "VerticalOffset": 0
+    },
+    "65": {
+      "Character": "A",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "66": {
+      "Character": "B",
+      "Spacing": 230,
+      "VerticalOffset": 0
+    },
+    "67": {
+      "Character": "C",
+      "Spacing": 230,
+      "VerticalOffset": 0
+    },
+    "68": {
+      "Character": "D",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "69": {
+      "Character": "E",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "70": {
+      "Character": "F",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "71": {
+      "Character": "G",
+      "Spacing": 242,
+      "VerticalOffset": 0
+    },
+    "72": {
+      "Character": "H",
+      "Spacing": 264,
+      "VerticalOffset": 0
+    },
+    "73": {
+      "Character": "I",
+      "Spacing": 104,
+      "VerticalOffset": 0
+    },
+    "74": {
+      "Character": "J",
+      "Spacing": 126,
+      "VerticalOffset": 0
+    },
+    "75": {
+      "Character": "K",
+      "Spacing": 230,
+      "VerticalOffset": 0
+    },
+    "76": {
+      "Character": "L",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "77": {
+      "Character": "M",
+      "Spacing": 288,
+      "VerticalOffset": 0
+    },
+    "78": {
+      "Character": "N",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "79": {
+      "Character": "O",
+      "Spacing": 264,
+      "VerticalOffset": 0
+    },
+    "80": {
+      "Character": "P",
+      "Spacing": 218,
+      "VerticalOffset": 0
+    },
+    "81": {
+      "Character": "Q",
+      "Spacing": 264,
+      "VerticalOffset": 0
+    },
+    "82": {
+      "Character": "R",
+      "Spacing": 230,
+      "VerticalOffset": 0
+    },
+    "83": {
+      "Character": "S",
+      "Spacing": 218,
+      "VerticalOffset": 0
+    },
+    "84": {
+      "Character": "T",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "85": {
+      "Character": "U",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "86": {
+      "Character": "V",
+      "Spacing": 242,
+      "VerticalOffset": 0
+    },
+    "87": {
+      "Character": "W",
+      "Spacing": 368,
+      "VerticalOffset": 0
+    },
+    "88": {
+      "Character": "X",
+      "Spacing": 230,
+      "VerticalOffset": 0
+    },
+    "89": {
+      "Character": "Y",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "90": {
+      "Character": "Z",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "91": {
+      "Character": "[",
+      "Spacing": 126,
+      "VerticalOffset": 0
+    },
+    "93": {
+      "Character": "]",
+      "Spacing": 126,
+      "VerticalOffset": 0
+    },
+    "94": {
+      "Character": "^",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "95": {
+      "Character": "_",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "96": {
+      "Character": "`",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "97": {
+      "Character": "a",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "98": {
+      "Character": "b",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "99": {
+      "Character": "c",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "100": {
+      "Character": "d",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "101": {
+      "Character": "e",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "102": {
+      "Character": "f",
+      "Spacing": 126,
+      "VerticalOffset": 0
+    },
+    "103": {
+      "Character": "g",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "104": {
+      "Character": "h",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "105": {
+      "Character": "i",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "106": {
+      "Character": "j",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "107": {
+      "Character": "k",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "108": {
+      "Character": "l",
+      "Spacing": 115,
+      "VerticalOffset": 0
+    },
+    "109": {
+      "Character": "m",
+      "Spacing": 299,
+      "VerticalOffset": 0
+    },
+    "110": {
+      "Character": "n",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "111": {
+      "Character": "o",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "112": {
+      "Character": "p",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "113": {
+      "Character": "q",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "114": {
+      "Character": "r",
+      "Spacing": 138,
+      "VerticalOffset": 0
+    },
+    "115": {
+      "Character": "s",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "116": {
+      "Character": "t",
+      "Spacing": 138,
+      "VerticalOffset": 0
+    },
+    "117": {
+      "Character": "u",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "118": {
+      "Character": "v",
+      "Spacing": 172,
+      "VerticalOffset": 0
+    },
+    "119": {
+      "Character": "w",
+      "Spacing": 288,
+      "VerticalOffset": 0
+    },
+    "120": {
+      "Character": "x",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "121": {
+      "Character": "y",
+      "Spacing": 172,
+      "VerticalOffset": 0
+    },
+    "122": {
+      "Character": "z",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "123": {
+      "Character": "{",
+      "Spacing": 138,
+      "VerticalOffset": 0
+    },
+    "124": {
+      "Character": "|",
+      "Spacing": 104,
+      "VerticalOffset": 0
+    },
+    "125": {
+      "Character": "}",
+      "Spacing": 138,
+      "VerticalOffset": 0
+    },
+    "33088": {
+      "Character": "€",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33089": {
+      "Character": "ƒ",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33090": {
+      "Character": "…",
+      "Spacing": 264,
+      "VerticalOffset": 3
+    },
+    "33091": {
+      "Character": "„",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33092": {
+      "Character": "†",
+      "Spacing": 115,
+      "VerticalOffset": 0
+    },
+    "33093": {
+      "Character": "‡",
+      "Spacing": 115,
+      "VerticalOffset": 0
+    },
+    "33094": {
+      "Character": "ˆ",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33095": {
+      "Character": "Š",
+      "Spacing": 218,
+      "VerticalOffset": 0
+    },
+    "33096": {
+      "Character": "‹",
+      "Spacing": 104,
+      "VerticalOffset": 0
+    },
+    "33097": {
+      "Character": "Œ",
+      "Spacing": 356,
+      "VerticalOffset": 0
+    },
+    "33098": {
+      "Character": "Ž",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "33099": {
+      "Character": "‘",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "33100": {
+      "Character": "’",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "33101": {
+      "Character": "“",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33102": {
+      "Character": "”",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33103": {
+      "Character": "•",
+      "Spacing": 172,
+      "VerticalOffset": 0
+    },
+    "33104": {
+      "Character": "–",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33105": {
+      "Character": "—",
+      "Spacing": 334,
+      "VerticalOffset": 0
+    },
+    "33106": {
+      "Character": "˜",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33107": {
+      "Character": "™",
+      "Spacing": 322,
+      "VerticalOffset": 0
+    },
+    "33108": {
+      "Character": "š",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33109": {
+      "Character": "›",
+      "Spacing": 104,
+      "VerticalOffset": 0
+    },
+    "33110": {
+      "Character": "œ",
+      "Spacing": 310,
+      "VerticalOffset": 0
+    },
+    "33111": {
+      "Character": "ž",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33112": {
+      "Character": "Ÿ",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "33113": {
+      "Character": "¡",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "33114": {
+      "Character": "¢",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33115": {
+      "Character": "£",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33116": {
+      "Character": "¤",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33117": {
+      "Character": "¦",
+      "Spacing": 104,
+      "VerticalOffset": 0
+    },
+    "33118": {
+      "Character": "§",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33119": {
+      "Character": "¨",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33120": {
+      "Character": "©",
+      "Spacing": 276,
+      "VerticalOffset": 0
+    },
+    "33121": {
+      "Character": "ª",
+      "Spacing": 115,
+      "VerticalOffset": 0
+    },
+    "33122": {
+      "Character": "«",
+      "Spacing": 172,
+      "VerticalOffset": 0
+    },
+    "33124": {
+      "Character": "¬",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33125": {
+      "Character": "®",
+      "Spacing": 276,
+      "VerticalOffset": 0
+    },
+    "33126": {
+      "Character": "¯",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33127": {
+      "Character": "°",
+      "Spacing": 126,
+      "VerticalOffset": 0
+    },
+    "33128": {
+      "Character": "±",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33129": {
+      "Character": "²",
+      "Spacing": 126,
+      "VerticalOffset": 0
+    },
+    "33130": {
+      "Character": "³",
+      "Spacing": 126,
+      "VerticalOffset": 0
+    },
+    "33131": {
+      "Character": "´",
+      "Spacing": 172,
+      "VerticalOffset": 0
+    },
+    "33132": {
+      "Character": "µ",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33133": {
+      "Character": "·",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "33134": {
+      "Character": "¸",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33135": {
+      "Character": "¹",
+      "Spacing": 126,
+      "VerticalOffset": 0
+    },
+    "33136": {
+      "Character": "º",
+      "Spacing": 115,
+      "VerticalOffset": 0
+    },
+    "33137": {
+      "Character": "»",
+      "Spacing": 172,
+      "VerticalOffset": 0
+    },
+    "33138": {
+      "Character": "¼",
+      "Spacing": 310,
+      "VerticalOffset": 0
+    },
+    "33139": {
+      "Character": "½",
+      "Spacing": 322,
+      "VerticalOffset": 0
+    },
+    "33140": {
+      "Character": "¾",
+      "Spacing": 310,
+      "VerticalOffset": 0
+    },
+    "33141": {
+      "Character": "¿",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33142": {
+      "Character": "À",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33143": {
+      "Character": "Á",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33144": {
+      "Character": "Â",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33145": {
+      "Character": "Ã",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33146": {
+      "Character": "Ä",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33147": {
+      "Character": "Å",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33148": {
+      "Character": "Æ",
+      "Spacing": 334,
+      "VerticalOffset": 0
+    },
+    "33149": {
+      "Character": "Ç",
+      "Spacing": 230,
+      "VerticalOffset": 0
+    },
+    "33150": {
+      "Character": "È",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "33152": {
+      "Character": "É",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "33153": {
+      "Character": "É",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "33154": {
+      "Character": "Ë",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "33155": {
+      "Character": "Ì",
+      "Spacing": 104,
+      "VerticalOffset": 0
+    },
+    "33156": {
+      "Character": "Í",
+      "Spacing": 104,
+      "VerticalOffset": 0
+    },
+    "33157": {
+      "Character": "Î",
+      "Spacing": 104,
+      "VerticalOffset": 0
+    },
+    "33158": {
+      "Character": "Ï",
+      "Spacing": 104,
+      "VerticalOffset": 0
+    },
+    "33159": {
+      "Character": "Ð",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33160": {
+      "Character": "Ñ",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33161": {
+      "Character": "Ò",
+      "Spacing": 264,
+      "VerticalOffset": 0
+    },
+    "33162": {
+      "Character": "Ó",
+      "Spacing": 264,
+      "VerticalOffset": 0
+    },
+    "33163": {
+      "Character": "Ô",
+      "Spacing": 264,
+      "VerticalOffset": 0
+    },
+    "33164": {
+      "Character": "Õ",
+      "Spacing": 264,
+      "VerticalOffset": 0
+    },
+    "33165": {
+      "Character": "Ö",
+      "Spacing": 264,
+      "VerticalOffset": 0
+    },
+    "33166": {
+      "Character": "×",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33167": {
+      "Character": "Ø",
+      "Spacing": 264,
+      "VerticalOffset": 0
+    },
+    "33168": {
+      "Character": "Ù",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33169": {
+      "Character": "Ú",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33170": {
+      "Character": "Û",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33171": {
+      "Character": "Ü",
+      "Spacing": 253,
+      "VerticalOffset": 0
+    },
+    "33172": {
+      "Character": "Ý",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "33173": {
+      "Character": "Þ",
+      "Spacing": 218,
+      "VerticalOffset": 0
+    },
+    "33174": {
+      "Character": "ß",
+      "Spacing": 230,
+      "VerticalOffset": 0
+    },
+    "33175": {
+      "Character": "à",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "33176": {
+      "Character": "á",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "33177": {
+      "Character": "â",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "33178": {
+      "Character": "ã",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "33179": {
+      "Character": "ä",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "33180": {
+      "Character": "å",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "33181": {
+      "Character": "æ",
+      "Spacing": 288,
+      "VerticalOffset": 0
+    },
+    "33182": {
+      "Character": "ç",
+      "Spacing": 161,
+      "VerticalOffset": 0
+    },
+    "33183": {
+      "Character": "è",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "33184": {
+      "Character": "é",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "33185": {
+      "Character": "ê",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "33186": {
+      "Character": "ë",
+      "Spacing": 184,
+      "VerticalOffset": 0
+    },
+    "33187": {
+      "Character": "ì",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "33188": {
+      "Character": "í",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "33189": {
+      "Character": "î",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "33190": {
+      "Character": "ï",
+      "Spacing": 92,
+      "VerticalOffset": 0
+    },
+    "33191": {
+      "Character": "ð",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33192": {
+      "Character": "ñ",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33193": {
+      "Character": "ò",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33194": {
+      "Character": "ó",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33195": {
+      "Character": "ô",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33196": {
+      "Character": "õ",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33208": {
+      "Character": "ö",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33209": {
+      "Character": "÷",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33210": {
+      "Character": "ø",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33211": {
+      "Character": "ù",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33212": {
+      "Character": "ú",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33213": {
+      "Character": "û",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33214": {
+      "Character": "ü",
+      "Spacing": 196,
+      "VerticalOffset": 0
+    },
+    "33215": {
+      "Character": "ý",
+      "Spacing": 172,
+      "VerticalOffset": 0
+    },
+    "33224": {
+      "Character": "þ",
+      "Spacing": 207,
+      "VerticalOffset": 0
+    },
+    "33225": {
+      "Character": "ÿ",
+      "Spacing": 172,
+      "VerticalOffset": 0
+    }
+  }
+}

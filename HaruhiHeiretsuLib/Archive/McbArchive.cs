@@ -281,9 +281,9 @@ namespace HaruhiHeiretsuLib.Archive
             return fileMap;
         }
 
-        public void LoadStringsFiles(string[] stringsFilesLocations)
+        public void LoadStringsFiles(string[] stringsFilesLocations, List<ScriptCommand> scriptCommands = null)
         {
-            LoadStringsFiles(string.Join('\n', stringsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
+            LoadStringsFiles(string.Join('\n', stringsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))), scriptCommands);
         }
 
         public void LoadStringsFiles(string stringFileLocations, List<ScriptCommand> scriptCommands = null)

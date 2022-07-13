@@ -190,15 +190,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
                         if (fontReplacementMap is not null)
                         {
-                            for (int j = 0; j < line.Length; j++)
-                            {
-                                if (fontReplacementMap.ContainsReplacement($"{line[i]}"))
-                                {
-                                    string replacement = $"{line[i]}";
-                                    line = line.Remove(i, 1);
-                                    line = line.Insert(i, fontReplacementMap.GetStartCharacterForReplacement(replacement));
-                                }
-                            }
+                            line = StringsFile.ProcessDialogueLineWithFontReplacement(line, fontReplacementMap, ScriptFile.DIALOGUE_LINE_LENGTH);
                         }
 
                         objects.Add(line);

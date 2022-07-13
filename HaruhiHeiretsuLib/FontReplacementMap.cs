@@ -47,7 +47,7 @@ namespace HaruhiHeiretsuLib
 
         public string GetStartCharacterForReplacement(string replacement)
         {
-            return Encoding.GetEncoding("Shift-JIS").GetString(BitConverter.GetBytes(Map.First(kv => kv.Value.Character == replacement).Key).Reverse().ToArray());
+            return Encoding.GetEncoding("Shift-JIS").GetString(BitConverter.GetBytes(Map.First(kv => kv.Value.Character == replacement).Key).Reverse().ToArray()).Replace("\0", "");
         }
 
         public int GetReplacementCharacterWidth(string replacement)
