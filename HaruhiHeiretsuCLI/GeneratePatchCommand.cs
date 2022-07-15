@@ -77,6 +77,16 @@ namespace HaruhiHeiretsuCLI
             commandOption.AppendChild(commandChoice);
             restorationSection.AppendChild(commandOption);
 
+            XmlElement testMapsOption = xml.CreateElement("option");
+            testMapsOption.SetAttribute("name", "Restore Test Maps");
+            XmlElement testMapsChoice = xml.CreateElement("choice");
+            testMapsChoice.SetAttribute("name", "Enabled");
+            XmlElement testMapsChoicePatch = xml.CreateElement("patch");
+            testMapsChoicePatch.SetAttribute("id", "RestoreTestMaps");
+            testMapsChoice.AppendChild(testMapsChoicePatch);
+            testMapsOption.AppendChild(testMapsChoice);
+            restorationSection.AppendChild(testMapsOption);
+
             options.AppendChild(restorationSection);
 
             root.AppendChild(options);
