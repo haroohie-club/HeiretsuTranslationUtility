@@ -425,6 +425,7 @@ namespace HaruhiHeiretsuLib.Archive
 
         public void SaveFontFile()
         {
+            McbSubArchives[0].Files[5].Edited = true;
             McbSubArchives[0].Files[5].Data = FontFile.GetBytes().ToList();
         }
 

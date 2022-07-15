@@ -8,7 +8,8 @@ namespace HaruhiHeiretsuLib.Archive
     public class BinArchive<T>
         where T : FileInArchive, new()
     {
-        public const int FirstHeaderPointerOffset = 0x1C;
+        public const int FirstHeaderPointerOffset = 0x14;
+        public const int FirstIndex = 1;
 
         public byte[] Header { get; set; }
 
@@ -74,7 +75,6 @@ namespace HaruhiHeiretsuLib.Archive
                 SecondHeaderNumbers.Add(BitConverter.ToUInt32(archiveBytes.Skip(i).Take(4).ToArray()));
             }
 
-            int startFile = 1;
             for (int i = firstFileOffset; i < archiveBytes.Length;)
             {
                 int offset = i;
@@ -92,16 +92,8 @@ namespace HaruhiHeiretsuLib.Archive
                     T file = new();
                     file.Offset = offset;
                     file.MagicInteger = GetMagicInteger(file.Offset);
-                    if (file.MagicInteger == 0)
-                    {
-                        file.Index = startFile++; // All archives have two files at the beginning that aren't indexed in the header, so we track them this way
-                        file.Length = -1;
-                    }
-                    else
-                    {
-                        file.Index = GetFileIndex(file.MagicInteger) + 3; // idk this game is weird
-                        file.Length = GetFileLength(file.MagicInteger);
-                    }
+                    file.Index = GetFileIndex(file.MagicInteger) + FirstIndex;
+                    file.Length = GetFileLength(file.MagicInteger);
                     try
                     {
                         file = FileManager<T>.FromCompressedData(fileBytes.ToArray(), offset, file.MagicInteger, file.Index, file.Length);
@@ -190,7 +182,7 @@ namespace HaruhiHeiretsuLib.Archive
             {
                 searchSet = Header;
             }
-            return (int)(BitConverter.ToUInt32(searchSet.Skip(FirstHeaderPointerOffset + ((file.Index - 3) * 4)).Take(4).ToArray()) >> MagicIntegerMsbShift) * MagicIntegerMsbMultiplier;
+            return (int)(BitConverter.ToUInt32(searchSet.Skip(FirstHeaderPointerOffset + ((file.Index - FirstIndex) * 4)).Take(4).ToArray()) >> MagicIntegerMsbShift) * MagicIntegerMsbMultiplier;
         }
 
         public uint GetNewMagicalInteger(T file, int compressedLength)
@@ -224,10 +216,10 @@ namespace HaruhiHeiretsuLib.Archive
                 else
                 {
                     compressedBytes = Helpers.CompressData(Files[i].GetBytes());
-                    if ((Files[i].Index - 3) >= 0)
+                    if ((Files[i].Index - FirstIndex) >= 0)
                     {
                         byte[] newMagicalIntegerBytes = BitConverter.GetBytes(GetNewMagicalInteger(Files[i], compressedBytes.Length));
-                        int pointerOffset = FirstHeaderPointerOffset + ((Files[i].Index - 3) * 4);
+                        int pointerOffset = FirstHeaderPointerOffset + ((Files[i].Index - FirstIndex) * 4);
                         for (int j = 0; j < newMagicalIntegerBytes.Length; j++)
                         {
                             bytes[pointerOffset + j] = newMagicalIntegerBytes[j];
@@ -251,7 +243,7 @@ namespace HaruhiHeiretsuLib.Archive
                     if (pointerShift > 0)
                     {
                         byte[] newPointer = BitConverter.GetBytes((uint)((Files[i + 1].Offset / MagicIntegerMsbMultiplier) + pointerShift) << MagicIntegerMsbShift);
-                        int pointerOffset = FirstHeaderPointerOffset + ((Files[i + 1].Index - 3) * 4);
+                        int pointerOffset = FirstHeaderPointerOffset + ((Files[i + 1].Index - FirstIndex) * 4);
                         bytes[pointerOffset + 2] = newPointer[2];
                         bytes[pointerOffset + 3] = newPointer[3];
                         Header[pointerOffset + 2] = newPointer[2];

@@ -29,8 +29,9 @@ namespace HaruhiHeiretsuLib.Graphics
 
             for (int i = 0; i < NumCharacters; i++)
             {
-                Characters.Add(new Character(Helpers.DecompressData(data.Skip(BitConverter.ToInt32(data.Skip(4 * (i + 1)).Take(4).ToArray())).ToArray()),
-                    i, _codepointsToIndexes.Where(c => c.Value == i).Select(c => c.Key)));
+                int offset = BitConverter.ToInt32(data.Skip(4 * (i + 1)).Take(4).ToArray());
+                Characters.Add(new(Helpers.DecompressData(data.Skip(offset).ToArray()),
+                    i, _codepointsToIndexes.Where(c => c.Value == i).Select(c => c.Key), offset));
             }
 
             for (int i = (NumCharacters + 1) * 4; i < ((NumCharacters + 1) * 4) + 0x40; i += 4)
@@ -89,10 +90,11 @@ namespace HaruhiHeiretsuLib.Graphics
         public const int SCALED_WIDTH = 36;
         public const int SCALED_HEIGHT = 32;
 
-        public Character(byte[] data, int index, IEnumerable<ushort> codepoint)
+        public Character(byte[] data, int index, IEnumerable<ushort> codepoint, int offset)
         {
             Codepoints = codepoint.ToArray();
             Index = index;
+            Offset = offset;
             FileType = GraphicsFileType.FONT_CHARACTER;
             Data = data.ToList();
             Height = 24;
