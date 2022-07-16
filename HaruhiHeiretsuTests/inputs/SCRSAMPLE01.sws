@@ -1,0 +1,103 @@
+Test_Script 客室 13:00
+== IN ==
+
+
+LOG(TRUE)
+FREE()
+== OUT ==
+TW("他の場所へ行くか")
+EXIT()
+== HARUHI ==
+TNW("インタラプト")
+CBACK()
+SET(memd 4867, lit 0)
+CMNT("トピック使用ＵＩ有り無し？", "トピック有", "トピック無")
+TDEL()
+VJUMP(memm 4098, ({label000}, FALSE, lit 0), ({label001}, FALSE, lit 1))
+BACK()
+label000: SET(memd 4867, lit 1)
+
+label001: CMNT("イベントの種類", "インタラプト動的", "インタラプト静的", "通常イベント")
+TDEL()
+VJUMP(memm 4098, ({label002}, FALSE, lit 0), ({label003}, FALSE, lit 1), ({label004}, FALSE, lit 2))
+BACK()
+
+label004: CMNT("イベントの種類２", "割れる", "受け止める")
+TDEL()
+VJUMP(memm 4098, ({label005}, FALSE, lit 0), ({label006}, FALSE, lit 1))
+BACK()
+
+label005: EV_MODE(TRUE)
+EV_START(lit 0, [lit 0, lit 1, lit 2], var EVT_SKIP)
+WAIT()
+EV_MODE(FALSE)
+FI(time_f lit 30)
+BACK()
+
+label006: EV_MODE(TRUE)
+EV_START(lit 0, [lit 0, lit 1, lit 4], var EVT_SKIP)
+WAIT()
+EV_MODE(FALSE)
+FI(time_f lit 30)
+BACK()
+
+label002: EV_MODE(TRUE)
+EV_START(lit 0, [lit 0, lit 1])
+IR_CHAP(lit 1)
+JUMP({label007}, if memd 4867)
+
+IR_START(time_s lit 5, UNKNOWN1A 00 00 03 00 00 00 00 1B)
+IR_ID(CHARACTER[UNKNOWN35], lit 0, "受け止める")
+IR_ID(CHARACTER[NAGATO], lit 1, "割れる")
+JUMP({label008})
+
+label007: IR_START(time_s lit 5, $TOPIC_00)
+IR_ID(CHARACTER[UNKNOWN35], lit 0, "受け止める")
+IR_ID(CHARACTER[NAGATO], lit 1, "割れる")
+label008: IR_STOP()
+IRJUMP(({label009}, FALSE, lit 0), ({label010}, TRUE, lit 0))
+WAIT()
+EV_MODE(FALSE)
+
+label010: EV_START(lit 0, [lit 2])
+WAIT()
+EV_MODE(FALSE)
+FI(time_f lit 30)
+BACK()
+
+label013: EV_START(lit 0, [lit 3])
+WAIT()
+EV_MODE(FALSE)
+FI(time_f lit 30)
+BACK()
+
+label003: EV_MODE(TRUE)
+EV_START(lit 0, [lit 0, lit 1])
+IR_CHAP(lit 1)
+JUMP({label011}, if memd 4867)
+
+IR_START(UNKNOWN1A 00 00 03 00 00 00 00 1A)
+IR_ID(CHARACTER[UNKNOWN35], lit 0, "受け止める")
+IR_ID(CHARACTER[NAGATO], lit 1, "割れる")
+JUMP({label012})
+
+label011: IR_START($TOPIC_00, UNKNOWN1A 00 00 03 00 00 00 00 1A)
+IR_ID(CHARACTER[UNKNOWN35], lit 0, "受け止める")
+IR_ID(CHARACTER[NAGATO], lit 1, "割れる")
+label012: IR_STOP()
+IRJUMP(({label013}, FALSE, lit 0), ({label014}, TRUE, lit 0))
+WAIT()
+EV_MODE(FALSE)
+
+label014: EV_START(lit 0, [lit 2])
+WAIT()
+EV_MODE(FALSE)
+FI(time_f lit 30)
+BACK()
+
+label009: EV_START(lit 0, [lit 3])
+WAIT()
+EV_MODE(FALSE)
+FI(time_f lit 30)
+BACK()
+BACK<KYON>()

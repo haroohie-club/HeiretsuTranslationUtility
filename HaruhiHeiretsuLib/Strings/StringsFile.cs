@@ -82,9 +82,10 @@ namespace HaruhiHeiretsuLib.Strings
             return dialogueText.Replace("\"", "“");
         }
 
-        public static string ProcessDialogueLineWithFontReplacement(string dialogueText, FontReplacementMap fontReplacementMap, int dialogueLineLength)
+        public static string ProcessDialogueLineWithFontReplacement(string dialogueText, FontReplacementMap fontReplacementMap, int[] dialogueLineLengths)
         {
             int lineLength = 0;
+            int currentLine = 0;
             for (int i = 0; i < dialogueText.Length; i++)
             {
                 if (dialogueText[i] == '#' && dialogueText.Length - i >= 3)
@@ -120,14 +121,26 @@ namespace HaruhiHeiretsuLib.Strings
                 if (dialogueText[i] == '\n')
                 {
                     lineLength = 0;
+                    currentLine++;
                 }
 
-                if (dialogueText[i] != ' ' && lineLength > dialogueLineLength)
+                int maxLineLength;
+                if (currentLine >= dialogueLineLengths.Length)
+                {
+                    maxLineLength = dialogueLineLengths.Last();
+                }
+                else
+                {
+                    maxLineLength = dialogueLineLengths[currentLine];
+                }
+
+                if (dialogueText[i] != ' ' && lineLength > maxLineLength)
                 {
                     int indexOfMostRecentSpace = dialogueText[0..i].LastIndexOf(' ');
                     dialogueText = dialogueText.Remove(indexOfMostRecentSpace, 1);
                     dialogueText = dialogueText.Insert(indexOfMostRecentSpace, "\n");
-                    lineLength = 0;
+                    lineLength = dialogueText[(indexOfMostRecentSpace + 1)..(i + 1)].Sum(c => fontReplacementMap.GetReplacementCharacterWidth($"{dialogueText[i]}"));
+                    currentLine++;
                 }
             }
 

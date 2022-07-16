@@ -190,7 +190,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
                         if (fontReplacementMap is not null)
                         {
-                            line = StringsFile.ProcessDialogueLineWithFontReplacement(line, fontReplacementMap, ScriptFile.DIALOGUE_LINE_LENGTH);
+                            line = StringsFile.ProcessDialogueLineWithFontReplacement(line, fontReplacementMap, ScriptFile.DIALOGUE_LINE_LENGTHS);
                         }
 
                         objects.Add(line);
@@ -462,7 +462,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                             bytes.AddRange(CalculateControlStructure(parts[0], parts[1], objects));
                         }
 
-                        i += arrayStrings.Sum(a => a.Length) + 4;
+                        i += arrayStrings.Sum(a => a.Length) + 5;
                         Parameters.Add(new() { Type = ScriptCommand.ParameterType.INTARRAY, Value = bytes.ToArray(), LineNumber = LineNumber });
                         continue;
                     }
