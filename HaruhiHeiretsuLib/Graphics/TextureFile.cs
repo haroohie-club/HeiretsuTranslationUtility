@@ -445,8 +445,8 @@ namespace HaruhiHeiretsuLib.Graphics
             SKPaint mainPaint = new(font) { IsAntialias = true, Color = SKColors.White, FilterQuality = SKFilterQuality.High };
 
             canvas.Clear();
-            canvas.DrawText(character, 0, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, shadowPaint);
-            canvas.DrawText(character, 2, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, mainPaint);
+            canvas.DrawText(character, 0, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, new() { Edging = SKFontEdging.Antialias }, shadowPaint);
+            canvas.DrawText(character, 2, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, new() { Edging = SKFontEdging.Antialias }, mainPaint);
             canvas.Flush();
 
             SKBitmap scaledBitmap = new(Width, Height);

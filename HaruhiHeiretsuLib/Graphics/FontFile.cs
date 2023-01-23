@@ -43,8 +43,10 @@ namespace HaruhiHeiretsuLib.Graphics
         public byte[] GetBytes()
         {
             List<byte> data = new();
-            List<int> pointers = new();
-            pointers.Add(((NumCharacters + 1) * 4) + (UnknownInts.Count * 4));
+            List<int> pointers = new()
+            {
+                ((NumCharacters + 1) * 4) + (UnknownInts.Count * 4)
+            };
 
             data.AddRange(BitConverter.GetBytes(NumCharacters));
             
