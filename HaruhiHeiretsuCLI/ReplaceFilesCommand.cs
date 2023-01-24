@@ -151,6 +151,31 @@ namespace HaruhiHeiretsuCLI
 
                             CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
                         }
+                        else if (Path.GetFileNameWithoutExtension(file).EndsWith("layout"))
+                        {
+                            if (archive != "grp")
+                            {
+                                CommandSet.Out.WriteLine($"WARNING: Layout CSV file {file} targets {archive}.bin rather than grp.bin, skipping...");
+                                continue;
+                            }
+
+                            string csv = File.ReadAllText(file);
+
+                            grp.Files.First(f => f.Index == archiveIndex).ImportLayoutCsv(csv);
+                            grp.Files.First(f => f.Index == archiveIndex).SetLayoutData();
+
+                            int i = mcb.GraphicsFiles.Count;
+                            mcb.LoadGraphicsFiles(file.Split('_'));
+                            for (; i < mcb.GraphicsFiles.Count; i++)
+                            {
+                                mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Data = grp.Files.First(f => f.Index == archiveIndex).Data;
+                                mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Edited = true;
+                            }
+
+                            archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
+
+                            CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
+                        }
                         else
                         {
                             if (archive != "dat")

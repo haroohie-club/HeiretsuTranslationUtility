@@ -1,6 +1,7 @@
 ﻿using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +20,7 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 SKBitmap bitmap = new(Width, Height);
                 using SKCanvas canvas = new(bitmap);
+                int i = 0;
                 foreach (LayoutComponent layout in LayoutComponents)
                 {
                     SKRect boundingBox = new()
@@ -36,7 +38,7 @@ namespace HaruhiHeiretsuLib.Graphics
                         Bottom = layout.ScreenY + Math.Abs(layout.ScreenHeight),
                     };
 
-                    if (layout.Index == -1)
+                    if (layout.Index == -1 || layout.Index >= archiveGraphicsFiles.Count)
                     {
                         continue;
                     }
@@ -67,6 +69,11 @@ namespace HaruhiHeiretsuLib.Graphics
                     }
 
                     canvas.DrawBitmap(tile, destination);
+
+                    SKPaint paint = new(new(SKTypeface.FromFamilyName("Arial")));
+                    canvas.DrawText($"{i}", layout.ScreenX, layout.ScreenY, paint);
+
+                    i++;
                 }
 
                return bitmap;
@@ -75,6 +82,43 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 return null;
             }
+        }
+
+        public void SetLayoutData()
+        {
+            Edited = true;
+
+            List<byte> bytes = new();
+
+            bytes.AddRange(Data.Take(4));
+            bytes.AddRange(UnknownLayoutHeaderInt1);
+
+            bytes.AddRange(LayoutComponents.SelectMany(l => l.GetBytes()));
+
+            Data = bytes;
+        }
+        public string GetLayoutCsv()
+        {
+            string csv = $"{nameof(LayoutComponent.UnknownShort1)},{nameof(LayoutComponent.Index)},{nameof(LayoutComponent.UnknownShort2)}," +
+                $"{nameof(LayoutComponent.ScreenX)},{nameof(LayoutComponent.ScreenY)},{nameof(LayoutComponent.ScreenWidth)},{nameof(LayoutComponent.ScreenHeight)}," +
+                $"{nameof(LayoutComponent.ImageX)},{nameof(LayoutComponent.ImageY)},{nameof(LayoutComponent.ImageWidth)},{nameof(LayoutComponent.ImageHeight)}," +
+                $"{nameof(LayoutComponent.UnknownShort3)},{nameof(LayoutComponent.AlphaTint)},{nameof(LayoutComponent.RedTint)},{nameof(LayoutComponent.GreenTint)},{nameof(LayoutComponent.BlueTint)}\n";
+            csv += string.Join('\n', LayoutComponents.Select(l => l.GetCsvLine()));
+
+            return csv;
+        }
+
+        public void ImportLayoutCsv(string csv)
+        {
+            LayoutComponents = new();
+            foreach (string line in csv.Split('\n').Skip(1))
+            {
+                if (!string.IsNullOrEmpty(line))
+                {
+                    LayoutComponents.Add(new(line));
+                }
+            }
+            SetLayoutData();
         }
     }
 
@@ -96,11 +140,63 @@ namespace HaruhiHeiretsuLib.Graphics
         public byte RedTint { get; set; }
         public byte GreenTint { get; set; }
         public byte BlueTint { get; set; }
+
+        public LayoutComponent()
+        {
+        }
+
+        public LayoutComponent(string csvLine)
+        {
+            string[] csvEntries = csvLine.Split(',');
+
+            UnknownShort1 = short.Parse(csvEntries[0]);
+            Index = short.Parse(csvEntries[1]);
+            UnknownShort2 = short.Parse(csvEntries[2]);
+            ScreenX = short.Parse(csvEntries[3]);
+            ScreenY = short.Parse(csvEntries[4]);
+            ScreenWidth = short.Parse(csvEntries[5]);
+            ScreenHeight = short.Parse(csvEntries[6]);
+            ImageX = short.Parse(csvEntries[7]);
+            ImageY = short.Parse(csvEntries[8]);
+            ImageWidth = short.Parse(csvEntries[9]);
+            ImageHeight = short.Parse(csvEntries[10]);
+            UnknownShort3 = short.Parse(csvEntries[11]);
+            AlphaTint = byte.Parse(csvEntries[12]);
+            RedTint = byte.Parse(csvEntries[13]);
+            GreenTint = byte.Parse(csvEntries[14]);
+            BlueTint = byte.Parse(csvEntries[15]);
+        }
+
+        public string GetCsvLine()
+        {
+            return $"{UnknownShort1},{Index},{UnknownShort2},{ScreenX},{ScreenY},{ScreenWidth},{ScreenHeight},{ImageX},{ImageY},{ImageWidth},{ImageHeight},{UnknownShort3},{AlphaTint},{RedTint},{GreenTint},{BlueTint}";
+        }
+
+        public List<byte> GetBytes()
+        {
+            List<byte> bytes = new();
+
+            bytes.AddRange(BitConverter.GetBytes(UnknownShort1));
+            bytes.AddRange(BitConverter.GetBytes(Index));
+            bytes.AddRange(BitConverter.GetBytes(UnknownShort2));
+            bytes.AddRange(BitConverter.GetBytes(ScreenX));
+            bytes.AddRange(BitConverter.GetBytes(ScreenY));
+            bytes.AddRange(BitConverter.GetBytes(ImageWidth));
+            bytes.AddRange(BitConverter.GetBytes(ImageHeight));
+            bytes.AddRange(BitConverter.GetBytes(ImageX));
+            bytes.AddRange(BitConverter.GetBytes(ImageY));
+            bytes.AddRange(BitConverter.GetBytes(ScreenWidth));
+            bytes.AddRange(BitConverter.GetBytes(ScreenHeight));
+            bytes.AddRange(BitConverter.GetBytes(UnknownShort3));
+            bytes.AddRange(new byte[] { BlueTint, GreenTint, RedTint, AlphaTint });
+
+            return bytes;
+        }
     }
 
     public static class KnownLayoutGraphicsSets
     {
-        public static LayoutGraphic[] TitleScreenGraphics = new LayoutGraphic[10]
+        public static LayoutGraphic[] TitleScreenGraphics = new LayoutGraphic[]
         {
             new(0x6B, (58, 0)),
             new(0x1E, (58, 1)),
@@ -114,7 +210,7 @@ namespace HaruhiHeiretsuLib.Graphics
             new(0x1B, (58, 9))
         };
 
-        public static LayoutGraphic[] SpecialVersionGraphics = new LayoutGraphic[10]
+        public static LayoutGraphic[] SpecialVersionGraphics = new LayoutGraphic[]
         {
             new(0x6B, (69, 0)),
             new(0x1E, (69, 1)),
@@ -126,6 +222,102 @@ namespace HaruhiHeiretsuLib.Graphics
             new(0x10, (69, 7)),
             new(0x11, (69, 8)),
             new(0x12, (69, 9)),
+        };
+        public static LayoutGraphic[] OptionsBgAndOtherGraphics = new LayoutGraphic[]
+        {
+            new(0x33, (0, 53)),
+            new(0x34, (0, 96)),
+            new(0x71, (0, 12)),
+            new(0x72, (0, 13)),
+            new(0x45, (0, 0)),
+            new(0x47, (0, 95)),
+            new(0x48, (0, 99)),
+            new(0x4A, (0, 0)),
+            new(0x4B, (0, 0)),
+            new(0x4C, (0, 0)),
+            new(0x4D, (0, 0)),
+            new(0x4E, (0, 0)),
+            new(0x4F, (0, 0)),
+            new(0x50, (0, 100)),
+            new(0x51, (0, 6)),
+            new(0x52, (0, 7)),
+            new(0x53, (0, 8)),
+            new(0x54, (0, 0)),
+            new(0x55, (0, 0)),
+            new(0x56, (0, 0)),
+            new(0x57, (0, 0)),
+            new(0x58, (0, 0)),
+            new(0x59, (0, 0)),
+            new(0xB2, (0, 0)),
+            new(0xB3, (0, 0)),
+            new(0x5A, (0, 0)),
+            new(0x5B, (0, 0)),
+            new(0x5C, (0, 0)),
+            new(0x5D, (0, 0)),
+            new(0x5E, (0, 0)),
+            new(0x5F, (0, 0)),
+            new(0x60, (0, 0)),
+            new(0x61, (0, 0)),
+            new(0x62, (0, 0)),
+            new(0x63, (0, 0)),
+            new(0x64, (0, 0)),
+            new(0x65, (0, 0)),
+            new(0x66, (0, 0)),
+            new(0x6E, (0, 0)),
+            new(0x6F, (0, 0)),
+            new(0x70, (0, 94)),
+        };
+        public static LayoutGraphic[] MainInterfaceGraphics = new LayoutGraphic[]
+        {
+            new(0x4C, (0, 0)),
+            new(0x4D, (0, 0)),
+            new(0x4E, (0, 0)),
+            new(0x50, (0, 100)),
+            new(0x53, (0, 8)),
+            new(0x54, (0, 0)),
+            new(0x4A, (0, 0)),
+            new(0x4B, (0, 0)),
+            new(0x45, (0, 0)),
+            new(0x5F, (0, 0)),
+            new(0x56, (0, 0)),
+            new(0x61, (0, 0)),
+            new(0x62, (0, 0)),
+            new(0x63, (0, 0)),
+            new(0x55, (0, 0)),
+            new(0x47, (0, 95)),
+            new(0x64, (0, 0)),
+            new(0x45, (0, 0)),
+            new(0x56, (0, 0)),
+            new(0x60, (0, 0)),
+            new(0x33, (0, 53)),
+            new(0x48, (0, 99)),
+            new(0x5A, (0, 0)),
+            new(0x5B, (0, 0)),
+            new(0x5C, (0, 0)),
+            new(0x5D, (0, 0)),
+            new(0x5E, (0, 0)),
+        };
+        public static LayoutGraphic[] PauseMenuGraphics = new LayoutGraphic[]
+        {
+            new(0x47, (0, 95)),
+            new(0x45, (0, 0)),
+            new(0x33, (0, 53)),
+            new(0x48, (0, 99)),
+        };
+        public static LayoutGraphic[] Unknown801BAB1C = new LayoutGraphic[]
+        {
+            new(0x45, (0, 0)),
+            new(0x60, (0, 0)),
+            new(0x33, (0, 53)),
+            new(0x48, (0, 99)),
+        };
+        public static LayoutGraphic[] Unknown801BAB28 = new LayoutGraphic[]
+        {
+            new(0x47, (0, 95)),
+            new(0x65, (0, 0)),
+            new(0x33, (0, 53)),
+            new(0x48, (0, 99)),
+            new(0x5C, (0, 0)),
         };
     }
 

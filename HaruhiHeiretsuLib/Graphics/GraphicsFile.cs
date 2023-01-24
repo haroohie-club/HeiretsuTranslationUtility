@@ -43,7 +43,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 Height = 480;
                 UnknownLayoutHeaderInt1 = Data.Skip(4).Take(4).ToArray();
                 LayoutComponents = new();
-                for (int i = 8; i < Data.Count - 0x1C; i += 0x1C)
+                for (int i = 8; i <= Data.Count - 0x1C; i += 0x1C)
                 {
                     LayoutComponents.Add(new LayoutComponent
                     {

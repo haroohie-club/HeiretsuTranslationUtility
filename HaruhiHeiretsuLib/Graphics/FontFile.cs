@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Topten.RichTextKit;
 
 namespace HaruhiHeiretsuLib.Graphics
 {
@@ -64,7 +65,7 @@ namespace HaruhiHeiretsuLib.Graphics
             return data.ToArray();
         }
 
-        public void OverwriteFont(string font, int fontSize, FontReplacementMap fontReplacementMap)
+        public void OverwriteFont(string font, float fontSize, FontReplacementMap fontReplacementMap)
         {
             Edited = true;
 

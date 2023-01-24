@@ -10,7 +10,7 @@ namespace HaruhiHeiretsuCLI
 {
     public class ReplaceFontCommand : Command
     {
-        private int _fontSize;
+        private float _fontSize;
         private string _mcb, _grp, _fontPath, _fontMap, _outputDir;
         public ReplaceFontCommand() : base("replace-font")
         {
@@ -22,7 +22,7 @@ namespace HaruhiHeiretsuCLI
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
                 { "g|grp=", "Path to grp.bin", g => _grp = g },
                 { "f|font-file=", "Path to the font file", f => _fontPath = f },
-                { "s|font-size=", "The font size to draw", s => _fontSize = int.Parse(s) },
+                { "s|font-size=", "The font size to draw", s => _fontSize = float.Parse(s) },
                 { "r|replacement|font-replacement-map=", "The font replacement map JSON file", r => _fontMap = r },
                 { "o|output=", "The directory to save the MCB and grp.bin to", o => _outputDir = o },
             };

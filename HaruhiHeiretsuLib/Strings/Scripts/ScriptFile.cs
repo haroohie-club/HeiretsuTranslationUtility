@@ -29,7 +29,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public int ScriptCommandBlockDefinitionsEndOffset { get; set; }
         public int ScriptCommandBlockDefinitionsEnd { get; set; }
 
-        public static int[] DIALOGUE_LINE_LENGTHS = new int[] { 9568, 9568, 8558, 8558 };
+        public static int[] DIALOGUE_LINE_LENGTHS = new int[] { 9368, 9368, 9000, 9000 };
 
         public ScriptFile()
         {
@@ -176,7 +176,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
                 string dialogueText = ProcessDialogueLineWithFontReplacement(NormalizeDialogueLine((string)d.Value), fontReplacementMap, DIALOGUE_LINE_LENGTHS);
 
-                if (dialogueText.Count(c => c == '\n') > 2 && Index > 0)
+                if (dialogueText.Count(c => c == '\n') > 3 && Index > 0)
                 {
                     Console.WriteLine($"Warning: file scr-{Index:D4} has line too long: {dialogueIndex} (starts with '{dialogueText[0..30]}')");
                 }

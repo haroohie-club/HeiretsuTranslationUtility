@@ -514,7 +514,21 @@ namespace HaruhiHeiretsuEditor
                     GraphicsButton loadButton = new() { Content = "Load Layout", Graphic = selectedFile };
                     loadButton.Click += LoadButton_Click;
 
+                    LayoutDropDown layoutDropDown = new() { AssociatedButton = loadButton };
+                    string[] dropDownItems = new string[] { "Options BG & Other Graphics", "UI Graphics", "Pause Menu Graphics", "Unknown801BAB1C", "Unknown801BAB28" };
+                    layoutDropDown.ItemsSource = dropDownItems;
+                    layoutDropDown.SelectionChanged += LayoutDropDown_SelectionChanged;
+
+                    GraphicsButton exportCsvButton = new() { Content = "Export CSV", Graphic = selectedFile };
+                    exportCsvButton.Click += ExportCsvButton_Click;
+
+                    GraphicsButton importCsvButton = new() { Content = "Import CSV", Graphic = selectedFile };
+                    importCsvButton.Click += ImportCsvButton_Click;
+
+                    graphicsEditStackPanel.Children.Add(layoutDropDown);
                     graphicsEditStackPanel.Children.Add(loadButton);
+                    graphicsEditStackPanel.Children.Add(exportCsvButton);
+                    graphicsEditStackPanel.Children.Add(importCsvButton);
 
                     Grid grid = new();
                     grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "U1" });
@@ -590,6 +604,38 @@ namespace HaruhiHeiretsuEditor
                     graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"Map Background Model: {selectedFile.MapBackgroundModel}" });
                 }
             }
+        }
+
+        private void ExportCsvButton_Click(object sender, RoutedEventArgs e)
+        {
+            GraphicsButton csvButton = (GraphicsButton)sender;
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "CSV|*.csv",
+            };
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllText(saveFileDialog.FileName, csvButton.Graphic.GetLayoutCsv());
+            }
+        }
+
+        private void ImportCsvButton_Click(object sender, RoutedEventArgs e)
+        {
+            GraphicsButton csvButton = (GraphicsButton)sender;
+            OpenFileDialog openFileDialog = new()
+            {
+                Filter = "CSV|*.csv",
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                csvButton.Graphic.ImportLayoutCsv(File.ReadAllText(openFileDialog.FileName));
+            }
+        }
+
+        private void LayoutDropDown_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            LayoutDropDown dropDown = (LayoutDropDown)sender;
+            dropDown.AssociatedButton.UnknownGraphicsArrayIndex = dropDown.SelectedIndex;
         }
 
         private void SgeButton_Click(object sender, RoutedEventArgs e)
@@ -710,12 +756,45 @@ namespace HaruhiHeiretsuEditor
                 }
                 else
                 {
-                    archiveGraphicsFiles = null;
+                    archiveGraphicsFiles = KnownLayoutGraphicsSets.OptionsBgAndOtherGraphics.Select(s => (GraphicsFile)_mcb.McbSubArchives[s.McbLocation.parent].Files[s.McbLocation.child]).ToList();
                 }
             }
             else
             {
-                archiveGraphicsFiles = null;
+                if (mapButton.Graphic.Index == 13) // main title screen
+                {
+                    archiveGraphicsFiles = KnownLayoutGraphicsSets.TitleScreenGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                }
+                else if (mapButton.Graphic.Index == 202) // special version screen
+                {
+                    archiveGraphicsFiles = KnownLayoutGraphicsSets.SpecialVersionGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                }
+                else if (mapButton.Graphic.Index == 33) // loading screen
+                {
+                    archiveGraphicsFiles = KnownLayoutGraphicsSets.PauseMenuGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                }
+                else
+                {
+                    switch (mapButton.UnknownGraphicsArrayIndex)
+                    {
+                        case 0:
+                        default:
+                            archiveGraphicsFiles = KnownLayoutGraphicsSets.OptionsBgAndOtherGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                            break;
+                        case 1:
+                            archiveGraphicsFiles = KnownLayoutGraphicsSets.MainInterfaceGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                            break;
+                        case 2:
+                            archiveGraphicsFiles = KnownLayoutGraphicsSets.PauseMenuGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                            break;
+                        case 3:
+                            archiveGraphicsFiles = KnownLayoutGraphicsSets.Unknown801BAB1C.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                            break;
+                        case 4:
+                            archiveGraphicsFiles = KnownLayoutGraphicsSets.Unknown801BAB28.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                            break;
+                    }
+                };
             }
             MapPreviewWindow mapPreviewWindow = new() { Width = 640 };
             Task.Factory.StartNew(() => mapButton.Graphic.GetLayout(archiveGraphicsFiles)).ContinueWith(task => mapPreviewWindow.CompleteLayoutLoad(task.Result));

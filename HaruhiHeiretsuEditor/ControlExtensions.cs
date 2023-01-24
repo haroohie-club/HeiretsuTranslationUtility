@@ -25,6 +25,12 @@ namespace HaruhiHeiretsuEditor
     public class GraphicsButton : Button
     {
         public GraphicsFile Graphic { get; set; }
+        public int UnknownGraphicsArrayIndex { get; set; }
+    }
+
+    public class LayoutDropDown : ComboBox
+    {
+        public GraphicsButton AssociatedButton { get; set; }
     }
 
     public class MapDefinitionButton : Button

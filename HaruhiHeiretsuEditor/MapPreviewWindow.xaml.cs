@@ -27,7 +27,7 @@ namespace HaruhiHeiretsuEditor
 
         private void AddContent(SKBitmap bitmap)
         {
-            mainGrid.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(bitmap) });
+            mainGrid.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(bitmap), MaxWidth = 640 });
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
