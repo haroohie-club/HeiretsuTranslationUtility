@@ -90,8 +90,8 @@ namespace HaruhiHeiretsuLib.Graphics
     {
         public ushort[] Codepoints { get; set; }
 
-        public const int SCALED_WIDTH = 36;
-        public const int SCALED_HEIGHT = 32;
+        public const int SCALED_WIDTH = 25;
+        public const int SCALED_HEIGHT = 24;
 
         public Character(byte[] data, int index, IEnumerable<ushort> codepoint, int offset)
         {
@@ -101,7 +101,7 @@ namespace HaruhiHeiretsuLib.Graphics
             FileType = GraphicsFileType.FONT_CHARACTER;
             Data = data.ToList();
             Height = 24;
-            Width = data.Length / Height;
+            Width = (int)(data.Length / Height * 2.0);
         }
 
         public string GetCodepointsString()

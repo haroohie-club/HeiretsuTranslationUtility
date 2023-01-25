@@ -210,19 +210,19 @@ namespace HaruhiHeiretsuLib.Graphics
                 int i = 0;
                 for (int y = 0; y < Height; y++)
                 {
-                    for (int x = 0; x < Width; x++)
+                    for (int x = 0; x < Width; x += 2)
                     {
                         byte alpha = (byte)(((Data[i] & 0xF0) >> 4) * 0x11);
                         byte grayscale = (byte)((Data[i] & 0x0F) * 0x11);
                         bitmap.SetPixel(x, y, new(grayscale, grayscale, grayscale, alpha));
+                        if (x + 1 < Width)
+                        {
+                            bitmap.SetPixel(x + 1, y, new(grayscale, grayscale, grayscale, alpha));
+                        }
                         i++;
                     }
                 }
-                SKBitmap transformedBitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
-                using SKCanvas canvas = new(transformedBitmap);
-                SKRect dest = new(0, 0, transformedBitmap.Width, transformedBitmap.Height);
-                canvas.DrawBitmap(bitmap, dest);
-                return transformedBitmap;
+                return bitmap;
             }
             return null;
         }
@@ -443,24 +443,28 @@ namespace HaruhiHeiretsuLib.Graphics
             using SKCanvas canvas = new(bitmap);
             SKPaint shadowPaint = new(font) { IsAntialias = true, Color = SKColors.Black, FilterQuality = SKFilterQuality.High };
             SKPaint mainPaint = new(font) { IsAntialias = true, Color = SKColors.White, FilterQuality = SKFilterQuality.High };
-            font.Edging = SKFontEdging.Antialias;
+            font.Edging = SKFontEdging.SubpixelAntialias;
 
             canvas.Clear();
             canvas.DrawText(character, 0, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, font, shadowPaint);
-            canvas.DrawText(character, 2, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, font, mainPaint);
+            canvas.DrawText(character, 1, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, font, mainPaint);
             canvas.Flush();
-
-            SKBitmap scaledBitmap = new(Width, Height);
-            using SKCanvas scaledCanvas = new(scaledBitmap);
-            scaledCanvas.DrawBitmap(bitmap, new SKRect(0, 0, Width, Height));
-            scaledCanvas.Flush();
 
             int i = 0;
             for (int y = 0; y < Height; y++)
             {
-                for (int x = 0; x < Width; x++)
+                for (int x = 0; x < Width; x += 2)
                 {
-                    Data[i] = (byte)(((scaledBitmap.GetPixel(x, y).Alpha / 0x11) << 4) | (scaledBitmap.GetPixel(x, y).Red / 0x11));
+                    if (x + 1 < Width)
+                    {
+                        Data[i] = (byte)(((bitmap.GetPixel(x, y).Alpha / 0x11) << 4) | (bitmap.GetPixel(x, y).Red / 0x11)
+                            + ((bitmap.GetPixel(x + 1, y).Alpha / 0x11) << 4) | (bitmap.GetPixel(x, y).Red / 0x11)
+                            / 2);
+        }
+                    else
+                    {
+                        Data[i] = (byte)(((bitmap.GetPixel(x, y).Alpha / 0x11) << 4) | (bitmap.GetPixel(x, y).Red / 0x11));
+                    }
                     i++;
                 }
             }
