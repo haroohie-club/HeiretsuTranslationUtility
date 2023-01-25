@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Scripts
 {

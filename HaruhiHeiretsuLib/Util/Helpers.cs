@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace HaruhiHeiretsuLib
+namespace HaruhiHeiretsuLib.Util
 {
     public static class Helpers
     {
@@ -34,7 +34,7 @@ namespace HaruhiHeiretsuLib
         public static float IntToFloat(int startingInt)
         {
             uint adjustedInt = (uint)startingInt ^ 0x80000000;
-            ulong f1 = (F2 & 0xFFFFFFFF00000000L) | adjustedInt;
+            ulong f1 = F2 & 0xFFFFFFFF00000000L | adjustedInt;
             double d1 = BitConverter.UInt64BitsToDouble(f1) - BitConverter.UInt64BitsToDouble(F2);
             double d31 = d1 * BitConverter.UInt64BitsToDouble(F0);
 
@@ -53,7 +53,7 @@ namespace HaruhiHeiretsuLib
         public static List<byte> GetPaddedByteArrayFromString(string text)
         {
             List<byte> stringBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(text).ToList();
-            stringBytes.AddRange(new byte[(stringBytes.Count % 4) == 0 ? 4 : 4 - (stringBytes.Count % 4)]);
+            stringBytes.AddRange(new byte[stringBytes.Count % 4 == 0 ? 4 : 4 - stringBytes.Count % 4]);
             return stringBytes;
         }
 
@@ -77,7 +77,7 @@ namespace HaruhiHeiretsuLib
 
         public static bool AddWillCauseCarry(int x, int y)
         {
-            return (((x & 0xFFFFFFFFfL) + (y & 0xFFFFFFFFL)) & 0x1000000000) > 0;
+            return ((x & 0xFFFFFFFFfL) + (y & 0xFFFFFFFFL) & 0x1000000000) > 0;
         }
 
         public static bool BytesInARowLessThan(this IEnumerable<byte> sequence, int numBytesInARowLessThan, byte targetByte)
@@ -130,7 +130,7 @@ namespace HaruhiHeiretsuLib
 
                 List<byte> nextBytes = decompressedData.Skip(i).Take(numNext).ToList();
                 LookbackEntry nextEntry = new(nextBytes, i);
-                if (lookbackDictionary.ContainsKey(nextEntry) && (i - lookbackDictionary[nextEntry].Max()) <= 0x1FFF)
+                if (lookbackDictionary.ContainsKey(nextEntry) && i - lookbackDictionary[nextEntry].Max() <= 0x1FFF)
                 {
                     if (directBytesToWrite > 0)
                     {
@@ -166,7 +166,7 @@ namespace HaruhiHeiretsuLib
                         remainingEncodedLength = encodedLength - 3;
                         encodedLength = 3;
                     }
-                    byte firstByte = (byte)((encodedLookbackIndex / 0x100) | (encodedLength << 5) | 0x80);
+                    byte firstByte = (byte)(encodedLookbackIndex / 0x100 | encodedLength << 5 | 0x80);
                     byte secondByte = (byte)(encodedLookbackIndex & 0xFF);
                     compressedData.AddRange(new byte[] { firstByte, secondByte });
                     if (remainingEncodedLength > 0)
@@ -194,13 +194,13 @@ namespace HaruhiHeiretsuLib
                     int numRepeatedBytes = Math.Min(0x1F3, repeatedBytes.Count);
                     if (numRepeatedBytes <= 0x13)
                     {
-                        compressedData.Add((byte)(0x40 | (numRepeatedBytes - 4))); // 0x40 -- repeated byte, 4-bit length
+                        compressedData.Add((byte)(0x40 | numRepeatedBytes - 4)); // 0x40 -- repeated byte, 4-bit length
                     }
                     else
                     {
                         int numToEncode = numRepeatedBytes - 4;
                         int msb = numToEncode & 0xF00;
-                        byte firstByte = (byte)(0x50 | (msb / 0x100));
+                        byte firstByte = (byte)(0x50 | msb / 0x100);
                         byte secondByte = (byte)(numToEncode - msb); // 0x50 -- repeated byte, 12-bit length
                         compressedData.AddRange(new byte[] { firstByte, secondByte });
                     }
@@ -254,7 +254,7 @@ namespace HaruhiHeiretsuLib
                 bool equals = true;
                 for (int i = 0; i < Bytes.Length; i++)
                 {
-                    equals = equals && (Bytes[i] == other.Bytes[i]);
+                    equals = equals && Bytes[i] == other.Bytes[i];
                 }
                 return equals;
             }
@@ -279,7 +279,7 @@ namespace HaruhiHeiretsuLib
             else
             {
                 int msb = 0x1F00 & numBytesToWrite;
-                byte firstByte = (byte)(0x20 | (msb / 0x100));
+                byte firstByte = (byte)(0x20 | msb / 0x100);
                 byte secondByte = (byte)(numBytesToWrite - msb);
                 writeTo.AddRange(new byte[] { firstByte, secondByte });
             }
@@ -312,7 +312,7 @@ namespace HaruhiHeiretsuLib
                         else
                         {
                             // bit 3 == 1 --> need two bytes to indicate how much data to read
-                            numBytes = compressedData[z++] + ((blockByte & 0x1F) * 0x100);
+                            numBytes = compressedData[z++] + (blockByte & 0x1F) * 0x100;
                         }
                         for (int i = 0; i < numBytes; i++)
                         {
@@ -329,7 +329,7 @@ namespace HaruhiHeiretsuLib
                         }
                         else
                         {
-                            numBytes = compressedData[z++] + ((blockByte & 0x0F) * 0x100) + 4;
+                            numBytes = compressedData[z++] + (blockByte & 0x0F) * 0x100 + 4;
                         }
                         byte repeatedByte = compressedData[z++];
                         for (int i = 0; i < numBytes; i++)
@@ -342,7 +342,7 @@ namespace HaruhiHeiretsuLib
                 {
                     // bit 1 == 1 --> backreference
                     int numBytes = ((blockByte & 0x60) >> 0x05) + 4;
-                    int backReferenceIndex = decompressedData.Count - (compressedData[z++] + ((blockByte & 0x1F) * 0x100));
+                    int backReferenceIndex = decompressedData.Count - (compressedData[z++] + (blockByte & 0x1F) * 0x100);
                     for (int i = backReferenceIndex; i < backReferenceIndex + numBytes; i++)
                     {
                         decompressedData.Add(decompressedData[i]);

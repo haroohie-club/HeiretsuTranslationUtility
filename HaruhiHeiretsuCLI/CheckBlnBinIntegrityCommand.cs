@@ -1,5 +1,5 @@
-﻿using HaruhiHeiretsuLib;
-using HaruhiHeiretsuLib.Archive;
+﻿using HaruhiHeiretsuLib.Archive;
+using HaruhiHeiretsuLib.Util;
 using Mono.Options;
 using System;
 using System.Collections.Generic;

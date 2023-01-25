@@ -1,4 +1,5 @@
-﻿using SkiaSharp;
+﻿using HaruhiHeiretsuLib.Util;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -423,7 +424,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
                                     for (int subRow = 0; subRow < 4; subRow++)
                                     {
-                                        Data[cmprIndex++] = 
+                                        Data[cmprIndex++] =
                                             (byte)((Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4]) << 6)
                                             | (Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4 + 1]) << 4)
                                             | (Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4 + 2]) << 2)
@@ -450,6 +451,8 @@ namespace HaruhiHeiretsuLib.Graphics
             canvas.DrawText(character, 1, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, font, mainPaint);
             canvas.Flush();
 
+            Data = Data.Select(b => (byte)0).ToList();
+
             int i = 0;
             for (int y = 0; y < Height; y++)
             {
@@ -460,7 +463,7 @@ namespace HaruhiHeiretsuLib.Graphics
                         Data[i] = (byte)(((bitmap.GetPixel(x, y).Alpha / 0x11) << 4) | (bitmap.GetPixel(x, y).Red / 0x11)
                             + ((bitmap.GetPixel(x + 1, y).Alpha / 0x11) << 4) | (bitmap.GetPixel(x, y).Red / 0x11)
                             / 2);
-        }
+                    }
                     else
                     {
                         Data[i] = (byte)(((bitmap.GetPixel(x, y).Alpha / 0x11) << 4) | (bitmap.GetPixel(x, y).Red / 0x11));

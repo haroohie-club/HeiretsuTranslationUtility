@@ -1,4 +1,4 @@
-﻿using HaruhiHeiretsuLib;
+﻿using HaruhiHeiretsuLib.Util;
 using Mono.Options;
 using System;
 using System.Collections.Generic;
