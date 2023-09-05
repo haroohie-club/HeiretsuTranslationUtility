@@ -428,7 +428,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             }
         }
 
-        public void TagDialogueWithEventFileMetadata(short[] scriptEventFiles)
+        private void TagDialogueWithEventFileMetadata(short[] scriptEventFiles)
         {
             ScriptCommandInvocation[] allInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToArray();
 

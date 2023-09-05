@@ -60,7 +60,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
     // Variable length
     public class ActionParameter
     {
-        private ushort _opCode;
+        private readonly ushort _opCode;
         public int ActionsTableEntryAddress { get; set; }
         public int Address { get; set; }
         public float StartFrame { get; set; }

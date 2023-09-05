@@ -13,8 +13,4 @@
     <ProjectReference Include="..\HaruhiHeiretsuLib\HaruhiHeiretsuLib.csproj" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="copy ..\string_file_locations.csv $(OutDir)string_file_locations.csv&#xD;&#xA;copy ..\graphics_locations.csv $(OutDir)graphics_locations.csv" />
-  </Target>
-
 </Project>
