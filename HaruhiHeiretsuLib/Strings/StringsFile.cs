@@ -165,59 +165,34 @@ namespace HaruhiHeiretsuLib.Strings
 
         public static ScriptFileSpeaker GetSpeaker(string code)
         {
-            switch (code)
+            return code switch
             {
-                case "ANN":
-                    return ScriptFileSpeaker.ANNOUNCEMENT;
-                case "CAP":
-                    return ScriptFileSpeaker.CAPTAIN;
-                case "CRF":
-                    return ScriptFileSpeaker.CREW_F;
-                case "CRM":
-                    return ScriptFileSpeaker.CREW_M;
-                case "GF1":
-                    return ScriptFileSpeaker.GUEST_F1;
-                case "GF2":
-                    return ScriptFileSpeaker.GUEST_F2;
-                case "GF3":
-                    return ScriptFileSpeaker.GUEST_F3;
-                case "GM1":
-                    return ScriptFileSpeaker.GUEST_M1;
-                case "GM2":
-                    return ScriptFileSpeaker.GUEST_M2;
-                case "GM3":
-                    return ScriptFileSpeaker.GUEST_M3;
-                case "HRH":
-                    return ScriptFileSpeaker.HARUHI;
-                case "KZM":
-                    return ScriptFileSpeaker.KOIZUMI;
-                case "KUN":
-                    return ScriptFileSpeaker.KUNIKIDA;
-                case "KYN":
-                    return ScriptFileSpeaker.KYON;
-                case "KY2":
-                    return ScriptFileSpeaker.KYON2;
-                case "MKT":
-                    return ScriptFileSpeaker.MIKOTO;
-                case "MKR":
-                    return ScriptFileSpeaker.MIKURU;
-                case "MNL":
-                    return ScriptFileSpeaker.MONOLOGUE;
-                case "NGT":
-                    return ScriptFileSpeaker.NAGATO;
-                case "NG2":
-                    return ScriptFileSpeaker.NAGATO2;
-                case "SIS":
-                    return ScriptFileSpeaker.KYNSIS;
-                case "TAI":
-                    return ScriptFileSpeaker.TAIICHIRO;
-                case "TAN":
-                    return ScriptFileSpeaker.TANIGUCHI;
-                case "TRY":
-                    return ScriptFileSpeaker.TSURUYA;
-                default:
-                    return ScriptFileSpeaker.UNKNOWN;
-            }
+                "ANN" => ScriptFileSpeaker.ANNOUNCEMENT,
+                "CAP" => ScriptFileSpeaker.CAPTAIN,
+                "CRF" => ScriptFileSpeaker.CREW_F,
+                "CRM" => ScriptFileSpeaker.CREW_M,
+                "GF1" => ScriptFileSpeaker.GUEST_F1,
+                "GF2" => ScriptFileSpeaker.GUEST_F2,
+                "GF3" => ScriptFileSpeaker.GUEST_F3,
+                "GM1" => ScriptFileSpeaker.GUEST_M1,
+                "GM2" => ScriptFileSpeaker.GUEST_M2,
+                "GM3" => ScriptFileSpeaker.GUEST_M3,
+                "HRH" => ScriptFileSpeaker.HARUHI,
+                "KZM" => ScriptFileSpeaker.KOIZUMI,
+                "KUN" => ScriptFileSpeaker.KUNIKIDA,
+                "KYN" => ScriptFileSpeaker.KYON,
+                "KY2" => ScriptFileSpeaker.KYON2,
+                "MKT" => ScriptFileSpeaker.MIKOTO,
+                "MKR" => ScriptFileSpeaker.MIKURU,
+                "MNL" => ScriptFileSpeaker.MONOLOGUE,
+                "NGT" => ScriptFileSpeaker.NAGATO,
+                "NG2" => ScriptFileSpeaker.NAGATO2,
+                "SIS" => ScriptFileSpeaker.KYNSIS,
+                "TAI" => ScriptFileSpeaker.TAIICHIRO,
+                "TAN" => ScriptFileSpeaker.TANIGUCHI,
+                "TRY" => ScriptFileSpeaker.TSURUYA,
+                _ => ScriptFileSpeaker.UNKNOWN,
+            };
         }
     }
 

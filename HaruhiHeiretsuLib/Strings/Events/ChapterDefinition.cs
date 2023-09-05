@@ -9,7 +9,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
     {
         public float StartTime { get; set; }
         public float EndTime { get; set; }
-        public int Unknown08 { get; set; }
+        public int CurrentTime { get; set; }
         public ushort ActorDefTableEntryCount { get; set; }
         public int ActorDefTableOffset { get; set; }
         public List<ActorDefinition> ActorDefinitionTable { get; set; } = new();
@@ -18,7 +18,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         {
             StartTime = BitConverter.ToSingle(data.Skip(offset).Take(4).ToArray());
             EndTime = BitConverter.ToSingle(data.Skip(offset + 0x04).Take(4).ToArray());
-            Unknown08 = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).ToArray());
+            CurrentTime = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).ToArray());
             ActorDefTableEntryCount = BitConverter.ToUInt16(data.Skip(offset + 0x0C).Take(2).ToArray());
             ActorDefTableOffset = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).ToArray());
 

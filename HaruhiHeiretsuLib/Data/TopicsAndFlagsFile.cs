@@ -7,7 +7,6 @@ using System.Text;
 
 namespace HaruhiHeiretsuLib.Data
 {
-
     /* This file is going to have some hardcoding bc it's easier that way, sue me
      * There are 9 sections, they are numbered as follows:
      * 1. Topics

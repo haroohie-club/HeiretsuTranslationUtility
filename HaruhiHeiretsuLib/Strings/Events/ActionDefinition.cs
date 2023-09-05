@@ -11,7 +11,9 @@ namespace HaruhiHeiretsuLib.Strings.Events
     {
         public int ActorDefinitionAddress { get; set; }
         public ushort OpCode { get; set; }
+        public ushort Unknown06 { get; set; }
         public ushort ParametersCount { get; set; }
+        public ushort Unknown0A { get; set; }
         public int ParametersAddress { get; set; }
         public List<ActionParameter> Parameters { get; set; } = new();
 
@@ -19,7 +21,9 @@ namespace HaruhiHeiretsuLib.Strings.Events
         {
             ActorDefinitionAddress = BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
             OpCode = BitConverter.ToUInt16(data.Skip(offset + 0x04).Take(2).ToArray());
+            Unknown06 = BitConverter.ToUInt16(data.Skip(offset + 0x06).Take(2).ToArray());
             ParametersCount = BitConverter.ToUInt16(data.Skip(offset + 0x08).Take(2).ToArray());
+            Unknown0A = BitConverter.ToUInt16(data.Skip(offset + 0x0A).Take(2).ToArray());
             ParametersAddress = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).ToArray());
 
             int currentPosition = ParametersAddress;
@@ -44,7 +48,9 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
             bytes.AddRange(BitConverter.GetBytes(ActorDefinitionAddress));
             bytes.AddRange(BitConverter.GetBytes(OpCode));
-            bytes.AddRange(BitConverter.GetBytes(ParametersAddress));
+            bytes.AddRange(BitConverter.GetBytes(Unknown06));
+            bytes.AddRange(BitConverter.GetBytes(ParametersCount));
+            bytes.AddRange(BitConverter.GetBytes(Unknown0A));
             bytes.AddRange(BitConverter.GetBytes(ParametersAddress));
 
             return bytes;
@@ -65,47 +71,21 @@ namespace HaruhiHeiretsuLib.Strings.Events
         {
             get
             {
-                switch (_opCode)
+                return _opCode switch
                 {
-                    case 1:
-                    case 2:
-                    case 4:
-                    case 9:
-                    case 22:
-                    case 25:
-                    case 6:
-                        return 0x40;
-                    case 3:
-                    case 24:
-                        return 0x48;
-                    case 5:
-                    case 8:
-                    case 19:
-                        return 0x2C;
-                    case 7:
-                        return 0x28;
-                    case 10:
-                    case 17:
-                    case 18:
-                    case 23:
-                        return 0x24;
-                    case 11:
-                        return 0x4C;
-                    case 12:
-                        return 0x38;
-                    case 13:
-                    case 14:
-                        return 0x50;
-                    case 15:
-                        return 0x58;
-                    case 16:
-                    case 21:
-                        return 0x20;
-                    case 20:
-                        return 0x250;
-                    default:
-                        return 0;
-                }
+                    1 or 2 or 4 or 9 or 22 or 25 or 6 => 0x40,
+                    3 or 24 => 0x48,
+                    5 or 8 or 19 => 0x2C,
+                    7 => 0x28,
+                    10 or 17 or 18 or 23 => 0x24,
+                    11 => 0x4C,
+                    12 => 0x38,
+                    13 or 14 => 0x50,
+                    15 => 0x58,
+                    16 or 21 => 0x20,
+                    20 => 0x250,
+                    _ => 0,
+                };
             }
         }
 

@@ -136,9 +136,9 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public CutsceneData(IEnumerable<byte> data)
         {
             Header = new(data.Take(0x40));
-            for (int i = 0; i < Header.NumCharacters; i++)
+            for (int i = 0; i < Header.NumActors; i++)
             {
-                CharacterModelDefinitionTable.Add(new(data.Skip(Header.CharacterModelDefinitionOffset + i * 0x18).Take(0x18)));
+                CharacterModelDefinitionTable.Add(new(data.Skip(Header.ActorModelDefinitionOffset + i * 0x18).Take(0x18)));
                 CharacterModelDefinitionTable.Last().Details = new(data, CharacterModelDefinitionTable.Last().CharacterModelDataEntryOffset);
             }
 
@@ -163,14 +163,14 @@ namespace HaruhiHeiretsuLib.Strings.Events
     {
         public int Version { get; set; }
         public float TotalRuntimeInFrames { get; set; }
-        public float Unknown08 { get; set; }
-        public short Unknown0C { get; set; } // with two bytes of padding, though
+        public float CurrentFrame { get; set; }
+        public short Unknown0C { get; set; } // with two bytes of padding
         public float Unknown10 { get; set; }
         public short ChaptersCount { get; set; }
-        public short Unknown16 { get; set; }
+        public short Padding16 { get; set; }
         public int ChapterDefTableOffset { get; set; }
-        public int NumCharacters { get; set; }
-        public int CharacterModelDefinitionOffset { get; set; }
+        public short NumActors { get; set; } // with two bytes of padding
+        public int ActorModelDefinitionOffset { get; set; }
         public short Unknown24 { get; set; }
         public short Unknown26 { get; set; }
         public int Unknown28 { get; set; }
@@ -181,14 +181,14 @@ namespace HaruhiHeiretsuLib.Strings.Events
             // Event files are little-endian, so no need to .Reverse
             Version = BitConverter.ToInt32(data.Take(4).ToArray());
             TotalRuntimeInFrames = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
-            Unknown08 = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
-            Unknown0C = BitConverter.ToInt16(data.Skip(0x0C).Take(4).ToArray());
+            CurrentFrame = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
+            Unknown0C = BitConverter.ToInt16(data.Skip(0x0C).Take(4).ToArray()); // With two bytes of padding
             Unknown10 = BitConverter.ToSingle(data.Skip(0x10).Take(4).ToArray());
             ChaptersCount = BitConverter.ToInt16(data.Skip(0x14).Take(2).ToArray());
-            Unknown16 = BitConverter.ToInt16(data.Skip(0x16).Take(2).ToArray());
+            Padding16 = BitConverter.ToInt16(data.Skip(0x16).Take(2).ToArray());
             ChapterDefTableOffset = BitConverter.ToInt32(data.Skip(0x18).Take(4).ToArray());
-            NumCharacters = BitConverter.ToInt32(data.Skip(0x1C).Take(4).ToArray());
-            CharacterModelDefinitionOffset = BitConverter.ToInt32(data.Skip(0x20).Take(4).ToArray());
+            NumActors = BitConverter.ToInt16(data.Skip(0x1C).Take(2).ToArray());
+            ActorModelDefinitionOffset = BitConverter.ToInt32(data.Skip(0x20).Take(4).ToArray());
             Unknown24 = BitConverter.ToInt16(data.Skip(0x24).Take(2).ToArray());
             Unknown26 = BitConverter.ToInt16(data.Skip(0x26).Take(2).ToArray());
             Unknown28 = BitConverter.ToInt32(data.Skip(0x28).Take(4).ToArray());
@@ -201,14 +201,16 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
             bytes.AddRange(BitConverter.GetBytes(Version));
             bytes.AddRange(BitConverter.GetBytes(TotalRuntimeInFrames));
-            bytes.AddRange(BitConverter.GetBytes(Unknown08));
+            bytes.AddRange(BitConverter.GetBytes(CurrentFrame));
             bytes.AddRange(BitConverter.GetBytes(Unknown0C));
+            bytes.AddRange(BitConverter.GetBytes((short)0));
             bytes.AddRange(BitConverter.GetBytes(Unknown10));
             bytes.AddRange(BitConverter.GetBytes(ChaptersCount));
-            bytes.AddRange(BitConverter.GetBytes(Unknown16));
+            bytes.AddRange(BitConverter.GetBytes(Padding16));
             bytes.AddRange(BitConverter.GetBytes(ChapterDefTableOffset));
-            bytes.AddRange(BitConverter.GetBytes(NumCharacters));
-            bytes.AddRange(BitConverter.GetBytes(CharacterModelDefinitionOffset));
+            bytes.AddRange(BitConverter.GetBytes(NumActors));
+            bytes.AddRange(BitConverter.GetBytes((short)0));
+            bytes.AddRange(BitConverter.GetBytes(ActorModelDefinitionOffset));
             bytes.AddRange(BitConverter.GetBytes(Unknown24));
             bytes.AddRange(BitConverter.GetBytes(Unknown26));
             bytes.AddRange(BitConverter.GetBytes(Unknown28));

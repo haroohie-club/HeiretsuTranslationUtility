@@ -11,6 +11,8 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
         public int Unknown0C { get; set; }
         public int Unknown10 { get; set; } // pointer
         public ushort Unknown14 { get; set; }
+        public ushort Unknown16 { get; set; } // guess
+        public int Unknown18 { get; set; } // guess
         public int Unknown1C { get; set; }
         public int Unknown20 { get; set; }
         public ushort Unknown24 { get; set; }
@@ -26,6 +28,8 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
             Unknown0C = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).ToArray());
             Unknown10 = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).ToArray());
             Unknown14 = BitConverter.ToUInt16(data.Skip(offset + 0x14).Take(2).ToArray());
+            Unknown16 = BitConverter.ToUInt16(data.Skip(offset + 0x16).Take(2).ToArray());
+            Unknown18 = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).ToArray());
             Unknown1C = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).ToArray());
             Unknown20 = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).ToArray());
             Unknown24 = BitConverter.ToUInt16(data.Skip(offset + 0x24).Take(2).ToArray());
@@ -49,7 +53,9 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
             bytes.AddRange(BitConverter.GetBytes(Unknown0C));
             bytes.AddRange(BitConverter.GetBytes(Unknown10));
             bytes.AddRange(BitConverter.GetBytes(Unknown14));
-            bytes.AddRange(new byte[6]);
+            bytes.AddRange(BitConverter.GetBytes(Unknown16));
+            bytes.AddRange(BitConverter.GetBytes(Unknown18));
+            bytes.AddRange(BitConverter.GetBytes(Unknown1C));
             bytes.AddRange(BitConverter.GetBytes(Unknown20));
             bytes.AddRange(BitConverter.GetBytes(Unknown24));
             bytes.AddRange(BitConverter.GetBytes(Unknown26));

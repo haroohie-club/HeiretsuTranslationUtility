@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Resources.NetStandard;
 using System.Text;
+using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Scripts
@@ -345,6 +346,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 {
                     TagDialogueWithEventFileMetadata(eventFileIndices);
                 }
+                TagDialogueWithTopicMetadata();
             }
         }
 
@@ -463,6 +465,37 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     string beforeAfter = DialogueLines[minDistanceLine].Offset > allInvocations[i].Address ? "before" : "after";
                     string chaptersString = chapters.Count > 0 ? $" (ch {string.Join(", ", chapters)})" : "";
                     DialogueLines[minDistanceLine].Metadata.Add($"Event evt-{eventId:D4}{chaptersString} starts {beforeAfter}");
+                }
+            }
+        }
+
+        private void TagDialogueWithTopicMetadata()
+        {
+            ScriptCommandInvocation[] allInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToArray();
+
+            for (int i = 0; i < allInvocations.Length; i++)
+            {
+                if (allInvocations[i].Command.Name == "TOPIC" || allInvocations[i].Command.Name == "TOPIC_GET"
+                    || allInvocations[i].Command.Name == "TOPIC_CHANGE" || allInvocations[i].Command.Name == "TOPIC_VANISH"
+                    || allInvocations[i].Command.Name == "TOPIC_USING")
+                {
+                    string topicName = Objects[BitConverter.ToInt16(allInvocations[i].Parameters[0].Value.Reverse().ToArray())];
+
+                    int minDistance = int.MaxValue;
+                    int minDistanceLine = 0;
+                    for (int j = 0; j < DialogueLines.Count; j++)
+                    {
+                        int distanceBetweenDialogueLineAndEventStart = allInvocations.Where(inv => inv.Address == DialogueLines[j].Offset)
+                            .Select(inv => Math.Abs(inv.LineNumber - allInvocations[i].LineNumber)).FirstOrDefault();
+                        if (distanceBetweenDialogueLineAndEventStart < minDistance)
+                        {
+                            minDistance = distanceBetweenDialogueLineAndEventStart;
+                            minDistanceLine = j;
+                        }
+                    }
+
+                    string beforeAfter = DialogueLines[minDistanceLine].Offset > allInvocations[i].Address ? "before" : "after";
+                    DialogueLines[minDistanceLine].Metadata.Add($"{allInvocations[i].Command.Name}({topicName}) {beforeAfter} this line");
                 }
             }
         }

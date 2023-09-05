@@ -96,7 +96,7 @@ namespace HaruhiHeiretsuCLI
                     case "scr":
                         ScriptFile scrFile = scr.Files.First(f => f.Index == index);
                         scrFile.Name = indexToNameMap[scrFile.Index];
-                        fileName = $"{name}_{scrFile.Name}.ja.resx";
+                        fileName = Path.Combine(_outputDirectory, $"{name}_{scrFile.Name}.ja.resx");
 
                         int mapSection, mapIndex;
                         if (char.IsNumber(name[0]))
