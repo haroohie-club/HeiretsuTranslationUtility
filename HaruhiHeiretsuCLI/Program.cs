@@ -15,6 +15,7 @@ namespace HaruhiHeiretsuCLI
                 "Available commands:",
                 new CalculatorCommand(),
                 new CheckBlnBinIntegrityCommand(),
+                new ExportEventJsonCommand(),
                 new ExportFileMapCommand(),
                 new ExportResxCommand(),
                 new ExportSgeJsonCommand(),

@@ -48,6 +48,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
             bytes.AddRange(new byte[0x10 - modelNameBytes.Length]);
             bytes.AddRange(BitConverter.GetBytes(ActionsCount));
             bytes.AddRange(BitConverter.GetBytes(ActionsTableAddress));
+            bytes.AddRange(new byte[0x20]);
 
             return bytes;
         }

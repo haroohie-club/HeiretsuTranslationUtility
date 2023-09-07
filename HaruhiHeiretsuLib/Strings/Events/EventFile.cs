@@ -90,7 +90,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         public override void EditDialogue(int index, string newLine)
         {
-            newLine.Replace("\n", "\\n");
+            newLine = newLine.Replace("\n", "\\n");
             (_, byte[] newLineData) = DialogueEditSetUp(index, newLine);
 
             if (newLineData.Length < DialogueLines[index].Length)
@@ -158,13 +158,13 @@ namespace HaruhiHeiretsuLib.Strings.Events
         }
     }
 
-    // 0x30 bytes
+    // 0x40 bytes
     public class EventFileHeader
     {
         public int Version { get; set; }
         public float TotalRuntimeInFrames { get; set; }
         public float CurrentFrame { get; set; }
-        public short Unknown0C { get; set; } // with two bytes of padding
+        public short CurrentChapter { get; set; } // with two bytes of padding
         public float Unknown10 { get; set; }
         public short ChaptersCount { get; set; }
         public short Padding16 { get; set; }
@@ -175,6 +175,10 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public short Unknown26 { get; set; }
         public int Unknown28 { get; set; }
         public int Unknown2C { get; set; }
+        public int Unknown30 { get; set; }
+        public int Unknown34 { get; set; }
+        public int Unknown38 { get; set; }
+        public int Unknown3C { get; set; }
 
         public EventFileHeader(IEnumerable<byte> data)
         {
@@ -182,7 +186,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
             Version = BitConverter.ToInt32(data.Take(4).ToArray());
             TotalRuntimeInFrames = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
             CurrentFrame = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
-            Unknown0C = BitConverter.ToInt16(data.Skip(0x0C).Take(4).ToArray()); // With two bytes of padding
+            CurrentChapter = BitConverter.ToInt16(data.Skip(0x0C).Take(4).ToArray()); // With two bytes of padding
             Unknown10 = BitConverter.ToSingle(data.Skip(0x10).Take(4).ToArray());
             ChaptersCount = BitConverter.ToInt16(data.Skip(0x14).Take(2).ToArray());
             Padding16 = BitConverter.ToInt16(data.Skip(0x16).Take(2).ToArray());
@@ -202,7 +206,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
             bytes.AddRange(BitConverter.GetBytes(Version));
             bytes.AddRange(BitConverter.GetBytes(TotalRuntimeInFrames));
             bytes.AddRange(BitConverter.GetBytes(CurrentFrame));
-            bytes.AddRange(BitConverter.GetBytes(Unknown0C));
+            bytes.AddRange(BitConverter.GetBytes(CurrentChapter));
             bytes.AddRange(BitConverter.GetBytes((short)0));
             bytes.AddRange(BitConverter.GetBytes(Unknown10));
             bytes.AddRange(BitConverter.GetBytes(ChaptersCount));
@@ -215,6 +219,10 @@ namespace HaruhiHeiretsuLib.Strings.Events
             bytes.AddRange(BitConverter.GetBytes(Unknown26));
             bytes.AddRange(BitConverter.GetBytes(Unknown28));
             bytes.AddRange(BitConverter.GetBytes(Unknown2C));
+            bytes.AddRange(BitConverter.GetBytes(Unknown30));
+            bytes.AddRange(BitConverter.GetBytes(Unknown34));
+            bytes.AddRange(BitConverter.GetBytes(Unknown38));
+            bytes.AddRange(BitConverter.GetBytes(Unknown3C));
 
             return bytes;
         }

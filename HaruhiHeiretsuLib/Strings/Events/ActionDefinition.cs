@@ -1,12 +1,40 @@
 ﻿using HaruhiHeiretsuLib.Strings.Events.Parameters;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace HaruhiHeiretsuLib.Strings.Events
 {
     // 0x38 bytes
+    /*
+     * Op Code Table:
+     * 0x01 - Camera Position
+     * 0x02 - Camera Look-To
+     * 0x03 -
+     * 0x04 -
+     * 0x05 -
+     * 0x06 -
+     * 0x07 -
+     * 0x08 -
+     * 0x09 -
+     * 0x0A -
+     * 0x0B -
+     * 0x0C -
+     * 0x0D -
+     * 0x0E -
+     * 0x0F -
+     * 0x10 -
+     * 0x11 -
+     * 0x12 -
+     * 0x13 -
+     * 0x14 - Dialogue
+     * 0x15 -
+     * 0x16 -
+     * 0x17 -
+     * 0x18 -
+     * 0x19 -
+     */
     public class ActionDefinition
     {
         public int ActorDefinitionAddress { get; set; }
@@ -31,6 +59,14 @@ namespace HaruhiHeiretsuLib.Strings.Events
             {
                 switch (OpCode)
                 {
+                    case 1:
+                    case 2:
+                    case 4:
+                    case 9:
+                    case 22:
+                    case 25:
+                        Parameters.Add(new SpatialParameter(data, currentPosition, OpCode));
+                        break;
                     case 20:
                         Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
                         break;
@@ -57,6 +93,8 @@ namespace HaruhiHeiretsuLib.Strings.Events
         }
     }
 
+    [JsonDerivedType(typeof(SpatialParameter))]
+    [JsonDerivedType(typeof(DialogueParameter))]
     // Variable length
     public class ActionParameter
     {

@@ -1,9 +1,6 @@
-﻿using System;
+﻿using HaruhiHeiretsuLib.Util;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Archive
 {
@@ -36,17 +33,19 @@ namespace HaruhiHeiretsuLib.Archive
 
         public T CastTo<T>() where T : FileInArchive, new()
         {
-            T newFile = new();
-            newFile.McbId = McbId;
-            newFile.Location = Location;
-            newFile.McbEntryData = McbEntryData;
-            newFile.MagicInteger = MagicInteger;
-            newFile.Index = Index;
-            newFile.Offset = Offset;
-            newFile.Length = Length;
-            newFile.Data = Data;
-            newFile.CompressedData = CompressedData;
-            newFile.Edited = Edited;
+            T newFile = new()
+            {
+                McbId = McbId,
+                Location = Location,
+                McbEntryData = McbEntryData,
+                MagicInteger = MagicInteger,
+                Index = Index,
+                Offset = Offset,
+                Length = Length,
+                Data = Data,
+                CompressedData = CompressedData,
+                Edited = Edited
+            };
             newFile.Initialize(Data.ToArray(), Offset);
 
             return newFile;
@@ -58,11 +57,13 @@ namespace HaruhiHeiretsuLib.Archive
     {
         public static T FromCompressedData(byte[] compressedData, int offset = 0, uint magicInteger = 0, int index = -1, int length = -1)
         {
-            T created = new();
-            created.MagicInteger = magicInteger;
-            created.Index = index;
-            created.Length = length;
-            created.Location = (-1, -1);
+            T created = new()
+            {
+                MagicInteger = magicInteger,
+                Index = index,
+                Length = length,
+                Location = (-1, -1)
+            };
             created.Initialize(Helpers.DecompressData(compressedData), offset);
             return created;
         }
