@@ -11,8 +11,8 @@ namespace HaruhiHeiretsuLib.Strings.Events
      * Op Code Table:
      * 0x01 - Camera Position
      * 0x02 - Camera Look-To
-     * 0x03 -
-     * 0x04 -
+     * 0x03 - Animation Path Effect
+     * 0x04 - Animation Path
      * 0x05 -
      * 0x06 -
      * 0x07 -
@@ -67,6 +67,13 @@ namespace HaruhiHeiretsuLib.Strings.Events
                     case 25:
                         Parameters.Add(new SpatialParameter(data, currentPosition, OpCode));
                         break;
+                    case 3:
+                    case 24:
+                        Parameters.Add(new AnimPathEffectParameter(data, currentPosition, OpCode));
+                        break;
+                    case 7:
+                        Parameters.Add(new FadeParameter(data, currentPosition, OpCode));
+                        break;
                     case 20:
                         Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
                         break;
@@ -93,8 +100,10 @@ namespace HaruhiHeiretsuLib.Strings.Events
         }
     }
 
-    [JsonDerivedType(typeof(SpatialParameter))]
     [JsonDerivedType(typeof(DialogueParameter))]
+    [JsonDerivedType(typeof(FadeParameter))]
+    [JsonDerivedType(typeof(AnimPathEffectParameter))]
+    [JsonDerivedType(typeof(SpatialParameter))]
     // Variable length
     public class ActionParameter
     {
@@ -113,9 +122,9 @@ namespace HaruhiHeiretsuLib.Strings.Events
                 {
                     1 or 2 or 4 or 9 or 22 or 25 or 6 => 0x40,
                     3 or 24 => 0x48,
-                    5 or 8 or 19 => 0x2C,
+                    5 or 8 or 19 or 18 or 23 => 0x2C,
                     7 => 0x28,
-                    10 or 17 or 18 or 23 => 0x24,
+                    10 or 17 => 0x24,
                     11 => 0x4C,
                     12 => 0x38,
                     13 or 14 => 0x50,

@@ -281,6 +281,9 @@ namespace HaruhiHeiretsuCLI
                             case McbArchive.ArchiveIndex.DAT:
                                 switch (mcb.StringsFiles[i].childLoc)
                                 {
+                                    case DataStringsFileLocations.SYSTEM_TEXT_MCB_INDEX:
+                                        break;
+
                                     case DataStringsFileLocations.MAP_DEFINITION_MCB_INDEX:
                                         DataStringsFile<MapDefinitionsFile> mapDefinitionsFile = mcbFile.CastTo<DataStringsFile<MapDefinitionsFile>>();
                                         mapDefinitionsFile.ImportResxFile(file, fontReplacementMap);

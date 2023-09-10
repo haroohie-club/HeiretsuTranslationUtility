@@ -25,6 +25,8 @@ namespace HaruhiHeiretsuLib.Strings.Data
 
         public override void Initialize(byte[] decompressedData, int offset = 0)
         {
+            Data = decompressedData.ToList();
+
             if ((!ValidIndices.Contains(Index) || offset == 0x800) && (Location.parent < 0 && Location.child < 0))
             {
                 return;

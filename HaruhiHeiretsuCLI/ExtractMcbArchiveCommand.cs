@@ -5,12 +5,12 @@ using System.IO;
 
 namespace HaruhiHeiretsuCLI
 {
-    public class ExtractArchiveCommand : Command
+    public class ExtractMcbArchiveCommand : Command
     {
         private string _mcb, _outputDirectory;
         private int _archiveIndex;
 
-        public ExtractArchiveCommand() : base("extract-archive")
+        public ExtractMcbArchiveCommand() : base("extract-mcb-archive")
         {
             Options = new()
             {

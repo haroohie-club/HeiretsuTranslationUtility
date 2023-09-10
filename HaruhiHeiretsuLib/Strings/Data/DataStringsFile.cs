@@ -65,14 +65,15 @@ namespace HaruhiHeiretsuLib.Strings.Data
                     if (dialogueText[i] == '“' && (i == dialogueText.Length - 1
                         || dialogueText[i + 1] == ' ' || dialogueText[i + 1] == '!' || dialogueText[i + 1] == '?' || dialogueText[i + 1] == '.' || dialogueText[i + 1] == '…' || dialogueText[i + 1] == '\n'))
                     {
-                        dialogueText.Remove(i, 1);
-                        dialogueText.Insert(i, "”");
+                        dialogueText = dialogueText.Remove(i, 1);
+                        dialogueText = dialogueText.Insert(i, "”");
                     }
 
                     if (fontReplacementMap.ContainsReplacement($"{dialogueText[i]}"))
                     {
-                        dialogueText.Remove(i, 1);
-                        dialogueText.Insert(i, fontReplacementMap.GetStartCharacterForReplacement($"{dialogueText[i]}"));
+                        string replacement = fontReplacementMap.GetStartCharacterForReplacement($"{dialogueText[i]}");
+                        dialogueText = dialogueText.Remove(i, 1);
+                        dialogueText = dialogueText.Insert(i, replacement);
                     }
                 }
 
@@ -83,11 +84,36 @@ namespace HaruhiHeiretsuLib.Strings.Data
 
     public static class DataStringsFileLocations
     {
+        public const int SYSTEM_TEXT_MCB_INDEX = 58;
+        public const int SYSTEM_TEXT_INDEX = 10;
+
+        public const int MESSAGE_BOX_TEXT_MCB_INDEX = 60;
+        public const int MESSAGE_BOX_TEXT_INDEX = 14;
+
+        // mcb 63 dat 20
+
+        public const int TIMELINE_TEXT_MCB_INDEX = 68;
+        public const int TIMELINE_TEXT_INDEX = 30;
+
+        public const int MENU_TEXT_MCB_INDEX = 70;
+        public const int MENU_TEXT_INDEX = 34;
+
+        // mcb 73 dat 40
+
+        // dat 42
+
+        // dat 44
+
+        public const int CLUBROOM_TEXT_INDEX = 46;
+
         public const int TOPICS_FLAG_MCB_INDEX = 78;
         public const int TOPICS_FLAGS_INDEX = 56;
 
         public const int MAP_DEFINITION_MCB_INDEX = 79;
         public const int MAP_DEFINITION_INDEX = 58;
+
+        public const int LOCATIONS_MCB_INDEX = 80;
+        public const int LOCATIONS_INDEX = 60;
 
         public const int NAMEPLATES_MCB_INDEX = 82;
         public const int NAMEPLATES_INDEX = 64;

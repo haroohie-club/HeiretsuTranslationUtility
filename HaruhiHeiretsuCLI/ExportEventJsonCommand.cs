@@ -4,8 +4,8 @@ using Mono.Options;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace HaruhiHeiretsuCLI
 {
@@ -30,7 +30,7 @@ namespace HaruhiHeiretsuCLI
 
             BinArchive<EventFile> evt = BinArchive<EventFile>.FromFile(_evt);
             EventFile eventFile = evt.Files.First(f => f.Index == _index);
-            File.WriteAllText(_output, JsonSerializer.Serialize(eventFile.CutsceneData, new JsonSerializerOptions() { IncludeFields = true }));
+            File.WriteAllText(_output, JsonSerializer.Serialize(eventFile.CutsceneData, new JsonSerializerOptions() { IncludeFields = true, NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals }));
 
             return 0;
         }
