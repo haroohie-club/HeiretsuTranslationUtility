@@ -72,11 +72,14 @@ def construct_mesh(sge, submesh, materials, meshNum):
     mesh.normals_split_custom_set_from_vertices(normals)
 
     uvlayer = mesh.uv_layers.new()
+    uvlayer_name = uvlayer.name
     color_layer = mesh.vertex_colors.new()
+    # Creating the color layer has invalidated the reference to the uv layer, so get it again.
+    uvlayer = mesh.uv_layers[uvlayer_name]
     for face in mesh.polygons:
         for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
             color_layer.data[vert_idx].color = (colors[vert_idx]['R'], colors[vert_idx]['G'], colors[vert_idx]['B'], colors[vert_idx]['A'])
-            uvlayer.data[loop_idx].uv = uvcoords[vert_idx]
+            uvlayer.uv[loop_idx].vector = uvcoords[vert_idx]
     
     for i in range(len(mesh.polygons)):
         if submesh['SubmeshFaces'][i]['Material'] is not None:
@@ -97,7 +100,7 @@ def json_vector_to_vector(json_vector):
     return Vector((float(json_vector['X']), float(json_vector['Z']), float(json_vector['Y'])))
 
 def json_vector2_to_vector2(json_vector):
-    return Vector((float(json_vector['X']), float(json_vector['Y'])))
+    return (float(json_vector['X']), float(json_vector['Y']))
 
 def main(filename):
     f = open(filename)

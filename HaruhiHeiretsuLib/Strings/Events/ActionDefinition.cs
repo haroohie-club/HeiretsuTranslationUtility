@@ -69,7 +69,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
                         break;
                     case 3:
                     case 24:
-                        Parameters.Add(new AnimPathEffectParameter(data, currentPosition, OpCode));
+                        Parameters.Add(new ModelAnimationParameter(data, currentPosition, OpCode));
                         break;
                     case 7:
                         Parameters.Add(new FadeParameter(data, currentPosition, OpCode));
@@ -77,6 +77,35 @@ namespace HaruhiHeiretsuLib.Strings.Events
                     case 20:
                         Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
                         break;
+                    case 5:
+                    // break
+                    case 6:
+                    //break
+                    case 8:
+                    //break
+                    case 10:
+                    //break
+                    case 11:
+                    //break
+                    case 12:
+                    //break
+                    case 13:
+                    //break
+                    case 14:
+                    //break
+                    case 15:
+                    //break
+                    case 16:
+                    //break
+                    case 17:
+                    //break
+                    case 18:
+                    case 23:
+                    //break
+                    case 19:
+                    //break
+                    case 21:
+                    //break
                     default:
                         Parameters.Add(new(data, currentPosition, OpCode));
                         break;
@@ -102,7 +131,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
     [JsonDerivedType(typeof(DialogueParameter))]
     [JsonDerivedType(typeof(FadeParameter))]
-    [JsonDerivedType(typeof(AnimPathEffectParameter))]
+    [JsonDerivedType(typeof(ModelAnimationParameter))]
     [JsonDerivedType(typeof(SpatialParameter))]
     // Variable length
     public class ActionParameter

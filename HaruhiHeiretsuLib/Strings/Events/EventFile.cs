@@ -139,7 +139,10 @@ namespace HaruhiHeiretsuLib.Strings.Events
             for (int i = 0; i < Header.NumActors; i++)
             {
                 CharacterModelDefinitionTable.Add(new(data.Skip(Header.ActorModelDefinitionOffset + i * 0x18).Take(0x18)));
-                CharacterModelDefinitionTable.Last().Details = new(data, CharacterModelDefinitionTable.Last().CharacterModelDataEntryOffset);
+                if (CharacterModelDefinitionTable.Last().CharacterModelDataEntryOffset > 0)
+                {
+                    CharacterModelDefinitionTable.Last().Details = new(data, CharacterModelDefinitionTable.Last().CharacterModelDataEntryOffset);
+                }
             }
 
             for (int i = 0; i < Header.ChaptersCount; i++)

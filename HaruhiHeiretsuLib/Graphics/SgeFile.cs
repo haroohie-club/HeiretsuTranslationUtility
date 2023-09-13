@@ -21,10 +21,26 @@ namespace HaruhiHeiretsuLib.Graphics
         public string Name { get; set; }
         public int SgeStartOffset { get; set; }
         public SgeHeader SgeHeader { get; set; }
+        public List<SgeAnimation> SgeAnimations { get; set; } = new();
+        public List<TranslateDataEntry> TranslateDataEntries { get; set; } = new();
+        public List<RotateDataEntry> RotateDataEntries { get; set; } = new();
+        public List<ScaleDataEntry> ScaleDataEntries { get; set; } = new();
+        public List<KeyframeDefinition> KeyframeDefinitions { get; set; } = new();
+        public List<Unknown38Entry> Unknown38Table { get; set; } = new();
         public List<SgeMesh> SgeMeshes { get; set; } = new();
         public List<SgeMaterial> SgeMaterials { get; set; } = new();
         public List<SgeBone> SgeBones { get; set; } = new();
         public List<SgeSubmesh> SgeSubmeshes { get; set; } = new();
+
+        // AnimTransformData
+        public int TranslateDataOffset { get; set; } // *AnimTransformDataOffset + 0
+        public int RotateDataOffset { get; set; } // *AnimTransformDataOffset + 4
+        public int ScaleDataOffset { get; set; } // *AnimTransformDataOffset + 8
+        public int KeyframeDefinitionsOffset { get; set; } // *AnimTransformDataOffset + 12
+        public short TranslateDataCount { get; set; } // *AnimTransformDataOffset + 16
+        public short RotateDataCount { get; set; } // *AnimTransformDataOffset + 18
+        public short ScaleDataCount { get; set; } // *AnimTransformDataOffset + 20
+        public short NumKeyframes { get; set; } // *AnimTransformDataOffset + 22
 
         public Sge(IEnumerable<byte> data)
         {
@@ -179,6 +195,45 @@ namespace HaruhiHeiretsuLib.Graphics
                     }
                 }
             }
+
+            TranslateDataOffset = BitConverter.ToInt32(sgeData.Skip(SgeHeader.AnimationTransformTableAddress).Take(4).ToArray());
+            RotateDataOffset = BitConverter.ToInt32(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x04).Take(4).ToArray());
+            ScaleDataOffset = BitConverter.ToInt32(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x08).Take(4).ToArray());
+            KeyframeDefinitionsOffset = BitConverter.ToInt32(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x0C).Take(4).ToArray());
+            TranslateDataCount = BitConverter.ToInt16(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x10).Take(2).ToArray());
+            RotateDataCount = BitConverter.ToInt16(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x12).Take(2).ToArray());
+            ScaleDataCount = BitConverter.ToInt16(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x14).Take(2).ToArray());
+            NumKeyframes = BitConverter.ToInt16(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x16).Take(2).ToArray());
+
+            for (int i = 0; i < SgeHeader.NumAnimations; i++)
+            {
+                SgeAnimations.Add(new(sgeData, 0, SgeHeader.BonesCount, SgeHeader.AnimationDataTableAddress + i * 0x38));
+            }
+
+            for (int i = 0; i < SgeHeader.Unknown38Count; i++)
+            {
+                Unknown38Table.Add(new(sgeData.Skip(SgeHeader.Unknown38TableOffset + i * 0x48).Take(0x48)));
+            }
+
+            for (int i = 0; i < TranslateDataCount; i++)
+            {
+                TranslateDataEntries.Add(new(sgeData.Skip(TranslateDataOffset + i * 0x0C).Take(0x0C)));
+            }
+
+            for (int i = 0; i < RotateDataCount; i++)
+            {
+                RotateDataEntries.Add(new(sgeData.Skip(RotateDataOffset + i * 0x10).Take(0x10)));
+            }
+
+            for (int i = 0; i < ScaleDataCount; i++)
+            {
+                ScaleDataEntries.Add(new(sgeData.Skip(ScaleDataOffset + i * 0x0C).Take(0x0C)));
+            }
+
+            for (int i = 0; i < NumKeyframes; i++)
+            {
+                KeyframeDefinitions.Add(new(sgeData.Skip(KeyframeDefinitionsOffset + i * 0x28).Take(0x28)));
+            }
         }
 
         public void ResolveTextures(string name, List<GraphicsFile> textures)
@@ -235,45 +290,45 @@ namespace HaruhiHeiretsuLib.Graphics
 
     public class SgeHeader
     {
-        public short Version { get; set; }    // 1
-        public short ModelType { get; set; }    // 2 -- value of 0, 3, 4 or 5; of 3 gives outline on character model; 4 is tristriped
-        public int Unknown04 { get; set; }      // 3
-        public int Unknown08 { get; set; }      // 4
-        public int Unknown0C { get; set; }   // 5
-        public int BonesCount { get; set; }     // 6
-        public int TexturesCount { get; set; }  // 7
-        public int Unknown18 { get; set; }      // 8
-        public int Unknown1C { get; set; }      // 9
-        public int Unknown20 { get; set; }      // 10
-        public int Unknown24 { get; set; }      // 11
-        public int Unknown28 { get; set; }      // 12
-        public int Unknown2C { get; set; }      // 13
-        public int MeshTableAddress { get; set; } // 14
-        public int Unknown34 { get; set; }      // 15
-        public int Unknown38 { get; set; }      // 16
-        public int Unknown3C { get; set; }      // 17
-        public int Unknown40 { get; set; }      // 18
-        public int BonesTableAddress { get; set; }  // 19
-        public int TextureTableAddress { get; set; }    // 20
-        public int Unknown4C { get; set; }      // 21
-        public int Unknown50 { get; set; }      // 22
-        public int Unknown54 { get; set; }      // 23
-        public int Unknown58 { get; set; }      // 24
-        public int Unknown5C { get; set; }      // 25
-        public int AnimationDataTableAddress { get; set; }      // 26
-        public int AnimationActionTableAddress { get; set; }      // 27
-        public int Unknown68 { get; set; }      // 28
-        public int Unknown6C { get; set; }      // 29
-        public int Unknown70 { get; set; }      // 30
-        public int Unknown74 { get; set; }      // 31
-        public int Unknown78 { get; set; }      // 32
-        public int Unknown7C { get; set; }      // 33
+        public short Version { get; set; }    // 0x00
+        public short ModelType { get; set; }    // 0x02 -- value of 0, 3, 4 or 5; of 3 gives outline on character model; 4 is tristriped
+        public int Unknown38Count { get; set; }      // 0x04
+        public int Unknown08 { get; set; }      // 0x08
+        public int Unknown0C { get; set; }   // 0x0C
+        public int BonesCount { get; set; }     // 0x10
+        public int TexturesCount { get; set; }  // 0x14
+        public int Unknown18 { get; set; }      // 0x18
+        public int Unknown1C { get; set; }      // 0x1C
+        public int Unknown20 { get; set; }      // 0x20
+        public int Unknown24 { get; set; }      // 0x24
+        public int Unknown28 { get; set; }      // 0x2
+        public int Unknown2C { get; set; }      // 0x2C
+        public int MeshTableAddress { get; set; } // 0x30
+        public int Unknown34 { get; set; }      // 0x34
+        public int Unknown38TableOffset { get; set; }      // 0x38
+        public int Unknown3C { get; set; }      // 0x3C
+        public int Unknown40 { get; set; }      // 0x40
+        public int BonesTableAddress { get; set; }  // 0x44
+        public int TextureTableAddress { get; set; }    // 0x48
+        public int Unknown4C { get; set; }      // 0x4C
+        public int Unknown50 { get; set; }      // 0x50
+        public int Unknown54 { get; set; }      // 0x54
+        public int Unknown58 { get; set; }      // 0x58
+        public int NumAnimations { get; set; }      // 0x5C
+        public int AnimationDataTableAddress { get; set; }      // 0x60
+        public int AnimationTransformTableAddress { get; set; }      // 0x64
+        public int NumEventAnimations { get; set; }      // 0x68
+        public int EventAnimationDataTableAddress { get; set; }      // 0x6C
+        public int EventAnimationTransformTableAddress { get; set; }      // 0x70
+        public int Unknown74 { get; set; }      // 0x74
+        public int Unknown78 { get; set; }      // 0x78
+        public int Unknown7C { get; set; }      // 0x7C
 
         public SgeHeader(IEnumerable<byte> headerData)
         {
             Version = BitConverter.ToInt16(headerData.Take(2).ToArray());
             ModelType = BitConverter.ToInt16(headerData.Skip(0x02).Take(2).ToArray());
-            Unknown04 = BitConverter.ToInt32(headerData.Skip(0x04).Take(4).ToArray());
+            Unknown38Count = BitConverter.ToInt32(headerData.Skip(0x04).Take(4).ToArray());
             Unknown08 = BitConverter.ToInt32(headerData.Skip(0x08).Take(4).ToArray());
             Unknown0C = BitConverter.ToInt32(headerData.Skip(0x0C).Take(4).ToArray());
             BonesCount = BitConverter.ToInt32(headerData.Skip(0x10).Take(4).ToArray());
@@ -286,7 +341,7 @@ namespace HaruhiHeiretsuLib.Graphics
             Unknown2C = BitConverter.ToInt32(headerData.Skip(0x2C).Take(4).ToArray());
             MeshTableAddress = BitConverter.ToInt32(headerData.Skip(0x30).Take(4).ToArray());
             Unknown34 = BitConverter.ToInt32(headerData.Skip(0x34).Take(4).ToArray());
-            Unknown38 = BitConverter.ToInt32(headerData.Skip(0x38).Take(4).ToArray());
+            Unknown38TableOffset = BitConverter.ToInt32(headerData.Skip(0x38).Take(4).ToArray());
             Unknown3C = BitConverter.ToInt32(headerData.Skip(0x3C).Take(4).ToArray());
             Unknown40 = BitConverter.ToInt32(headerData.Skip(0x40).Take(4).ToArray());
             BonesTableAddress = BitConverter.ToInt32(headerData.Skip(0x44).Take(4).ToArray());
@@ -295,25 +350,24 @@ namespace HaruhiHeiretsuLib.Graphics
             Unknown50 = BitConverter.ToInt32(headerData.Skip(0x50).Take(4).ToArray());
             Unknown54 = BitConverter.ToInt32(headerData.Skip(0x54).Take(4).ToArray());
             Unknown58 = BitConverter.ToInt32(headerData.Skip(0x58).Take(4).ToArray());
-            Unknown5C = BitConverter.ToInt32(headerData.Skip(0x5C).Take(4).ToArray());
+            NumAnimations = BitConverter.ToInt32(headerData.Skip(0x5C).Take(4).ToArray());
             AnimationDataTableAddress = BitConverter.ToInt32(headerData.Skip(0x60).Take(4).ToArray());
-            AnimationActionTableAddress = BitConverter.ToInt32(headerData.Skip(0x64).Take(4).ToArray());
-            Unknown68 = BitConverter.ToInt32(headerData.Skip(0x68).Take(4).ToArray());
-            Unknown6C = BitConverter.ToInt32(headerData.Skip(0x6C).Take(4).ToArray());
-            Unknown70 = BitConverter.ToInt32(headerData.Skip(0x70).Take(4).ToArray());
+            AnimationTransformTableAddress = BitConverter.ToInt32(headerData.Skip(0x64).Take(4).ToArray());
+            NumEventAnimations = BitConverter.ToInt32(headerData.Skip(0x68).Take(4).ToArray());
+            EventAnimationDataTableAddress = BitConverter.ToInt32(headerData.Skip(0x6C).Take(4).ToArray()); // These tables are accessed when
+            EventAnimationTransformTableAddress = BitConverter.ToInt32(headerData.Skip(0x70).Take(4).ToArray()); // (anim number & 0x8000) is true
             Unknown74 = BitConverter.ToInt32(headerData.Skip(0x74).Take(4).ToArray());
             Unknown78 = BitConverter.ToInt32(headerData.Skip(0x78).Take(4).ToArray());
             Unknown7C = BitConverter.ToInt32(headerData.Skip(0x7C).Take(4).ToArray());
         }
     }
 
-    public class AnimationTableEntry
+    public class SgeAnimation
     {
-        public float Unknown00 { get; set; }
+        public float TotalFrames { get; set; }
         public int Unknown04 { get; set; }
-        public int AnimationAddress { get; set; }
-        public AnimationData Animation { get; set; }
-        public int Unknown0C { get; set; }
+        public int BoneTableOffset { get; set; }
+        public int NumKeyframes { get; set; }
         public int Unknown10 { get; set; }
         public int Unknown14 { get; set; }
         public int Unknown18 { get; set; }
@@ -325,34 +379,197 @@ namespace HaruhiHeiretsuLib.Graphics
         public int Unknown30 { get; set; }
         public int Unknown34 { get; set; }
 
-        public AnimationTableEntry(IEnumerable<byte> data, int offset)
-        {
-            Unknown00 = BitConverter.ToSingle(data.Skip(0x00 + offset).Take(4).ToArray());
-            Unknown04 = BitConverter.ToInt32(data.Skip(0x04 + offset).Take(4).ToArray());
-            AnimationAddress = BitConverter.ToInt32(data.Skip(0x08 + offset).Take(4).ToArray());
+        public List<short> UsedKeyframes { get; set; } = new();
+        public List<BoneTableEntry> BoneTable { get; set; } = new();
 
-            Unknown0C = BitConverter.ToInt32(data.Skip(0x0C + offset).Take(4).ToArray());
-            Unknown10 = BitConverter.ToInt32(data.Skip(0x10 + offset).Take(4).ToArray());
-            Unknown14 = BitConverter.ToInt32(data.Skip(0x14 + offset).Take(4).ToArray());
-            Unknown18 = BitConverter.ToInt32(data.Skip(0x18 + offset).Take(4).ToArray());
-            Unknown1C = BitConverter.ToInt32(data.Skip(0x1C + offset).Take(4).ToArray());
-            Unknown20 = BitConverter.ToInt32(data.Skip(0x20 + offset).Take(4).ToArray());
-            Unknown24 = BitConverter.ToInt32(data.Skip(0x24 + offset).Take(4).ToArray());
-            Unknown28 = BitConverter.ToInt32(data.Skip(0x28 + offset).Take(4).ToArray());
-            Unknown2C = BitConverter.ToInt32(data.Skip(0x2C + offset).Take(4).ToArray());
-            Unknown30 = BitConverter.ToInt32(data.Skip(0x30 + offset).Take(4).ToArray());
-            Unknown34 = BitConverter.ToInt32(data.Skip(0x34 + offset).Take(4).ToArray());
+        public SgeAnimation(IEnumerable<byte> data, int baseOffset, int numBones, int defOffset)
+        {
+            TotalFrames = BitConverter.ToSingle(data.Skip(defOffset).Take(4).ToArray());
+            Unknown04 = BitConverter.ToInt32(data.Skip(defOffset + 0x04).Take(4).ToArray());
+            BoneTableOffset = BitConverter.ToInt32(data.Skip(defOffset + 0x08).Take(4).ToArray());
+            NumKeyframes = BitConverter.ToInt32(data.Skip(defOffset + 0x0C).Take(4).ToArray());
+            Unknown10 = BitConverter.ToInt32(data.Skip(defOffset + 0x10).Take(4).ToArray());
+            Unknown14 = BitConverter.ToInt32(data.Skip(defOffset + 0x14).Take(4).ToArray());
+            Unknown18 = BitConverter.ToInt32(data.Skip(defOffset + 0x18).Take(4).ToArray());
+            Unknown1C = BitConverter.ToInt32(data.Skip(defOffset + 0x1C).Take(4).ToArray());
+            Unknown20 = BitConverter.ToInt32(data.Skip(defOffset + 0x20).Take(4).ToArray());
+            Unknown24 = BitConverter.ToInt32(data.Skip(defOffset + 0x24).Take(4).ToArray());
+            Unknown28 = BitConverter.ToInt32(data.Skip(defOffset + 0x28).Take(4).ToArray());
+            Unknown2C = BitConverter.ToInt32(data.Skip(defOffset + 0x2C).Take(4).ToArray());
+            Unknown30 = BitConverter.ToInt32(data.Skip(defOffset + 0x30).Take(4).ToArray());
+            Unknown34 = BitConverter.ToInt32(data.Skip(defOffset + 0x34).Take(4).ToArray());
+
+            int usedKeyframesOffset = BitConverter.ToInt32(data.Skip(baseOffset + BoneTableOffset).Take(4).ToArray());
+            for (int i = 0; i < NumKeyframes; i++)
+            {
+                UsedKeyframes.Add(BitConverter.ToInt16(data.Skip(baseOffset + usedKeyframesOffset + i * 6).Take(2).ToArray()));
+            }
+            for (int i = 1; i < numBones; i++)
+            {
+                int offset = BitConverter.ToInt32(data.Skip(baseOffset + BoneTableOffset + i * 4).Take(4).ToArray()) + baseOffset;
+                BoneTable.Add(new(data.Skip(offset).Take(6 * NumKeyframes), offset, NumKeyframes));
+            }
         }
     }
 
-    public class AnimationData
+    public class BoneTableEntry
     {
+        public int Offset { get; set; }
+        public List<BoneTableKeyframe> Keyframes { get; set; } = new();
 
+        public BoneTableEntry(IEnumerable<byte> data, int offset, int numKeyframes)
+        {
+            for (int i = 0; i < numKeyframes; i++)
+            {
+                Offset = offset;
+                Keyframes.Add(new(
+                    BitConverter.ToInt16(data.Skip(i * 6).Take(2).ToArray()),
+                    BitConverter.ToInt16(data.Skip(i * 6 + 2).Take(2).ToArray()),
+                    BitConverter.ToInt16(data.Skip(i * 6 + 4).Take(2).ToArray())
+                    ));
+            }
+        }
     }
 
-    public class AnimationAction
+    public struct BoneTableKeyframe
     {
+        public short TranslateIndex { get; set; }
+        public short RotateIndex { get; set; }
+        public short ScaleIndex { get; set; }
 
+        public BoneTableKeyframe(short translate, short rotate, short scale)
+        {
+            TranslateIndex = translate;
+            RotateIndex = rotate;
+            ScaleIndex = scale;
+        }
+    }
+
+    // 0x0C bytes
+    // vector
+    public class TranslateDataEntry
+    {
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Z { get; set; }
+
+        public TranslateDataEntry(IEnumerable<byte> data)
+        {
+            X = BitConverter.ToSingle(data.Take(4).ToArray());
+            Y = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
+            Z = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
+        }
+    }
+
+    // 0x10 bytes
+    // quaternion
+    public class RotateDataEntry
+    {
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Z { get; set; }
+        public float W { get; set; }
+
+        public RotateDataEntry(IEnumerable<byte> data)
+        {
+            X = BitConverter.ToSingle(data.Take(4).ToArray());
+            Y = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
+            Z = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
+            W = BitConverter.ToSingle(data.Skip(0x0C).Take(4).ToArray());
+        }
+    }
+
+    // 0x0C bytes
+    // vector
+    public class ScaleDataEntry
+    {
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Z { get; set; }
+
+        public ScaleDataEntry(IEnumerable<byte> data)
+        {
+            X = BitConverter.ToSingle(data.Take(4).ToArray());
+            Y = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
+            Z = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
+        }
+    }
+
+    // 0x28 bytes
+    public class KeyframeDefinition
+    {
+        public float Unknown00 { get; set; }
+        public float Unknown04 { get; set; }
+        public ushort Unknown08 { get; set; }
+        public ushort Unknown0A { get; set; }
+        public int Unknown0C { get; set; }
+        public ushort NumFrames { get; set; }
+        public ushort EndFrame { get; set; }
+        public int Unknown14 { get; set; }
+        public int Unknown18 { get; set; }
+        public int Unknown1C { get; set; } // Pointer
+        public int Unknown20 { get; set; } // Pointer
+        public int Unknown24 { get; set; } // Pointer
+
+        public KeyframeDefinition(IEnumerable<byte> data)
+        {
+            Unknown00 = BitConverter.ToSingle(data.Take(4).ToArray());
+            Unknown04 = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
+            Unknown08 = BitConverter.ToUInt16(data.Skip(0x08).Take(2).ToArray());
+            Unknown0A = BitConverter.ToUInt16(data.Skip(0x0A).Take(2).ToArray());
+            Unknown0C = BitConverter.ToInt32(data.Skip(0x0C).Take(4).ToArray());
+            NumFrames = BitConverter.ToUInt16(data.Skip(0x10).Take(2).ToArray());
+            EndFrame = BitConverter.ToUInt16(data.Skip(0x12).Take(2).ToArray());
+            Unknown14 = BitConverter.ToInt32(data.Skip(0x14).Take(4).ToArray());
+            Unknown18 = BitConverter.ToInt32(data.Skip(0x18).Take(4).ToArray());
+            Unknown1C = BitConverter.ToInt32(data.Skip(0x1C).Take(4).ToArray());
+            Unknown20 = BitConverter.ToInt32(data.Skip(0x20).Take(4).ToArray());
+            Unknown24 = BitConverter.ToInt32(data.Skip(0x24).Take(4).ToArray());
+        }
+    }
+
+    public class Unknown38Entry
+    {
+        public float Unknown00 { get; set; }
+        public float Unknown04 { get; set; }
+        public float Unknown08 { get; set; }
+        public float Unknown0C { get; set; }
+        public float Unknown10 { get; set; }
+        public float Unknown14 { get; set; }
+        public float Unknown18 { get; set; }
+        public float Unknown1C { get; set; }
+        public float Unknown20 { get; set; }
+        public float Unknown24 { get; set; }
+        public float Unknown28 { get; set; }
+        public float Unknown2C { get; set; }
+        public int Unknown30 { get; set; }
+        public int Unknown34 { get; set; }
+        public int Unknown38 { get; set; }
+        public int Unknown3C { get; set; }
+        public float Unknown40 { get; set; }
+        public int Unknown44 { get; set; }
+
+        public Unknown38Entry(IEnumerable<byte> data)
+        {
+            Unknown00 = BitConverter.ToSingle(data.Take(4).ToArray());
+            Unknown04 = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
+            Unknown08 = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
+            Unknown0C = BitConverter.ToSingle(data.Skip(0x0C).Take(4).ToArray());
+            Unknown10 = BitConverter.ToSingle(data.Skip(0x10).Take(4).ToArray());
+            Unknown14 = BitConverter.ToSingle(data.Skip(0x14).Take(4).ToArray());
+            Unknown18 = BitConverter.ToSingle(data.Skip(0x18).Take(4).ToArray());
+            Unknown1C = BitConverter.ToSingle(data.Skip(0x1C).Take(4).ToArray());
+            Unknown20 = BitConverter.ToSingle(data.Skip(0x20).Take(4).ToArray());
+            Unknown24 = BitConverter.ToSingle(data.Skip(0x24).Take(4).ToArray());
+            Unknown28 = BitConverter.ToSingle(data.Skip(0x28).Take(4).ToArray());
+            Unknown2C = BitConverter.ToSingle(data.Skip(0x2C).Take(4).ToArray());
+            Unknown30 = BitConverter.ToInt32(data.Skip(0x30).Take(4).ToArray());
+            Unknown34 = BitConverter.ToInt32(data.Skip(0x34).Take(4).ToArray());
+            Unknown38 = BitConverter.ToInt32(data.Skip(0x38).Take(4).ToArray());
+            Unknown3C = BitConverter.ToInt32(data.Skip(0x3C).Take(4).ToArray());
+            Unknown40 = BitConverter.ToSingle(data.Skip(0x3C).Take(4).ToArray());
+            Unknown44 = BitConverter.ToInt32(data.Skip(0x3C).Take(4).ToArray());
+        }
     }
 
     public class SgeMesh
@@ -403,7 +620,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public SgeBone Parent { get; set; }
         public int Address { get; set; }
         public Vector3 Unknown00 { get; set; }      // 1
-        public Vector3 Position { get; set; } 
+        public Vector3 Position { get; set; }
         public int ParentAddress { get; set; }
         public int AddressToBone1 { get; set; }     // 4
         public int AddressToBone2 { get; set; }     // 5
@@ -554,7 +771,7 @@ namespace HaruhiHeiretsuLib.Graphics
     {
         public List<int> Polygon { get; set; }
         public SgeMaterial Material { get; set; }
-        
+
         public SgeFace(int first, int second, int third, SgeMaterial material, int evenOdd = 0)
         {
             if (evenOdd == 0)

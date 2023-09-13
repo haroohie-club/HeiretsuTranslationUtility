@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace HaruhiHeiretsuLib.Strings.Events.Parameters
 {
-    public class AnimPathEffectParameter : ActionParameter
+    public class ModelAnimationParameter : ActionParameter
     {
         public int Unknown0C { get; set; }
         public int Unknown10 { get; set; }
@@ -16,7 +16,9 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
         public int Unknown28 { get; set; }
         public int Unknown2C { get; set; }
         public int Unknown30 { get; set; }
-        public int BounceIntensity { get; set; }
+        public bool UseAltAnimation { get; set; }
+        public short AnimationIndex { get; set; }
+        public short Unknown36 { get; set; }
         public int Unknown38 { get; set; }
         public int Unknown3C { get; set; }
         public byte Unknown40 { get; set; }
@@ -26,7 +28,7 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
         public short Unknown44 { get; set; }
         public short Unknown46 { get; set; }
 
-        public AnimPathEffectParameter(IEnumerable<byte> data, int offset, ushort opCode) : base(data, offset, opCode)
+        public ModelAnimationParameter(IEnumerable<byte> data, int offset, ushort opCode) : base(data, offset, opCode)
         {
             Unknown0C = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).ToArray());
             Unknown10 = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).ToArray());
@@ -38,7 +40,10 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
             Unknown28 = BitConverter.ToInt32(data.Skip(offset + 0x28).Take(4).ToArray());
             Unknown2C = BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).ToArray());
             Unknown30 = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).ToArray());
-            BounceIntensity = BitConverter.ToInt32(data.Skip(offset + 0x34).Take(4).ToArray());
+            short animParam = BitConverter.ToInt16(data.Skip(offset + 0x34).Take(2).ToArray());
+            UseAltAnimation = (animParam & 0x8000) > 0;
+            AnimationIndex = (short)(animParam & 0x7FFF);
+            Unknown36 = BitConverter.ToInt16(data.Skip(offset + 0x36).Take(2).ToArray());
             Unknown38 = BitConverter.ToInt32(data.Skip(offset + 0x38).Take(4).ToArray());
             Unknown3C = BitConverter.ToInt32(data.Skip(offset + 0x3C).Take(4).ToArray());
             Unknown40 = data.ElementAt(offset + 0x40);
@@ -47,16 +52,6 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
             Unknown43 = data.ElementAt(offset + 0x43);
             Unknown44 = BitConverter.ToInt16(data.Skip(offset + 0x44).Take(2).ToArray());
             Unknown46 = BitConverter.ToInt16(data.Skip(offset + 0x46).Take(2).ToArray());
-        }
-
-        [Flags]
-        public enum EventAnimationEffect
-        {
-            NONE = 0,
-            DISPLAY = 0b0001,
-            UNKNOWN2 = 0b0010,
-            UNKNOWN4 = 0b0100,
-            UNKNOWN8 = 0b1000,
         }
     }
 }

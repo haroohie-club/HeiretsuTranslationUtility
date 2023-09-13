@@ -1,6 +1,4 @@
 ﻿using HaruhiHeiretsuLib.Graphics;
-using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;

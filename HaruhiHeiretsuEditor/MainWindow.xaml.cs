@@ -696,7 +696,7 @@ namespace HaruhiHeiretsuEditor
                 csv += "Unknown04\n";
                 valueLine = string.Empty;
                 percentageLine = string.Empty;
-                var unknown04HeaderValues = headers.GroupBy(h => h.Unknown04).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                var unknown04HeaderValues = headers.GroupBy(h => h.Unknown38Count).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
                 foreach (var header04 in unknown04HeaderValues)
                 {
                     valueLine += $"{header04.Key},";
