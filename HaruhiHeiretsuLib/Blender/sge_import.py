@@ -115,7 +115,7 @@ def construct_animation(sge, anim, bones_list : list, anim_num):
                 continue
             bone = pose.bones[arm_bone]
             bone_keyframe = anim['BoneTable'][bone_idx]['Keyframes']
-            trans_vec = json_vector_to_vector(sge['TranslateDataEntries'][bone_keyframe[i]['TranslateIndex']])
+            trans_vec = json_vector_to_vector(sge['TranslateDataEntries'][bone_keyframe[i]['TranslateIndex']]) * 25.4
             rot_quaternion = json_quaternion_to_quaternion(sge['RotateDataEntries'][bone_keyframe[i]['RotateIndex']])
             scale_vec = json_vector_to_vector(sge['ScaleDataEntries'][bone_keyframe[i]['ScaleIndex']])
             matrix = Matrix.LocRotScale(trans_vec, rot_quaternion, scale_vec)
@@ -137,13 +137,10 @@ def construct_animation(sge, anim, bones_list : list, anim_num):
                 group=f'Animation{anim_num}'
             )
             bone_idx += 1
-        if i == 0:
-            bpy.ops.pose.armature_apply()
         i += 1
 
 def json_vector_to_vector(json_vector):
-    # Flip Z & Y for blender
-    return Vector((float(json_vector['X']), float(json_vector['Z']), float(json_vector['Y'])))
+    return Vector((float(json_vector['X']), float(json_vector['Y']), float(json_vector['Z'])))
 
 def json_vector2_to_vector2(json_vector):
     return (float(json_vector['X']), float(json_vector['Y']))
@@ -181,6 +178,13 @@ def main(filename, anim_number):
             break
             # i += 1
     
+    bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.context.object.matrix_world = bpy.context.object.matrix_world @ Matrix.Rotation(math.radians(90), 4, 'X')
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.transform.mirror(constraint_axis=(False, True, False), orient_type='GLOBAL')
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode='POSE')
+
     return {'FINISHED'}
 
 if __name__ == '__main__':
@@ -191,7 +195,7 @@ if __name__ == '__main__':
 
     input_file = sys.argv[-3]
     output_format = sys.argv[-2]
-    anim_number = int(sys.argv[-1]) - 1
+    anim_number = int(sys.argv[-1])
 
     main(input_file, anim_number)
     output_file = os.path.join(os.path.dirname(input_file), os.path.splitext(os.path.basename(input_file))[0])
