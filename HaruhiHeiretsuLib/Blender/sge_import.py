@@ -1,5 +1,6 @@
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix, Quaternion
+import math
 import json
 import os
 from re import U
@@ -33,25 +34,28 @@ def construct_armature(sge):
     obj.name = sge['Name']
     armature = obj.data
     armature.name = sge['Name'] + "_Armature"
+    bones_list = []
     for bone in sge['SgeBones']:
-        new_bone = armature.edit_bones.new("Bone" + str(bone['Address']))
+        bone_name = f"Bone{bone['Address']}"
+        new_bone = armature.edit_bones.new(bone_name)
         new_bone.head = json_vector_to_vector(bone['Position'])
         new_bone.tail = new_bone.head + Vector((0, 0.1, 0))
+        bones_list.append(bone_name)
     for bone in armature.edit_bones:
         i = 0
         for potential_child in sge['SgeBones']:
-            if ("Bone" + str(potential_child['ParentAddress']) == bone.name):
+            if (f"Bone{potential_child['ParentAddress']}" == bone.name):
                 armature.edit_bones[i].parent = bone
                 armature.edit_bones[i].tail = bone.head
             i += 1
-    return obj
+    return (obj, bones_list)
 
-def construct_mesh(sge, submesh, materials, meshNum):
+def construct_mesh(sge, submesh, materials , mesh_num):
     print('Constructing mesh...')
-    mesh = bpy.data.meshes.new(sge['Name'] + "_Mesh" + str(meshNum))
+    mesh = bpy.data.meshes.new(sge['Name'] + "_Mesh" + str(mesh_num))
     mesh.validate(verbose=True)
     mesh.use_auto_smooth = True
-    obj = bpy.data.objects.new(sge['Name'] + "_Mesh" + str(meshNum), mesh)
+    obj = bpy.data.objects.new(sge['Name'] + "_Mesh" + str(mesh_num), mesh)
     for material in materials:
         obj.data.materials.append(material)
 
@@ -91,9 +95,51 @@ def construct_mesh(sge, submesh, materials, meshNum):
         for attached_vertex in bone['VertexGroup']:
             attached_vertex_split = attached_vertex.split(',')
             (attached_vertex_mesh, attached_vertex_index) = (int(attached_vertex_split[0]), int(attached_vertex_split[1]))
-            if attached_vertex_mesh == meshNum:
+            if attached_vertex_mesh == mesh_num:
                 bone_vertex_group.add([attached_vertex_index], bone['VertexGroup'][attached_vertex], 'ADD')
     return obj
+
+def construct_animation(sge, anim, bones_list : list, anim_num):
+    print(f'Creating animation {anim_num}...')
+    bpy.ops.object.mode_set(mode='POSE')
+    pose = bpy.context.object.pose
+    bpy.ops.pose.group_add()
+    i = 0
+    for keyframe_idx in anim['UsedKeyframes']:
+        keyframe = sge['KeyframeDefinitions'][keyframe_idx]
+        bone_idx = 0
+        for arm_bone in bones_list:
+            if arm_bone not in pose.bones.keys():
+                print(arm_bone)
+                # bone_idx += 1
+                continue
+            bone = pose.bones[arm_bone]
+            bone_keyframe = anim['BoneTable'][bone_idx]['Keyframes']
+            trans_vec = json_vector_to_vector(sge['TranslateDataEntries'][bone_keyframe[i]['TranslateIndex']])
+            rot_quaternion = json_quaternion_to_quaternion(sge['RotateDataEntries'][bone_keyframe[i]['RotateIndex']])
+            scale_vec = json_vector_to_vector(sge['ScaleDataEntries'][bone_keyframe[i]['ScaleIndex']])
+            matrix = Matrix.LocRotScale(trans_vec, rot_quaternion, scale_vec)
+            bone.matrix = bone.matrix @ matrix
+
+            bone.keyframe_insert(
+                data_path=f'location',
+                frame=keyframe['EndFrame'] - keyframe['NumFrames'],
+                group=f'Animation{anim_num}'
+            )
+            bone.keyframe_insert(
+                data_path=f'rotation_quaternion',
+                frame=keyframe['EndFrame'] - keyframe['NumFrames'],
+                group=f'Animation{anim_num}'
+            )
+            bone.keyframe_insert(
+                data_path=f'scale',
+                frame=keyframe['EndFrame'] - keyframe['NumFrames'] + 1,
+                group=f'Animation{anim_num}'
+            )
+            bone_idx += 1
+        if i == 0:
+            bpy.ops.pose.armature_apply()
+        i += 1
 
 def json_vector_to_vector(json_vector):
     # Flip Z & Y for blender
@@ -102,11 +148,14 @@ def json_vector_to_vector(json_vector):
 def json_vector2_to_vector2(json_vector):
     return (float(json_vector['X']), float(json_vector['Y']))
 
-def main(filename):
+def json_quaternion_to_quaternion(json_quaternion):
+    return Quaternion((float(json_quaternion['W']), float(json_quaternion['X']), float(json_quaternion['Y']), float(json_quaternion['Z'])))
+
+def main(filename, anim_number):
     f = open(filename)
     sge = json.load(f)
     materials = construct_materials(sge)
-    armature = construct_armature(sge)
+    (armature, bones_list) = construct_armature(sge)
 
     sge_collection = bpy.data.collections.new('sge_collection')
     bpy.context.scene.collection.children.link(sge_collection)
@@ -122,6 +171,16 @@ def main(filename):
         modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
         modifier.object = armature
     
+    if i >= 0:
+        i = 0
+        for anim in sge['SgeAnimations']:
+            if i < anim_number:
+                i += 1
+                continue
+            construct_animation(sge, anim, bones_list, i)
+            break
+            # i += 1
+    
     return {'FINISHED'}
 
 if __name__ == '__main__':
@@ -130,10 +189,11 @@ if __name__ == '__main__':
         o.select_set(True)
     bpy.ops.object.delete()
 
-    input_file = sys.argv[-2]
-    output_format = sys.argv[-1]
+    input_file = sys.argv[-3]
+    output_format = sys.argv[-2]
+    anim_number = int(sys.argv[-1]) - 1
 
-    main(input_file)
+    main(input_file, anim_number)
     output_file = os.path.join(os.path.dirname(input_file), os.path.splitext(os.path.basename(input_file))[0])
 
     if output_format.lower() == 'gltf':

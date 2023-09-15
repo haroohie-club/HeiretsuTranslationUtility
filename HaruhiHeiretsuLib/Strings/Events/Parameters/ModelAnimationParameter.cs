@@ -21,7 +21,7 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
         public short Unknown36 { get; set; }
         public int Unknown38 { get; set; }
         public int Unknown3C { get; set; }
-        public byte Unknown40 { get; set; }
+        public byte AnimationSpeed { get; set; }
         public byte Unknown41 { get; set; }
         public byte Unknown42 { get; set; }
         public byte Unknown43 { get; set; }
@@ -46,7 +46,7 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
             Unknown36 = BitConverter.ToInt16(data.Skip(offset + 0x36).Take(2).ToArray());
             Unknown38 = BitConverter.ToInt32(data.Skip(offset + 0x38).Take(4).ToArray());
             Unknown3C = BitConverter.ToInt32(data.Skip(offset + 0x3C).Take(4).ToArray());
-            Unknown40 = data.ElementAt(offset + 0x40);
+            AnimationSpeed = data.ElementAt(offset + 0x40);
             Unknown41 = data.ElementAt(offset + 0x41);
             Unknown42 = data.ElementAt(offset + 0x42);
             Unknown43 = data.ElementAt(offset + 0x43);
