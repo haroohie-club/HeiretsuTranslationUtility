@@ -17,7 +17,6 @@ namespace HaruhiHeiretsuLib.Graphics
 
     public class Sge
     {
-        public const float MODEL_SCALE = 25.4f;
         public string Name { get; set; }
         public int SgeStartOffset { get; set; }
         public SgeHeader SgeHeader { get; set; }
@@ -638,7 +637,7 @@ namespace HaruhiHeiretsuLib.Graphics
             Position = new Vector3(
                 BitConverter.ToSingle(data.Skip(offset + 0x0C).Take(4).ToArray()),
                 BitConverter.ToSingle(data.Skip(offset + 0x10).Take(4).ToArray()),
-                BitConverter.ToSingle(data.Skip(offset + 0x14).Take(4).ToArray())) * Sge.MODEL_SCALE;
+                BitConverter.ToSingle(data.Skip(offset + 0x14).Take(4).ToArray()));
             ParentAddress = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).ToArray());
             AddressToBone1 = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).ToArray());
             AddressToBone2 = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).ToArray());
@@ -748,7 +747,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public SgeVertex(IEnumerable<byte> data)
         {
-            Position = new Vector3(BitConverter.ToSingle(data.Skip(0x00).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray())) * Sge.MODEL_SCALE;
+            Position = new Vector3(BitConverter.ToSingle(data.Skip(0x00).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray()));
             float weight1 = BitConverter.ToSingle(data.Skip(0x0C).Take(4).ToArray());
             float weight2 = BitConverter.ToSingle(data.Skip(0x10).Take(4).ToArray());
             float weight3 = BitConverter.ToSingle(data.Skip(0x14).Take(4).ToArray());

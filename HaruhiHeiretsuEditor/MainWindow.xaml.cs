@@ -8,13 +8,13 @@ using HaruhiHeiretsuLib.Strings.Data;
 using HaruhiHeiretsuLib.Strings.Events;
 using HaruhiHeiretsuLib.Strings.Scripts;
 using Microsoft.Win32;
-using Newtonsoft.Json;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -227,11 +227,6 @@ namespace HaruhiHeiretsuEditor
             {
                 _evtFile = BinArchive<EventFile>.FromFile(openFileDialog.FileName);
                 scriptsListBox.ItemsSource = _evtFile.Files;
-                // TODO: REMOVE
-                JsonSerializer serializer = JsonSerializer.Create(new() { MaxDepth = 10 });
-                using FileStream fs = File.OpenWrite("evt.json");
-                using StreamWriter sw = new(fs);
-                serializer.Serialize(sw, _evtFile.Files.Select(f => f.CutsceneData));
                 scriptsListBox.Items.Refresh();
             }
         }
@@ -938,6 +933,10 @@ namespace HaruhiHeiretsuEditor
 
                 if (Path.GetFileName(openFileDialog.FileName) == "dat.bin")
                 {
+                    DataFile currentSgeIndexFile = _datFile.Files.First(f => f.Index == 4);
+                    SgeIndexFile sgeIndexFile = currentSgeIndexFile.CastTo<SgeIndexFile>();
+                    _datFile.Files[_datFile.Files.IndexOf(currentSgeIndexFile)] = sgeIndexFile;
+
                     DataFile currentCameraDataFile = _datFile.Files.First(f => f.Index == 36);
                     CameraDataFile cameraDataFile = currentCameraDataFile.CastTo<CameraDataFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentCameraDataFile)] = cameraDataFile;
@@ -1016,6 +1015,24 @@ namespace HaruhiHeiretsuEditor
                 DataFile selectedFile = (DataFile)dataListBox.SelectedItem;
                 dataEditStackPanel.Children.Add(new TextBlock { Text = $"{selectedFile.Data.Count} bytes" });
                 dataEditStackPanel.Children.Add(new TextBlock { Text = $"Actual compressed length: {selectedFile.CompressedData.Length:X}; Calculated length: {selectedFile.Length:X}" });
+
+                if (selectedFile.GetType() == typeof(SgeIndexFile))
+                {
+                    Button exportToJsonButton = new() { Content = "Export to JSON" };
+                    exportToJsonButton.Click += (obj, args) =>
+                    {
+                        SaveFileDialog saveFileDialog = new()
+                        {
+                            Title = "Save SGE index file JSON",
+                            Filter = "JSON file|*.json",
+                        };
+                        if (saveFileDialog.ShowDialog() == true)
+                        {
+                            File.WriteAllText(saveFileDialog.FileName, JsonSerializer.Serialize((SgeIndexFile)selectedFile));
+                        }
+                    };
+                    dataEditStackPanel.Children.Add(exportToJsonButton);
+                }
 
                 if (selectedFile.GetType() == typeof(MapDefinitionsFile))
                 {

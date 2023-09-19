@@ -10,7 +10,8 @@ namespace HaruhiHeiretsuCLI
     public class HexSearchCommand : Command
     {
         private string _mcb;
-        private List<byte> _hexString = new();
+        private readonly List<byte> _hexString = new();
+        private bool _fourByteAligned = false;
 
         public HexSearchCommand() : base("hex-search")
         {
@@ -31,6 +32,7 @@ namespace HaruhiHeiretsuCLI
                         }
                     }
                 },
+                { "4|four-byte-aligned", "When included, restricts search to starting on four-byte alignments", f => _fourByteAligned = true },
             };
         }
 
@@ -39,7 +41,7 @@ namespace HaruhiHeiretsuCLI
             Options.Parse(arguments);
             McbArchive mcb = Program.GetMcbFile(_mcb);
 
-            List<(int, int)> fileLocations = mcb.CheckHexInFile(_hexString.ToArray());
+            List<(int, int)> fileLocations = mcb.CheckHexInFile(_hexString.ToArray(), _fourByteAligned);
             using StreamWriter fs = File.CreateText("search_result_locations.csv");
             foreach ((int file, int subFile) in fileLocations)
             {

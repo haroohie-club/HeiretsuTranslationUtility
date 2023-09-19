@@ -1,20 +1,30 @@
 ﻿using HaruhiHeiretsuLib.Util;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace HaruhiHeiretsuLib.Archive
 {
     public partial class FileInArchive
     {
+        [JsonIgnore]
         public ushort McbId { get; set; }
+        [JsonIgnore]
         public (int parent, int child) Location { get; set; } = (-1, -1);
+        [JsonIgnore]
         public (int archiveIndex, int archiveOffset) McbEntryData { get; set; }
+        [JsonIgnore]
         public uint MagicInteger { get; set; }
         public int Index { get; set; }
+        [JsonIgnore]
         public int Offset { get; set; }
+        [JsonIgnore]
         public int Length { get; set; }
+        [JsonIgnore]
         public List<byte> Data { get; set; }
+        [JsonIgnore]
         public byte[] CompressedData { get; set; }
+        [JsonIgnore]
         public bool Edited { get; set; } = false;
 
         public virtual void Initialize(byte[] decompressedData, int offset)

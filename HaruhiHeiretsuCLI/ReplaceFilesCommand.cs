@@ -186,7 +186,7 @@ namespace HaruhiHeiretsuCLI
 
                             FileInArchive currentFile = dat.Files.First(f => f.Index == archiveIndex);
                             List<byte> data = new();
-
+                            
                             if (archiveIndex == 36)
                             {
                                 CameraDataFile cameraDataFile = new(File.ReadAllLines(file));

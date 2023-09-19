@@ -52,7 +52,7 @@ namespace HaruhiHeiretsuLib
 
         public int GetReplacementCharacterWidth(string replacement)
         {
-            return Map.First(kv => kv.Value.Character == replacement).Value.Spacing;
+            return Map.FirstOrDefault(kv => kv.Value.Character == replacement).Value?.Spacing ?? 354;
         }
 
         public string GetFontHackCFile()

@@ -453,9 +453,11 @@ namespace HaruhiHeiretsuLib.Archive
             return fileLocations;
         }
 
-        public List<(int, int)> CheckHexInFile(byte[] search)
+        public List<(int, int)> CheckHexInFile(byte[] search, bool fourByteAligned)
         {
             List<(int, int)> fileLocations = new();
+
+            int increment = fourByteAligned ? 4 : 1;
 
             foreach (McbSubArchive subArchive in McbSubArchives)
             {
@@ -463,7 +465,7 @@ namespace HaruhiHeiretsuLib.Archive
                 {
                     if (file.Data.Count > 0)
                     {
-                        for (int i = 0; i < file.Data.Count - search.Length; i++)
+                        for (int i = 0; i < file.Data.Count - search.Length; i += increment)
                         {
                             if (file.Data.Skip(i).Take(search.Length).SequenceEqual(search))
                             {

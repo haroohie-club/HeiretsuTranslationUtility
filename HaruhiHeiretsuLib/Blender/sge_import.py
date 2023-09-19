@@ -5,6 +5,9 @@ import json
 import os
 from re import U
 import sys
+from random import randrange
+
+model_scale = 25.4
 
 def construct_materials(sge):
     print('Constructing materials...')
@@ -38,7 +41,7 @@ def construct_armature(sge):
     for bone in sge['SgeBones']:
         bone_name = f"Bone{bone['Address']}"
         new_bone = armature.edit_bones.new(bone_name)
-        new_bone.head = json_vector_to_vector(bone['Position'])
+        new_bone.head = json_vector_to_vector(bone['Position']) * model_scale
         new_bone.tail = new_bone.head + Vector((0, 0.1, 0))
         bones_list.append(bone_name)
     for bone in armature.edit_bones:
@@ -64,7 +67,7 @@ def construct_mesh(sge, submesh, materials , mesh_num):
     uvcoords = []
     colors = []
     for sge_vertex in submesh['SubmeshVertices']:
-        vertices.append(json_vector_to_vector(sge_vertex['Position']))
+        vertices.append(json_vector_to_vector(sge_vertex['Position']) * model_scale)
         normals.append(json_vector_to_vector(sge_vertex['Normal']))
         uvcoords.append(json_vector2_to_vector2(sge_vertex['UVCoords']))
         colors.append(sge_vertex['Color'])
@@ -110,16 +113,18 @@ def construct_animation(sge, anim, bones_list : list, anim_num):
         bone_idx = 0
         for arm_bone in bones_list:
             if arm_bone not in pose.bones.keys():
-                print(arm_bone)
-                # bone_idx += 1
+                # print(arm_bone)
                 continue
             bone = pose.bones[arm_bone]
             bone_keyframe = anim['BoneTable'][bone_idx]['Keyframes']
-            trans_vec = json_vector_to_vector(sge['TranslateDataEntries'][bone_keyframe[i]['TranslateIndex']]) * 25.4
+            trans_vec = json_vector_to_vector(sge['TranslateDataEntries'][bone_keyframe[i]['TranslateIndex']]) * model_scale
             rot_quaternion = json_quaternion_to_quaternion(sge['RotateDataEntries'][bone_keyframe[i]['RotateIndex']])
             scale_vec = json_vector_to_vector(sge['ScaleDataEntries'][bone_keyframe[i]['ScaleIndex']])
             matrix = Matrix.LocRotScale(trans_vec, rot_quaternion, scale_vec)
             bone.matrix = bone.matrix @ matrix
+
+            # if randrange(0, 10) > 5:
+            #     bone.rotation_quaternion = bone.rotation_quaternion @ bone.rotation_quaternion
 
             bone.keyframe_insert(
                 data_path=f'location',
