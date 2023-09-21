@@ -48,6 +48,8 @@ def construct_armature(sge):
         i = 0
         for potential_child in sge['SgeBones']:
             if (f"Bone{potential_child['ParentAddress']}" == bone.name):
+                if armature.edit_bones[i].head == bone.head:
+                    armature.edit_bones[i].head += Vector((0, 0.1, 0))
                 armature.edit_bones[i].parent = bone
                 armature.edit_bones[i].tail = bone.head
             i += 1
@@ -111,20 +113,17 @@ def construct_animation(sge, anim, bones_list : list, anim_num):
     for keyframe_idx in anim['UsedKeyframes']:
         keyframe = sge['KeyframeDefinitions'][keyframe_idx]
         bone_idx = 0
-        for arm_bone in bones_list:
-            if arm_bone not in pose.bones.keys():
-                # print(arm_bone)
+        for armature_bone in bones_list:
+            if bone_idx < 1:
+                bone_idx += 1
                 continue
-            bone = pose.bones[arm_bone]
-            bone_keyframe = anim['BoneTable'][bone_idx]['Keyframes']
+            bone = pose.bones[armature_bone]
+            bone_keyframe = anim['BoneTable'][bone_idx - 1]['Keyframes']
             trans_vec = json_vector_to_vector(sge['TranslateDataEntries'][bone_keyframe[i]['TranslateIndex']]) * model_scale
             rot_quaternion = json_quaternion_to_quaternion(sge['RotateDataEntries'][bone_keyframe[i]['RotateIndex']])
             scale_vec = json_vector_to_vector(sge['ScaleDataEntries'][bone_keyframe[i]['ScaleIndex']])
             matrix = Matrix.LocRotScale(trans_vec, rot_quaternion, scale_vec)
             bone.matrix = bone.matrix @ matrix
-
-            # if randrange(0, 10) > 5:
-            #     bone.rotation_quaternion = bone.rotation_quaternion @ bone.rotation_quaternion
 
             bone.keyframe_insert(
                 data_path=f'location',
@@ -138,7 +137,7 @@ def construct_animation(sge, anim, bones_list : list, anim_num):
             )
             bone.keyframe_insert(
                 data_path=f'scale',
-                frame=keyframe['EndFrame'] - keyframe['NumFrames'] + 1,
+                frame=keyframe['EndFrame'] - keyframe['NumFrames'],
                 group=f'Animation{anim_num}'
             )
             bone_idx += 1
