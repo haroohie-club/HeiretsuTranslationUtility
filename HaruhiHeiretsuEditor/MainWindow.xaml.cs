@@ -514,16 +514,16 @@ namespace HaruhiHeiretsuEditor
                     layoutDropDown.ItemsSource = dropDownItems;
                     layoutDropDown.SelectionChanged += LayoutDropDown_SelectionChanged;
 
-                    GraphicsButton exportCsvButton = new() { Content = "Export CSV", Graphic = selectedFile };
-                    exportCsvButton.Click += ExportCsvButton_Click;
+                    GraphicsButton exportJsonButton = new() { Content = "Export JSON", Graphic = selectedFile };
+                    exportJsonButton.Click += ExportJsonButton_Click;
 
-                    GraphicsButton importCsvButton = new() { Content = "Import CSV", Graphic = selectedFile };
-                    importCsvButton.Click += ImportCsvButton_Click;
+                    GraphicsButton importJsonButton = new() { Content = "Import JSON", Graphic = selectedFile };
+                    importJsonButton.Click += ImportJsonButton_Click;
 
                     graphicsEditStackPanel.Children.Add(layoutDropDown);
                     graphicsEditStackPanel.Children.Add(loadButton);
-                    graphicsEditStackPanel.Children.Add(exportCsvButton);
-                    graphicsEditStackPanel.Children.Add(importCsvButton);
+                    graphicsEditStackPanel.Children.Add(exportJsonButton);
+                    graphicsEditStackPanel.Children.Add(importJsonButton);
 
                     Grid grid = new();
                     grid.ColumnDefinitions.Add(new ColumnDefinition() { Name = "U1" });
@@ -601,29 +601,29 @@ namespace HaruhiHeiretsuEditor
             }
         }
 
-        private void ExportCsvButton_Click(object sender, RoutedEventArgs e)
+        private void ExportJsonButton_Click(object sender, RoutedEventArgs e)
         {
-            GraphicsButton csvButton = (GraphicsButton)sender;
+            GraphicsButton jsonButton = (GraphicsButton)sender;
             SaveFileDialog saveFileDialog = new()
             {
-                Filter = "CSV|*.csv",
+                Filter = "JSON|*.json",
             };
             if (saveFileDialog.ShowDialog() == true)
             {
-                File.WriteAllText(saveFileDialog.FileName, csvButton.Graphic.GetLayoutCsv());
+                File.WriteAllText(saveFileDialog.FileName, jsonButton.Graphic.GetLayoutJson());
             }
         }
 
-        private void ImportCsvButton_Click(object sender, RoutedEventArgs e)
+        private void ImportJsonButton_Click(object sender, RoutedEventArgs e)
         {
             GraphicsButton csvButton = (GraphicsButton)sender;
             OpenFileDialog openFileDialog = new()
             {
-                Filter = "CSV|*.csv",
+                Filter = "JSON|*.json",
             };
             if (openFileDialog.ShowDialog() == true)
             {
-                csvButton.Graphic.ImportLayoutCsv(File.ReadAllText(openFileDialog.FileName));
+                csvButton.Graphic.ImportLayoutJson(File.ReadAllText(openFileDialog.FileName));
             }
         }
 

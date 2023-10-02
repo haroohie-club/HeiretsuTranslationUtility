@@ -22,11 +22,11 @@ namespace HaruhiHeiretsuTests
             byte[] bytesOnDisk = File.ReadAllBytes(path);
             GraphicsFile startLayoutFile = new();
             startLayoutFile.Initialize(bytesOnDisk, 0);
-            string startLayoutCsv = startLayoutFile.GetLayoutCsv();
+            string startLayoutCsv = startLayoutFile.GetLayoutJson();
 
             GraphicsFile importedLayoutFile = new();
             importedLayoutFile.Initialize(bytesOnDisk, 0);
-            importedLayoutFile.ImportLayoutCsv(startLayoutCsv);
+            importedLayoutFile.ImportLayoutJson(startLayoutCsv);
             importedLayoutFile.SetLayoutData();
 
             File.WriteAllBytes(@$"output\{Path.GetFileNameWithoutExtension(path)}-start.bin", bytesOnDisk);
