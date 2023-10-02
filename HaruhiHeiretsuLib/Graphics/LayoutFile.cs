@@ -2,8 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace HaruhiHeiretsuLib.Graphics
 {
@@ -70,8 +69,8 @@ namespace HaruhiHeiretsuLib.Graphics
 
                     canvas.DrawBitmap(tile, destination);
 
-                    SKPaint paint = new(new(SKTypeface.FromFamilyName("Arial")));
-                    canvas.DrawText($"{i}", layout.ScreenX, layout.ScreenY, paint);
+                    SKPaint paint = new(new(SKTypeface.FromFamilyName("Arial"), 14)) { FakeBoldText = true };
+                    canvas.DrawText($"{i} ({layout.Index})", layout.ScreenX, layout.ScreenY, paint);
 
                     i++;
                 }
@@ -97,28 +96,17 @@ namespace HaruhiHeiretsuLib.Graphics
 
             Data = bytes;
         }
-        public string GetLayoutCsv()
-        {
-            string csv = $"{nameof(LayoutComponent.UnknownShort1)},{nameof(LayoutComponent.Index)},{nameof(LayoutComponent.UnknownShort2)}," +
-                $"{nameof(LayoutComponent.ScreenX)},{nameof(LayoutComponent.ScreenY)},{nameof(LayoutComponent.ScreenWidth)},{nameof(LayoutComponent.ScreenHeight)}," +
-                $"{nameof(LayoutComponent.ImageX)},{nameof(LayoutComponent.ImageY)},{nameof(LayoutComponent.ImageWidth)},{nameof(LayoutComponent.ImageHeight)}," +
-                $"{nameof(LayoutComponent.UnknownShort3)},{nameof(LayoutComponent.AlphaTint)},{nameof(LayoutComponent.RedTint)},{nameof(LayoutComponent.GreenTint)},{nameof(LayoutComponent.BlueTint)}\n";
-            csv += string.Join('\n', LayoutComponents.Select(l => l.GetCsvLine()));
 
-            return csv;
+        public string GetLayoutJson()
+        {
+            return JsonSerializer.Serialize(this);
         }
 
-        public void ImportLayoutCsv(string csv)
+        public void ImportLayoutJson(string json)
         {
-            LayoutComponents = new();
-            foreach (string line in csv.Split('\n').Skip(1))
-            {
-                if (!string.IsNullOrEmpty(line))
-                {
-                    LayoutComponents.Add(new(line));
-                }
-            }
-            SetLayoutData();
+            GraphicsFile file = JsonSerializer.Deserialize<GraphicsFile>(json);
+            UnknownLayoutHeaderInt1 = file.UnknownLayoutHeaderInt1;
+            LayoutComponents = file.LayoutComponents;
         }
     }
 
@@ -143,33 +131,6 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public LayoutComponent()
         {
-        }
-
-        public LayoutComponent(string csvLine)
-        {
-            string[] csvEntries = csvLine.Split(',');
-
-            UnknownShort1 = short.Parse(csvEntries[0]);
-            Index = short.Parse(csvEntries[1]);
-            UnknownShort2 = short.Parse(csvEntries[2]);
-            ScreenX = short.Parse(csvEntries[3]);
-            ScreenY = short.Parse(csvEntries[4]);
-            ScreenWidth = short.Parse(csvEntries[5]);
-            ScreenHeight = short.Parse(csvEntries[6]);
-            ImageX = short.Parse(csvEntries[7]);
-            ImageY = short.Parse(csvEntries[8]);
-            ImageWidth = short.Parse(csvEntries[9]);
-            ImageHeight = short.Parse(csvEntries[10]);
-            UnknownShort3 = short.Parse(csvEntries[11]);
-            AlphaTint = byte.Parse(csvEntries[12]);
-            RedTint = byte.Parse(csvEntries[13]);
-            GreenTint = byte.Parse(csvEntries[14]);
-            BlueTint = byte.Parse(csvEntries[15]);
-        }
-
-        public string GetCsvLine()
-        {
-            return $"{UnknownShort1},{Index},{UnknownShort2},{ScreenX},{ScreenY},{ScreenWidth},{ScreenHeight},{ImageX},{ImageY},{ImageWidth},{ImageHeight},{UnknownShort3},{AlphaTint},{RedTint},{GreenTint},{BlueTint}";
         }
 
         public List<byte> GetBytes()
