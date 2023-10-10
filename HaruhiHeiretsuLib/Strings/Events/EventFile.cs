@@ -101,6 +101,11 @@ namespace HaruhiHeiretsuLib.Strings.Events
                 newLineData = temp.ToArray();
             }
 
+            if (newLineData.Length > 0x80)
+            {
+                newLineData = newLineData.Take(0x80).ToArray();
+            }
+
             Data.RemoveRange(DialogueLines[index].Offset, newLineData.Length);
             Data.InsertRange(DialogueLines[index].Offset, newLineData);
         }

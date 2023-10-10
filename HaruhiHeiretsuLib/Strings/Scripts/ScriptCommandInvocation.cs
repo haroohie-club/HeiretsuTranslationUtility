@@ -463,7 +463,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                             bytes.AddRange(CalculateControlStructure(parts[0], parts[1], objects));
                         }
 
-                        i += arrayStrings.Sum(a => a.Length) + 5;
+                        i += arrayStrings.Sum(a => a.Length) + arrayStrings.Length + 3;
                         Parameters.Add(new() { Type = ScriptCommand.ParameterType.INTARRAY, Value = bytes.ToArray(), LineNumber = LineNumber });
                         continue;
                     }
