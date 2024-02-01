@@ -52,7 +52,7 @@ namespace HaruhiHeiretsuEditor
             {
                 _mcb = new McbArchive(openFileDialog.FileName, openFileDialog.FileName.Replace("0", "1"));
 
-                byte[] commandsFileData = _mcb.McbSubArchives[75].Files[2].Data.ToArray();
+                byte[] commandsFileData = [.. _mcb.McbSubArchives[75].Files[2].Data];
 
                 _mcb.LoadStringsFiles(File.ReadAllText("string_file_locations.csv"), ScriptCommand.ParseScriptCommandFile(commandsFileData));
                 _mcb.LoadGraphicsFiles();
@@ -138,8 +138,8 @@ namespace HaruhiHeiretsuEditor
             if (openFileDialog.ShowDialog() == true)
             {
                 _scrFile = BinArchive<ScriptFile>.FromFile(openFileDialog.FileName);
-                List<string> scriptFileNames = ScriptFile.ParseScriptListFile(_scrFile.Files[0].Data.ToArray());
-                List<ScriptCommand> availableCommands = ScriptCommand.ParseScriptCommandFile(_scrFile.Files[1].Data.ToArray());
+                List<string> scriptFileNames = ScriptFile.ParseScriptListFile([.. _scrFile.Files[0].Data]);
+                List<ScriptCommand> availableCommands = ScriptCommand.ParseScriptCommandFile([.. _scrFile.Files[1].Data]);
                 for (int i = 0; i < _scrFile.Files.Count; i++)
                 {
                     _scrFile.Files[i].Name = scriptFileNames[i];
@@ -242,7 +242,7 @@ namespace HaruhiHeiretsuEditor
                 if (saveFileDialog.ShowDialog() == true)
                 {
                     var selectedFile = (StringsFile)scriptsListBox.SelectedItem;
-                    File.WriteAllBytes(saveFileDialog.FileName, selectedFile.Data.ToArray());
+                    File.WriteAllBytes(saveFileDialog.FileName, [.. selectedFile.Data]);
                 }
             }
         }
@@ -394,7 +394,7 @@ namespace HaruhiHeiretsuEditor
                 _grpFile = BinArchive<GraphicsFile>.FromFile(openFileDialog.FileName);
                 graphicsListBox.ItemsSource = _grpFile.Files;
                 graphicsListBox.Items.Refresh();
-                _fontFile = new FontFile(_grpFile.Files[0].Data.ToArray());
+                _fontFile = new FontFile([.. _grpFile.Files[0].Data]);
                 fontListBox.ItemsSource = _fontFile.Characters;
                 fontListBox.Items.Refresh();
             }
@@ -411,7 +411,7 @@ namespace HaruhiHeiretsuEditor
                 if (_fontFile.Edited)
                 {
                     _grpFile.Files[0].Edited = true;
-                    _grpFile.Files[0].Data = _fontFile.GetBytes().ToList();
+                    _grpFile.Files[0].Data = [.. _fontFile.GetBytes()];
                 }
                 File.WriteAllBytes(saveFileDialog.FileName, _grpFile.GetBytes(out Dictionary<int, int> offsetAdjustments));
                 string offsetAdjustmentsFile = "grp.bin";
@@ -655,7 +655,7 @@ namespace HaruhiHeiretsuEditor
             };
             if (saveFileDialog.ShowDialog() == true)
             {
-                List<SgeHeader> headers = new();
+                List<SgeHeader> headers = [];
                 foreach ((int parent, int child) in _mcb.GraphicsFiles)
                 {
                     if (((GraphicsFile)_mcb.McbSubArchives[parent].Files[child]).FileType == GraphicsFile.GraphicsFileType.SGE)
@@ -839,7 +839,7 @@ namespace HaruhiHeiretsuEditor
             };
             if (saveFileDialog.ShowDialog() == true)
             {
-                File.WriteAllBytes(saveFileDialog.FileName, ((GraphicsFile)graphicsListBox.SelectedItem).Data.ToArray());
+                File.WriteAllBytes(saveFileDialog.FileName, [.. ((GraphicsFile)graphicsListBox.SelectedItem).Data]);
             }
         }
 

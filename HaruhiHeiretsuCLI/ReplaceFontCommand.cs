@@ -14,8 +14,8 @@ namespace HaruhiHeiretsuCLI
         private string _mcb, _grp, _fontPath, _fontMap, _outputDir;
         public ReplaceFontCommand() : base("replace-font")
         {
-            Options = new()
-            {
+            Options =
+            [
                 "Replace a section of the base game font with a new one",
                 "Usage: HaruhiHeiretsuCLI replace-font -m [MCP_BATH] -g [GPR_BIN_PATH] -f [FONT_FILE] -s [FONT_SIZE] -b [BEGIN_CHAR] -e [END_CHAR] [-c [ENCODING]] -o [OUTPUT_DIR]",
                 "",
@@ -25,7 +25,7 @@ namespace HaruhiHeiretsuCLI
                 { "s|font-size=", "The font size to draw", s => _fontSize = float.Parse(s) },
                 { "r|replacement|font-replacement-map=", "The font replacement map JSON file", r => _fontMap = r },
                 { "o|output=", "The directory to save the MCB and grp.bin to", o => _outputDir = o },
-            };
+            ];
         }
 
         public override int Invoke(IEnumerable<string> arguments)
@@ -40,7 +40,7 @@ namespace HaruhiHeiretsuCLI
             mcb.LoadFontFile();
             CommandSet.Out.WriteLine($"Replacing characters from {Path.GetFileName(_fontMap)} in font file with font {SkiaSharp.SKTypeface.FromFile(_fontPath).FamilyName} size {_fontSize}...");
             mcb.FontFile.OverwriteFont(_fontPath, _fontSize, FontReplacementMap.FromJson(File.ReadAllText(_fontMap)));
-            grp.Files[0].Data = mcb.FontFile.GetBytes().ToList();
+            grp.Files[0].Data = [.. mcb.FontFile.GetBytes()];
             grp.Files[0].Edited = true;
 
             File.WriteAllBytes(Path.Combine(_outputDir, "grp.bin"), grp.GetBytes(out Dictionary<int, int> offsetAdjustments));

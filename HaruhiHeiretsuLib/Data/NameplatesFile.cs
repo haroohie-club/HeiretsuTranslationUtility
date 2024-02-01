@@ -10,7 +10,7 @@ namespace HaruhiHeiretsuLib.Data
 {
     public class NameplatesFile : DataFile, IDataStringsFile
     {
-        public List<Nameplate> Nameplates { get; set; } = new();
+        public List<Nameplate> Nameplates { get; set; } = [];
 
         public override void Initialize(byte[] decompressedData, int offset)
         {
@@ -48,10 +48,10 @@ namespace HaruhiHeiretsuLib.Data
 
         public override byte[] GetBytes()
         {
-            List<byte> bytes = new();
-            List<byte> nameplateBytes = new();
-            List<byte> stringBytes = new();
-            List<int> endPointers = new();
+            List<byte> bytes = [];
+            List<byte> nameplateBytes = [];
+            List<byte> stringBytes = [];
+            List<int> endPointers = [];
 
             bytes.AddRange(BitConverter.GetBytes(1).Reverse());
             bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced later
@@ -92,12 +92,12 @@ namespace HaruhiHeiretsuLib.Data
                 bytes.AddRange(BitConverter.GetBytes(endPointer).Reverse());
             }
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
 
         public List<DialogueLine> GetDialogueLines()
         {
-            List<DialogueLine> dialogueLines = new();
+            List<DialogueLine> dialogueLines = [];
 
             foreach (Nameplate nameplate in Nameplates)
             {

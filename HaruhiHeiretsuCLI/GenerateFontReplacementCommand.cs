@@ -19,8 +19,8 @@ namespace HaruhiHeiretsuCLI
 
         public GenerateFontReplacementCommand() : base("generate-font-replacement", "Generate a font replacement map from a font file")
         {
-            Options = new()
-            {
+            Options =
+            [
                 "Generates a font replacement map from the glyph widths in a given font file",
                 "Usage: HaruhiHeiretsuCLI generate-font-replacement-command -f FONT_FILE -s FONT_SIZE -j OUTPUT_FILE -c OUTPUT_HACK [-e EXTENDED_CHARACTERS]",
                 "",
@@ -29,7 +29,7 @@ namespace HaruhiHeiretsuCLI
                 { "j|output-json=", "The output JSON file location", j => _outputJson = j },
                 { "c|h|output-c|output-hack=", "The output location of the font hack C file", h => _outputHack = h },
                 { "e|extended-characters=", "A string of extended characters to replace Japanese characters with", e => _extendedCharacters = e },
-            };
+            ];
         }
 
         public override int Invoke(IEnumerable<string> arguments)
@@ -43,7 +43,7 @@ namespace HaruhiHeiretsuCLI
             int[] widths = paint.GetGlyphWidths(CHARACTERS).Select(w => (int)Math.Round(w * GAME_SCALE_FACTOR)).ToArray();
             int[] extendedWidths = paint.GetGlyphWidths(_extendedCharacters).Select(w => (int)Math.Round(w * GAME_SCALE_FACTOR)).ToArray();
 
-            Dictionary<string, FontReplacementCharacter> fontReplacementMap = new();
+            Dictionary<string, FontReplacementCharacter> fontReplacementMap = [];
             for (int i = 0; i < CHARACTERS.Length; i++)
             {
                 fontReplacementMap.Add($"{CHARACTERS[i]}", new() { Character = $"{CHARACTERS[i]}", Spacing = widths[i] });

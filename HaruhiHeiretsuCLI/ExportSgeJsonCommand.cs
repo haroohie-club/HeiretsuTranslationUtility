@@ -16,8 +16,8 @@ namespace HaruhiHeiretsuCLI
         private int _grpIndex = 0;
         public ExportSgeJsonCommand() : base("export-sge-json")
         {
-            Options = new()
-            {
+            Options =
+            [
                 "Export an SGE model's JSON data for importing into Blender; SGE can be specified by file name or by GRP index",
                 "Usage: HaruhiHeiretsuCLI export-sge-json -g GRP.BIN -d DAT.BIN [-n SGE_NAME] [-i GRP_INDEX]",
                 "",
@@ -26,7 +26,7 @@ namespace HaruhiHeiretsuCLI
                 { "n|name|sge-name=", "Name of the SGE file to export", n => _sgeName = n },
                 { "i|index|grp-index=", "Index of the file in grp.bin", i => _grpIndex = int.Parse(i) },
                 { "o|output=", "Output file location; defaults to the name of the file in the current directory", o => _outputFile = o },
-            };
+            ];
         }
 
         public override int Invoke(IEnumerable<string> arguments)
@@ -41,7 +41,7 @@ namespace HaruhiHeiretsuCLI
             byte[] graphicsFileNameMap = dat.Files.First(f => f.Index == 8).GetBytes();
             int numGraphicsFiles = BitConverter.ToInt32(graphicsFileNameMap.Skip(0x10).Take(4).Reverse().ToArray());
 
-            Dictionary<int, string> indexToNameMap = new();
+            Dictionary<int, string> indexToNameMap = [];
             for (int i = 0; i < numGraphicsFiles; i++)
             {
                 indexToNameMap.Add(BitConverter.ToInt32(graphicsFileNameMap.Skip(0x14 * (i + 1)).Take(4).Reverse().ToArray()), Encoding.ASCII.GetString(graphicsFileNameMap.Skip(0x14 * (i + 1) + 0x04).TakeWhile(b => b != 0x00).ToArray()));

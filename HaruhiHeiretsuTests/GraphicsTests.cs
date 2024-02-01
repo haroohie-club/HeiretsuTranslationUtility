@@ -1,8 +1,6 @@
 ﻿using HaruhiHeiretsuLib.Graphics;
 using NUnit.Framework;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace HaruhiHeiretsuTests
 {

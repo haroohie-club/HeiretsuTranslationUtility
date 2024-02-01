@@ -15,13 +15,13 @@ namespace HaruhiHeiretsuCLI
 
         public GeneratePatchCommand() : base("generate-patch")
         {
-            Options = new()
-            {
+            Options =
+            [
                 "Generate the base Riivolution patch",
                 "Usage: HaruhiHeiretsuCLI generate-patch -o [OUTPUT_DIR]",
                 "",
                 { "o|output=", "Directory to place patch in", o => _outputDir = o },
-            };
+            ];
         }
 
         public override int Invoke(IEnumerable<string> arguments)

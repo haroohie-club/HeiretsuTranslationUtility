@@ -52,7 +52,7 @@ namespace HaruhiHeiretsuLib.Util
 
         public static List<byte> GetPaddedByteArrayFromString(string text)
         {
-            List<byte> stringBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(text).ToList();
+            List<byte> stringBytes = [.. Encoding.GetEncoding("Shift-JIS").GetBytes(text)];
             stringBytes.AddRange(new byte[stringBytes.Count % 4 == 0 ? 4 : 4 - stringBytes.Count % 4]);
             return stringBytes;
         }
@@ -99,27 +99,27 @@ namespace HaruhiHeiretsuLib.Util
 
         public static byte[] GetStringBytes(string str)
         {
-            List<byte> bytes = new();
+            List<byte> bytes = [];
 
             byte[] stringBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(str);
             bytes.AddRange(BitConverter.GetBytes(stringBytes.Length + 1).Reverse());
             bytes.AddRange(stringBytes);
             bytes.Add(0);
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
 
         public static byte[] CompressData(byte[] decompressedData)
         {
             // nonsense hack to deal with a rare edge case where the last byte of a file could get dropped
-            List<byte> temp = decompressedData.ToList();
+            List<byte> temp = [.. decompressedData];
             temp.Add(0x00);
-            decompressedData = temp.ToArray();
+            decompressedData = [.. temp];
 
-            List<byte> compressedData = new();
+            List<byte> compressedData = [];
 
             int directBytesToWrite = 0;
-            Dictionary<LookbackEntry, List<int>> lookbackDictionary = new();
+            Dictionary<LookbackEntry, List<int>> lookbackDictionary = [];
             for (int i = 0; i < decompressedData.Length;)
             {
                 int numNext = Math.Min(decompressedData.Length - i - 1, 4);
@@ -144,7 +144,7 @@ namespace HaruhiHeiretsuLib.Util
                     {
                         if (i - index <= 0x1FFF)
                         {
-                            List<byte> lookbackSequence = new();
+                            List<byte> lookbackSequence = [];
                             for (int j = 0; i + j < decompressedData.Length && decompressedData[index + j] == decompressedData[i + j]; j++)
                             {
                                 lookbackSequence.Add(decompressedData[lookbackIndex + j]);
@@ -216,7 +216,7 @@ namespace HaruhiHeiretsuLib.Util
                     }
                     if (!lookbackDictionary.ContainsKey(nextEntry))
                     {
-                        lookbackDictionary.Add(nextEntry, new List<int> { i });
+                        lookbackDictionary.Add(nextEntry, [i]);
                     }
                     else
                     {
@@ -232,7 +232,7 @@ namespace HaruhiHeiretsuLib.Util
                 WriteDirectBytes(decompressedData, compressedData, decompressedData.Length - 1, directBytesToWrite);
             }
 
-            return compressedData.ToArray();
+            return [.. compressedData];
         }
 
         private class LookbackEntry
@@ -241,7 +241,7 @@ namespace HaruhiHeiretsuLib.Util
 
             public LookbackEntry(List<byte> bytes, int index)
             {
-                Bytes = bytes.ToArray();
+                Bytes = [.. bytes];
             }
 
             public override bool Equals(object obj)
@@ -288,7 +288,7 @@ namespace HaruhiHeiretsuLib.Util
 
         public static byte[] DecompressData(byte[] compressedData)
         {
-            List<byte> decompressedData = new();
+            List<byte> decompressedData = [];
 
             // documentation note: bits 1234 5678 in a byte
             for (int z = 0; z < compressedData.Length;)
@@ -372,7 +372,7 @@ namespace HaruhiHeiretsuLib.Util
             {
                 decompressedData.Add(0x00);
             }
-            return decompressedData.ToArray();
+            return [.. decompressedData];
         }
     }
 }

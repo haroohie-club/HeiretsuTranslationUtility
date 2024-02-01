@@ -43,7 +43,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public ushort ParametersCount { get; set; }
         public ushort Unknown0A { get; set; }
         public int ParametersAddress { get; set; }
-        public List<ActionParameter> Parameters { get; set; } = new();
+        public List<ActionParameter> Parameters { get; set; } = [];
 
         public ActionDefinition(IEnumerable<byte> data, int offset)
         {
@@ -116,14 +116,15 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
-
-            bytes.AddRange(BitConverter.GetBytes(ActorDefinitionAddress));
-            bytes.AddRange(BitConverter.GetBytes(OpCode));
-            bytes.AddRange(BitConverter.GetBytes(Unknown06));
-            bytes.AddRange(BitConverter.GetBytes(ParametersCount));
-            bytes.AddRange(BitConverter.GetBytes(Unknown0A));
-            bytes.AddRange(BitConverter.GetBytes(ParametersAddress));
+            List<byte> bytes =
+            [
+                .. BitConverter.GetBytes(ActorDefinitionAddress),
+                .. BitConverter.GetBytes(OpCode),
+                .. BitConverter.GetBytes(Unknown06),
+                .. BitConverter.GetBytes(ParametersCount),
+                .. BitConverter.GetBytes(Unknown0A),
+                .. BitConverter.GetBytes(ParametersAddress),
+            ];
 
             return bytes;
         }
@@ -177,18 +178,18 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         protected List<byte> GetHeaderBytes()
         {
-            List<byte> bytes = new();
-            bytes.AddRange(BitConverter.GetBytes(ActionsTableEntryAddress));
-            bytes.AddRange(BitConverter.GetBytes(StartFrame));
-            bytes.AddRange(BitConverter.GetBytes(EndFrame));
+            List<byte> bytes =
+            [
+                .. BitConverter.GetBytes(ActionsTableEntryAddress),
+                .. BitConverter.GetBytes(StartFrame),
+                .. BitConverter.GetBytes(EndFrame),
+            ];
             return bytes;
         }
 
         public virtual List<byte> GetBytes()
         {
-            List<byte> bytes = new();
-            bytes.AddRange(GetHeaderBytes());
-            bytes.AddRange(Data);
+            List<byte> bytes = [.. GetHeaderBytes(), .. Data];
             return bytes;
         }
     }

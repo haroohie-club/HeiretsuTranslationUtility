@@ -10,9 +10,9 @@ namespace HaruhiHeiretsuLib.Data
 {
     public class ExtrasClfClaFile : DataFile, IDataStringsFile
     {
-        public List<ClfEntry> Section1 { get; set; } = new();
-        public List<ClaOutfitEntry> Section2 { get; set; } = new();
-        public List<ClaCharacterEntry> Section3 { get; set; } = new();
+        public List<ClfEntry> Section1 { get; set; } = [];
+        public List<ClaOutfitEntry> Section2 { get; set; } = [];
+        public List<ClaCharacterEntry> Section3 { get; set; } = [];
 
         public override void Initialize(byte[] decompressedData, int offset)
         {
@@ -41,9 +41,9 @@ namespace HaruhiHeiretsuLib.Data
 
         public override byte[] GetBytes()
         {
-            List<byte> bytes = new();
-            List<byte> dataBytes = new();
-            List<int> endPointers = new();
+            List<byte> bytes = [];
+            List<byte> dataBytes = [];
+            List<int> endPointers = [];
 
             bytes.AddRange(BitConverter.GetBytes(3).Reverse());
             bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced later
@@ -54,7 +54,7 @@ namespace HaruhiHeiretsuLib.Data
             int section1StartPointer = startPointer + 0x20 * Section3.Count; // float section
             bytes.AddRange(BitConverter.GetBytes(section1StartPointer).Reverse());
             bytes.AddRange(BitConverter.GetBytes(Section1.Count).Reverse());
-            List<byte> section1StringBytes = new();
+            List<byte> section1StringBytes = [];
             int section1StringsOffset = section1StartPointer + Section1.Count * 0x24;
             
             for (int i = 0; i < Section1.Count; i++)
@@ -68,7 +68,7 @@ namespace HaruhiHeiretsuLib.Data
             int section2StartPointer = section1StartPointer + dataBytes.Count;
             bytes.AddRange(BitConverter.GetBytes(section2StartPointer).Reverse());
             bytes.AddRange(BitConverter.GetBytes(Section2.Count).Reverse());
-            List<byte> section2StringBytes = new();
+            List<byte> section2StringBytes = [];
             int section2StringsOffset = section2StartPointer + Section2.Count * 0x2C;
             for (int i = 0; i < Section2.Count; i++)
             {
@@ -81,7 +81,7 @@ namespace HaruhiHeiretsuLib.Data
             int section3StartPointer = section1StartPointer + dataBytes.Count;
             bytes.AddRange(BitConverter.GetBytes(section3StartPointer).Reverse());
             bytes.AddRange(BitConverter.GetBytes(Section3.Count).Reverse());
-            List<byte> section3StringBytes = new();
+            List<byte> section3StringBytes = [];
             int section3StringsOffset = section3StartPointer + Section3.Count * 0x34;
             for (int i = 0; i < Section3.Count; i++)
             {
@@ -105,12 +105,12 @@ namespace HaruhiHeiretsuLib.Data
 
             bytes.AddRange(new byte[bytes.Count % 16 == 0 ? 0 : 16 - bytes.Count % 16]);
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
 
         public List<DialogueLine> GetDialogueLines()
         {
-            List<DialogueLine> lines = new();
+            List<DialogueLine> lines = [];
 
             for (int i = 0; i < Section1.Count; i++)
             {
@@ -118,7 +118,7 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     Speaker = Section1[i].Speaker,
                     Line = Section1[i].Line,
-                    Metadata = (new string[] { Section1[i].VoiceFile, "0", $"{i}", "0" }).ToList(),
+                    Metadata = [.. (new string[] { Section1[i].VoiceFile, "0", $"{i}", "0" })],
                 });
             }
             for (int i = 0; i < Section2.Count; i++)
@@ -127,19 +127,19 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     Speaker = $"{Section2[i].OutfitOwner}'s {Section2[i].OutfitType} Description",
                     Line = Section2[i].OutfitDescription,
-                    Metadata = (new string[] { Section2[i].OutfitFlag, "1", $"{i}", "0" }).ToList(),
+                    Metadata = [.. (new string[] { Section2[i].OutfitFlag, "1", $"{i}", "0" })],
                 });
                 lines.Add(new()
                 {
                     Speaker = $"{Section2[i].Speaker1} (Describing {Section2[i].OutfitOwner}'s {Section2[i].OutfitType})",
                     Line = Section2[i].Line1,
-                    Metadata = (new string[] { Section2[i].OutfitFlag, Section2[i].VoiceFile1, "1", $"{i}", "1" }).ToList(),
+                    Metadata = [.. (new string[] { Section2[i].OutfitFlag, Section2[i].VoiceFile1, "1", $"{i}", "1" })],
                 });
                 lines.Add(new()
                 {
                     Speaker = $"{Section2[i].Speaker2} (Describing {Section2[i].OutfitOwner}'s {Section2[i].OutfitType})",
                     Line = Section2[i].Line2,
-                    Metadata = (new string[] { Section2[i].OutfitFlag, Section2[i].VoiceFile2, "1", $"{i}", "2" }).ToList(),
+                    Metadata = [.. (new string[] { Section2[i].OutfitFlag, Section2[i].VoiceFile2, "1", $"{i}", "2" })],
                 });
             }
             for (int i = 0; i < Section3.Count; i++)
@@ -148,19 +148,19 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     Speaker = $"{Section3[i].Character} Name",
                     Line = Section3[i].CharacterName,
-                    Metadata = (new string[] { Section3[i].CharacterFlag, "2", $"{i}", "0" }).ToList(),
+                    Metadata = [.. (new string[] { Section3[i].CharacterFlag, "2", $"{i}", "0" })],
                 });
                 lines.Add(new()
                 {
                     Speaker = $"{Section3[i].Speaker1} (Describing {Section3[i].Character})",
                     Line = Section3[i].Line1,
-                    Metadata = (new string[] { Section3[i].CharacterFlag, Section3[i].VoiceFile1, "2", $"{i}", "1" }).ToList(),
+                    Metadata = [.. (new string[] { Section3[i].CharacterFlag, Section3[i].VoiceFile1, "2", $"{i}", "1" })],
                 });
                 lines.Add(new()
                 {
                     Speaker = $"{Section3[i].Speaker2} (Describing {Section3[i].Character})",
                     Line = Section3[i].Line2,
-                    Metadata = (new string[] { Section3[i].CharacterFlag, Section3[i].VoiceFile2, "2", $"{i}", "1" }).ToList(),
+                    Metadata = [.. (new string[] { Section3[i].CharacterFlag, Section3[i].VoiceFile2, "2", $"{i}", "1" })],
                 });
             }
 
@@ -245,8 +245,8 @@ namespace HaruhiHeiretsuLib.Data
 
         public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int offset, int stringsOffset, List<int> endPointers)
         {
-            List<byte> dataBytes = new();
-            List<byte> stringBytes = new();
+            List<byte> dataBytes = [];
+            List<byte> stringBytes = [];
 
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());
@@ -313,8 +313,8 @@ namespace HaruhiHeiretsuLib.Data
 
         public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int offset, int stringsOffset, List<int> endPointers)
         {
-            List<byte> dataBytes = new();
-            List<byte> stringBytes = new();
+            List<byte> dataBytes = [];
+            List<byte> stringBytes = [];
 
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());
@@ -382,16 +382,17 @@ namespace HaruhiHeiretsuLib.Data
 
             public List<byte> GetBytes()
             {
-                List<byte> bytes = new();
-
-                bytes.AddRange(BitConverter.GetBytes(Unknown00).Reverse());
-                bytes.AddRange(BitConverter.GetBytes(Unknown04).Reverse());
-                bytes.AddRange(BitConverter.GetBytes(Unknown08).Reverse());
-                bytes.AddRange(BitConverter.GetBytes(Unknown0C).Reverse());
-                bytes.AddRange(BitConverter.GetBytes(Unknown10).Reverse());
-                bytes.AddRange(BitConverter.GetBytes(Unknown14).Reverse());
-                bytes.AddRange(BitConverter.GetBytes(Unknown18).Reverse());
-                bytes.AddRange(BitConverter.GetBytes(Unknown1C).Reverse());
+                List<byte> bytes =
+                [
+                    .. BitConverter.GetBytes(Unknown00).Reverse(),
+                    .. BitConverter.GetBytes(Unknown04).Reverse(),
+                    .. BitConverter.GetBytes(Unknown08).Reverse(),
+                    .. BitConverter.GetBytes(Unknown0C).Reverse(),
+                    .. BitConverter.GetBytes(Unknown10).Reverse(),
+                    .. BitConverter.GetBytes(Unknown14).Reverse(),
+                    .. BitConverter.GetBytes(Unknown18).Reverse(),
+                    .. BitConverter.GetBytes(Unknown1C).Reverse(),
+                ];
 
                 return bytes;
             }
@@ -440,8 +441,8 @@ namespace HaruhiHeiretsuLib.Data
 
         public (List<byte> dataBytes, List<byte> stringBytes, List<byte> floatStructBytes) GetBytes(int offset, int stringsOffset, int floatOffset, List<int> endPointers)
         {
-            List<byte> dataBytes = new();
-            List<byte> stringBytes = new();
+            List<byte> dataBytes = [];
+            List<byte> stringBytes = [];
 
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());

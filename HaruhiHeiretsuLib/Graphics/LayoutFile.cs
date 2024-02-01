@@ -87,12 +87,12 @@ namespace HaruhiHeiretsuLib.Graphics
         {
             Edited = true;
 
-            List<byte> bytes = new();
-
-            bytes.AddRange(Data.Take(4));
-            bytes.AddRange(UnknownLayoutHeaderInt1);
-
-            bytes.AddRange(LayoutComponents.SelectMany(l => l.GetBytes()));
+            List<byte> bytes =
+            [
+                .. Data.Take(4),
+                .. UnknownLayoutHeaderInt1,
+                .. LayoutComponents.SelectMany(l => l.GetBytes()),
+            ];
 
             Data = bytes;
         }
@@ -135,21 +135,22 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
-
-            bytes.AddRange(BitConverter.GetBytes(UnknownShort1));
-            bytes.AddRange(BitConverter.GetBytes(Index));
-            bytes.AddRange(BitConverter.GetBytes(UnknownShort2));
-            bytes.AddRange(BitConverter.GetBytes(ScreenX));
-            bytes.AddRange(BitConverter.GetBytes(ScreenY));
-            bytes.AddRange(BitConverter.GetBytes(ImageWidth));
-            bytes.AddRange(BitConverter.GetBytes(ImageHeight));
-            bytes.AddRange(BitConverter.GetBytes(ImageX));
-            bytes.AddRange(BitConverter.GetBytes(ImageY));
-            bytes.AddRange(BitConverter.GetBytes(ScreenWidth));
-            bytes.AddRange(BitConverter.GetBytes(ScreenHeight));
-            bytes.AddRange(BitConverter.GetBytes(UnknownShort3));
-            bytes.AddRange(new byte[] { BlueTint, GreenTint, RedTint, AlphaTint });
+            List<byte> bytes =
+            [
+                .. BitConverter.GetBytes(UnknownShort1),
+                .. BitConverter.GetBytes(Index),
+                .. BitConverter.GetBytes(UnknownShort2),
+                .. BitConverter.GetBytes(ScreenX),
+                .. BitConverter.GetBytes(ScreenY),
+                .. BitConverter.GetBytes(ImageWidth),
+                .. BitConverter.GetBytes(ImageHeight),
+                .. BitConverter.GetBytes(ImageX),
+                .. BitConverter.GetBytes(ImageY),
+                .. BitConverter.GetBytes(ScreenWidth),
+                .. BitConverter.GetBytes(ScreenHeight),
+                .. BitConverter.GetBytes(UnknownShort3),
+                .. new byte[] { BlueTint, GreenTint, RedTint, AlphaTint },
+            ];
 
             return bytes;
         }

@@ -12,7 +12,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public int CurrentTime { get; set; }
         public ushort ActorDefTableEntryCount { get; set; }
         public int ActorDefTableOffset { get; set; }
-        public List<ActorDefinition> ActorDefinitionTable { get; set; } = new();
+        public List<ActorDefinition> ActorDefinitionTable { get; set; } = [];
 
         public ChapterDefinition(IEnumerable<byte> data, int offset)
         {

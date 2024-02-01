@@ -13,8 +13,8 @@ namespace HaruhiHeiretsuCLI
         private string _mcb, _dat, _evt, _grp, _scr;
         public CheckBlnBinIntegrityCommand() : base("check-bln-bin-integrity", "Checks if BLN and BIN files are identical")
         {
-            Options = new()
-            {
+            Options =
+            [
                 "Replaces strings in the mcb and dat/evt/scr archives",
                 "Usage: HaruhiHeiretsuCLI repalce-strings -m [MCB_PATH] -d [DAT_BIN] -e [EVT_BIN] -s [SCR_BIN] -r [REPLACEMENT_FOLDER] -o [OUTPUT_FOLDER]",
                 "",
@@ -23,7 +23,7 @@ namespace HaruhiHeiretsuCLI
                 { "e|evt=", "Path to evt.bin", e => _evt = e },
                 { "g|grp=", "Path to grp.bin", g => _grp = g },
                 { "s|scr=", "Path to scr.bin", s => _scr = s },
-            };
+            ];
         }
 
         public override int Invoke(IEnumerable<string> arguments)

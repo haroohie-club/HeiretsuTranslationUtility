@@ -22,7 +22,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public override void Initialize(byte[] decompressedData, int offset)
         {
             Offset = offset;
-            Data = decompressedData.ToList();
+            Data = [.. decompressedData];
 
             InitializeInternal();
         }
@@ -31,7 +31,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         {
             Location = (parent, child);
             McbId = mcbId;
-            Data = data.ToList();
+            Data = [.. data];
 
             InitializeInternal();
         }
@@ -95,10 +95,8 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
             if (newLineData.Length < DialogueLines[index].Length)
             {
-                List<byte> temp = new();
-                temp.AddRange(newLineData);
-                temp.AddRange(new byte[DialogueLines[index].Length - newLineData.Length]);
-                newLineData = temp.ToArray();
+                List<byte> temp = [.. newLineData, .. new byte[DialogueLines[index].Length - newLineData.Length]];
+                newLineData = [.. temp];
             }
 
             if (newLineData.Length > 0x80)
@@ -135,8 +133,8 @@ namespace HaruhiHeiretsuLib.Strings.Events
     public class CutsceneData
     {
         public EventFileHeader Header { get; set; }
-        public List<ModelDefinition> CharacterModelDefinitionTable { get; set; } = new();
-        public List<ChapterDefinition> ChapterDefinitionTable { get; set; } = new();
+        public List<ModelDefinition> CharacterModelDefinitionTable { get; set; } = [];
+        public List<ChapterDefinition> ChapterDefinitionTable { get; set; } = [];
 
         public CutsceneData(IEnumerable<byte> data)
         {
@@ -158,9 +156,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
-
-            bytes.AddRange(Header.GetBytes());
+            List<byte> bytes = [.. Header.GetBytes()];
 
             return bytes;
         }
@@ -209,28 +205,29 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
-
-            bytes.AddRange(BitConverter.GetBytes(Version));
-            bytes.AddRange(BitConverter.GetBytes(TotalRuntimeInFrames));
-            bytes.AddRange(BitConverter.GetBytes(CurrentFrame));
-            bytes.AddRange(BitConverter.GetBytes(CurrentChapter));
-            bytes.AddRange(BitConverter.GetBytes((short)0));
-            bytes.AddRange(BitConverter.GetBytes(Unknown10));
-            bytes.AddRange(BitConverter.GetBytes(ChaptersCount));
-            bytes.AddRange(BitConverter.GetBytes(Padding16));
-            bytes.AddRange(BitConverter.GetBytes(ChapterDefTableOffset));
-            bytes.AddRange(BitConverter.GetBytes(NumActors));
-            bytes.AddRange(BitConverter.GetBytes((short)0));
-            bytes.AddRange(BitConverter.GetBytes(ActorModelDefinitionOffset));
-            bytes.AddRange(BitConverter.GetBytes(Unknown24));
-            bytes.AddRange(BitConverter.GetBytes(Unknown26));
-            bytes.AddRange(BitConverter.GetBytes(Unknown28));
-            bytes.AddRange(BitConverter.GetBytes(Unknown2C));
-            bytes.AddRange(BitConverter.GetBytes(Unknown30));
-            bytes.AddRange(BitConverter.GetBytes(Unknown34));
-            bytes.AddRange(BitConverter.GetBytes(Unknown38));
-            bytes.AddRange(BitConverter.GetBytes(Unknown3C));
+            List<byte> bytes =
+            [
+                .. BitConverter.GetBytes(Version),
+                .. BitConverter.GetBytes(TotalRuntimeInFrames),
+                .. BitConverter.GetBytes(CurrentFrame),
+                .. BitConverter.GetBytes(CurrentChapter),
+                .. BitConverter.GetBytes((short)0),
+                .. BitConverter.GetBytes(Unknown10),
+                .. BitConverter.GetBytes(ChaptersCount),
+                .. BitConverter.GetBytes(Padding16),
+                .. BitConverter.GetBytes(ChapterDefTableOffset),
+                .. BitConverter.GetBytes(NumActors),
+                .. BitConverter.GetBytes((short)0),
+                .. BitConverter.GetBytes(ActorModelDefinitionOffset),
+                .. BitConverter.GetBytes(Unknown24),
+                .. BitConverter.GetBytes(Unknown26),
+                .. BitConverter.GetBytes(Unknown28),
+                .. BitConverter.GetBytes(Unknown2C),
+                .. BitConverter.GetBytes(Unknown30),
+                .. BitConverter.GetBytes(Unknown34),
+                .. BitConverter.GetBytes(Unknown38),
+                .. BitConverter.GetBytes(Unknown3C),
+            ];
 
             return bytes;
         }

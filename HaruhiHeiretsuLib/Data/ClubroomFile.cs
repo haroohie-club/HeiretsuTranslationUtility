@@ -4,14 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuLib.Data
 {
     public class ClubroomFile : DataFile, IDataStringsFile
     {
-        public List<ClubroomThing> ClubroomThings { get; set; } = new();
-        public List<ClubroomThing2> ClubroomThing2s { get; set; } = new();
+        public List<ClubroomThing> ClubroomThings { get; set; } = [];
+        public List<ClubroomThing2> ClubroomThing2s { get; set; } = [];
 
         public override void Initialize(byte[] decompressedData, int offset)
         {
@@ -37,9 +36,9 @@ namespace HaruhiHeiretsuLib.Data
 
         public override byte[] GetBytes()
         {
-            List<byte> bytes = new();
-            List<byte> dataBytes = new();
-            List<int> endPointers = new();
+            List<byte> bytes = [];
+            List<byte> dataBytes = [];
+            List<int> endPointers = [];
 
             bytes.AddRange(BitConverter.GetBytes(2).Reverse());
             bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced later
@@ -49,7 +48,7 @@ namespace HaruhiHeiretsuLib.Data
             bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
             bytes.AddRange(BitConverter.GetBytes(ClubroomThings.Count).Reverse());
 
-            List<byte> clubroomThingStringBytes = new();
+            List<byte> clubroomThingStringBytes = [];
             int clubroomStringsStartPointer = startPointer + ClubroomThings.Count * 0x60;
             for (int i = 0; i < ClubroomThings.Count; i++)
             {
@@ -63,7 +62,7 @@ namespace HaruhiHeiretsuLib.Data
             bytes.AddRange(BitConverter.GetBytes(clubroomThings2StartPointer).Reverse());
             bytes.AddRange(BitConverter.GetBytes(ClubroomThing2s.Count).Reverse());
 
-            List<byte> clubroomThing2StringBytes = new();
+            List<byte> clubroomThing2StringBytes = [];
             int clubroom2StringsStartPointer = clubroomThings2StartPointer + ClubroomThing2s.Count * 0x24;
             for (int i = 0; i < ClubroomThing2s.Count; i++)
             {
@@ -84,12 +83,12 @@ namespace HaruhiHeiretsuLib.Data
                 bytes.AddRange(BitConverter.GetBytes(endPointer).Reverse());
             }
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
 
         public List<DialogueLine> GetDialogueLines()
         {
-            List<DialogueLine> dialogueLines = new();
+            List<DialogueLine> dialogueLines = [];
 
             for (int i = 0; i < ClubroomThings.Count; i++)
             {
@@ -110,14 +109,14 @@ namespace HaruhiHeiretsuLib.Data
                     Speaker = $"{ClubroomThings[i].Speaker1} ({ClubroomThings[i].Flag} 1)",
                     Line = ClubroomThings[i].Line1,
                     Offset = i,
-                    Metadata = (new string[] { ClubroomThings[i].VoiceFile1 }).ToList(),
+                    Metadata = [.. (new string[] { ClubroomThings[i].VoiceFile1 })],
                 });
                 dialogueLines.Add(new()
                 {
                     Speaker = $"{ClubroomThings[i].Speaker2} ({ClubroomThings[i].Flag} 2)",
                     Line = ClubroomThings[i].Line2,
                     Offset = i,
-                    Metadata = (new string[] { ClubroomThings[i].VoiceFile2 }).ToList(),
+                    Metadata = [.. (new string[] { ClubroomThings[i].VoiceFile2 })],
                 });
             }
             for (int i = 0; i < ClubroomThing2s.Count; i++)
@@ -133,14 +132,14 @@ namespace HaruhiHeiretsuLib.Data
                     Speaker = $"{ClubroomThing2s[i].Speaker1} ({ClubroomThing2s[i].Flag} 1)",
                     Line = ClubroomThing2s[i].Line1,
                     Offset = ClubroomThings.Count + i,
-                    Metadata = (new string[] { ClubroomThing2s[i].VoiceFile1 }).ToList(),
+                    Metadata = [.. (new string[] { ClubroomThing2s[i].VoiceFile1 })],
                 });
                 dialogueLines.Add(new()
                 {
                     Speaker = $"{ClubroomThing2s[i].Speaker2} ({ClubroomThing2s[i].Flag} 2)",
                     Line = ClubroomThing2s[i].Line2,
                     Offset = ClubroomThings.Count + i,
-                    Metadata = (new string[] { ClubroomThing2s[i].VoiceFile2 }).ToList(),
+                    Metadata = [.. (new string[] { ClubroomThing2s[i].VoiceFile2 })],
                 });
             }
 
@@ -253,8 +252,8 @@ namespace HaruhiHeiretsuLib.Data
 
         public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int currentOffset, int currentStringsOffset, List<int> endPointers)
         {
-            List<byte> dataBytes = new();
-            List<byte> stringBytes = new();
+            List<byte> dataBytes = [];
+            List<byte> stringBytes = [];
 
             endPointers.Add(currentOffset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());
@@ -339,8 +338,8 @@ namespace HaruhiHeiretsuLib.Data
 
         public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int currentOffset, int currentStringsOffset, List<int> endPointers)
         {
-            List<byte> dataBytes = new();
-            List<byte> stringBytes = new();
+            List<byte> dataBytes = [];
+            List<byte> stringBytes = [];
 
             endPointers.Add(currentOffset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(currentStringsOffset + stringBytes.Count).Reverse());

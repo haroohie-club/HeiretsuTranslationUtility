@@ -10,7 +10,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public short Index { get; set; }
         public ushort NumberOfParameters => (ushort)Parameters.Count;
         public string Name { get; set; }
-        public List<ushort> Parameters { get; set; } = new();
+        public List<ushort> Parameters { get; set; } = [];
         public int DefinitionLength { get; set; }
 
         private ScriptCommand()
@@ -33,7 +33,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public static List<ScriptCommand> ParseScriptCommandFile(byte[] scriptCommandFileData)
         {
             int numCommands = BitConverter.ToInt32(scriptCommandFileData.Take(4).Reverse().ToArray());
-            List<ScriptCommand> scriptCommands = new();
+            List<ScriptCommand> scriptCommands = [];
 
             for (int i = 4; scriptCommands.Count < numCommands;)
             {

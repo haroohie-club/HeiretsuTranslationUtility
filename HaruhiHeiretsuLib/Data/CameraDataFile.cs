@@ -6,8 +6,8 @@ namespace HaruhiHeiretsuLib.Data
 {
     public class CameraDataFile : DataFile
     {
-        public List<float> Section1 { get; set; } = new();
-        public List<CameraDataEntry> CameraDataEntries { get; set; } = new();
+        public List<float> Section1 { get; set; } = [];
+        public List<CameraDataEntry> CameraDataEntries { get; set; } = [];
         public short StaticCameraIndex { get; set; } = new();
 
         public CameraDataFile()
@@ -47,23 +47,25 @@ namespace HaruhiHeiretsuLib.Data
 
         public string GetCsv()
         {
-            List<string> csvLines = new();
-            csvLines.Add("Section1Floats");
-            csvLines.Add(string.Join(',', Section1));
-            csvLines.Add($"{nameof(CameraDataEntry.XPosition)},{nameof(CameraDataEntry.YPosition)},{nameof(CameraDataEntry.ZPosition)},{nameof(CameraDataEntry.XLook)},{nameof(CameraDataEntry.YLook)},{nameof(CameraDataEntry.ZLook)}," +
-                $"{nameof(CameraDataEntry.Unknown18)},{nameof(CameraDataEntry.MinYaw)},{nameof(CameraDataEntry.MaxYaw)},{nameof(CameraDataEntry.MinPitch)},{nameof(CameraDataEntry.MaxPitch)},{nameof(CameraDataEntry.Zoom)}," +
-                $"{nameof(CameraDataEntry.Unknown30)}");
-            csvLines.AddRange(CameraDataEntries.Select(e => e.GetCsvLine()));
-            csvLines.Add("Section3Ints");
-            csvLines.Add(string.Join(',', StaticCameraIndex));
+            List<string> csvLines =
+            [
+                "Section1Floats",
+                string.Join(',', Section1),
+                $"{nameof(CameraDataEntry.XPosition)},{nameof(CameraDataEntry.YPosition)},{nameof(CameraDataEntry.ZPosition)},{nameof(CameraDataEntry.XLook)},{nameof(CameraDataEntry.YLook)},{nameof(CameraDataEntry.ZLook)}," +
+                    $"{nameof(CameraDataEntry.Unknown18)},{nameof(CameraDataEntry.MinYaw)},{nameof(CameraDataEntry.MaxYaw)},{nameof(CameraDataEntry.MinPitch)},{nameof(CameraDataEntry.MaxPitch)},{nameof(CameraDataEntry.Zoom)}," +
+                    $"{nameof(CameraDataEntry.Unknown30)}",
+                .. CameraDataEntries.Select(e => e.GetCsvLine()),
+                "Section3Ints",
+                string.Join(',', StaticCameraIndex),
+            ];
 
             return string.Join('\n', csvLines);
         }
 
         public override byte[] GetBytes()
         {
-            List<byte> bytes = new();
-            List<byte> sectionBytes = new();
+            List<byte> bytes = [];
+            List<byte> sectionBytes = [];
             int startingOffset = 0x24;
 
             bytes.AddRange(BitConverter.GetBytes(3).Reverse());
@@ -89,7 +91,7 @@ namespace HaruhiHeiretsuLib.Data
 
             bytes.AddRange(new byte[4]);
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
     }
 
@@ -146,21 +148,22 @@ namespace HaruhiHeiretsuLib.Data
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
-
-            bytes.AddRange(BitConverter.GetBytes(XPosition).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(YPosition).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(ZPosition).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(XLook).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(YLook).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(ZLook).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(Unknown18).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(MinYaw).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(MaxYaw).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(MinPitch).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(MaxPitch).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(Zoom).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(Unknown30).Reverse());
+            List<byte> bytes =
+            [
+                .. BitConverter.GetBytes(XPosition).Reverse(),
+                .. BitConverter.GetBytes(YPosition).Reverse(),
+                .. BitConverter.GetBytes(ZPosition).Reverse(),
+                .. BitConverter.GetBytes(XLook).Reverse(),
+                .. BitConverter.GetBytes(YLook).Reverse(),
+                .. BitConverter.GetBytes(ZLook).Reverse(),
+                .. BitConverter.GetBytes(Unknown18).Reverse(),
+                .. BitConverter.GetBytes(MinYaw).Reverse(),
+                .. BitConverter.GetBytes(MaxYaw).Reverse(),
+                .. BitConverter.GetBytes(MinPitch).Reverse(),
+                .. BitConverter.GetBytes(MaxPitch).Reverse(),
+                .. BitConverter.GetBytes(Zoom).Reverse(),
+                .. BitConverter.GetBytes(Unknown30).Reverse(),
+            ];
 
             return bytes;
         }

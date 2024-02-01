@@ -15,10 +15,10 @@ namespace HaruhiHeiretsuLib.Archive
 {
     public class McbArchive
     {
-        public List<McbSubArchive> McbSubArchives { get; set; } = new();
-        public List<(int parentLoc, int childLoc)> StringsFiles { get; set; } = new();
-        public List<(int parentLoc, int childLoc)> GraphicsFiles { get; set; } = new();
-        Dictionary<ArchiveIndex, Dictionary<int, int>> OffsetIndexDictionaries { get; set; } = new();
+        public List<McbSubArchive> McbSubArchives { get; set; } = [];
+        public List<(int parentLoc, int childLoc)> StringsFiles { get; set; } = [];
+        public List<(int parentLoc, int childLoc)> GraphicsFiles { get; set; } = [];
+        Dictionary<ArchiveIndex, Dictionary<int, int>> OffsetIndexDictionaries { get; set; } = [];
         public FontFile FontFile { get; set; }
 
         public enum ArchiveIndex
@@ -53,7 +53,7 @@ namespace HaruhiHeiretsuLib.Archive
 
         public (byte[] mcb0Bytes, byte[] mcb1Bytes) GetBytes()
         {
-            List<byte> mcb0 = new(), mcb1 = new();
+            List<byte> mcb0 = [], mcb1 = [];
 
             if (FontFile is not null && FontFile.Edited == true)
             {
@@ -82,7 +82,7 @@ namespace HaruhiHeiretsuLib.Archive
 
         public void AdjustOffsets(string binArchiveAdjustmentFile)
         {
-            Dictionary<int, int> offsetAdjustments = new();
+            Dictionary<int, int> offsetAdjustments = [];
             string[] archiveAdjustmentFileLines = File.ReadAllLines(binArchiveAdjustmentFile);
 
             foreach (string line in archiveAdjustmentFileLines.Skip(1))
@@ -140,7 +140,7 @@ namespace HaruhiHeiretsuLib.Archive
             byte[] graphicsFileNameMap = McbSubArchives[0].Files[57].GetBytes();
             int numGraphicsFiles = BitConverter.ToInt32(graphicsFileNameMap.Skip(0x10).Take(4).Reverse().ToArray());
 
-            Dictionary<int, string> indexToNameMap = new();
+            Dictionary<int, string> indexToNameMap = [];
             for (int i = 0; i < numGraphicsFiles; i++)
             {
                 indexToNameMap.Add(BitConverter.ToInt32(graphicsFileNameMap.Skip(0x14 * (i + 1)).Take(4).Reverse().ToArray()), Encoding.ASCII.GetString(graphicsFileNameMap.Skip(0x14 * (i + 1) + 0x04).TakeWhile(b => b != 0x00).ToArray()));
@@ -183,9 +183,9 @@ namespace HaruhiHeiretsuLib.Archive
                 case "grp.bin":
                     if (!OffsetIndexDictionaries.ContainsKey(ArchiveIndex.GRP))
                     {
-                        OffsetIndexDictionaries.Add(ArchiveIndex.GRP, new());
+                        OffsetIndexDictionaries.Add(ArchiveIndex.GRP, []);
                     }
-                    OffsetIndexDictionaries[ArchiveIndex.GRP] = new();
+                    OffsetIndexDictionaries[ArchiveIndex.GRP] = [];
                     foreach (var file in archive.Files)
                     {
                         OffsetIndexDictionaries[ArchiveIndex.GRP].Add(file.Offset, file.Index);
@@ -195,9 +195,9 @@ namespace HaruhiHeiretsuLib.Archive
                 case "dat.bin":
                     if (!OffsetIndexDictionaries.ContainsKey(ArchiveIndex.DAT))
                     {
-                        OffsetIndexDictionaries.Add(ArchiveIndex.DAT, new());
+                        OffsetIndexDictionaries.Add(ArchiveIndex.DAT, []);
                     }
-                    OffsetIndexDictionaries[ArchiveIndex.DAT] = new();
+                    OffsetIndexDictionaries[ArchiveIndex.DAT] = [];
                     foreach (var file in archive.Files)
                     {
                         OffsetIndexDictionaries[ArchiveIndex.DAT].Add(file.Offset, file.Index);
@@ -206,9 +206,9 @@ namespace HaruhiHeiretsuLib.Archive
                 case "scr.bin":
                     if (!OffsetIndexDictionaries.ContainsKey(ArchiveIndex.SCR))
                     {
-                        OffsetIndexDictionaries.Add(ArchiveIndex.SCR, new());
+                        OffsetIndexDictionaries.Add(ArchiveIndex.SCR, []);
                     }
-                    OffsetIndexDictionaries[ArchiveIndex.SCR] = new();
+                    OffsetIndexDictionaries[ArchiveIndex.SCR] = [];
                     foreach (var file in archive.Files)
                     {
                         OffsetIndexDictionaries[ArchiveIndex.SCR].Add(file.Offset, file.Index);
@@ -218,9 +218,9 @@ namespace HaruhiHeiretsuLib.Archive
                 case "evt.bin":
                     if (!OffsetIndexDictionaries.ContainsKey(ArchiveIndex.EVT))
                     {
-                        OffsetIndexDictionaries.Add(ArchiveIndex.EVT, new());
+                        OffsetIndexDictionaries.Add(ArchiveIndex.EVT, []);
                     }
-                    OffsetIndexDictionaries[ArchiveIndex.EVT] = new();
+                    OffsetIndexDictionaries[ArchiveIndex.EVT] = [];
                     foreach (var file in archive.Files)
                     {
                         OffsetIndexDictionaries[ArchiveIndex.EVT].Add(file.Offset, file.Index);
@@ -232,7 +232,7 @@ namespace HaruhiHeiretsuLib.Archive
 
         public Dictionary<int, List<(int, int)>> GetFileMap(string binArchiveFile)
         {
-            Dictionary<int, List<(int, int)>> fileMap = new();
+            Dictionary<int, List<(int, int)>> fileMap = [];
             int archiveIndexToSearch;
             switch (Path.GetFileName(binArchiveFile).ToLower())
             {
@@ -269,7 +269,7 @@ namespace HaruhiHeiretsuLib.Archive
 
                         if (!fileMap.ContainsKey(correspondingBinIndex))
                         {
-                            fileMap.Add(correspondingBinIndex, new List<(int, int)>());
+                            fileMap.Add(correspondingBinIndex, []);
                         }
 
                         fileMap[correspondingBinIndex].Add((i, j));
@@ -356,7 +356,7 @@ namespace HaruhiHeiretsuLib.Archive
 
         public static List<(int, int)> GetFilesToLoad(string[] graphicsFilesLocations)
         {
-            List<(int, int)> locations = new();
+            List<(int, int)> locations = [];
             string[] recombined = graphicsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ',')).ToArray();
 
             foreach (string line in recombined)
@@ -409,7 +409,7 @@ namespace HaruhiHeiretsuLib.Archive
                             McbId = McbSubArchives[parent].Id,
                             CompressedData = McbSubArchives[parent].Files[child].CompressedData
                         };
-                        graphicsFile.Initialize(McbSubArchives[parent].Files[child].Data.ToArray(), 0);
+                        graphicsFile.Initialize([.. McbSubArchives[parent].Files[child].Data], 0);
                         graphicsFile.Offset = McbSubArchives[parent].Files[child].Offset;
                         GraphicsFiles.Add((parent, child));
                         McbSubArchives[parent].Files[child] = graphicsFile;
@@ -420,18 +420,18 @@ namespace HaruhiHeiretsuLib.Archive
 
         public void LoadFontFile()
         {
-            FontFile = new FontFile(McbSubArchives[0].Files[5].Data.ToArray());
+            FontFile = new FontFile([.. McbSubArchives[0].Files[5].Data]);
         }
 
         public void SaveFontFile()
         {
             McbSubArchives[0].Files[5].Edited = true;
-            McbSubArchives[0].Files[5].Data = FontFile.GetBytes().ToList();
+            McbSubArchives[0].Files[5].Data = [.. FontFile.GetBytes()];
         }
 
         public List<(int, int)> FindStringInFiles(string search)
         {
-            List<(int, int)> fileLocations = new();
+            List<(int, int)> fileLocations = [];
 
             foreach (McbSubArchive subArchive in McbSubArchives)
             {
@@ -455,7 +455,7 @@ namespace HaruhiHeiretsuLib.Archive
 
         public List<(int, int)> CheckHexInFile(byte[] search, bool fourByteAligned)
         {
-            List<(int, int)> fileLocations = new();
+            List<(int, int)> fileLocations = [];
 
             int increment = fourByteAligned ? 4 : 1;
 

@@ -7,9 +7,9 @@ namespace HaruhiHeiretsuLib.Data
     // dat 004
     public class SgeIndexFile : DataFile
     {
-        public List<SgeIndexFileEntry> Section1Entries { get; set; } = new();
-        public List<SgeIndexFileSection2Entry> Section2Entries { get; set; } = new();
-        public List<short> Section3Entries { get; set; } = new();
+        public List<SgeIndexFileEntry> Section1Entries { get; set; } = [];
+        public List<SgeIndexFileSection2Entry> Section2Entries { get; set; } = [];
+        public List<short> Section3Entries { get; set; } = [];
 
         public SgeIndexFile()
         {

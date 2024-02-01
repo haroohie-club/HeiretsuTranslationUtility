@@ -13,11 +13,11 @@ namespace HaruhiHeiretsuLib.Graphics
     {
         public byte[] CompressedData { get; set; }
         public int NumCharacters { get; set; }
-        public List<int> UnknownInts { get; set; } = new();
-        public List<Character> Characters { get; set; } = new();
+        public List<int> UnknownInts { get; set; } = [];
+        public List<Character> Characters { get; set; } = [];
         public bool Edited { get; set; } = false;
 
-        private Dictionary<ushort, int> _codepointsToIndexes = new();
+        private Dictionary<ushort, int> _codepointsToIndexes = [];
 
         public FontFile(byte[] data)
         {
@@ -44,17 +44,17 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public byte[] GetBytes()
         {
-            List<byte> data = new();
-            List<int> pointers = new()
-            {
+            List<byte> data = [];
+            List<int> pointers =
+            [
                 ((NumCharacters + 1) * 4) + (UnknownInts.Count * 4)
-            };
+            ];
 
             data.AddRange(BitConverter.GetBytes(NumCharacters));
             
             foreach (Character character in Characters)
             {
-                List<byte> charData = Helpers.CompressData(character.Data.ToArray()).ToList();
+                List<byte> charData = [.. Helpers.CompressData([.. character.Data])];
                 charData.Add(0x00);
                 pointers.Add(pointers.Last() + charData.Count);
                 data.AddRange(charData);
@@ -63,7 +63,7 @@ namespace HaruhiHeiretsuLib.Graphics
             data.InsertRange(4, pointers.SelectMany(p => BitConverter.GetBytes(p)));
             data.InsertRange((NumCharacters + 1) * 4, UnknownInts.SelectMany(i => BitConverter.GetBytes(i)));
 
-            return data.ToArray();
+            return [.. data];
         }
 
         public void OverwriteFont(string font, float fontSize, FontReplacementMap fontReplacementMap)
@@ -100,7 +100,7 @@ namespace HaruhiHeiretsuLib.Graphics
             Index = index;
             Offset = offset;
             FileType = GraphicsFileType.FONT_CHARACTER;
-            Data = data.ToList();
+            Data = [.. data];
             Height = 24;
             Width = (int)(data.Length / Height * 2.0);
         }

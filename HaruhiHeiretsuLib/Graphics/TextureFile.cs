@@ -384,7 +384,7 @@ namespace HaruhiHeiretsuLib.Graphics
                                         break;
                                     }
 
-                                    List<SKColor> texel = new();
+                                    List<SKColor> texel = [];
                                     for (int tY = 0; tY < 4; tY++)
                                     {
                                         for (int tX = 0; tX < 4; tX++)
@@ -425,10 +425,10 @@ namespace HaruhiHeiretsuLib.Graphics
                                     for (int subRow = 0; subRow < 4; subRow++)
                                     {
                                         Data[cmprIndex++] =
-                                            (byte)((Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4]) << 6)
-                                            | (Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4 + 1]) << 4)
-                                            | (Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4 + 2]) << 2)
-                                            | Helpers.ClosestColorIndex(palette.ToList(), texel[subRow * 4 + 3]));
+                                            (byte)((Helpers.ClosestColorIndex([.. palette], texel[subRow * 4]) << 6)
+                                            | (Helpers.ClosestColorIndex([.. palette], texel[subRow * 4 + 1]) << 4)
+                                            | (Helpers.ClosestColorIndex([.. palette], texel[subRow * 4 + 2]) << 2)
+                                            | Helpers.ClosestColorIndex([.. palette], texel[subRow * 4 + 3]));
                                     }
                                 }
                             }

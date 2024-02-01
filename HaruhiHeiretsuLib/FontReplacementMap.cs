@@ -9,7 +9,7 @@ namespace HaruhiHeiretsuLib
 {
     public class FontReplacementMap
     {
-        public Dictionary<ushort, FontReplacementCharacter> Map { get; set; } = new();
+        public Dictionary<ushort, FontReplacementCharacter> Map { get; set; } = [];
 
         public static FontReplacementMap FromJson(string json)
         {

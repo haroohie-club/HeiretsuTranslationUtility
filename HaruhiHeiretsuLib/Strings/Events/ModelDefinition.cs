@@ -68,12 +68,12 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public short RotateDataCount { get; set; } // *AnimTransformDataOffset + 18
         public short ScaleDataCount { get; set; } // *AnimTransformDataOffset + 20
         public short NumKeyframes { get; set; } // *AnimTransformDataOffset + 22
-        public List<SgeAnimation> AnimationDefinitions { get; set; } = new();
-        public List<Unknown38Entry> Unknown38Table { get; set; } = new();
-        public List<TranslateDataEntry> TranslateDataEntries { get; set; } = new();
-        public List<RotateDataEntry> RotateDataEntries { get; set; } = new();
-        public List<ScaleDataEntry> ScaleDataEntries { get; set; } = new();
-        public List<KeyframeDefinition> KeyframeDefinitions { get; set; } = new();
+        public List<SgeAnimation> AnimationDefinitions { get; set; } = [];
+        public List<Unknown38Entry> Unknown38Table { get; set; } = [];
+        public List<TranslateDataEntry> TranslateDataEntries { get; set; } = [];
+        public List<RotateDataEntry> RotateDataEntries { get; set; } = [];
+        public List<ScaleDataEntry> ScaleDataEntries { get; set; } = [];
+        public List<KeyframeDefinition> KeyframeDefinitions { get; set; } = [];
 
         // Truncated version of an SGE header
         public ModelDefinitionDetails(IEnumerable<byte> data, int offset)

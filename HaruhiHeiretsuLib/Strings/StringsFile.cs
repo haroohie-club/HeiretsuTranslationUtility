@@ -11,7 +11,7 @@ namespace HaruhiHeiretsuLib.Strings
     {
         public const string VOICE_REGEX = @"(CL|V)(\w\d{2}\w)?\w{3}\d{3}(?<characterCode>[A-Z]{3})";
 
-        public List<DialogueLine> DialogueLines { get; set; } = new();
+        public List<DialogueLine> DialogueLines { get; set; } = [];
 
         public virtual void EditDialogue(int index, string newLine)
         {
@@ -155,7 +155,7 @@ namespace HaruhiHeiretsuLib.Strings
         public int Length => Encoding.GetEncoding("Shift-JIS").GetByteCount(Line);
         public int NumPaddingZeroes { get; set; } = 1;
 
-        public List<string> Metadata { get; set; } = new();
+        public List<string> Metadata { get; set; } = [];
 
         public override string ToString()
         {

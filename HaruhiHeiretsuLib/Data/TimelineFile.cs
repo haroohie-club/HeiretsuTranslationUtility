@@ -9,7 +9,7 @@ namespace HaruhiHeiretsuLib.Data
 {
     public class TimelineFile : DataFile, IDataStringsFile
     {
-        public List<List<TimelineEntry>> TimelineSections { get; set; } = new();
+        public List<List<TimelineEntry>> TimelineSections { get; set; } = [];
 
         public override void Initialize(byte[] decompressedData, int offset)
         {
@@ -20,7 +20,7 @@ namespace HaruhiHeiretsuLib.Data
 
             for (int i = 0; i < numSections; i++)
             {
-                List<TimelineEntry> entries = new();
+                List<TimelineEntry> entries = [];
                 int sectionStartPointer = BitConverter.ToInt32(Data.Skip(0x0C + i * 0x08).Take(4).Reverse().ToArray());
                 int numEntries = BitConverter.ToInt32(Data.Skip(0x0C + i * 0x08 + 0x04).Take(4).Reverse().ToArray());
 
@@ -35,9 +35,9 @@ namespace HaruhiHeiretsuLib.Data
 
         public override byte[] GetBytes()
         {
-            List<byte> bytes = new();
-            List<byte> dataBytes = new();
-            List<int> endPointers = new();
+            List<byte> bytes = [];
+            List<byte> dataBytes = [];
+            List<int> endPointers = [];
 
             bytes.AddRange(BitConverter.GetBytes(TimelineSections.Count).Reverse());
             bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced later
@@ -48,7 +48,7 @@ namespace HaruhiHeiretsuLib.Data
 
             for (int i = 0; i <  TimelineSections.Count; i++)
             {
-                List<byte> sectionStringBytes = new();
+                List<byte> sectionStringBytes = [];
                 int stringsSectionPointer = currentSectionPointer + 0x54 * TimelineSections[i].Count;
 
                 bytes.AddRange(BitConverter.GetBytes(currentSectionPointer).Reverse());
@@ -74,12 +74,12 @@ namespace HaruhiHeiretsuLib.Data
                 bytes.AddRange(BitConverter.GetBytes(endPointer).Reverse());
             }
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
 
         public List<DialogueLine> GetDialogueLines()
         {
-            List<DialogueLine> lines = new();
+            List<DialogueLine> lines = [];
 
             int i = 0;
             foreach (List<TimelineEntry> section in TimelineSections)
@@ -95,20 +95,20 @@ namespace HaruhiHeiretsuLib.Data
                         {
                             Speaker = $"{identifier} Title",
                             Line = entry.EntryTitle,
-                            Metadata = (new string[3] { $"{i}", $"{j}", "0" }).ToList(),
+                            Metadata = [.. (new string[3] { $"{i}", $"{j}", "0" })],
                         });
                     }
                     lines.Add(new()
                     {
                         Speaker = $"{identifier} Description (1)",
                         Line = entry.EntryDescription,
-                        Metadata = (new string[3] { $"{i}", $"{j}", "1" }).ToList(),
+                        Metadata = [.. (new string[3] { $"{i}", $"{j}", "1" })],
                     });
                     lines.Add(new()
                     {
                         Speaker = $"{identifier} Description (2)",
                         Line = entry.EntryDescription2,
-                        Metadata = (new string[3] { $"{i}", $"{j}", "2" }).ToList(),
+                        Metadata = [.. (new string[3] { $"{i}", $"{j}", "2" })],
                     });
                     if (!string.IsNullOrEmpty(entry.EntryDescriptionCompleted))
                     {
@@ -116,7 +116,7 @@ namespace HaruhiHeiretsuLib.Data
                         {
                             Speaker = $"{identifier} Description Completed (1)",
                             Line = entry.EntryDescriptionCompleted,
-                            Metadata = (new string[3] { $"{i}", $"{j}", "3" }).ToList(),
+                            Metadata = [.. (new string[3] { $"{i}", $"{j}", "3" })],
                         });
                     }
                     if (!string.IsNullOrEmpty(entry.EntryDescriptionCompleted2))
@@ -125,7 +125,7 @@ namespace HaruhiHeiretsuLib.Data
                         {
                             Speaker = $"{identifier} Description Completed (2)",
                             Line = entry.EntryDescriptionCompleted2,
-                            Metadata = (new string[3] { $"{i}", $"{j}", "4" }).ToList(),
+                            Metadata = [.. (new string[3] { $"{i}", $"{j}", "4" })],
                         });
                     }
                     j++;
@@ -239,8 +239,8 @@ namespace HaruhiHeiretsuLib.Data
 
         public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int currentOffset, int currentStringsOffset, List<int> endPointers)
         {
-            List<byte> dataBytes = new();
-            List<byte> stringBytes = new();
+            List<byte> dataBytes = [];
+            List<byte> stringBytes = [];
 
             dataBytes.AddRange(BitConverter.GetBytes(Index).Reverse());
             if (!string.IsNullOrEmpty(EntryTitle))

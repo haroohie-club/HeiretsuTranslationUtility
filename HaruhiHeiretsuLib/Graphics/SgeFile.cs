@@ -21,16 +21,16 @@ namespace HaruhiHeiretsuLib.Graphics
         public string Name { get; set; }
         public int SgeStartOffset { get; set; }
         public SgeHeader SgeHeader { get; set; }
-        public List<SgeAnimation> SgeAnimations { get; set; } = new();
-        public List<TranslateDataEntry> TranslateDataEntries { get; set; } = new();
-        public List<RotateDataEntry> RotateDataEntries { get; set; } = new();
-        public List<ScaleDataEntry> ScaleDataEntries { get; set; } = new();
-        public List<KeyframeDefinition> KeyframeDefinitions { get; set; } = new();
-        public List<Unknown38Entry> Unknown38Table { get; set; } = new();
-        public List<SgeMesh> SgeMeshes { get; set; } = new();
-        public List<SgeMaterial> SgeMaterials { get; set; } = new();
-        public List<SgeBone> SgeBones { get; set; } = new();
-        public List<SgeSubmesh> SgeSubmeshes { get; set; } = new();
+        public List<SgeAnimation> SgeAnimations { get; set; } = [];
+        public List<TranslateDataEntry> TranslateDataEntries { get; set; } = [];
+        public List<RotateDataEntry> RotateDataEntries { get; set; } = [];
+        public List<ScaleDataEntry> ScaleDataEntries { get; set; } = [];
+        public List<KeyframeDefinition> KeyframeDefinitions { get; set; } = [];
+        public List<Unknown38Entry> Unknown38Table { get; set; } = [];
+        public List<SgeMesh> SgeMeshes { get; set; } = [];
+        public List<SgeMaterial> SgeMaterials { get; set; } = [];
+        public List<SgeBone> SgeBones { get; set; } = [];
+        public List<SgeSubmesh> SgeSubmeshes { get; set; } = [];
 
         // AnimTransformData
         public int TranslateDataOffset { get; set; } // *AnimTransformDataOffset + 0
@@ -75,8 +75,8 @@ namespace HaruhiHeiretsuLib.Graphics
                         SgeSubmeshes.Add(new(sgeData, meshTableEntry.SubmeshAddress + i * 0x64, SgeMaterials, SgeBones));
                     }
 
-                    List<(int numVertices, int startAddress)> vertexTables = new();
-                    List<(int numFaces, int startAddress)> faceTables = new();
+                    List<(int numVertices, int startAddress)> vertexTables = [];
+                    List<(int numFaces, int startAddress)> faceTables = [];
 
                     for (int i = 0; i < 2; i++)
                     {
@@ -97,10 +97,10 @@ namespace HaruhiHeiretsuLib.Graphics
                         }
                         faceTables.Add((numFaces, facesStartAddress));
                     }
-                    List<List<SgeVertex>> vertexLists = new();
+                    List<List<SgeVertex>> vertexLists = [];
                     foreach ((int numVertices, int startAddress) in vertexTables)
                     {
-                        vertexLists.Add(new());
+                        vertexLists.Add([]);
                         for (int i = 0; i < numVertices; i++)
                         {
                             vertexLists.Last().Add(new(sgeData.Skip(startAddress + i * 0x38).Take(0x38)));
@@ -120,11 +120,11 @@ namespace HaruhiHeiretsuLib.Graphics
                         count += submesh.SubmeshVertices.Count;
                     }
 
-                    List<List<int>> faceLists = new();
+                    List<List<int>> faceLists = [];
                     currentTable = 0;
                     foreach ((int numFaces, int startAddress) in faceTables)
                     {
-                        faceLists.Add(new());
+                        faceLists.Add([]);
                         for (int i = 0; i < numFaces; i++)
                         {
                             faceLists[currentTable].Add(BitConverter.ToInt32(sgeData.Skip(startAddress + i * 4).Take(4).ToArray()));
@@ -375,8 +375,8 @@ namespace HaruhiHeiretsuLib.Graphics
         public int Unknown30 { get; set; }
         public int Unknown34 { get; set; }
 
-        public List<short> UsedKeyframes { get; set; } = new();
-        public List<BoneTableEntry> BoneTable { get; set; } = new();
+        public List<short> UsedKeyframes { get; set; } = [];
+        public List<BoneTableEntry> BoneTable { get; set; } = [];
 
         public SgeAnimation(IEnumerable<byte> data, int baseOffset, int numBones, int defOffset)
         {
@@ -411,7 +411,7 @@ namespace HaruhiHeiretsuLib.Graphics
     public class BoneTableEntry
     {
         public int Offset { get; set; }
-        public List<BoneTableKeyframe> Keyframes { get; set; } = new();
+        public List<BoneTableKeyframe> Keyframes { get; set; } = [];
 
         public BoneTableEntry(IEnumerable<byte> data, int offset, int numKeyframes)
         {
@@ -622,7 +622,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public int AddressToBone2 { get; set; }     // 5
         public int Count { get; set; }              // 6
 
-        public Dictionary<SgeBoneAttachedVertex, float> VertexGroup { get; set; } = new();
+        public Dictionary<SgeBoneAttachedVertex, float> VertexGroup { get; set; } = [];
 
         public SgeBone(IEnumerable<byte> data, int offset)
         {
@@ -677,8 +677,8 @@ namespace HaruhiHeiretsuLib.Graphics
 
     public class SgeSubmesh
     {
-        public List<SgeVertex> SubmeshVertices { get; set; } = new();
-        public List<SgeFace> SubmeshFaces { get; set; } = new();
+        public List<SgeVertex> SubmeshVertices { get; set; } = [];
+        public List<SgeFace> SubmeshFaces { get; set; } = [];
 
         public SgeMaterial Material { get; set; }
         public int Unknown00 { get; set; }          // 2
@@ -695,7 +695,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public int EndVertex { get; set; }      // 12
         public int StartFace { get; set; }             // 13
         public int FaceCount { get; set; }
-        public List<short> BonePalette { get; set; } = new();
+        public List<short> BonePalette { get; set; } = [];
         public float Unknown54 { get; set; }          // 23
         public float Unknown58 { get; set; }          // 24
         public float Unknown5C { get; set; }          // 25
@@ -772,11 +772,11 @@ namespace HaruhiHeiretsuLib.Graphics
         {
             if (evenOdd == 0)
             {
-                Polygon = new List<int> { first, second, third };
+                Polygon = [first, second, third];
             }
             else
             {
-                Polygon = new List<int> { second, first, third };
+                Polygon = [second, first, third];
             }
             Material = material;
         }

@@ -22,9 +22,9 @@ namespace HaruhiHeiretsuLib.Archive
         public int MagicIntegerLsbMultiplier { get; set; }
         public int MagicIntegerLsbMask { get; set; }
         public int MagicIntegerMsbShift { get; set; }
-        public List<uint> MagicIntegers { get; set; } = new();
-        public List<T> Files { get; set; } = new();
-        public Dictionary<int, int> LengthToMagicIntegerMap { get; private set; } = new();
+        public List<uint> MagicIntegers { get; set; } = [];
+        public List<T> Files { get; set; } = [];
+        public Dictionary<int, int> LengthToMagicIntegerMap { get; private set; } = [];
 
         public static BinArchive<T> FromFile(string fileName)
         {
@@ -79,7 +79,7 @@ namespace HaruhiHeiretsuLib.Archive
                     file.MagicInteger = MagicIntegers[i];
                     file.Index = i + 1;
                     file.Length = compressedLength;
-                    file.CompressedData = fileBytes.ToArray();
+                    file.CompressedData = [.. fileBytes];
                     Files.Add(file);
                 }
             }
@@ -156,7 +156,7 @@ namespace HaruhiHeiretsuLib.Archive
 
         public byte[] GetBytes(out Dictionary<int, int> offsetAdjustments)
         {
-            List<byte> bytes = new();
+            List<byte> bytes = [];
             offsetAdjustments = new()
             {
                 { Files[0].Offset, Files[0].Offset }
@@ -227,7 +227,7 @@ namespace HaruhiHeiretsuLib.Archive
                 bytes.Add(0);
             }
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
     }
 }

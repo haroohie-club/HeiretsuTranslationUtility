@@ -8,13 +8,13 @@ namespace HaruhiHeiretsuLib.Strings.Data
     // The same kind of string files found in Chokuretsu except big-endian
     public class ShadeStringsFile : StringsFile
     {
-        public List<int> FrontPointers { get; set; } = new();
+        public List<int> FrontPointers { get; set; } = [];
         public int PointerToNumEndPointers { get; set; }
-        public List<int> EndPointers { get; set; } = new();
-        public List<int> EndPointerPointers { get; set; } = new();
+        public List<int> EndPointers { get; set; } = [];
+        public List<int> EndPointerPointers { get; set; } = [];
         public string Title { get; set; }
 
-        public Dictionary<int, string> DramatisPersonae { get; set; } = new();
+        public Dictionary<int, string> DramatisPersonae { get; set; } = [];
         public int DialogueSectionPointer { get; set; }
 
         private static int[] ValidIndices = { 2, 4, 10, 14, 20, 30, 34, 40, 42, 44, 46, 48, 56, 58, 60, 64, 66, 72, 74, 76, 78, 84, 88 };
@@ -25,7 +25,7 @@ namespace HaruhiHeiretsuLib.Strings.Data
 
         public override void Initialize(byte[] decompressedData, int offset = 0)
         {
-            Data = decompressedData.ToList();
+            Data = [.. decompressedData];
 
             if ((!ValidIndices.Contains(Index) || offset == 0x800) && (Location.parent < 0 && Location.child < 0))
             {
@@ -34,7 +34,7 @@ namespace HaruhiHeiretsuLib.Strings.Data
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             Offset = offset;
-            Data = decompressedData.ToList();
+            Data = [.. decompressedData];
 
             int numFrontPointers = BitConverter.ToInt32(decompressedData.Take(4).Reverse().ToArray());
             bool reachedDramatisPersonae = false;
@@ -88,8 +88,7 @@ namespace HaruhiHeiretsuLib.Strings.Data
             DialogueLines[index].NumPaddingZeroes = 4 - (DialogueLines[index].Length % 4);
             int lengthDifference = DialogueLines[index].Length + DialogueLines[index].NumPaddingZeroes - oldLength;
 
-            List<byte> toWrite = new();
-            toWrite.AddRange(Encoding.GetEncoding("Shift-JIS").GetBytes(DialogueLines[index].Line));
+            List<byte> toWrite = [.. Encoding.GetEncoding("Shift-JIS").GetBytes(DialogueLines[index].Line)];
             for (int i = 0; i < DialogueLines[index].NumPaddingZeroes; i++)
             {
                 toWrite.Add(0);

@@ -12,8 +12,8 @@ namespace HaruhiHeiretsuCLI
 
         public ExtractBinArchiveCommand() : base("extract-bin-archive", "Unpacks an archive")
         {
-            Options = new()
-            {
+            Options =
+            [
                 "Unpacks all files in an archive (either compressed or decompressed) to a specified directory",
                 "Usage: HaruhiHeiretsuCLI extract-bin-archive -i [inputArchive] -o [outputDirectory] [OPTIONS]",
                 "",
@@ -21,7 +21,7 @@ namespace HaruhiHeiretsuCLI
                 { "o|output-direcetory=", "The directory to unpack the archive files (will be created if does not exist)", o => _outputDirectory = o },
                 { "c|compressed", "Add this flag if you want files to remain compressed", c => _compressed = true },
                 { "d|decimal", "Switches the output from hexadecimal numbering to decimal", d => _decimal = true },
-            };
+            ];
         }
 
         public override int Invoke(IEnumerable<string> arguments)
@@ -54,7 +54,7 @@ namespace HaruhiHeiretsuCLI
 
             archive.Files.ForEach(x => File.WriteAllBytes(Path.Combine(_outputDirectory,
                 (_decimal ? $"{x.Index:D3}" : $"{x.Index:X3}") + ".bin"),
-                _compressed ? x.CompressedData : x.Data.ToArray()));
+                _compressed ? x.CompressedData : [.. x.Data]));
 
             CommandSet.Out.WriteLine($"Successfully unpacked {archive.Files.Count} from archive {archive.FileName}.");
 

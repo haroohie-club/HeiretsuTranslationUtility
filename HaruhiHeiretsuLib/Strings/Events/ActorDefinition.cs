@@ -17,7 +17,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public byte Unknown20 { get; set; }
         public byte Unknown21 { get; set; }
         public short SgeDatIndex { get; set; }
-        public List<ActionDefinition> ActionsTable { get; set; } = new();
+        public List<ActionDefinition> ActionsTable { get; set; } = [];
 
         public ActorDefinition(IEnumerable<byte> data, int offset)
         {
@@ -43,10 +43,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         public List<byte> GetBytes()
         {
-            List<byte> bytes = new();
-
-            bytes.AddRange(BitConverter.GetBytes(ChapterDefinitionOffset));
-            bytes.AddRange(BitConverter.GetBytes((short)Type));
+            List<byte> bytes = [.. BitConverter.GetBytes(ChapterDefinitionOffset), .. BitConverter.GetBytes((short)Type)];
             byte[] modelNameBytes = Encoding.ASCII.GetBytes(ModelName);
             bytes.AddRange(modelNameBytes);
             bytes.AddRange(new byte[0x10 - modelNameBytes.Length]);

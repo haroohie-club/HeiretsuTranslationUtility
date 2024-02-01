@@ -18,9 +18,9 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public string Time { get; set; }
 
         public List<ScriptCommand> AvailableCommands { get; set; }
-        public List<ScriptCommandBlock> ScriptCommandBlocks { get; set; } = new();
+        public List<ScriptCommandBlock> ScriptCommandBlocks { get; set; } = [];
 
-        public List<string> Objects { get; set; } = new();
+        public List<string> Objects { get; set; } = [];
 
         public int NumObjectssOffset { get; set; }
         public short NumObjects { get; set; }
@@ -41,7 +41,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         {
             Location = (parent, child);
             McbId = mcbId;
-            Data = data.ToList();
+            Data = [.. data];
 
             ParseScript();
         }
@@ -49,7 +49,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public override void Initialize(byte[] decompressedData, int offset)
         {
             Offset = offset;
-            Data = decompressedData.ToList();
+            Data = [.. decompressedData];
 
             ParseScript();
         }
@@ -136,7 +136,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     {
                         string voiceFile = Objects.ElementAtOrDefault(Helpers.ToShortOrDefault(ScriptCommandBlocks
                             .SelectMany(b => (b.Invocations
-                            .FirstOrDefault(inv => (inv?.Address ?? -1) == dialogueLines[i].dialogue[j].Offset)?.Parameters ?? new List<Parameter>())
+                            .FirstOrDefault(inv => (inv?.Address ?? -1) == dialogueLines[i].dialogue[j].Offset)?.Parameters ?? [])
                             .FirstOrDefault(p => p.Type == ScriptCommand.ParameterType.VARINDEX)?.Value ?? Array.Empty<byte>())) ?? -1);
                         if (!string.IsNullOrEmpty(voiceFile))
                         {
@@ -222,8 +222,8 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public void Compile(string code, FontReplacementMap fontReplacementMap = null)
         {
-            List<byte> bytes = new();
-            List<(string, int)> labels = new();
+            List<byte> bytes = [];
+            List<(string, int)> labels = [];
             string[] lines = code.Split('\n');
             string[] info = lines[0].Split(' ');
             InternalName = info[0];
@@ -233,8 +233,8 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             bytes.AddRange(Helpers.GetStringBytes(Room));
             bytes.AddRange(Helpers.GetStringBytes(Time));
 
-            ScriptCommandBlocks = new();
-            Objects = new();
+            ScriptCommandBlocks = [];
+            Objects = [];
 
             for (int lineNumber = 2; lineNumber < lines.Length;)
             {
@@ -324,9 +324,11 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 for (int j = 0; j < ScriptCommandBlocks[i].Invocations.Count; j++)
                 {
                     ScriptCommandBlocks[i].Invocations[j].AllOtherInvocations = allInvocations;
-                    List<Parameter> addressParams = new();
-                    addressParams.AddRange(ScriptCommandBlocks[i].Invocations[j].Parameters.Where(p => p.Type == ScriptCommand.ParameterType.ADDRESS));
-                    addressParams.AddRange(ScriptCommandBlocks[i].Invocations[j].Parameters.Where(p => p.Type == ScriptCommand.ParameterType.INDEXEDADDRESS));
+                    List<Parameter> addressParams =
+                    [
+                        .. ScriptCommandBlocks[i].Invocations[j].Parameters.Where(p => p.Type == ScriptCommand.ParameterType.ADDRESS),
+                        .. ScriptCommandBlocks[i].Invocations[j].Parameters.Where(p => p.Type == ScriptCommand.ParameterType.INDEXEDADDRESS),
+                    ];
 
                     foreach (Parameter param in addressParams)
                     {
@@ -354,7 +356,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         {
             Parameter[] dialogueParams = GetDialogueParameters();
             ScriptCommandInvocation[] allInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToArray();
-            Dictionary<int, int> NumChoicesPerInvocationIndex = new();
+            Dictionary<int, int> NumChoicesPerInvocationIndex = [];
 
             for (int i = 0; i < DialogueLines.Count; i++)
             {
@@ -438,7 +440,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 {
                     int eventId = scriptEventFiles[int.Parse(allInvocations[i].CalculateIntParameter(Helpers.GetIntFromByteArray(allInvocations[i].Parameters.First(p => p.Type == ScriptCommand.ParameterType.INT).Value, 0),
                         Helpers.GetIntFromByteArray(allInvocations[i].Parameters.First(p => p.Type == ScriptCommand.ParameterType.INT).Value, 1))[4..])];
-                    List<int> chapters = new();
+                    List<int> chapters = [];
                     byte[] chaptersParam = allInvocations[i].Parameters.FirstOrDefault(p => p.Type == ScriptCommand.ParameterType.INTARRAY)?.Value;
                     if (chaptersParam is not null)
                     {
@@ -502,7 +504,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public static List<string> ParseScriptListFile(byte[] scriptListFileData)
         {
-            List<string> scriptList = new();
+            List<string> scriptList = [];
 
             int numScripts = BitConverter.ToInt32(scriptListFileData.Take(4).Reverse().ToArray());
 

@@ -20,8 +20,8 @@ namespace HaruhiHeiretsuCLI
         private string _mcb, _dat, _evt, _grp, _scr, _fontReplacement, _replacementDir, _resxDir, _langCode, _outputDir;
         public ReplaceFilesCommand() : base("replace-files", "Replaces arbitrary files in the mcb and archives")
         {
-            Options = new()
-            {
+            Options =
+            [
                 "Replaces files in the mcb and bin archives",
                 "",
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
@@ -34,7 +34,7 @@ namespace HaruhiHeiretsuCLI
                 { "x|resx=",  "Path to RESX directory", x => _resxDir = x },
                 { "l|lang-code=", "Language code to use during replacement", l => _langCode = l },
                 { "o|output=", "Path to output directory", o => _outputDir = o },
-            };
+            ];
         }
 
         public override int Invoke(IEnumerable<string> arguments)
@@ -107,7 +107,7 @@ namespace HaruhiHeiretsuCLI
                             continue;
                         }
 
-                        ScriptFile scriptFile = new() { AvailableCommands = ScriptCommand.ParseScriptCommandFile(scr.Files[1].Data.ToArray()) };
+                        ScriptFile scriptFile = new() { AvailableCommands = ScriptCommand.ParseScriptCommandFile([.. scr.Files[1].Data]) };
                         scriptFile.Compile(File.ReadAllText(file), fontReplacementMap);
                         List<byte> data = scriptFile.Data;
 
@@ -115,12 +115,12 @@ namespace HaruhiHeiretsuCLI
                         foreach ((int parentLoc, int childLoc) in loadedFileLocations)
                         {
                             mcb.McbSubArchives[parentLoc].Files[childLoc].Edited = true;
-                            mcb.McbSubArchives[parentLoc].Files[childLoc].Data = data.ToList();
+                            mcb.McbSubArchives[parentLoc].Files[childLoc].Data = [.. data];
                         }
 
                         archivesEdited[McbArchive.ArchiveIndex.SCR] = true;
                         scr.Files.First(f => f.Index == archiveIndex).Edited = true;
-                        scr.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
+                        scr.Files.First(f => f.Index == archiveIndex).Data = [.. data];
 
                         CommandSet.Out.WriteLine($"Finished replacing {Path.GetFileName(file)} in MCB & SCR");
                     }
@@ -185,17 +185,17 @@ namespace HaruhiHeiretsuCLI
                             }
 
                             FileInArchive currentFile = dat.Files.First(f => f.Index == archiveIndex);
-                            List<byte> data = new();
+                            List<byte> data = [];
                             
                             if (archiveIndex == 36)
                             {
                                 CameraDataFile cameraDataFile = new(File.ReadAllLines(file));
-                                data = cameraDataFile.GetBytes().ToList();
+                                data = [.. cameraDataFile.GetBytes()];
                             }
                             else if (archiveIndex == 58)
                             {
                                 MapDefinitionsFile mapDefinitionsFile = new(File.ReadAllLines(file), currentFile.Index, currentFile.Offset);
-                                data = mapDefinitionsFile.GetBytes().ToList();
+                                data = [.. mapDefinitionsFile.GetBytes()];
                             }
                             else
                             {
@@ -210,7 +210,7 @@ namespace HaruhiHeiretsuCLI
                             foreach ((int parentLoc, int childLoc) in loadedFileLocations)
                             {
                                 mcb.McbSubArchives[parentLoc].Files[childLoc].Edited = true;
-                                mcb.McbSubArchives[parentLoc].Files[childLoc].Data = data.ToList();
+                                mcb.McbSubArchives[parentLoc].Files[childLoc].Data = [.. data];
                             }
 
                             archivesEdited[McbArchive.ArchiveIndex.DAT] = true;
@@ -225,7 +225,7 @@ namespace HaruhiHeiretsuCLI
                         foreach ((int parentLoc, int childLoc) in loadedFileLocations)
                         {
                             mcb.McbSubArchives[parentLoc].Files[childLoc].Edited = true;
-                            mcb.McbSubArchives[parentLoc].Files[childLoc].Data = data.ToList();
+                            mcb.McbSubArchives[parentLoc].Files[childLoc].Data = [.. data];
                         }
 
                         switch (archive)
@@ -233,22 +233,22 @@ namespace HaruhiHeiretsuCLI
                             case "dat":
                                 archivesEdited[McbArchive.ArchiveIndex.DAT] = true;
                                 dat.Files.First(f => f.Index == archiveIndex).Edited = true;
-                                dat.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
+                                dat.Files.First(f => f.Index == archiveIndex).Data = [.. data];
                                 break;
                             case "evt":
                                 archivesEdited[McbArchive.ArchiveIndex.EVT] = true;
                                 evt.Files.First(f => f.Index == archiveIndex).Edited = true;
-                                evt.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
+                                evt.Files.First(f => f.Index == archiveIndex).Data = [.. data];
                                 break;
                             case "grp":
                                 archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
                                 grp.Files.First(f => f.Index == archiveIndex).Edited = true;
-                                grp.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
+                                grp.Files.First(f => f.Index == archiveIndex).Data = [.. data];
                                 break;
                             case "scr":
                                 archivesEdited[McbArchive.ArchiveIndex.SCR] = true;
                                 scr.Files.First(f => f.Index == archiveIndex).Edited = true;
-                                scr.Files.First(f => f.Index == archiveIndex).Data = data.ToList();
+                                scr.Files.First(f => f.Index == archiveIndex).Data = [.. data];
                                 break;
                         }
 
@@ -272,7 +272,7 @@ namespace HaruhiHeiretsuCLI
                     int archiveIndex = int.Parse(archiveRegexMatch.Groups["archiveIndex"].Value);
 
                     int i = mcb.StringsFiles.Count;
-                    mcb.LoadStringsFiles(file.Split('_'), ScriptCommand.ParseScriptCommandFile(scr.Files[1].Data.ToArray()));
+                    mcb.LoadStringsFiles(file.Split('_'), ScriptCommand.ParseScriptCommandFile([.. scr.Files[1].Data]));
                     for (; i < mcb.StringsFiles.Count; i++)
                     {
                         FileInArchive mcbFile = mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc];
@@ -324,7 +324,7 @@ namespace HaruhiHeiretsuCLI
 
                             case McbArchive.ArchiveIndex.SCR:
                                 ScriptFile mcbScriptFile = mcbFile.CastTo<ScriptFile>();
-                                mcbScriptFile.AvailableCommands = ScriptCommand.ParseScriptCommandFile(scr.Files[1].Data.ToArray());
+                                mcbScriptFile.AvailableCommands = ScriptCommand.ParseScriptCommandFile([.. scr.Files[1].Data]);
                                 mcbScriptFile.PopulateCommandBlocks();
                                 mcbScriptFile.ImportResxFile(file, fontReplacementMap);
                                 mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = mcbScriptFile;
@@ -389,7 +389,7 @@ namespace HaruhiHeiretsuCLI
 
                         case "scr":
                             archivesEdited[McbArchive.ArchiveIndex.SCR] = true;
-                            scr.Files.First(f => f.Index == archiveIndex).AvailableCommands = ScriptCommand.ParseScriptCommandFile(scr.Files[1].Data.ToArray());
+                            scr.Files.First(f => f.Index == archiveIndex).AvailableCommands = ScriptCommand.ParseScriptCommandFile([.. scr.Files[1].Data]);
                             scr.Files.First(f => f.Index == archiveIndex).PopulateCommandBlocks();
                             scr.Files.First(f => f.Index == archiveIndex).ImportResxFile(file, fontReplacementMap);
                             break;

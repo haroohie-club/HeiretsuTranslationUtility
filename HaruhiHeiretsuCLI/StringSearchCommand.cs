@@ -11,14 +11,14 @@ namespace HaruhiHeiretsuCLI
         private string _mcb, _search;
         public StringSearchCommand() : base("string-search")
         {
-            Options = new()
-            {
+            Options =
+            [
                 "Perform a search for a string anywhere in all files in the MCB",
                 "Usage: HaruhiHeiretsuCLI string-search -m [MCB_FILE] -s [SEARCH]",
                 "",
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
                 { "s|search=", "String to search for", s => _search = s },
-            };
+            ];
         }
 
         public override int Invoke(IEnumerable<string> arguments)

@@ -10,7 +10,7 @@ namespace HaruhiHeiretsuLib.Data
 {
     public class ExtrasCldFile : DataFile, IDataStringsFile
     {
-        public List<CldAbout> CldAbouts = new();
+        public List<CldAbout> CldAbouts = [];
 
         public override void Initialize(byte[] decompressedData, int offset)
         {
@@ -37,9 +37,9 @@ namespace HaruhiHeiretsuLib.Data
 
         public override byte[] GetBytes()
         {
-            List<byte> bytes = new();
-            List<byte> stringBytes = new();
-            List<int> endPointers = new();
+            List<byte> bytes = [];
+            List<byte> stringBytes = [];
+            List<int> endPointers = [];
 
             bytes.AddRange(BitConverter.GetBytes(1).Reverse());
             bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced
@@ -85,12 +85,12 @@ namespace HaruhiHeiretsuLib.Data
 
             bytes.AddRange(new byte[bytes.Count % 16 == 0 ? 0 : 16 - bytes.Count % 16]);
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
 
         public List<DialogueLine> GetDialogueLines()
         {
-            List<DialogueLine> lines = new();
+            List<DialogueLine> lines = [];
 
             for (int i = 0; i < CldAbouts.Count; i++)
             {
@@ -101,7 +101,7 @@ namespace HaruhiHeiretsuLib.Data
                         Offset = i,
                         Speaker = "Title",
                         Line = CldAbouts[i].Title,
-                        Metadata = (new string[] { "0" }).ToList(),
+                        Metadata = [.. (new string[] { "0" })],
                     });
                 }
                 lines.Add(new()
@@ -109,7 +109,7 @@ namespace HaruhiHeiretsuLib.Data
                     Offset = i,
                     Speaker = CldAbouts[i].Speaker,
                     Line = CldAbouts[i].Line,
-                    Metadata = (new string[] { CldAbouts[i].VoiceFile, $"Title: {CldAbouts[i].Title}", "1" }).ToList(),
+                    Metadata = [.. (new string[] { CldAbouts[i].VoiceFile, $"Title: {CldAbouts[i].Title}", "1" })],
                 });
             }
 

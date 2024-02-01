@@ -9,7 +9,7 @@ namespace HaruhiHeiretsuLib
 {
     public class DolFile
     {
-        public List<GraphicsFile> GraphicsFiles { get; set; } = new();
+        public List<GraphicsFile> GraphicsFiles { get; set; } = [];
 
         public DolFile(byte[] dolBytes)
         {

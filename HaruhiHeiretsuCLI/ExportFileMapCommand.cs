@@ -12,15 +12,15 @@ namespace HaruhiHeiretsuCLI
 
         public ExportFileMapCommand() : base("export-file-map")
         {
-            Options = new()
-            {
+            Options =
+            [
                 "Export a map of all files between a specified bin and the MCB",
                 "Usage: HaruhiHeiretsuCLI export-file-map -m [MCB_PATH] -b [BIN_FILE] -o [OUTPUT_FILE]",
                 "",
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
                 { "b|bin=", "Path to the bin archive", b => _binFile = b },
                 { "o|output=", "Output path of file map", o => _outputFile = o },
-            };
+            ];
         }
 
         public override int Invoke(IEnumerable<string> arguments)
@@ -31,7 +31,7 @@ namespace HaruhiHeiretsuCLI
 
             Dictionary<int, List<(int, int)>> fileMap = mcb.GetFileMap(_binFile);
             string binIdentifier = Path.GetFileNameWithoutExtension(_binFile);
-            List<string> fileNames = new();
+            List<string> fileNames = [];
 
             foreach (int binIndex in fileMap.Keys)
             {

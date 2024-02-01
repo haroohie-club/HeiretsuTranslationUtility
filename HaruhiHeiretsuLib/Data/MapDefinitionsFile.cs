@@ -9,7 +9,7 @@ namespace HaruhiHeiretsuLib.Data
 {
     public class MapDefinitionsFile : DataFile, IDataStringsFile
     {
-        public List<MapDefinitionSection> Sections { get; set; } = new();
+        public List<MapDefinitionSection> Sections { get; set; } = [];
 
         public MapDefinitionsFile()
         {
@@ -37,14 +37,14 @@ namespace HaruhiHeiretsuLib.Data
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             IEnumerable<IGrouping<string, string>> csvGroups = csvLines.Skip(1).GroupBy(l => l[0..l.IndexOf('-')]);
-            Sections = csvGroups.Select(g => new MapDefinitionSection(g.ToArray(), int.Parse(g.Key))).ToList();
+            Sections = csvGroups.Select(g => new MapDefinitionSection([.. g], int.Parse(g.Key))).ToList();
         }
 
         public override byte[] GetBytes()
         {
-            List<byte> bytes = new();
-            List<byte> sectionBytes = new();
-            List<int> endPointers = new();
+            List<byte> bytes = [];
+            List<byte> sectionBytes = [];
+            List<int> endPointers = [];
             bytes.AddRange(BitConverter.GetBytes(Sections.Count).Reverse());
             bytes.AddRange(new byte[4]); // end pointer section, will be replaced later
 
@@ -71,7 +71,7 @@ namespace HaruhiHeiretsuLib.Data
                 bytes.AddRange(BitConverter.GetBytes(endPointer).Reverse());
             }
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
 
         public string GetCsv()
@@ -86,7 +86,7 @@ namespace HaruhiHeiretsuLib.Data
 
         public List<DialogueLine> GetDialogueLines()
         {
-            List<DialogueLine> lines = new();
+            List<DialogueLine> lines = [];
 
             foreach (MapDefinitionSection section in Sections)
             {
@@ -128,7 +128,7 @@ namespace HaruhiHeiretsuLib.Data
     public class MapDefinitionSection
     {
         public int Index { get; set; }
-        public List<MapDefinition> MapDefinitions { get; set; } = new();
+        public List<MapDefinition> MapDefinitions { get; set; } = [];
 
         public MapDefinitionSection(IEnumerable<byte> data, int index, int offset, int itemCount)
         {
@@ -151,10 +151,10 @@ namespace HaruhiHeiretsuLib.Data
 
         public List<byte> GetBytes(int mapDefinitionOffset, List<int> endPointers)
         {
-            List<byte> bytes = new();
+            List<byte> bytes = [];
 
             int stringsOffset = mapDefinitionOffset + MapDefinitions.Count * 0x68;
-            List<byte> stringsSection = new();
+            List<byte> stringsSection = [];
 
             foreach (MapDefinition mapDefinition in MapDefinitions)
             {

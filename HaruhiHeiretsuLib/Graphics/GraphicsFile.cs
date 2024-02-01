@@ -19,7 +19,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public override void Initialize(byte[] decompressedData, int offset)
         {
-            Data = decompressedData.ToList();
+            Data = [.. decompressedData];
             Offset = offset;
             if (Encoding.ASCII.GetString(Data.Take(6).ToArray()) == "SGE008")
             {
@@ -42,7 +42,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 Width = 640;
                 Height = 480;
                 UnknownLayoutHeaderInt1 = Data.Skip(4).Take(4).ToArray();
-                LayoutComponents = new();
+                LayoutComponents = [];
                 for (int i = 8; i <= Data.Count - 0x1C; i += 0x1C)
                 {
                     LayoutComponents.Add(new LayoutComponent
@@ -100,7 +100,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public override byte[] GetBytes()
         {
-            return Data.ToArray();
+            return [.. Data];
         }
 
         public void TryResolveName(Dictionary<int, int> offsetIndexDictionary, Dictionary<int, string> textureNameDictionary)

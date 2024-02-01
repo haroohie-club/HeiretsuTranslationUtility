@@ -12,7 +12,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public string Name { get; set; }
         public ushort NumInvocations { get; set; }
         public int BlockOffset { get; set; } // Location of the actual script command block
-        public List<ScriptCommandInvocation> Invocations { get; set; } = new();
+        public List<ScriptCommandInvocation> Invocations { get; set; } = [];
         public int Length => Invocations.Sum(i => i.Length);
 
         public ScriptCommandBlock(int address, int endAddress, IEnumerable<byte> data, List<string> objects)

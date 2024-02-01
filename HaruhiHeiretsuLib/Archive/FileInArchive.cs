@@ -29,12 +29,12 @@ namespace HaruhiHeiretsuLib.Archive
 
         public virtual void Initialize(byte[] decompressedData, int offset)
         {
-            Data = decompressedData.ToList();
+            Data = [.. decompressedData];
             Offset = offset;
         }
         public virtual byte[] GetBytes()
         {
-            return Data.ToArray();
+            return [.. Data];
         }
 
         public FileInArchive()
@@ -56,7 +56,7 @@ namespace HaruhiHeiretsuLib.Archive
                 CompressedData = CompressedData,
                 Edited = Edited
             };
-            newFile.Initialize(Data.ToArray(), Offset);
+            newFile.Initialize([.. Data], Offset);
 
             return newFile;
         }

@@ -21,9 +21,9 @@ namespace HaruhiHeiretsuLib.Data
     */
     public class TopicsAndFlagsFile : DataFile, IDataStringsFile
     {
-        public List<Topic> Topics { get; set; } = new();
-        public Dictionary<FlagType, List<Flag>> Flags { get; set; } = new();
-        public List<TopicReference> TopicReferences { get; set; } = new();
+        public List<Topic> Topics { get; set; } = [];
+        public Dictionary<FlagType, List<Flag>> Flags { get; set; } = [];
+        public List<TopicReference> TopicReferences { get; set; } = [];
 
         public TopicsAndFlagsFile()
         {
@@ -63,7 +63,7 @@ namespace HaruhiHeiretsuLib.Data
                 }
                 else if (i < 8)
                 {
-                    Flags.Add((FlagType)i, new());
+                    Flags.Add((FlagType)i, []);
                     for (int j = 0; j < sectionItemCount; j++)
                     {
                         Flag flag = new();
@@ -98,9 +98,9 @@ namespace HaruhiHeiretsuLib.Data
 
         public override byte[] GetBytes()
         {
-            List<byte> bytes = new();
-            List<byte> dataBytes = new();
-            List<int> endPointers = new();
+            List<byte> bytes = [];
+            List<byte> dataBytes = [];
+            List<int> endPointers = [];
 
             bytes.AddRange(BitConverter.GetBytes(Flags.Count + 2).Reverse());
             bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced later
@@ -112,7 +112,7 @@ namespace HaruhiHeiretsuLib.Data
             bytes.AddRange(BitConverter.GetBytes(currentSectionPointer).Reverse());
             bytes.AddRange(BitConverter.GetBytes(Topics.Count).Reverse());
 
-            List<byte> topicStringsBytes = new();
+            List<byte> topicStringsBytes = [];
             int topicStringsSectionPointer = currentSectionPointer + 0x18 * Topics.Count;
             foreach (Topic topic in Topics)
             {
@@ -142,7 +142,7 @@ namespace HaruhiHeiretsuLib.Data
                 bytes.AddRange(BitConverter.GetBytes(currentSectionPointer).Reverse());
                 bytes.AddRange(BitConverter.GetBytes(Flags[flagType].Count).Reverse());
 
-                List<byte> flagStringsBytes = new();
+                List<byte> flagStringsBytes = [];
                 int flagStringsSectionPointer = currentSectionPointer + 0x08 * Flags[flagType].Count;
 
                 foreach (Flag flag in Flags[flagType])
@@ -160,7 +160,7 @@ namespace HaruhiHeiretsuLib.Data
 
             bytes.AddRange(BitConverter.GetBytes(currentSectionPointer).Reverse());
             bytes.AddRange(BitConverter.GetBytes(TopicReferences.Count).Reverse());
-            List<byte> topicReferenceStringBytes = new();
+            List<byte> topicReferenceStringBytes = [];
             int topicReferenceStringSectionPointer = currentSectionPointer + 0x34 * TopicReferences.Count;
             foreach (TopicReference topicReference in TopicReferences)
             {
@@ -198,12 +198,12 @@ namespace HaruhiHeiretsuLib.Data
                 bytes.AddRange(BitConverter.GetBytes(endPointer).Reverse());
             }
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
 
         public List<DialogueLine> GetDialogueLines()
         {
-            List<DialogueLine> lines = new();
+            List<DialogueLine> lines = [];
 
             foreach (Topic topic in Topics)
             {

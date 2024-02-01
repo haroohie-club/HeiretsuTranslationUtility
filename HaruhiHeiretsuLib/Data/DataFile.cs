@@ -10,7 +10,7 @@ namespace HaruhiHeiretsuLib.Data
         public override void Initialize(byte[] decompressedData, int offset)
         {
             Offset = offset;
-            Data = decompressedData.ToList();
+            Data = [.. decompressedData];
         }
 
         public override byte[] GetBytes() => Data.ToArray();

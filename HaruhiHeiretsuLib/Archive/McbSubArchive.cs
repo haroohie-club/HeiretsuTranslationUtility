@@ -14,7 +14,7 @@ namespace HaruhiHeiretsuLib.Archive
         public int Offset { get; set; }
         public int Size { get; set; }
 
-        public List<FileInArchive> Files { get; set; } = new();
+        public List<FileInArchive> Files { get; set; } = [];
 
         public McbSubArchive(int parentLoc, ushort id, short padding, int offset, int size, byte[] data)
         {
@@ -37,7 +37,7 @@ namespace HaruhiHeiretsuLib.Archive
 
                 byte[] compressedData = data.Skip(i + 12).Take(compressedSize).ToArray();
 
-                Files.Add(new() { Location = (parentLoc, childLoc++), Offset = i, McbId = Id, McbEntryData = (archiveIndex, archiveOffset), CompressedData = compressedData, Data = Helpers.DecompressData(compressedData).ToList() });
+                Files.Add(new() { Location = (parentLoc, childLoc++), Offset = i, McbId = Id, McbEntryData = (archiveIndex, archiveOffset), CompressedData = compressedData, Data = [.. Helpers.DecompressData(compressedData)] });
 
                 i += compressedSize + 12;
             }
@@ -45,7 +45,7 @@ namespace HaruhiHeiretsuLib.Archive
 
         public byte[] GetBytes()
         {
-            List<byte> bytes = new();
+            List<byte> bytes = [];
 
             foreach (FileInArchive file in Files)
             {
@@ -70,7 +70,7 @@ namespace HaruhiHeiretsuLib.Archive
             bytes.AddRange(BitConverter.GetBytes(0x7FFF)); // end bytes
             bytes.AddRange(new byte[bytes.Count % 0x1000 == 0 ? 0x1000 : 0x1000 - (bytes.Count % 0x1000)]);
 
-            return bytes.ToArray();
+            return [.. bytes];
         }
     }
 }

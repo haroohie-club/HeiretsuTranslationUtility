@@ -48,20 +48,22 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
 
         public override List<byte> GetBytes()
         {
-            List<byte> bytes = new();
-            bytes.AddRange(GetHeaderBytes());
-            bytes.AddRange(BitConverter.GetBytes(Unknown0C));
-            bytes.AddRange(BitConverter.GetBytes(Unknown10));
-            bytes.AddRange(BitConverter.GetBytes(Unknown14));
-            bytes.AddRange(BitConverter.GetBytes(Unknown16));
-            bytes.AddRange(BitConverter.GetBytes(Unknown18));
-            bytes.AddRange(BitConverter.GetBytes(Unknown1C));
-            bytes.AddRange(BitConverter.GetBytes(Unknown20));
-            bytes.AddRange(BitConverter.GetBytes(Unknown24));
-            bytes.AddRange(BitConverter.GetBytes(Unknown26));
-            bytes.AddRange(BitConverter.GetBytes(Unknown28));
-            bytes.AddRange(BitConverter.GetBytes(Unknown2A));
-            bytes.AddRange(BitConverter.GetBytes((int)SpeakingCharacter));
+            List<byte> bytes =
+            [
+                .. GetHeaderBytes(),
+                .. BitConverter.GetBytes(Unknown0C),
+                .. BitConverter.GetBytes(Unknown10),
+                .. BitConverter.GetBytes(Unknown14),
+                .. BitConverter.GetBytes(Unknown16),
+                .. BitConverter.GetBytes(Unknown18),
+                .. BitConverter.GetBytes(Unknown1C),
+                .. BitConverter.GetBytes(Unknown20),
+                .. BitConverter.GetBytes(Unknown24),
+                .. BitConverter.GetBytes(Unknown26),
+                .. BitConverter.GetBytes(Unknown28),
+                .. BitConverter.GetBytes(Unknown2A),
+                .. BitConverter.GetBytes((int)SpeakingCharacter),
+            ];
             byte[] voiceFileBytes = Encoding.ASCII.GetBytes(VoiceFile);
             bytes.AddRange(voiceFileBytes);
             bytes.AddRange(new byte[0x20 - voiceFileBytes.Length]);
