@@ -97,7 +97,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public Character(byte[] data, int index, IEnumerable<ushort> codepoint, int offset)
         {
             Codepoints = codepoint.ToArray();
-            Index = index;
+            BinArchiveIndex = index;
             Offset = offset;
             FileType = GraphicsFileType.FONT_CHARACTER;
             Data = [.. data];
@@ -117,7 +117,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public override string ToString()
         {
-            return $"'{Encoding.GetEncoding("Shift-JIS").GetString(BitConverter.GetBytes(Codepoints.Last()).Reverse().ToArray())}' {Index:D4} {Offset:X8}";
+            return $"'{Encoding.GetEncoding("Shift-JIS").GetString(BitConverter.GetBytes(Codepoints.Last()).Reverse().ToArray())}' {BinArchiveIndex:D4} {Offset:X8}";
         }
 
         public static int CodePointToIndex(ushort codepoint)

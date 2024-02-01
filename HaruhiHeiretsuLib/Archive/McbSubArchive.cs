@@ -49,8 +49,8 @@ namespace HaruhiHeiretsuLib.Archive
 
             foreach (FileInArchive file in Files)
             {
-                bytes.AddRange(BitConverter.GetBytes(file.McbEntryData.archiveIndex));
-                bytes.AddRange(BitConverter.GetBytes(file.McbEntryData.archiveOffset));
+                bytes.AddRange(BitConverter.GetBytes(file.McbEntryData.ArchiveIndex));
+                bytes.AddRange(BitConverter.GetBytes(file.McbEntryData.ArchiveOffset));
 
                 if (!file.Edited)
                 {

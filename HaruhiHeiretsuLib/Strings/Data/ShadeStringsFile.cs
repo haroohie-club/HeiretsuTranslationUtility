@@ -27,7 +27,7 @@ namespace HaruhiHeiretsuLib.Strings.Data
         {
             Data = [.. decompressedData];
 
-            if ((!ValidIndices.Contains(Index) || offset == 0x800) && (Location.parent < 0 && Location.child < 0))
+            if ((!ValidIndices.Contains(BinArchiveIndex) || offset == 0x800) && (Location.parent < 0 && Location.child < 0))
             {
                 return;
             }

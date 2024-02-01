@@ -43,7 +43,7 @@ namespace HaruhiHeiretsuCLI
 
             foreach (int datIndex in datMap.Keys)
             {
-                string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(dat.Files.First(f => f.Index == datIndex).CompressedData)).Select(b => $"{b:X2}"));
+                string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(dat.Files.First(f => f.BinArchiveIndex == datIndex).CompressedData)).Select(b => $"{b:X2}"));
                 foreach ((int parent, int child) in datMap[datIndex])
                 {
                     List<byte> blnSubFileData = mcb.McbSubArchives[parent].Files[child].Data;
@@ -66,7 +66,7 @@ namespace HaruhiHeiretsuCLI
 
             foreach (int evtIndex in evtMap.Keys)
             {
-                string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(evt.Files.First(f => f.Index == evtIndex).CompressedData)).Select(b => $"{b:X2}"));
+                string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(evt.Files.First(f => f.BinArchiveIndex == evtIndex).CompressedData)).Select(b => $"{b:X2}"));
                 foreach ((int parent, int child) in evtMap[evtIndex])
                 {
                     List<byte> blnSubFileData = mcb.McbSubArchives[parent].Files[child].Data;
@@ -89,7 +89,7 @@ namespace HaruhiHeiretsuCLI
 
             foreach (int grpIndex in grpMap.Keys)
             {
-                string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(grp.Files.First(f => f.Index == grpIndex).CompressedData)).Select(b => $"{b:X2}"));
+                string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(grp.Files.First(f => f.BinArchiveIndex == grpIndex).CompressedData)).Select(b => $"{b:X2}"));
                 foreach ((int parent, int child) in grpMap[grpIndex])
                 {
                     List<byte> blnSubFileData = mcb.McbSubArchives[parent].Files[child].Data;
@@ -112,7 +112,7 @@ namespace HaruhiHeiretsuCLI
 
             foreach (int scrIndex in scrMap.Keys)
             {
-                string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(scr.Files.First(f => f.Index == scrIndex).CompressedData)).Select(b => $"{b:X2}"));
+                string archiveFileHash = string.Join("", SHA256.HashData(Helpers.DecompressData(scr.Files.First(f => f.BinArchiveIndex == scrIndex).CompressedData)).Select(b => $"{b:X2}"));
                 foreach ((int parent, int child) in scrMap[scrIndex])
                 {
                     List<byte> blnSubFileData = mcb.McbSubArchives[parent].Files[child].Data;

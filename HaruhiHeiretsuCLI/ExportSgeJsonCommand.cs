@@ -38,7 +38,7 @@ namespace HaruhiHeiretsuCLI
             CommandSet.Out.WriteLine($"Loading dat.bin from {_dat}...");
             BinArchive<DataFile> dat = BinArchive<DataFile>.FromFile(_dat);
 
-            byte[] graphicsFileNameMap = dat.Files.First(f => f.Index == 8).GetBytes();
+            byte[] graphicsFileNameMap = dat.Files.First(f => f.BinArchiveIndex == 8).GetBytes();
             int numGraphicsFiles = BitConverter.ToInt32(graphicsFileNameMap.Skip(0x10).Take(4).Reverse().ToArray());
 
             Dictionary<int, string> indexToNameMap = [];
@@ -67,14 +67,14 @@ namespace HaruhiHeiretsuCLI
             }
             else
             {
-                sgeFile = grp.Files.First(f => f.Index == _grpIndex);
+                sgeFile = grp.Files.First(f => f.BinArchiveIndex == _grpIndex);
             }
 
             if (string.IsNullOrEmpty(_outputFile))
             {
                 _outputFile = $"{sgeFile.Name}";
             }
-            CommandSet.Out.WriteLine($"Dumping {sgeFile.Name} (GRP #{sgeFile.Index}) to {_outputFile}.sge.json...");
+            CommandSet.Out.WriteLine($"Dumping {sgeFile.Name} (GRP #{sgeFile.BinArchiveIndex}) to {_outputFile}.sge.json...");
 
             File.WriteAllText($"{_outputFile}.sge.json", sgeFile.Sge.DumpJson());
 

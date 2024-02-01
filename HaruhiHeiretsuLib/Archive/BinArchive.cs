@@ -1,43 +1,63 @@
-﻿using System;
+﻿using HaruhiChokuretsuLib.Util;
+using HaruhiHeiretsuLib.Util;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using HaruhiChokuretsuLib.Util;
-using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Archive
 {
+    /// <summary>
+    /// A representation of the *.bin archive files
+    /// </summary>
+    /// <typeparam name="T">The type of file contained by the archive</typeparam>
     public class BinArchive<T>
         where T : FileInArchive, new()
     {
+        /// <summary>
+        /// The offset of the first magic integer
+        /// </summary>
         public const int FirstMagicIntegerOffset = 0x14;
 
-        public byte[] Header { get; set; }
+        /// <summary>
+        /// The file name of the bin archive
+        /// </summary>
+        public string FileName { get; private set; }
+        /// <summary>
+        /// The number of files in the archive
+        /// </summary>
+        public int NumFiles { get; private set; }
+        /// <summary>
+        /// The alignment in bytes of the files in the archive
+        /// </summary>
+        public int FileAlignment { get; private set; }
+        internal int MagicIntegerLsbMultiplier { get; set; }
+        internal int MagicIntegerLsbMask { get; set; }
+        internal int MagicIntegerMsbShift { get; set; }
+        internal List<uint> MagicIntegers { get; set; } = [];
+        /// <summary>
+        /// The list of files in the archive
+        /// </summary>
+        public List<T> Files { get; private set; } = [];
+        private Dictionary<int, int> _lengthToMagicIntegerMap = [];
 
-        public string FileName { get; set; }
-        public int NumFiles { get; set; }
-        public int HeaderLength { get; set; }
-        public int FileSpacing { get; set; }
-        public int MagicIntegerLsbMultiplier { get; set; }
-        public int MagicIntegerLsbMask { get; set; }
-        public int MagicIntegerMsbShift { get; set; }
-        public List<uint> MagicIntegers { get; set; } = [];
-        public List<T> Files { get; set; } = [];
-        public Dictionary<int, int> LengthToMagicIntegerMap { get; private set; } = [];
-
+        /// <summary>
+        /// Loads a bin archive from a file
+        /// </summary>
+        /// <param name="fileName">The file to load the bin archive from</param>
+        /// <returns>An object representing the bin archive</returns>
         public static BinArchive<T> FromFile(string fileName)
         {
             byte[] archiveBytes = File.ReadAllBytes(fileName);
             return new BinArchive<T>(archiveBytes) { FileName = Path.GetFileName(fileName) };
         }
 
-        public BinArchive(byte[] archiveBytes)
+        internal BinArchive(byte[] archiveBytes)
         {
             // Convert the main header components
             NumFiles = IO.ReadIntLE(archiveBytes, 0);
 
-            FileSpacing = IO.ReadIntLE(archiveBytes, 0x04);
+            FileAlignment = IO.ReadIntLE(archiveBytes, 0x04);
             MagicIntegerLsbMultiplier = IO.ReadIntLE(archiveBytes, 0x08);
 
             MagicIntegerLsbMask = IO.ReadIntLE(archiveBytes, 0x10);
@@ -47,9 +67,9 @@ namespace HaruhiHeiretsuLib.Archive
             for (int i = 0; i <= MagicIntegerLsbMask; i++)
             {
                 int length = GetFileLength((uint)i);
-                if (!LengthToMagicIntegerMap.ContainsKey(length))
+                if (!_lengthToMagicIntegerMap.ContainsKey(length))
                 {
-                    LengthToMagicIntegerMap.Add(length, i);
+                    _lengthToMagicIntegerMap.Add(length, i);
                 }
             }
 
@@ -77,7 +97,7 @@ namespace HaruhiHeiretsuLib.Archive
                     }
                     file.Offset = offset;
                     file.MagicInteger = MagicIntegers[i];
-                    file.Index = i + 1;
+                    file.BinArchiveIndex = i + 1;
                     file.Length = compressedLength;
                     file.CompressedData = [.. fileBytes];
                     Files.Add(file);
@@ -85,21 +105,21 @@ namespace HaruhiHeiretsuLib.Archive
             }
         }
 
-        public int GetFileOffset(uint magicInteger)
+        private int GetFileOffset(uint magicInteger)
         {
-            return (int)((magicInteger >> MagicIntegerMsbShift) * FileSpacing);
+            return (int)((magicInteger >> MagicIntegerMsbShift) * FileAlignment);
         }
 
-        public uint GetNewMagicInteger(T file, int compressedLength)
+        private uint GetNewMagicInteger(T file, int compressedLength)
         {
-            uint offsetComponent = (uint)(file.Offset / FileSpacing) << MagicIntegerMsbShift;
+            uint offsetComponent = (uint)(file.Offset / FileAlignment) << MagicIntegerMsbShift;
             int newLength = (compressedLength + 0x7FF) & ~0x7FF; // round to nearest 0x800
-            int newLengthComponent = LengthToMagicIntegerMap[newLength];
+            int newLengthComponent = _lengthToMagicIntegerMap[newLength];
 
             return offsetComponent | (uint)newLengthComponent;
         }
 
-        public int GetFileLength(uint magicInteger)
+        private int GetFileLength(uint magicInteger)
         {
             // absolutely unhinged routine
             int magicLengthInt = 0x7FF + (int)((magicInteger & (uint)MagicIntegerLsbMask) * (uint)MagicIntegerLsbMultiplier);
@@ -154,6 +174,11 @@ namespace HaruhiHeiretsuLib.Archive
             return magicLengthInt * 0x800;
         }
 
+        /// <summary>
+        /// Gets the binary representation of the bin archive as well as an offset adjustment dictionary
+        /// </summary>
+        /// <param name="offsetAdjustments">A dictionary of adjustments to make within the mcb</param>
+        /// <returns>The binary representation of the bin archive</returns>
         public byte[] GetBytes(out Dictionary<int, int> offsetAdjustments)
         {
             List<byte> bytes = [];
@@ -163,7 +188,7 @@ namespace HaruhiHeiretsuLib.Archive
             };
 
             bytes.AddRange(BitConverter.GetBytes(NumFiles));
-            bytes.AddRange(BitConverter.GetBytes(FileSpacing));
+            bytes.AddRange(BitConverter.GetBytes(FileAlignment));
             bytes.AddRange(BitConverter.GetBytes(MagicIntegerLsbMultiplier));
             bytes.AddRange(BitConverter.GetBytes(MagicIntegerMsbShift));
             bytes.AddRange(BitConverter.GetBytes(MagicIntegerLsbMask));
@@ -186,7 +211,7 @@ namespace HaruhiHeiretsuLib.Archive
                 {
                     compressedBytes = Helpers.CompressData(Files[i].GetBytes());
                     byte[] newMagicalIntegerBytes = BitConverter.GetBytes(GetNewMagicInteger(Files[i], compressedBytes.Length));
-                    int magicIntegerOffset = FirstMagicIntegerOffset + ((Files[i].Index - 1) * 4);
+                    int magicIntegerOffset = FirstMagicIntegerOffset + ((Files[i].BinArchiveIndex - 1) * 4);
                     for (int j = 0; j < newMagicalIntegerBytes.Length; j++)
                     {
                         bytes[magicIntegerOffset + j] = newMagicalIntegerBytes[j];
@@ -205,12 +230,12 @@ namespace HaruhiHeiretsuLib.Archive
                     // the next file’s offset, that means we need to adjust the next file’s offset
                     if (bytes.Count > Files[i + 1].Offset)
                     {
-                        pointerShift = ((bytes.Count - Files[i + 1].Offset) / FileSpacing) + 1;
+                        pointerShift = ((bytes.Count - Files[i + 1].Offset) / FileAlignment) + 1;
                     }
                     if (pointerShift > 0)
                     {
                         // Calculate the new magic integer factoring in pointer shift
-                        Files[i + 1].Offset = ((Files[i + 1].Offset / FileSpacing) + pointerShift) * FileSpacing;
+                        Files[i + 1].Offset = ((Files[i + 1].Offset / FileAlignment) + pointerShift) * FileAlignment;
                         int magicIntegerOffset = FirstMagicIntegerOffset + (i + 1) * 4;
                         uint newMagicInteger = GetNewMagicInteger(Files[i + 1], Files[i + 1].Length);
                         Files[i + 1].MagicInteger = newMagicInteger;

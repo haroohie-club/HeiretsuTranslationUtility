@@ -105,7 +105,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public void TryResolveName(Dictionary<int, int> offsetIndexDictionary, Dictionary<int, string> textureNameDictionary)
         {
-            if (textureNameDictionary.TryGetValue(offsetIndexDictionary[McbEntryData.archiveOffset], out string name))
+            if (textureNameDictionary.TryGetValue(offsetIndexDictionary[McbEntryData.ArchiveOffset], out string name))
             {
                 Name = name;
             }
@@ -113,7 +113,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public void TryResolveName(Dictionary<int, string> textureNameDictionary)
         {
-            if (textureNameDictionary.TryGetValue(Index, out string name))
+            if (textureNameDictionary.TryGetValue(BinArchiveIndex, out string name))
             {
                 Name = name;
             }
@@ -127,7 +127,7 @@ namespace HaruhiHeiretsuLib.Graphics
             }
             else
             {
-                return $"{Index:X3} {Index:D4} {Offset:X8} - {FileType}";
+                return $"{BinArchiveIndex:X3} {BinArchiveIndex:D4} {Offset:X8} - {FileType}";
             }
         }
 

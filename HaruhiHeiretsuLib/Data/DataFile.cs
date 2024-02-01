@@ -17,7 +17,7 @@ namespace HaruhiHeiretsuLib.Data
 
         public override string ToString()
         {
-            return $"{Index:X3} 0x{Offset:X8} {Name}";
+            return $"{BinArchiveIndex:X3} 0x{Offset:X8} {Name}";
         }
     }
 }

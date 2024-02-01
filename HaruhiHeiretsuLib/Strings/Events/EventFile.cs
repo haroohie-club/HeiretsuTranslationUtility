@@ -122,7 +122,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
                 if (dialogueText.Count(c => c == '\n') > 1)
                 {
-                    Console.WriteLine($"Warning: file evt-{Index} has line too long: {dialogueIndex} (starts with '{dialogueText[0..30]}')");
+                    Console.WriteLine($"Warning: file evt-{BinArchiveIndex} has line too long: {dialogueIndex} (starts with '{dialogueText[0..30]}')");
                 }
 
                 EditDialogue(dialogueIndex, dialogueText);

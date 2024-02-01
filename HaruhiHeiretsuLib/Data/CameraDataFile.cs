@@ -4,17 +4,33 @@ using System.Linq;
 
 namespace HaruhiHeiretsuLib.Data
 {
+    /// <summary>
+    /// A file representing the camera data file (dat.bin 0x24)
+    /// </summary>
     public class CameraDataFile : DataFile
     {
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public List<float> Section1 { get; set; } = [];
+        /// <summary>
+        /// List of cameras
+        /// </summary>
         public List<CameraDataEntry> CameraDataEntries { get; set; } = [];
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public short StaticCameraIndex { get; set; } = new();
 
+        /// <summary>
+        /// Simple constructor
+        /// </summary>
         public CameraDataFile()
         {
             Name = "Camera Data";
         }
 
+        /// <inheritdoc/>
         public override void Initialize(byte[] decompressedData, int offset)
         {
             base.Initialize(decompressedData, offset);
@@ -37,6 +53,10 @@ namespace HaruhiHeiretsuLib.Data
             StaticCameraIndex = BitConverter.ToInt16(Data.Skip(section3Offset).Take(2).Reverse().ToArray());
         }
 
+        /// <summary>
+        /// Creates a camera data file from a CSV file
+        /// </summary>
+        /// <param name="csvLines">A list of CSV lines (as with File.ReadAllLines)</param>
         public CameraDataFile(string[] csvLines)
         {
             Section1 = csvLines[1].Split(',').Where(f => f.Length > 0).Select(f => float.Parse(f)).ToList();
@@ -45,6 +65,10 @@ namespace HaruhiHeiretsuLib.Data
             StaticCameraIndex = csvLines.Skip(3 + CameraDataEntries.Count).ElementAt(1).Split(',').Where(f => f.Length > 0).Select(f => short.Parse(f)).First();
         }
 
+        /// <summary>
+        /// Gets a CSV representation of the camera data file
+        /// </summary>
+        /// <returns>A string CSV representation of the camera data file</returns>
         public string GetCsv()
         {
             List<string> csvLines =
@@ -62,6 +86,10 @@ namespace HaruhiHeiretsuLib.Data
             return string.Join('\n', csvLines);
         }
 
+        /// <summary>
+        /// Gets the binary data of the camera file
+        /// </summary>
+        /// <returns>A byte array containing the camera file binary data</returns>
         public override byte[] GetBytes()
         {
             List<byte> bytes = [];
@@ -95,6 +123,9 @@ namespace HaruhiHeiretsuLib.Data
         }
     }
 
+    /// <summary>
+    /// An entry in the CameraDataFile
+    /// </summary>
     public class CameraDataEntry
     {
         public float XPosition { get; set; }

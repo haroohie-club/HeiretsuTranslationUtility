@@ -84,7 +84,7 @@ namespace HaruhiHeiretsuCLI
 
                         SKBitmap bitmap = SKBitmap.Decode(file);
 
-                        grp.Files.First(f => f.Index == archiveIndex).Set20AF30Image(bitmap);
+                        grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Set20AF30Image(bitmap);
 
                         int i = mcb.GraphicsFiles.Count;
                         mcb.LoadGraphicsFiles(file.Split('_'));
@@ -119,8 +119,8 @@ namespace HaruhiHeiretsuCLI
                         }
 
                         archivesEdited[McbArchive.ArchiveIndex.SCR] = true;
-                        scr.Files.First(f => f.Index == archiveIndex).Edited = true;
-                        scr.Files.First(f => f.Index == archiveIndex).Data = [.. data];
+                        scr.Files.First(f => f.BinArchiveIndex == archiveIndex).Edited = true;
+                        scr.Files.First(f => f.BinArchiveIndex == archiveIndex).Data = [.. data];
 
                         CommandSet.Out.WriteLine($"Finished replacing {Path.GetFileName(file)} in MCB & SCR");
                     }
@@ -134,14 +134,14 @@ namespace HaruhiHeiretsuCLI
 
                         string json = File.ReadAllText(file);
 
-                        grp.Files.First(f => f.Index == archiveIndex).ImportLayoutJson(json);
-                        grp.Files.First(f => f.Index == archiveIndex).SetLayoutData();
+                        grp.Files.First(f => f.BinArchiveIndex == archiveIndex).ImportLayoutJson(json);
+                        grp.Files.First(f => f.BinArchiveIndex == archiveIndex).SetLayoutData();
 
                         int i = mcb.GraphicsFiles.Count;
                         mcb.LoadGraphicsFiles(file.Split('_'));
                         for (; i < mcb.GraphicsFiles.Count; i++)
                         {
-                            mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Data = grp.Files.First(f => f.Index == archiveIndex).Data;
+                            mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Data = grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Data;
                             mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Edited = true;
                         }
 
@@ -162,13 +162,13 @@ namespace HaruhiHeiretsuCLI
                             string[] csvLines = File.ReadAllLines(file);
                             List<MapEntry> mapEntries = csvLines.Skip(1).Select(l => new MapEntry(l)).ToList();
 
-                            grp.Files.First(f => f.Index == archiveIndex).SetMapData(mapEntries);
+                            grp.Files.First(f => f.BinArchiveIndex == archiveIndex).SetMapData(mapEntries);
 
                             int i = mcb.GraphicsFiles.Count;
                             mcb.LoadGraphicsFiles(file.Split('_'));
                             for (; i < mcb.GraphicsFiles.Count; i++)
                             {
-                                mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Data = grp.Files.First(f => f.Index == archiveIndex).Data;
+                                mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Data = grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Data;
                                 mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Edited = true;
                             }
 
@@ -184,7 +184,7 @@ namespace HaruhiHeiretsuCLI
                                 continue;
                             }
 
-                            FileInArchive currentFile = dat.Files.First(f => f.Index == archiveIndex);
+                            FileInArchive currentFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex);
                             List<byte> data = [];
                             
                             if (archiveIndex == 36)
@@ -194,7 +194,7 @@ namespace HaruhiHeiretsuCLI
                             }
                             else if (archiveIndex == 58)
                             {
-                                MapDefinitionsFile mapDefinitionsFile = new(File.ReadAllLines(file), currentFile.Index, currentFile.Offset);
+                                MapDefinitionsFile mapDefinitionsFile = new(File.ReadAllLines(file), currentFile.BinArchiveIndex, currentFile.Offset);
                                 data = [.. mapDefinitionsFile.GetBytes()];
                             }
                             else
@@ -232,23 +232,23 @@ namespace HaruhiHeiretsuCLI
                         {
                             case "dat":
                                 archivesEdited[McbArchive.ArchiveIndex.DAT] = true;
-                                dat.Files.First(f => f.Index == archiveIndex).Edited = true;
-                                dat.Files.First(f => f.Index == archiveIndex).Data = [.. data];
+                                dat.Files.First(f => f.BinArchiveIndex == archiveIndex).Edited = true;
+                                dat.Files.First(f => f.BinArchiveIndex == archiveIndex).Data = [.. data];
                                 break;
                             case "evt":
                                 archivesEdited[McbArchive.ArchiveIndex.EVT] = true;
-                                evt.Files.First(f => f.Index == archiveIndex).Edited = true;
-                                evt.Files.First(f => f.Index == archiveIndex).Data = [.. data];
+                                evt.Files.First(f => f.BinArchiveIndex == archiveIndex).Edited = true;
+                                evt.Files.First(f => f.BinArchiveIndex == archiveIndex).Data = [.. data];
                                 break;
                             case "grp":
                                 archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
-                                grp.Files.First(f => f.Index == archiveIndex).Edited = true;
-                                grp.Files.First(f => f.Index == archiveIndex).Data = [.. data];
+                                grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Edited = true;
+                                grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Data = [.. data];
                                 break;
                             case "scr":
                                 archivesEdited[McbArchive.ArchiveIndex.SCR] = true;
-                                scr.Files.First(f => f.Index == archiveIndex).Edited = true;
-                                scr.Files.First(f => f.Index == archiveIndex).Data = [.. data];
+                                scr.Files.First(f => f.BinArchiveIndex == archiveIndex).Edited = true;
+                                scr.Files.First(f => f.BinArchiveIndex == archiveIndex).Data = [.. data];
                                 break;
                         }
 
@@ -339,59 +339,59 @@ namespace HaruhiHeiretsuCLI
                             switch (archiveIndex)
                             {
                                 case DataStringsFileLocations.MAP_DEFINITION_INDEX:
-                                    DataStringsFile<MapDefinitionsFile> mapDefinitionsFile = dat.Files.First(f => f.Index == archiveIndex).CastTo<DataStringsFile<MapDefinitionsFile>>();
+                                    DataStringsFile<MapDefinitionsFile> mapDefinitionsFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<MapDefinitionsFile>>();
                                     mapDefinitionsFile.ImportResxFile(file, fontReplacementMap);
-                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.Index == archiveIndex))] = mapDefinitionsFile.DataFile;
+                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = mapDefinitionsFile.DataFile;
                                     break;
 
                                 case DataStringsFileLocations.TOPICS_FLAGS_INDEX:
-                                    DataStringsFile<TopicsAndFlagsFile> topicsAndFlagsFile = dat.Files.First(f => f.Index == archiveIndex).CastTo<DataStringsFile<TopicsAndFlagsFile>>();
+                                    DataStringsFile<TopicsAndFlagsFile> topicsAndFlagsFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<TopicsAndFlagsFile>>();
                                     topicsAndFlagsFile.ImportResxFile(file, fontReplacementMap);
-                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.Index == archiveIndex))] = topicsAndFlagsFile.DataFile;
+                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = topicsAndFlagsFile.DataFile;
                                     break;
 
                                 case DataStringsFileLocations.NAMEPLATES_INDEX:
-                                    DataStringsFile<NameplatesFile> nameplatesFile = dat.Files.First(f => f.Index == archiveIndex).CastTo<DataStringsFile<NameplatesFile>>();
+                                    DataStringsFile<NameplatesFile> nameplatesFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<NameplatesFile>>();
                                     nameplatesFile.ImportResxFile(file, fontReplacementMap);
-                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.Index == archiveIndex))] = nameplatesFile.DataFile;
+                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = nameplatesFile.DataFile;
                                     break;
 
                                 case DataStringsFileLocations.TIMELINE_INDEX:
-                                    DataStringsFile<TimelineFile> timelineFile = dat.Files.First(f => f.Index == archiveIndex).CastTo<DataStringsFile<TimelineFile>>();
+                                    DataStringsFile<TimelineFile> timelineFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<TimelineFile>>();
                                     timelineFile.ImportResxFile(file, fontReplacementMap);
-                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.Index == archiveIndex))] = timelineFile.DataFile;
+                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = timelineFile.DataFile;
                                     break;
 
                                 case DataStringsFileLocations.CLUBROOM_INDEX:
-                                    DataStringsFile<ClubroomFile> clubroomFile = dat.Files.First(f => f.Index == archiveIndex).CastTo<DataStringsFile<ClubroomFile>>();
+                                    DataStringsFile<ClubroomFile> clubroomFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ClubroomFile>>();
                                     clubroomFile.ImportResxFile(file, fontReplacementMap);
-                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.Index == archiveIndex))] = clubroomFile.DataFile;
+                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = clubroomFile.DataFile;
                                     break;
 
                                 case DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX:
-                                    DataStringsFile<ExtrasClfClaFile> extrasClfClaFile = dat.Files.First(f => f.Index == archiveIndex).CastTo<DataStringsFile<ExtrasClfClaFile>>();
+                                    DataStringsFile<ExtrasClfClaFile> extrasClfClaFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ExtrasClfClaFile>>();
                                     extrasClfClaFile.ImportResxFile(file, fontReplacementMap);
-                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.Index == archiveIndex))] = extrasClfClaFile.DataFile;
+                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = extrasClfClaFile.DataFile;
                                     break;
 
                                 case DataStringsFileLocations.EXTRAS_CLD_INDEX:
-                                    DataStringsFile<ExtrasCldFile> extrasCldFile = dat.Files.First(f => f.Index == archiveIndex).CastTo<DataStringsFile<ExtrasCldFile>>();
+                                    DataStringsFile<ExtrasCldFile> extrasCldFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ExtrasCldFile>>();
                                     extrasCldFile.ImportResxFile(file, fontReplacementMap);
-                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.Index == archiveIndex))] = extrasCldFile.DataFile;
+                                    dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = extrasCldFile.DataFile;
                                     break;
                             }
                             break;
 
                         case "evt":
                             archivesEdited[McbArchive.ArchiveIndex.EVT] = true;
-                            evt.Files.First(f => f.Index == archiveIndex).ImportResxFile(file, fontReplacementMap);
+                            evt.Files.First(f => f.BinArchiveIndex == archiveIndex).ImportResxFile(file, fontReplacementMap);
                             break;
 
                         case "scr":
                             archivesEdited[McbArchive.ArchiveIndex.SCR] = true;
-                            scr.Files.First(f => f.Index == archiveIndex).AvailableCommands = ScriptCommand.ParseScriptCommandFile([.. scr.Files[1].Data]);
-                            scr.Files.First(f => f.Index == archiveIndex).PopulateCommandBlocks();
-                            scr.Files.First(f => f.Index == archiveIndex).ImportResxFile(file, fontReplacementMap);
+                            scr.Files.First(f => f.BinArchiveIndex == archiveIndex).AvailableCommands = ScriptCommand.ParseScriptCommandFile([.. scr.Files[1].Data]);
+                            scr.Files.First(f => f.BinArchiveIndex == archiveIndex).PopulateCommandBlocks();
+                            scr.Files.First(f => f.BinArchiveIndex == archiveIndex).ImportResxFile(file, fontReplacementMap);
                             break;
 
                         case "default":

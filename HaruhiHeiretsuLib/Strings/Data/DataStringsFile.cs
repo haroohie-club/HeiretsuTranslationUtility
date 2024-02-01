@@ -18,7 +18,7 @@ namespace HaruhiHeiretsuLib.Strings.Data
             DataFile.Location = Location;
             DataFile.McbEntryData = McbEntryData;
             DataFile.MagicInteger = MagicInteger;
-            DataFile.Index = Index;
+            DataFile.BinArchiveIndex = BinArchiveIndex;
             DataFile.Offset = Offset;
             DataFile.Length = Length;
             DataFile.CompressedData = CompressedData;

@@ -184,31 +184,31 @@ namespace HaruhiHeiretsuEditor
             {
                 _datStringsFile = BinArchive<ShadeStringsFile>.FromFile(openFileDialog.FileName);
 
-                ShadeStringsFile currentTopicsAndFlagsFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.TOPICS_FLAGS_INDEX);
+                ShadeStringsFile currentTopicsAndFlagsFile = _datStringsFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.TOPICS_FLAGS_INDEX);
                 DataStringsFile<TopicsAndFlagsFile> topicsAndFlagsFile = currentTopicsAndFlagsFile.CastTo<DataStringsFile<TopicsAndFlagsFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentTopicsAndFlagsFile)] = topicsAndFlagsFile;
 
-                ShadeStringsFile currentMapDefFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.MAP_DEFINITION_INDEX);
+                ShadeStringsFile currentMapDefFile = _datStringsFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.MAP_DEFINITION_INDEX);
                 DataStringsFile<MapDefinitionsFile> mapDefFile = currentMapDefFile.CastTo<DataStringsFile<MapDefinitionsFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentMapDefFile)] = mapDefFile;
 
-                ShadeStringsFile currentTimelineFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.TIMELINE_INDEX);
+                ShadeStringsFile currentTimelineFile = _datStringsFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.TIMELINE_INDEX);
                 DataStringsFile<TimelineFile> timelineFile = currentTimelineFile.CastTo<DataStringsFile<TimelineFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentTimelineFile)] = timelineFile;
 
-                ShadeStringsFile currentNameplatesFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.NAMEPLATES_INDEX);
+                ShadeStringsFile currentNameplatesFile = _datStringsFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.NAMEPLATES_INDEX);
                 DataStringsFile<NameplatesFile> nameplatesFile = currentNameplatesFile.CastTo<DataStringsFile<NameplatesFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentNameplatesFile)] = nameplatesFile;
 
-                ShadeStringsFile currentClubroomFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.CLUBROOM_INDEX);
+                ShadeStringsFile currentClubroomFile = _datStringsFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.CLUBROOM_INDEX);
                 DataStringsFile<ClubroomFile> clubroomFile = currentClubroomFile.CastTo<DataStringsFile<ClubroomFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentClubroomFile)] = clubroomFile;
 
-                ShadeStringsFile currentExtrasClfClaFile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX);
+                ShadeStringsFile currentExtrasClfClaFile = _datStringsFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX);
                 DataStringsFile<ExtrasClfClaFile> extrasClfClaFile = currentExtrasClfClaFile.CastTo<DataStringsFile<ExtrasClfClaFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentExtrasClfClaFile)] = extrasClfClaFile;
 
-                ShadeStringsFile currentExtrasCldFfile = _datStringsFile.Files.First(f => f.Index == DataStringsFileLocations.EXTRAS_CLD_INDEX);
+                ShadeStringsFile currentExtrasCldFfile = _datStringsFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.EXTRAS_CLD_INDEX);
                 DataStringsFile<ExtrasCldFile> extrasCldFile = currentExtrasCldFfile.CastTo<DataStringsFile<ExtrasCldFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentExtrasCldFfile)] = extrasCldFile;
 
@@ -330,7 +330,7 @@ namespace HaruhiHeiretsuEditor
                 }
                 if (_evtFile is not null)
                 {
-                    scriptEditStackPanel.Children.Add(new TextBlock { Text = $"EVT {_evtFile.Files.Where(e => e.Index > 0xB3 || e.Index < 0xB1).Sum(e => e.DialogueLines.Count)}" });
+                    scriptEditStackPanel.Children.Add(new TextBlock { Text = $"EVT {_evtFile.Files.Where(e => e.BinArchiveIndex > 0xB3 || e.BinArchiveIndex < 0xB1).Sum(e => e.DialogueLines.Count)}" });
                 }
             }
             if (scriptsListBox.SelectedIndex >= 0)
@@ -756,17 +756,17 @@ namespace HaruhiHeiretsuEditor
             }
             else
             {
-                if (mapButton.Graphic.Index == 13) // main title screen
+                if (mapButton.Graphic.BinArchiveIndex == 13) // main title screen
                 {
-                    archiveGraphicsFiles = KnownLayoutGraphicsSets.TitleScreenGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                    archiveGraphicsFiles = KnownLayoutGraphicsSets.TitleScreenGraphics.Select(s => _grpFile.Files.First(f => f.BinArchiveIndex == s.GrpIndex)).ToList();
                 }
-                else if (mapButton.Graphic.Index == 202) // special version screen
+                else if (mapButton.Graphic.BinArchiveIndex == 202) // special version screen
                 {
-                    archiveGraphicsFiles = KnownLayoutGraphicsSets.SpecialVersionGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                    archiveGraphicsFiles = KnownLayoutGraphicsSets.SpecialVersionGraphics.Select(s => _grpFile.Files.First(f => f.BinArchiveIndex == s.GrpIndex)).ToList();
                 }
-                else if (mapButton.Graphic.Index == 33) // loading screen
+                else if (mapButton.Graphic.BinArchiveIndex == 33) // loading screen
                 {
-                    archiveGraphicsFiles = KnownLayoutGraphicsSets.PauseMenuGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                    archiveGraphicsFiles = KnownLayoutGraphicsSets.PauseMenuGraphics.Select(s => _grpFile.Files.First(f => f.BinArchiveIndex == s.GrpIndex)).ToList();
                 }
                 else
                 {
@@ -774,19 +774,19 @@ namespace HaruhiHeiretsuEditor
                     {
                         case 0:
                         default:
-                            archiveGraphicsFiles = KnownLayoutGraphicsSets.OptionsBgAndOtherGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                            archiveGraphicsFiles = KnownLayoutGraphicsSets.OptionsBgAndOtherGraphics.Select(s => _grpFile.Files.First(f => f.BinArchiveIndex == s.GrpIndex)).ToList();
                             break;
                         case 1:
-                            archiveGraphicsFiles = KnownLayoutGraphicsSets.MainInterfaceGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                            archiveGraphicsFiles = KnownLayoutGraphicsSets.MainInterfaceGraphics.Select(s => _grpFile.Files.First(f => f.BinArchiveIndex == s.GrpIndex)).ToList();
                             break;
                         case 2:
-                            archiveGraphicsFiles = KnownLayoutGraphicsSets.PauseMenuGraphics.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                            archiveGraphicsFiles = KnownLayoutGraphicsSets.PauseMenuGraphics.Select(s => _grpFile.Files.First(f => f.BinArchiveIndex == s.GrpIndex)).ToList();
                             break;
                         case 3:
-                            archiveGraphicsFiles = KnownLayoutGraphicsSets.Unknown801BAB1C.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                            archiveGraphicsFiles = KnownLayoutGraphicsSets.Unknown801BAB1C.Select(s => _grpFile.Files.First(f => f.BinArchiveIndex == s.GrpIndex)).ToList();
                             break;
                         case 4:
-                            archiveGraphicsFiles = KnownLayoutGraphicsSets.Unknown801BAB28.Select(s => _grpFile.Files.First(f => f.Index == s.GrpIndex)).ToList();
+                            archiveGraphicsFiles = KnownLayoutGraphicsSets.Unknown801BAB28.Select(s => _grpFile.Files.First(f => f.BinArchiveIndex == s.GrpIndex)).ToList();
                             break;
                     }
                 };
@@ -933,23 +933,23 @@ namespace HaruhiHeiretsuEditor
 
                 if (Path.GetFileName(openFileDialog.FileName) == "dat.bin")
                 {
-                    DataFile currentSgeIndexFile = _datFile.Files.First(f => f.Index == 4);
+                    DataFile currentSgeIndexFile = _datFile.Files.First(f => f.BinArchiveIndex == 4);
                     SgeIndexFile sgeIndexFile = currentSgeIndexFile.CastTo<SgeIndexFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentSgeIndexFile)] = sgeIndexFile;
 
-                    DataFile currentCameraDataFile = _datFile.Files.First(f => f.Index == 36);
+                    DataFile currentCameraDataFile = _datFile.Files.First(f => f.BinArchiveIndex == 36);
                     CameraDataFile cameraDataFile = currentCameraDataFile.CastTo<CameraDataFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentCameraDataFile)] = cameraDataFile;
 
-                    DataFile currentTopicsAndFlagsFile = _datFile.Files.First(f => f.Index == DataStringsFileLocations.TOPICS_FLAGS_INDEX);
+                    DataFile currentTopicsAndFlagsFile = _datFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.TOPICS_FLAGS_INDEX);
                     TopicsAndFlagsFile topicsAndFlagsFile = currentTopicsAndFlagsFile.CastTo<TopicsAndFlagsFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentTopicsAndFlagsFile)] = topicsAndFlagsFile;
 
-                    DataFile currentMapDefFile = _datFile.Files.First(f => f.Index == DataStringsFileLocations.MAP_DEFINITION_INDEX);
+                    DataFile currentMapDefFile = _datFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.MAP_DEFINITION_INDEX);
                     MapDefinitionsFile mapDefFile = currentMapDefFile.CastTo<MapDefinitionsFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentMapDefFile)] = mapDefFile;
 
-                    DataFile currentTimelineFile = _datFile.Files.First(f => f.Index == DataStringsFileLocations.TIMELINE_INDEX);
+                    DataFile currentTimelineFile = _datFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.TIMELINE_INDEX);
                     TimelineFile timelineFile = currentMapDefFile.CastTo<TimelineFile>();
                     _datFile.Files[_datFile.Files.IndexOf(currentTimelineFile)] = timelineFile;
                 }
@@ -1000,7 +1000,7 @@ namespace HaruhiHeiretsuEditor
             {
                 DataFile newDataFile = new();
                 newDataFile.Initialize(File.ReadAllBytes(openFileDialog.FileName), _datFile.Files[dataListBox.SelectedIndex].Offset);
-                newDataFile.Index = _datFile.Files[dataListBox.SelectedIndex].Index;
+                newDataFile.BinArchiveIndex = _datFile.Files[dataListBox.SelectedIndex].BinArchiveIndex;
                 _datFile.Files[dataListBox.SelectedIndex] = newDataFile;
                 _datFile.Files[dataListBox.SelectedIndex].Edited = true;
                 graphicsListBox.Items.Refresh();

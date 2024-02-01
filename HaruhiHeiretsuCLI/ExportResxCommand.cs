@@ -46,7 +46,7 @@ namespace HaruhiHeiretsuCLI
             Dictionary<int, string> indexToNameMap = scriptNames.ToDictionary(keySelector: n => scriptNames.IndexOf(n) + 1);
             List<ScriptCommand> commands = ScriptCommand.ParseScriptCommandFile(scr.Files[1].GetBytes());
 
-            MapDefinitionsFile mapDefinitionsFile = dat.Files.First(f => f.Index == 58).CastTo<MapDefinitionsFile>();
+            MapDefinitionsFile mapDefinitionsFile = dat.Files.First(f => f.BinArchiveIndex == 58).CastTo<MapDefinitionsFile>();
 
             List<(string, string, int)> binMap = files.Select(f =>
             {
@@ -63,39 +63,39 @@ namespace HaruhiHeiretsuCLI
                         switch (index)
                         {
                             case DataStringsFileLocations.MAP_DEFINITION_INDEX:
-                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<MapDefinitionsFile>>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<MapDefinitionsFile>>().WriteResxFile(fileName);
                                 break;
                             case DataStringsFileLocations.TOPICS_FLAGS_INDEX:
-                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<TopicsAndFlagsFile>>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<TopicsAndFlagsFile>>().WriteResxFile(fileName);
                                 break;
                             case DataStringsFileLocations.NAMEPLATES_INDEX:
-                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<NameplatesFile>>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<NameplatesFile>>().WriteResxFile(fileName);
                                 break;
                             case DataStringsFileLocations.TIMELINE_INDEX:
-                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<TimelineFile>>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<TimelineFile>>().WriteResxFile(fileName);
                                 break;
                             case DataStringsFileLocations.CLUBROOM_INDEX:
-                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<ClubroomFile>>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ClubroomFile>>().WriteResxFile(fileName);
                                 break;
                             case DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX:
-                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<ExtrasClfClaFile>>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ExtrasClfClaFile>>().WriteResxFile(fileName);
                                 break;
                             case DataStringsFileLocations.EXTRAS_CLD_INDEX:
-                                dat.Files.Last(f => f.Index == index).CastTo<DataStringsFile<ExtrasCldFile>>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ExtrasCldFile>>().WriteResxFile(fileName);
                                 break;
                             default:
-                                dat.Files.Last(f => f.Index == index).CastTo<ShadeStringsFile>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<ShadeStringsFile>().WriteResxFile(fileName);
                                 break;
                         }
                         break;
 
                     case "evt":
-                        evt.Files.First(f => f.Index == index).WriteResxFile(fileName);
+                        evt.Files.First(f => f.BinArchiveIndex == index).WriteResxFile(fileName);
                         break;
 
                     case "scr":
-                        ScriptFile scrFile = scr.Files.First(f => f.Index == index);
-                        scrFile.Name = indexToNameMap[scrFile.Index];
+                        ScriptFile scrFile = scr.Files.First(f => f.BinArchiveIndex == index);
+                        scrFile.Name = indexToNameMap[scrFile.BinArchiveIndex];
                         fileName = Path.Combine(_outputDirectory, $"{name}_{scrFile.Name}.ja.resx");
 
                         int mapSection, mapIndex;

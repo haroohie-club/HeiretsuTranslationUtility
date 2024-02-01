@@ -55,7 +55,7 @@ namespace HaruhiHeiretsuLib.Strings
             }
             else
             {
-                return $"{Index:X3} {Index:D4} 0x{Offset:X8}";
+                return $"{BinArchiveIndex:X3} {BinArchiveIndex:D4} 0x{Offset:X8}";
             }
         }
 

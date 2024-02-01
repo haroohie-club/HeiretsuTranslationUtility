@@ -178,9 +178,9 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
                 string dialogueText = ProcessDialogueLineWithFontReplacement(NormalizeDialogueLine((string)d.Value), fontReplacementMap, DIALOGUE_LINE_LENGTHS);
 
-                if (dialogueText.Count(c => c == '\n') > 3 && Index > 0)
+                if (dialogueText.Count(c => c == '\n') > 3 && BinArchiveIndex > 0)
                 {
-                    Console.WriteLine($"Warning: file scr-{Index:D4} has line too long: {dialogueIndex} (starts with '{dialogueText[0..30]}')");
+                    Console.WriteLine($"Warning: file scr-{BinArchiveIndex:D4} has line too long: {dialogueIndex} (starts with '{dialogueText[0..30]}')");
                 }
 
                 EditDialogue(dialogueIndex, dialogueText);
@@ -524,7 +524,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             }
             else
             {
-                return $"{Index:X3} {Index:D4} 0x{Offset:X8} {Name}";
+                return $"{BinArchiveIndex:X3} {BinArchiveIndex:D4} 0x{Offset:X8} {Name}";
             }
         }
     }

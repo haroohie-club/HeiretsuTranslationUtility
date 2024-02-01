@@ -124,11 +124,11 @@ namespace HaruhiHeiretsuLib.Archive
             {
                 foreach (FileInArchive file in subArchive.Files)
                 {
-                    if (file.McbEntryData.archiveIndex == archiveIndexToAdjust)
+                    if (file.McbEntryData.ArchiveIndex == archiveIndexToAdjust)
                     {
-                        if (offsetAdjustments.ContainsKey(file.McbEntryData.archiveOffset))
+                        if (offsetAdjustments.ContainsKey(file.McbEntryData.ArchiveOffset))
                         {
-                            file.McbEntryData = (file.McbEntryData.archiveIndex, offsetAdjustments[file.McbEntryData.archiveOffset]);
+                            file.McbEntryData = (file.McbEntryData.ArchiveIndex, offsetAdjustments[file.McbEntryData.ArchiveOffset]);
                         }
                     }
                 }
@@ -170,7 +170,7 @@ namespace HaruhiHeiretsuLib.Archive
             {
                 if (McbSubArchives[parentLoc].Files[childLoc].GetType() == typeof(ScriptFile))
                 {
-                    ((ScriptFile)McbSubArchives[parentLoc].Files[childLoc]).Name = indexToNameMap[OffsetIndexDictionaries[ArchiveIndex.SCR][McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveOffset]];
+                    ((ScriptFile)McbSubArchives[parentLoc].Files[childLoc]).Name = indexToNameMap[OffsetIndexDictionaries[ArchiveIndex.SCR][McbSubArchives[parentLoc].Files[childLoc].McbEntryData.ArchiveOffset]];
                 }
             }
         }
@@ -188,7 +188,7 @@ namespace HaruhiHeiretsuLib.Archive
                     OffsetIndexDictionaries[ArchiveIndex.GRP] = [];
                     foreach (var file in archive.Files)
                     {
-                        OffsetIndexDictionaries[ArchiveIndex.GRP].Add(file.Offset, file.Index);
+                        OffsetIndexDictionaries[ArchiveIndex.GRP].Add(file.Offset, file.BinArchiveIndex);
                     }
                     ResolveGraphicsFileNames();
                     break;
@@ -200,7 +200,7 @@ namespace HaruhiHeiretsuLib.Archive
                     OffsetIndexDictionaries[ArchiveIndex.DAT] = [];
                     foreach (var file in archive.Files)
                     {
-                        OffsetIndexDictionaries[ArchiveIndex.DAT].Add(file.Offset, file.Index);
+                        OffsetIndexDictionaries[ArchiveIndex.DAT].Add(file.Offset, file.BinArchiveIndex);
                     }
                     break;
                 case "scr.bin":
@@ -211,7 +211,7 @@ namespace HaruhiHeiretsuLib.Archive
                     OffsetIndexDictionaries[ArchiveIndex.SCR] = [];
                     foreach (var file in archive.Files)
                     {
-                        OffsetIndexDictionaries[ArchiveIndex.SCR].Add(file.Offset, file.Index);
+                        OffsetIndexDictionaries[ArchiveIndex.SCR].Add(file.Offset, file.BinArchiveIndex);
                     }
                     ResolveScriptFileName();
                     break;
@@ -223,7 +223,7 @@ namespace HaruhiHeiretsuLib.Archive
                     OffsetIndexDictionaries[ArchiveIndex.EVT] = [];
                     foreach (var file in archive.Files)
                     {
-                        OffsetIndexDictionaries[ArchiveIndex.EVT].Add(file.Offset, file.Index);
+                        OffsetIndexDictionaries[ArchiveIndex.EVT].Add(file.Offset, file.BinArchiveIndex);
                     }
                     break;
             }
@@ -263,9 +263,9 @@ namespace HaruhiHeiretsuLib.Archive
             {
                 for (int j = 0; j < McbSubArchives[i].Files.Count; j++)
                 {
-                    if (McbSubArchives[i].Files[j].McbEntryData.archiveIndex == archiveIndexToSearch)
+                    if (McbSubArchives[i].Files[j].McbEntryData.ArchiveIndex == archiveIndexToSearch)
                     {
-                        int correspondingBinIndex = binArchive.Files.First(f => f.Offset == McbSubArchives[i].Files[j].McbEntryData.archiveOffset).Index;
+                        int correspondingBinIndex = binArchive.Files.First(f => f.Offset == McbSubArchives[i].Files[j].McbEntryData.ArchiveOffset).BinArchiveIndex;
 
                         if (!fileMap.ContainsKey(correspondingBinIndex))
                         {
@@ -309,7 +309,7 @@ namespace HaruhiHeiretsuLib.Archive
                     mapDef = null;
                 }
 
-                switch ((ArchiveIndex)McbSubArchives[parentLoc].Files[childLoc].McbEntryData.archiveIndex)
+                switch ((ArchiveIndex)McbSubArchives[parentLoc].Files[childLoc].McbEntryData.ArchiveIndex)
                 {
                     case ArchiveIndex.DAT:
                         StringsFiles.Add((parentLoc, childLoc));
@@ -400,12 +400,12 @@ namespace HaruhiHeiretsuLib.Archive
             {
                 for (int child = 0; child < McbSubArchives[parent].Files.Count; child++)
                 {
-                    if (McbSubArchives[parent].Files[child].McbEntryData.archiveIndex == (int)ArchiveIndex.GRP)
+                    if (McbSubArchives[parent].Files[child].McbEntryData.ArchiveIndex == (int)ArchiveIndex.GRP)
                     {
                         GraphicsFile graphicsFile = new()
                         {
-                            Location = (parent, child), McbEntryData = (McbSubArchives[parent].Files[child].McbEntryData.archiveIndex,
-                            McbSubArchives[parent].Files[child].McbEntryData.archiveOffset),
+                            Location = (parent, child), McbEntryData = (McbSubArchives[parent].Files[child].McbEntryData.ArchiveIndex,
+                            McbSubArchives[parent].Files[child].McbEntryData.ArchiveOffset),
                             McbId = McbSubArchives[parent].Id,
                             CompressedData = McbSubArchives[parent].Files[child].CompressedData
                         };

@@ -53,7 +53,7 @@ namespace HaruhiHeiretsuCLI
             var archive = BinArchive<FileInArchive>.FromFile(_inputArchive);
 
             archive.Files.ForEach(x => File.WriteAllBytes(Path.Combine(_outputDirectory,
-                (_decimal ? $"{x.Index:D3}" : $"{x.Index:X3}") + ".bin"),
+                (_decimal ? $"{x.BinArchiveIndex:D3}" : $"{x.BinArchiveIndex:X3}") + ".bin"),
                 _compressed ? x.CompressedData : [.. x.Data]));
 
             CommandSet.Out.WriteLine($"Successfully unpacked {archive.Files.Count} from archive {archive.FileName}.");
