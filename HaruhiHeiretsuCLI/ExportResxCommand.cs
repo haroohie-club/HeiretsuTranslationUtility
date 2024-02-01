@@ -18,8 +18,8 @@ namespace HaruhiHeiretsuCLI
         private Regex _binRegex = new Regex(@"(?<bin>dat|evt|scr)-(?<index>\-?\d{4})");
         public ExportResxCommand() : base("export-resx", "Exports RESX files from string files")
         {
-            Options =
-            [
+            Options = new()
+            {
                 "Exports RESX files from a list of string files.",
                 "",
                 { "i|input|string-file-map=", "String file map", i => _stringFileMap = i },
@@ -28,7 +28,7 @@ namespace HaruhiHeiretsuCLI
                 { "e|evt=", "Input evt.bin", e => _evt = e },
                 { "s|scr=", "input scr.bin", s => _scr = s },
                 { "o|output-directory=", "Output directory for resx files", o => _outputDirectory = o },
-            ];
+            };
         }
 
         public override int Invoke(IEnumerable<string> arguments)

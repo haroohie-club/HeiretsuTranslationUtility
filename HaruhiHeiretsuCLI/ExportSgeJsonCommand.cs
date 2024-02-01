@@ -16,8 +16,8 @@ namespace HaruhiHeiretsuCLI
         private int _grpIndex = 0;
         public ExportSgeJsonCommand() : base("export-sge-json")
         {
-            Options =
-            [
+            Options = new()
+            {
                 "Export an SGE model's JSON data for importing into Blender; SGE can be specified by file name or by GRP index",
                 "Usage: HaruhiHeiretsuCLI export-sge-json -g GRP.BIN -d DAT.BIN [-n SGE_NAME] [-i GRP_INDEX]",
                 "",
@@ -26,7 +26,7 @@ namespace HaruhiHeiretsuCLI
                 { "n|name|sge-name=", "Name of the SGE file to export", n => _sgeName = n },
                 { "i|index|grp-index=", "Index of the file in grp.bin", i => _grpIndex = int.Parse(i) },
                 { "o|output=", "Output file location; defaults to the name of the file in the current directory", o => _outputFile = o },
-            ];
+            };
         }
 
         public override int Invoke(IEnumerable<string> arguments)

@@ -1,10 +1,6 @@
 ﻿using Mono.Options;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace HaruhiHeiretsuCLI
@@ -15,13 +11,13 @@ namespace HaruhiHeiretsuCLI
 
         public GeneratePatchCommand() : base("generate-patch")
         {
-            Options =
-            [
+            Options = new()
+            {
                 "Generate the base Riivolution patch",
                 "Usage: HaruhiHeiretsuCLI generate-patch -o [OUTPUT_DIR]",
                 "",
                 { "o|output=", "Directory to place patch in", o => _outputDir = o },
-            ];
+            };
         }
 
         public override int Invoke(IEnumerable<string> arguments)

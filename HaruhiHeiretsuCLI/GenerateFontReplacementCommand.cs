@@ -19,8 +19,8 @@ namespace HaruhiHeiretsuCLI
 
         public GenerateFontReplacementCommand() : base("generate-font-replacement", "Generate a font replacement map from a font file")
         {
-            Options =
-            [
+            Options = new()
+            {
                 "Generates a font replacement map from the glyph widths in a given font file",
                 "Usage: HaruhiHeiretsuCLI generate-font-replacement-command -f FONT_FILE -s FONT_SIZE -j OUTPUT_FILE -c OUTPUT_HACK [-e EXTENDED_CHARACTERS]",
                 "",
@@ -29,7 +29,7 @@ namespace HaruhiHeiretsuCLI
                 { "j|output-json=", "The output JSON file location", j => _outputJson = j },
                 { "c|h|output-c|output-hack=", "The output location of the font hack C file", h => _outputHack = h },
                 { "e|extended-characters=", "A string of extended characters to replace Japanese characters with", e => _extendedCharacters = e },
-            ];
+            };
         }
 
         public override int Invoke(IEnumerable<string> arguments)

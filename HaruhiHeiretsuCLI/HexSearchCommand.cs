@@ -3,7 +3,6 @@ using Mono.Options;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuCLI
 {
@@ -15,8 +14,8 @@ namespace HaruhiHeiretsuCLI
 
         public HexSearchCommand() : base("hex-search")
         {
-            Options =
-            [
+            Options = new()
+            {
                 "Searches the decompressed files in the MCB for a particular hex string and returns files/locations where it is found",
                 "Usage: HaruhiHeiretsuCLI hex-search -m [MCB_FILE] -s [HEX_STRING]",
                 "",
@@ -33,7 +32,7 @@ namespace HaruhiHeiretsuCLI
                     }
                 },
                 { "4|four-byte-aligned", "When included, restricts search to starting on four-byte alignments", f => _fourByteAligned = true },
-            ];
+            };
         }
 
         public override int Invoke(IEnumerable<string> arguments)

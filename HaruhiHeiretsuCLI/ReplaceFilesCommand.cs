@@ -20,8 +20,8 @@ namespace HaruhiHeiretsuCLI
         private string _mcb, _dat, _evt, _grp, _scr, _fontReplacement, _replacementDir, _resxDir, _langCode, _outputDir;
         public ReplaceFilesCommand() : base("replace-files", "Replaces arbitrary files in the mcb and archives")
         {
-            Options =
-            [
+            Options = new()
+            {
                 "Replaces files in the mcb and bin archives",
                 "",
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
@@ -34,7 +34,7 @@ namespace HaruhiHeiretsuCLI
                 { "x|resx=",  "Path to RESX directory", x => _resxDir = x },
                 { "l|lang-code=", "Language code to use during replacement", l => _langCode = l },
                 { "o|output=", "Path to output directory", o => _outputDir = o },
-            ];
+            };
         }
 
         public override int Invoke(IEnumerable<string> arguments)

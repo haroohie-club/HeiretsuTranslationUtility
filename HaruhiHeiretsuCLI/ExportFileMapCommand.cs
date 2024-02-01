@@ -2,7 +2,6 @@
 using Mono.Options;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuCLI
 {
@@ -12,15 +11,15 @@ namespace HaruhiHeiretsuCLI
 
         public ExportFileMapCommand() : base("export-file-map")
         {
-            Options =
-            [
+            Options = new()
+            {
                 "Export a map of all files between a specified bin and the MCB",
                 "Usage: HaruhiHeiretsuCLI export-file-map -m [MCB_PATH] -b [BIN_FILE] -o [OUTPUT_FILE]",
                 "",
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
                 { "b|bin=", "Path to the bin archive", b => _binFile = b },
                 { "o|output=", "Output path of file map", o => _outputFile = o },
-            ];
+            };
         }
 
         public override int Invoke(IEnumerable<string> arguments)

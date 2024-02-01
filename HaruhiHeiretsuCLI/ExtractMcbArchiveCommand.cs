@@ -12,15 +12,15 @@ namespace HaruhiHeiretsuCLI
 
         public ExtractMcbArchiveCommand() : base("extract-mcb-archive")
         {
-            Options =
-            [
+            Options = new()
+            {
                 "Extract all files in a particular BlnSub archive from the MCB to a directory",
                 "Usage: HaruhiHeiretsuCLI extract-archive -m [MCB_PATH] -i [ARCHIVE_INDEX] -o [OUTPUT_DIRECTORY]",
                 "",
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
                 { "i|index=", "Index of BlnSub archive to extract from MCB", i => _archiveIndex = int.Parse(i) },
                 { "o|output=", "Output directory", o => _outputDirectory = o },
-            ];
+            };
         }
 
         public override int Invoke(IEnumerable<string> arguments)
