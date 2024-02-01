@@ -40,11 +40,11 @@ namespace HaruhiHeiretsuTests
 
             if (generatedBytes.Length < initialBytes.Length)
             {
-                List<byte> temp = generatedBytes.ToList();
+                List<byte> temp = [.. generatedBytes];
                 temp.AddRange(new byte[initialBytes.Length - generatedBytes.Length]);
-                generatedBytes = temp.ToArray();
+                generatedBytes = [.. temp];
             }
-            Assert.AreEqual(initialBytes, generatedBytes);
+            Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }
     }
 }

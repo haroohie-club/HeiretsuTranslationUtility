@@ -1,10 +1,9 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace HaruhiHeiretsuLib
 {
@@ -14,11 +13,7 @@ namespace HaruhiHeiretsuLib
 
         public static FontReplacementMap FromJson(string json)
         {
-            JsonSerializer serializer = new();
-            using StringReader stringReader = new(json);
-            using JsonTextReader jsonTextReader = new(stringReader);
-            FontReplacementMap map = serializer.Deserialize<FontReplacementMap>(jsonTextReader);
-            return map;
+            return JsonSerializer.Deserialize<FontReplacementMap>(json);
         }
 
         public FontReplacementMap()
@@ -82,12 +77,7 @@ namespace HaruhiHeiretsuLib
 
         public string GetJson()
         {
-            JsonSerializer serializer = new();
-            serializer.Formatting = Formatting.Indented;
-            using StringWriter stringWriter = new();
-            using JsonTextWriter writer = new(stringWriter);
-            serializer.Serialize(writer, this);
-            return stringWriter.ToString();
+            return JsonSerializer.Serialize(this);
         }
     }
 

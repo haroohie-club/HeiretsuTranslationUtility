@@ -43,7 +43,7 @@ namespace HaruhiHeiretsuTests
             File.WriteAllBytes($"output\\{Path.GetFileNameWithoutExtension(file)}-compiled.bin", newScript.GetBytes());
             File.WriteAllText($"output\\{Path.GetFileNameWithoutExtension(file)}-initial.sws", scriptCode);
             File.WriteAllText($"output\\{Path.GetFileNameWithoutExtension(file)}-final.sws", newScript.Decompile());
-            Assert.AreEqual(dataOnDisk, newScript.GetBytes());
+            Assert.That(dataOnDisk, Is.EquivalentTo(newScript.GetBytes()));
         }
 
         [Test]
@@ -53,8 +53,10 @@ namespace HaruhiHeiretsuTests
             List<ScriptCommand> commands = ScriptCommand.ParseScriptCommandFile(File.ReadAllBytes(SCRCOMMAND_FILE));
             string scriptCode = File.ReadAllText(file);
             byte[] dataOnDisk = File.ReadAllBytes(file);
-            ScriptFile script = new(0, 0, dataOnDisk);
-            script.AvailableCommands = commands;
+            ScriptFile script = new(0, 0, dataOnDisk)
+            {
+                AvailableCommands = commands
+            };
             script.Compile(scriptCode);
         }
     }

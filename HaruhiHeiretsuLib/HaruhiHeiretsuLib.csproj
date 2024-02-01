@@ -1,14 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="ResXResourceReader.NetStandard" Version="1.1.0" />
-    <PackageReference Include="SkiaSharp" Version="2.88.5" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.5" />
+    <PackageReference Include="ResXResourceReader.NetStandard" Version="1.2.0" />
+    <PackageReference Include="SkiaSharp" Version="2.88.7" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.7" />
     <PackageReference Include="Topten.RichTextKit" Version="0.4.166" />
   </ItemGroup>
 

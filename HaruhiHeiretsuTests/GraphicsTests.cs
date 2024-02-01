@@ -13,6 +13,10 @@ namespace HaruhiHeiretsuTests
         [SetUp]
         public void Setup()
         {
+            if (!Directory.Exists("output"))
+            {
+                Directory.CreateDirectory("output");
+            }
         }
 
         [Test]
@@ -32,7 +36,7 @@ namespace HaruhiHeiretsuTests
             File.WriteAllBytes(@$"output\{Path.GetFileNameWithoutExtension(path)}-start.bin", bytesOnDisk);
             File.WriteAllBytes(@$"output\{Path.GetFileNameWithoutExtension(path)}-imported.bin", importedLayoutFile.GetBytes());
 
-            Assert.AreEqual(bytesOnDisk, importedLayoutFile.GetBytes());
+            Assert.That(bytesOnDisk, Is.EquivalentTo(importedLayoutFile.GetBytes()));
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using HaruhiHeiretsuLib.Util;
-using Newtonsoft.Json;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -7,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace HaruhiHeiretsuLib.Graphics
 {
@@ -279,11 +280,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 }
             }
 
-            using StringWriter stringWriter = new();
-            JsonSerializer serializer = new();
-            serializer.Serialize(stringWriter, this);
-
-            return stringWriter.ToString();
+            return JsonSerializer.Serialize(this);
         }
     }
 

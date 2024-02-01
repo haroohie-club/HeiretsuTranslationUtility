@@ -20,6 +20,10 @@ namespace HaruhiHeiretsuTests
         [SetUp]
         public void Setup()
         {
+            if (!Directory.Exists("output"))
+            {
+                Directory.CreateDirectory("output");
+            }
         }
 
         [Test]
@@ -35,14 +39,14 @@ namespace HaruhiHeiretsuTests
             generatedFile.Initialize(generatedBytes, 0);
             string generatedCsv = generatedFile.GetCsv();
 
-            Assert.AreEqual(initialCsv, generatedCsv);
+            Assert.That(initialCsv, Is.EquivalentTo(generatedCsv));
             if (generatedBytes.Length < initialBytes.Length)
             {
-                List<byte> temp = generatedBytes.ToList();
+                List<byte> temp = [.. generatedBytes];
                 temp.AddRange(new byte[initialBytes.Length - generatedBytes.Length]);
-                generatedBytes= temp.ToArray();
+                generatedBytes= [.. temp];
             }
-            Assert.AreEqual(initialBytes, generatedBytes);
+            Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }
 
         [Test]
@@ -58,8 +62,8 @@ namespace HaruhiHeiretsuTests
             generatedFile.Initialize(generatedBytes, 0);
             string generatedCsv = generatedFile.GetCsv();
 
-            Assert.AreEqual(initialCsv, generatedCsv);
-            Assert.AreEqual(initialBytes, generatedBytes);
+            Assert.That(initialCsv, Is.EquivalentTo(generatedCsv));
+            Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }
 
         [Test]
@@ -73,7 +77,7 @@ namespace HaruhiHeiretsuTests
             TopicsAndFlagsFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
-            Assert.AreEqual(initialBytes, generatedBytes);
+            Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }
 
         [Test]
@@ -87,7 +91,7 @@ namespace HaruhiHeiretsuTests
             NameplatesFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
-            Assert.AreEqual(initialBytes, generatedBytes);
+            Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }
 
         [Test]
@@ -101,7 +105,7 @@ namespace HaruhiHeiretsuTests
             TimelineFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
-            Assert.AreEqual(initialBytes, generatedBytes);
+            Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }
 
         [Test]
@@ -115,7 +119,7 @@ namespace HaruhiHeiretsuTests
             ClubroomFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
-            Assert.AreEqual(initialBytes, generatedBytes);
+            Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }
 
         [Test]
@@ -129,7 +133,7 @@ namespace HaruhiHeiretsuTests
             ExtrasClfClaFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
-            Assert.AreEqual(initialBytes, generatedBytes);
+            Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }
 
         [Test]
@@ -145,7 +149,7 @@ namespace HaruhiHeiretsuTests
             ExtrasCldFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
-            Assert.AreEqual(initialBytes, generatedBytes);
+            Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }
     }
 }
