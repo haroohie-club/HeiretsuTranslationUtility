@@ -332,7 +332,7 @@ namespace HaruhiHeiretsuLib.Archive
                                 break;
 
                             case (0, DataStringsFileLocations.CLUBROOM_MCB_INDEX):
-                                McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<ClubroomFile>>();
+                                McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>();
                                 break;
 
                             default:

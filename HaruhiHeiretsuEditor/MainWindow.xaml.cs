@@ -201,15 +201,15 @@ namespace HaruhiHeiretsuEditor
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentNameplatesFile)] = nameplatesFile;
 
                 ShadeStringsFile currentClubroomFile = _datStringsFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.CLUBROOM_INDEX);
-                DataStringsFile<ClubroomFile> clubroomFile = currentClubroomFile.CastTo<DataStringsFile<ClubroomFile>>();
+                DataStringsFile<ClubroomKoizumiCutscenesFile> clubroomFile = currentClubroomFile.CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentClubroomFile)] = clubroomFile;
 
                 ShadeStringsFile currentExtrasClfClaFile = _datStringsFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX);
-                DataStringsFile<ExtrasClfClaFile> extrasClfClaFile = currentExtrasClfClaFile.CastTo<DataStringsFile<ExtrasClfClaFile>>();
+                DataStringsFile<ClubroomHaruhiModelsFile> extrasClfClaFile = currentExtrasClfClaFile.CastTo<DataStringsFile<ClubroomHaruhiModelsFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentExtrasClfClaFile)] = extrasClfClaFile;
 
                 ShadeStringsFile currentExtrasCldFfile = _datStringsFile.Files.First(f => f.BinArchiveIndex == DataStringsFileLocations.EXTRAS_CLD_INDEX);
-                DataStringsFile<ExtrasCldFile> extrasCldFile = currentExtrasCldFfile.CastTo<DataStringsFile<ExtrasCldFile>>();
+                DataStringsFile<ClubroomNagatoDatabaseFile> extrasCldFile = currentExtrasCldFfile.CastTo<DataStringsFile<ClubroomNagatoDatabaseFile>>();
                 _datStringsFile.Files[_datStringsFile.Files.IndexOf(currentExtrasCldFfile)] = extrasCldFile;
 
                 scriptsListBox.ItemsSource = _datStringsFile.Files;

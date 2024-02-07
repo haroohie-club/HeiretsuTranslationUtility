@@ -5,7 +5,7 @@ using System.Linq;
 namespace HaruhiHeiretsuLib.Data
 {
     /// <summary>
-    /// A file representing the camera data file (dat.bin 0x24)
+    /// A file representing the camera data file (dat.bin 36)
     /// </summary>
     public class CameraDataFile : DataFile
     {
@@ -86,10 +86,7 @@ namespace HaruhiHeiretsuLib.Data
             return string.Join('\n', csvLines);
         }
 
-        /// <summary>
-        /// Gets the binary data of the camera file
-        /// </summary>
-        /// <returns>A byte array containing the camera file binary data</returns>
+        /// <inheritdoc/>
         public override byte[] GetBytes()
         {
             List<byte> bytes = [];
@@ -128,20 +125,63 @@ namespace HaruhiHeiretsuLib.Data
     /// </summary>
     public class CameraDataEntry
     {
+        /// <summary>
+        /// The camera's position along the X axis of the scene
+        /// </summary>
         public float XPosition { get; set; }
+        /// <summary>
+        /// The camera's position along the Y axis of the scene
+        /// </summary>
         public float YPosition { get; set; }
+        /// <summary>
+        /// The camera's position along the Z axis of the scene
+        /// </summary>
         public float ZPosition { get; set; }
+        /// <summary>
+        /// The X component of the point the camera is looking at
+        /// </summary>
         public float XLook { get; set; }
+        /// <summary>
+        /// The Y component of the point the camera is looking at
+        /// </summary>
         public float YLook { get; set; }
+        /// <summary>
+        /// The Z component of the point the camera is looking at
+        /// </summary>
         public float ZLook { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public float Unknown18 { get; set; }
+        /// <summary>
+        /// The minimum yaw for the camera if it can be moved
+        /// </summary>
         public float MinYaw { get; set; }
+        /// <summary>
+        /// The maximum yaw for the camera if it can be moved
+        /// </summary>
         public float MaxYaw { get; set; }
+        /// <summary>
+        /// The minimum pitch for the camera if it can be moved
+        /// </summary>
         public float MinPitch { get; set; }
+        /// <summary>
+        /// The maximum pitch for the camera if it can be moved
+        /// </summary>
         public float MaxPitch { get; set; }
+        /// <summary>
+        /// The amount the camera is zoomed in (1.0 default; higher values = greater zoom)
+        /// </summary>
         public float Zoom { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public float Unknown30 { get; set; }
 
+        /// <summary>
+        /// Creates a camera entry from binary data
+        /// </summary>
+        /// <param name="bytes">The binary data representing the camera data (0x34 bytes)</param>
         public CameraDataEntry(IEnumerable<byte> bytes)
         {
             XPosition = BitConverter.ToSingle(bytes.Take(4).Reverse().ToArray());
@@ -158,7 +198,11 @@ namespace HaruhiHeiretsuLib.Data
             Zoom = BitConverter.ToSingle(bytes.Skip(0x2C).Take(4).Reverse().ToArray());
             Unknown30 = BitConverter.ToSingle(bytes.Skip(0x30).Take(4).Reverse().ToArray());
         }
-
+        
+        /// <summary>
+        /// Creates camera data entry from a line of comma-separated values
+        /// </summary>
+        /// <param name="csvLine">The CSV line string</param>
         public CameraDataEntry(string csvLine)
         {
             string[] components = csvLine.Split(',');
@@ -177,6 +221,10 @@ namespace HaruhiHeiretsuLib.Data
             Unknown30 = float.Parse(components[12]);
         }
 
+        /// <summary>
+        /// Gets the camera's binary data
+        /// </summary>
+        /// <returns>List of bytes representing the camera's binary data</returns>
         public List<byte> GetBytes()
         {
             List<byte> bytes =
@@ -199,6 +247,10 @@ namespace HaruhiHeiretsuLib.Data
             return bytes;
         }
 
+        /// <summary>
+        /// Gets a CSV line representing the camera's properties
+        /// </summary>
+        /// <returns>A string CSV line representing the camera's properties</returns>
         public string GetCsvLine()
         {
             return $"{XPosition},{YPosition},{ZPosition},{XLook},{YLook},{ZLook},{Unknown18},{MinYaw},{MaxYaw},{MinPitch},{MaxPitch},{Zoom},{Unknown30}";

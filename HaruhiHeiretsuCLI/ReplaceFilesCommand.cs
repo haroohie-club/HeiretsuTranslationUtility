@@ -276,7 +276,7 @@ namespace HaruhiHeiretsuCLI
                     for (; i < mcb.StringsFiles.Count; i++)
                     {
                         FileInArchive mcbFile = mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc];
-                        switch ((McbArchive.ArchiveIndex)mcbFile.McbEntryData.archiveIndex)
+                        switch ((McbArchive.ArchiveIndex)mcbFile.McbEntryData.ArchiveIndex)
                         {
                             case McbArchive.ArchiveIndex.DAT:
                                 switch (mcb.StringsFiles[i].childLoc)
@@ -309,7 +309,7 @@ namespace HaruhiHeiretsuCLI
                                         break;
 
                                     case DataStringsFileLocations.CLUBROOM_MCB_INDEX:
-                                        DataStringsFile<ClubroomFile> clubroomFile = mcbFile.CastTo<DataStringsFile<ClubroomFile>>();
+                                        DataStringsFile<ClubroomKoizumiCutscenesFile> clubroomFile = mcbFile.CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>();
                                         clubroomFile.ImportResxFile(file, fontReplacementMap);
                                         mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = clubroomFile.DataFile;
                                         break;
@@ -363,19 +363,19 @@ namespace HaruhiHeiretsuCLI
                                     break;
 
                                 case DataStringsFileLocations.CLUBROOM_INDEX:
-                                    DataStringsFile<ClubroomFile> clubroomFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ClubroomFile>>();
+                                    DataStringsFile<ClubroomKoizumiCutscenesFile> clubroomFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>();
                                     clubroomFile.ImportResxFile(file, fontReplacementMap);
                                     dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = clubroomFile.DataFile;
                                     break;
 
                                 case DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX:
-                                    DataStringsFile<ExtrasClfClaFile> extrasClfClaFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ExtrasClfClaFile>>();
+                                    DataStringsFile<ClubroomHaruhiModelsFile> extrasClfClaFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ClubroomHaruhiModelsFile>>();
                                     extrasClfClaFile.ImportResxFile(file, fontReplacementMap);
                                     dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = extrasClfClaFile.DataFile;
                                     break;
 
                                 case DataStringsFileLocations.EXTRAS_CLD_INDEX:
-                                    DataStringsFile<ExtrasCldFile> extrasCldFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ExtrasCldFile>>();
+                                    DataStringsFile<ClubroomNagatoDatabaseFile> extrasCldFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ClubroomNagatoDatabaseFile>>();
                                     extrasCldFile.ImportResxFile(file, fontReplacementMap);
                                     dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = extrasCldFile.DataFile;
                                     break;

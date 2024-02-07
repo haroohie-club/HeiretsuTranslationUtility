@@ -75,13 +75,13 @@ namespace HaruhiHeiretsuCLI
                                 dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<TimelineFile>>().WriteResxFile(fileName);
                                 break;
                             case DataStringsFileLocations.CLUBROOM_INDEX:
-                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ClubroomFile>>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>().WriteResxFile(fileName);
                                 break;
                             case DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX:
-                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ExtrasClfClaFile>>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ClubroomHaruhiModelsFile>>().WriteResxFile(fileName);
                                 break;
                             case DataStringsFileLocations.EXTRAS_CLD_INDEX:
-                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ExtrasCldFile>>().WriteResxFile(fileName);
+                                dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ClubroomNagatoDatabaseFile>>().WriteResxFile(fileName);
                                 break;
                             default:
                                 dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<ShadeStringsFile>().WriteResxFile(fileName);

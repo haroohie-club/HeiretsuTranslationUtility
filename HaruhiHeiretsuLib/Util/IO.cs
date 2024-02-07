@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiChokuretsuLib.Util
 {
@@ -42,6 +41,11 @@ namespace HaruhiChokuretsuLib.Util
         public static ushort ReadUShortLE(IEnumerable<byte> data, int offset)
         {
             return BitConverter.ToUInt16(data.Skip(offset).Take(2).ToArray());
+        }
+
+        public static float ReadFloat(IEnumerable<byte> data, int offset)
+        {
+            return BitConverter.ToSingle(data.Skip(offset).Take(4).ToArray());
         }
 
         public static string ReadShiftJisString(IEnumerable<byte> data, int offset)

@@ -4,16 +4,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuLib.Data
 {
-    public class ExtrasClfClaFile : DataFile, IDataStringsFile
+    /// <summary>
+    /// Class representing the clubroom Haruhi models file (dat.bin 75/76)
+    /// </summary>
+    public class ClubroomHaruhiModelsFile : DataFile, IDataStringsFile
     {
         public List<ClfEntry> Section1 { get; set; } = [];
         public List<ClaOutfitEntry> Section2 { get; set; } = [];
         public List<ClaCharacterEntry> Section3 { get; set; } = [];
 
+        /// <inheritdoc/>
         public override void Initialize(byte[] decompressedData, int offset)
         {
             base.Initialize(decompressedData, offset);
@@ -39,6 +42,7 @@ namespace HaruhiHeiretsuLib.Data
             }
         }
 
+        /// <inheritdoc/>
         public override byte[] GetBytes()
         {
             List<byte> bytes = [];
@@ -108,6 +112,7 @@ namespace HaruhiHeiretsuLib.Data
             return [.. bytes];
         }
 
+        /// <inheritdoc/>
         public List<DialogueLine> GetDialogueLines()
         {
             List<DialogueLine> lines = [];
@@ -167,6 +172,7 @@ namespace HaruhiHeiretsuLib.Data
             return lines;
         }
 
+        /// <inheritdoc/>
         public void ReplaceDialogueLine(DialogueLine line)
         {
             int section = int.Parse(line.Metadata[^3]);

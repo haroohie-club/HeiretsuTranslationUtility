@@ -4,14 +4,28 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuLib.Data
 {
-    public class ExtrasCldFile : DataFile, IDataStringsFile
+    /// <summary>
+    /// A representation of the Database menus in the clubroom when talking to Nagato
+    /// </summary>
+    public class ClubroomNagatoDatabaseFile : DataFile, IDataStringsFile
     {
-        public List<CldAbout> CldAbouts = [];
+        /// <summary>
+        /// List of clubroom database cards
+        /// </summary>
+        public List<ClubroomDatabaseCard> ClubroomDatabaseCards = [];
 
+        /// <summary>
+        /// Simple constructor
+        /// </summary>
+        public ClubroomNagatoDatabaseFile()
+        {
+            Name = "Clubroom Nagato Database File";
+        }
+
+        /// <inheritdoc/>
         public override void Initialize(byte[] decompressedData, int offset)
         {
             base.Initialize(decompressedData, offset);
@@ -21,7 +35,7 @@ namespace HaruhiHeiretsuLib.Data
             int numCldAbouts = BitConverter.ToInt32(Data.Skip(0x10).Take(4).Reverse().ToArray());
             for (int i = 0; i < numCldAbouts; i++)
             {
-                CldAbout cldAbout = new();
+                ClubroomDatabaseCard cldAbout = new();
                 int titleOffset = BitConverter.ToInt32(Data.Skip(startPointer + i * 0x10 + 0x00).Take(4).Reverse().ToArray());
                 cldAbout.Title = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(titleOffset).TakeWhile(b => b != 0x00).ToArray());
                 int voiceFileOffset = BitConverter.ToInt32(Data.Skip(startPointer + i * 0x10 + 0x04).Take(4).Reverse().ToArray());
@@ -31,10 +45,11 @@ namespace HaruhiHeiretsuLib.Data
                 int lineOffset = BitConverter.ToInt32(Data.Skip(startPointer + i * 0x10 + 0x0C).Take(4).Reverse().ToArray());
                 cldAbout.Line = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(lineOffset).TakeWhile(b => b != 0x00).ToArray());
 
-                CldAbouts.Add(cldAbout);
+                ClubroomDatabaseCards.Add(cldAbout);
             }
         }
 
+        /// <inheritdoc/>
         public override byte[] GetBytes()
         {
             List<byte> bytes = [];
@@ -47,16 +62,16 @@ namespace HaruhiHeiretsuLib.Data
             int startPointer = 0x14;
             bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
             bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(CldAbouts.Count).Reverse());
+            bytes.AddRange(BitConverter.GetBytes(ClubroomDatabaseCards.Count).Reverse());
 
-            int stringsPointer = startPointer + CldAbouts.Count * 0x10;
-            for (int i = 0; i < CldAbouts.Count; i++)
+            int stringsPointer = startPointer + ClubroomDatabaseCards.Count * 0x10;
+            for (int i = 0; i < ClubroomDatabaseCards.Count; i++)
             {
-                if (!string.IsNullOrEmpty(CldAbouts[i].Title))
+                if (!string.IsNullOrEmpty(ClubroomDatabaseCards[i].Title))
                 {
                     endPointers.Add(bytes.Count);
                     bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
-                    stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(CldAbouts[i].Title));
+                    stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].Title));
                 }
                 else
                 {
@@ -64,13 +79,13 @@ namespace HaruhiHeiretsuLib.Data
                 }
                 endPointers.Add(bytes.Count);
                 bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
-                stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(CldAbouts[i].VoiceFile));
+                stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].VoiceFile));
                 endPointers.Add(bytes.Count);
                 bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
-                stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(CldAbouts[i].Speaker));
+                stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].Speaker));
                 endPointers.Add(bytes.Count);
                 bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
-                stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(CldAbouts[i].Line));
+                stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].Line));
             }
             bytes.AddRange(stringBytes);
 
@@ -88,55 +103,72 @@ namespace HaruhiHeiretsuLib.Data
             return [.. bytes];
         }
 
+        /// <inheritdoc/>
         public List<DialogueLine> GetDialogueLines()
         {
             List<DialogueLine> lines = [];
 
-            for (int i = 0; i < CldAbouts.Count; i++)
+            for (int i = 0; i < ClubroomDatabaseCards.Count; i++)
             {
-                if (!string.IsNullOrEmpty(CldAbouts[i].Title))
+                if (!string.IsNullOrEmpty(ClubroomDatabaseCards[i].Title))
                 {
                     lines.Add(new()
                     {
                         Offset = i,
                         Speaker = "Title",
-                        Line = CldAbouts[i].Title,
+                        Line = ClubroomDatabaseCards[i].Title,
                         Metadata = [.. (new string[] { "0" })],
                     });
                 }
                 lines.Add(new()
                 {
                     Offset = i,
-                    Speaker = CldAbouts[i].Speaker,
-                    Line = CldAbouts[i].Line,
-                    Metadata = [.. (new string[] { CldAbouts[i].VoiceFile, $"Title: {CldAbouts[i].Title}", "1" })],
+                    Speaker = ClubroomDatabaseCards[i].Speaker,
+                    Line = ClubroomDatabaseCards[i].Line,
+                    Metadata = [.. (new string[] { ClubroomDatabaseCards[i].VoiceFile, $"Title: {ClubroomDatabaseCards[i].Title}", "1" })],
                 });
             }
 
             return lines;
         }
 
+        /// <inheritdoc/>
         public void ReplaceDialogueLine(DialogueLine line)
         {
             switch (line.Metadata[^1])
             {
                 case "0":
-                    CldAbouts[line.Offset].Title = line.Line;
+                    ClubroomDatabaseCards[line.Offset].Title = line.Line;
                     break;
 
                 case "1":
-                    CldAbouts[line.Offset].Line = line.Line;
+                    ClubroomDatabaseCards[line.Offset].Line = line.Line;
                     break;
             }
         }
     }
 
     // 0x10 bytes
-    public class CldAbout
+    /// <summary>
+    /// Representation of a menu card in the clubroom database when talking to Nagato
+    /// </summary>
+    public class ClubroomDatabaseCard
     {
+        /// <summary>
+        /// The title of the menu card
+        /// </summary>
         public string Title { get; set; }
+        /// <summary>
+        /// The voice file that plays when hovering over the card
+        /// </summary>
         public string VoiceFile { get; set; }
+        /// <summary>
+        /// The speaker of the line that is displayed when hovering over the card
+        /// </summary>
         public string Speaker { get; set; }
+        /// <summary>
+        /// The line that is displayed when hovering over the card
+        /// </summary>
         public string Line { get; set; }
     }
 }

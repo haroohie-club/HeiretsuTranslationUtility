@@ -112,11 +112,11 @@ namespace HaruhiHeiretsuTests
         public void ClubroomFileParsingIsReversible()
         {
             byte[] initialBytes = File.ReadAllBytes(ClubroomFilePath);
-            ClubroomFile clubroomFile = new();
-            clubroomFile.Initialize(initialBytes, 0);
+            ClubroomKoizumiCutscenesFile clubroomCutsceneFile = new();
+            clubroomCutsceneFile.Initialize(initialBytes, 0);
 
-            byte[] generatedBytes = clubroomFile.GetBytes();
-            ClubroomFile generatedFile = new();
+            byte[] generatedBytes = clubroomCutsceneFile.GetBytes();
+            ClubroomKoizumiCutscenesFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
             Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
@@ -126,11 +126,11 @@ namespace HaruhiHeiretsuTests
         public void ExtrasClfClaFileParsingIsReversible()
         {
             byte[] initialBytes = File.ReadAllBytes(ExtrasClfClaFilePath);
-            ExtrasClfClaFile extrasClfClaFile = new();
+            ClubroomHaruhiModelsFile extrasClfClaFile = new();
             extrasClfClaFile.Initialize(initialBytes, 0);
 
             byte[] generatedBytes = extrasClfClaFile.GetBytes();
-            ExtrasClfClaFile generatedFile = new();
+            ClubroomHaruhiModelsFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
             Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
@@ -140,13 +140,13 @@ namespace HaruhiHeiretsuTests
         public void ExtrasCldFileParsingIsReversible()
         {
             byte[] initialBytes = File.ReadAllBytes(ExtrasCldFilePath);
-            ExtrasCldFile extrasCldFile = new();
+            ClubroomNagatoDatabaseFile extrasCldFile = new();
             extrasCldFile.Initialize(initialBytes, 0);
 
             byte[] generatedBytes = extrasCldFile.GetBytes();
             File.WriteAllBytes("output/extrascld-initial.bin", initialBytes);
             File.WriteAllBytes("output/extrascld-generated.bin", generatedBytes);
-            ExtrasCldFile generatedFile = new();
+            ClubroomNagatoDatabaseFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
             Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
