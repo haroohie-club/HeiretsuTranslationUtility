@@ -1,5 +1,5 @@
 import bpy
-from mathutils import Vector, Matrix, Quaternion
+from mathutils import Vector, Matrix, Quaternion, Euler
 import math
 import json
 import os
@@ -109,6 +109,34 @@ def construct_animation(sge, anim, bones_list : list, anim_num):
     bpy.ops.object.mode_set(mode='POSE')
     pose = bpy.context.object.pose
     bpy.ops.pose.group_add()
+    bone_idx = 0
+    # for armature_bone in bones_list:
+    #     if bone_idx < 1:
+    #         bone_idx += 1
+    #         continue
+    #     bone = pose.bones[armature_bone]
+    #     trans_vec = Vector((0, 0, 0))
+    #     scale_vec = Vector((1, 1, 1))
+    #     rot_euler = Euler(json_vector_to_vector(sge['SgeBones'][bone_idx]['Unknown00']))
+    #     matrix = Matrix.LocRotScale(trans_vec, rot_euler, scale_vec)
+    #     bone.matrix = bone.matrix @ matrix
+    #     bone.keyframe_insert(
+    #         data_path=f'location',
+    #         frame=0,
+    #         group=f'Animation{anim_num}'
+    #     )
+    #     bone.keyframe_insert(
+    #         data_path=f'rotation_quaternion',
+    #         frame=0,
+    #         group=f'Animation{anim_num}'
+    #     )
+    #     bone.keyframe_insert(
+    #         data_path=f'scale',
+    #         frame=0,
+    #         group=f'Animation{anim_num}'
+    #     )
+    #     bone_idx += 1
+    
     i = 0
     for keyframe_idx in anim['UsedKeyframes']:
         keyframe = sge['KeyframeDefinitions'][keyframe_idx]
@@ -123,7 +151,12 @@ def construct_animation(sge, anim, bones_list : list, anim_num):
             rot_quaternion = json_quaternion_to_quaternion(sge['RotateDataEntries'][bone_keyframe[i]['RotateIndex']])
             scale_vec = json_vector_to_vector(sge['ScaleDataEntries'][bone_keyframe[i]['ScaleIndex']])
             matrix = Matrix.LocRotScale(trans_vec, rot_quaternion, scale_vec)
-            bone.matrix = bone.matrix @ matrix
+            if i == 0:
+                bone.matrix = bone.matrix @ matrix
+                prev_mat = bone.matrix
+            else:
+                bone.matrix = prev_mat @ matrix
+                prev_mat = bone.matrix
 
             bone.keyframe_insert(
                 data_path=f'location',
