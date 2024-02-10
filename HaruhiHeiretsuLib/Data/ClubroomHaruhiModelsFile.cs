@@ -12,9 +12,18 @@ namespace HaruhiHeiretsuLib.Data
     /// </summary>
     public class ClubroomHaruhiModelsFile : DataFile, IDataStringsFile
     {
-        public List<ClfEntry> Section1 { get; set; } = [];
-        public List<ClaOutfitEntry> Section2 { get; set; } = [];
-        public List<ClaCharacterEntry> Section3 { get; set; } = [];
+        /// <summary>
+        /// A list of animations available for each character once the model viewer is entered
+        /// </summary>
+        public List<ModelViewerCharacterAnimation> Animations { get; set; } = [];
+        /// <summary>
+        /// A list of outfits available to each character through the second menu of the model viewer
+        /// </summary>
+        public List<ModelViewerCharacterOutfit> Outfits { get; set; } = [];
+        /// <summary>
+        /// A list of characters available in the first menu of the model viewer
+        /// </summary>
+        public List<ModelViewerCharacter> Characters { get; set; } = [];
 
         /// <inheritdoc/>
         public override void Initialize(byte[] decompressedData, int offset)
@@ -22,23 +31,23 @@ namespace HaruhiHeiretsuLib.Data
             base.Initialize(decompressedData, offset);
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            int section1StartPointer = BitConverter.ToInt32(Data.Skip(0x0C).Take(4).Reverse().ToArray());
-            int section1ItemCount = BitConverter.ToInt32(Data.Skip(0x10).Take(4).Reverse().ToArray());
-            for (int i = 0; i < section1ItemCount; i++)
+            int animationSectionStartPointer = BitConverter.ToInt32(Data.Skip(0x0C).Take(4).Reverse().ToArray());
+            int animationCount = BitConverter.ToInt32(Data.Skip(0x10).Take(4).Reverse().ToArray());
+            for (int i = 0; i < animationCount; i++)
             {
-                Section1.Add(new(Data, section1StartPointer + i * 0x24));
+                Animations.Add(new(Data, animationSectionStartPointer + i * 0x24));
             }
-            int section2StartPointer = BitConverter.ToInt32(Data.Skip(0x14).Take(4).Reverse().ToArray());
-            int section2ItemCount = BitConverter.ToInt32(Data.Skip(0x18).Take(4).Reverse().ToArray());
-            for (int i = 0; i < section2ItemCount; i++)
+            int outfitStartPointer = BitConverter.ToInt32(Data.Skip(0x14).Take(4).Reverse().ToArray());
+            int outfitCount = BitConverter.ToInt32(Data.Skip(0x18).Take(4).Reverse().ToArray());
+            for (int i = 0; i < outfitCount; i++)
             {
-                Section2.Add(new(Data, section2StartPointer + i * 0x2C));
+                Outfits.Add(new(Data, outfitStartPointer + i * 0x2C));
             }
-            int section3StartPointer = BitConverter.ToInt32(Data.Skip(0x1C).Take(4).Reverse().ToArray());
-            int section3ItemCount = BitConverter.ToInt32(Data.Skip(0x20).Take(4).Reverse().ToArray());
-            for (int i = 0; i < section3ItemCount; i++)
+            int characterStartPointer = BitConverter.ToInt32(Data.Skip(0x1C).Take(4).Reverse().ToArray());
+            int characterCount = BitConverter.ToInt32(Data.Skip(0x20).Take(4).Reverse().ToArray());
+            for (int i = 0; i < characterCount; i++)
             {
-                Section3.Add(new(Data, section3StartPointer + i * 0x34));
+                Characters.Add(new(Data, characterStartPointer + i * 0x34));
             }
         }
 
@@ -55,15 +64,15 @@ namespace HaruhiHeiretsuLib.Data
             int startPointer = 12 + 8 * 3;
             bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
 
-            int section1StartPointer = startPointer + 0x20 * Section3.Count; // float section
+            int section1StartPointer = startPointer + 0x20 * Characters.Count; // float section
             bytes.AddRange(BitConverter.GetBytes(section1StartPointer).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(Section1.Count).Reverse());
+            bytes.AddRange(BitConverter.GetBytes(Animations.Count).Reverse());
             List<byte> section1StringBytes = [];
-            int section1StringsOffset = section1StartPointer + Section1.Count * 0x24;
+            int section1StringsOffset = section1StartPointer + Animations.Count * 0x24;
             
-            for (int i = 0; i < Section1.Count; i++)
+            for (int i = 0; i < Animations.Count; i++)
             {
-                (List<byte> entryDataBytes, List<byte> entryStringBytes) = Section1[i].GetBytes(section1StartPointer + i * 0x24, section1StringsOffset + section1StringBytes.Count, endPointers);
+                (List<byte> entryDataBytes, List<byte> entryStringBytes) = Animations[i].GetBytes(section1StartPointer + i * 0x24, section1StringsOffset + section1StringBytes.Count, endPointers);
                 dataBytes.AddRange(entryDataBytes);
                 section1StringBytes.AddRange(entryStringBytes);
             }
@@ -71,12 +80,12 @@ namespace HaruhiHeiretsuLib.Data
 
             int section2StartPointer = section1StartPointer + dataBytes.Count;
             bytes.AddRange(BitConverter.GetBytes(section2StartPointer).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(Section2.Count).Reverse());
+            bytes.AddRange(BitConverter.GetBytes(Outfits.Count).Reverse());
             List<byte> section2StringBytes = [];
-            int section2StringsOffset = section2StartPointer + Section2.Count * 0x2C;
-            for (int i = 0; i < Section2.Count; i++)
+            int section2StringsOffset = section2StartPointer + Outfits.Count * 0x2C;
+            for (int i = 0; i < Outfits.Count; i++)
             {
-                (List<byte> entryDataBytes, List<byte> entryStringBytes) = Section2[i].GetBytes(section2StartPointer + i * 0x2C, section2StringsOffset + section2StringBytes.Count, endPointers);
+                (List<byte> entryDataBytes, List<byte> entryStringBytes) = Outfits[i].GetBytes(section2StartPointer + i * 0x2C, section2StringsOffset + section2StringBytes.Count, endPointers);
                 dataBytes.AddRange(entryDataBytes);
                 section2StringBytes.AddRange(entryStringBytes);
             }
@@ -84,13 +93,13 @@ namespace HaruhiHeiretsuLib.Data
 
             int section3StartPointer = section1StartPointer + dataBytes.Count;
             bytes.AddRange(BitConverter.GetBytes(section3StartPointer).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(Section3.Count).Reverse());
+            bytes.AddRange(BitConverter.GetBytes(Characters.Count).Reverse());
             List<byte> section3StringBytes = [];
-            int section3StringsOffset = section3StartPointer + Section3.Count * 0x34;
-            for (int i = 0; i < Section3.Count; i++)
+            int section3StringsOffset = section3StartPointer + Characters.Count * 0x34;
+            for (int i = 0; i < Characters.Count; i++)
             {
                 (List<byte> entryDataBytes, List<byte> entryStringBytes, List<byte> entryFloatStructBytes) =
-                    Section3[i].GetBytes(section3StartPointer + i * 0x34, section3StringsOffset + section3StringBytes.Count, bytes.Count, endPointers);
+                    Characters[i].GetBytes(section3StartPointer + i * 0x34, section3StringsOffset + section3StringBytes.Count, bytes.Count, endPointers);
                 dataBytes.AddRange(entryDataBytes);
                 section3StringBytes.AddRange(entryStringBytes);
                 bytes.AddRange(entryFloatStructBytes);
@@ -117,55 +126,55 @@ namespace HaruhiHeiretsuLib.Data
         {
             List<DialogueLine> lines = [];
 
-            for (int i = 0; i < Section1.Count; i++)
+            for (int i = 0; i < Animations.Count; i++)
             {
                 lines.Add(new()
                 {
-                    Speaker = Section1[i].Speaker,
-                    Line = Section1[i].Line,
-                    Metadata = [.. (new string[] { Section1[i].VoiceFile, "0", $"{i}", "0" })],
+                    Speaker = Animations[i].Speaker,
+                    Line = Animations[i].Line,
+                    Metadata = [.. (new string[] { Animations[i].VoiceFile, "0", $"{i}", "0" })],
                 });
             }
-            for (int i = 0; i < Section2.Count; i++)
+            for (int i = 0; i < Outfits.Count; i++)
             {
                 lines.Add(new()
                 {
-                    Speaker = $"{Section2[i].OutfitOwner}'s {Section2[i].OutfitType} Description",
-                    Line = Section2[i].OutfitDescription,
-                    Metadata = [.. (new string[] { Section2[i].OutfitFlag, "1", $"{i}", "0" })],
+                    Speaker = $"{Outfits[i].OutfitOwner}'s {Outfits[i].OutfitType} Description",
+                    Line = Outfits[i].OutfitDescription,
+                    Metadata = [.. (new string[] { Outfits[i].OutfitFlag, "1", $"{i}", "0" })],
                 });
                 lines.Add(new()
                 {
-                    Speaker = $"{Section2[i].Speaker1} (Describing {Section2[i].OutfitOwner}'s {Section2[i].OutfitType})",
-                    Line = Section2[i].Line1,
-                    Metadata = [.. (new string[] { Section2[i].OutfitFlag, Section2[i].VoiceFile1, "1", $"{i}", "1" })],
+                    Speaker = $"{Outfits[i].Speaker1} (Describing {Outfits[i].OutfitOwner}'s {Outfits[i].OutfitType})",
+                    Line = Outfits[i].Line1,
+                    Metadata = [.. (new string[] { Outfits[i].OutfitFlag, Outfits[i].VoiceFile1, "1", $"{i}", "1" })],
                 });
                 lines.Add(new()
                 {
-                    Speaker = $"{Section2[i].Speaker2} (Describing {Section2[i].OutfitOwner}'s {Section2[i].OutfitType})",
-                    Line = Section2[i].Line2,
-                    Metadata = [.. (new string[] { Section2[i].OutfitFlag, Section2[i].VoiceFile2, "1", $"{i}", "2" })],
+                    Speaker = $"{Outfits[i].Speaker2} (Describing {Outfits[i].OutfitOwner}'s {Outfits[i].OutfitType})",
+                    Line = Outfits[i].Line2,
+                    Metadata = [.. (new string[] { Outfits[i].OutfitFlag, Outfits[i].VoiceFile2, "1", $"{i}", "2" })],
                 });
             }
-            for (int i = 0; i < Section3.Count; i++)
+            for (int i = 0; i < Characters.Count; i++)
             {
                 lines.Add(new()
                 {
-                    Speaker = $"{Section3[i].Character} Name",
-                    Line = Section3[i].CharacterName,
-                    Metadata = [.. (new string[] { Section3[i].CharacterFlag, "2", $"{i}", "0" })],
+                    Speaker = $"{Characters[i].Character} Name",
+                    Line = Characters[i].CharacterName,
+                    Metadata = [.. (new string[] { Characters[i].CharacterUnlockFlag, "2", $"{i}", "0" })],
                 });
                 lines.Add(new()
                 {
-                    Speaker = $"{Section3[i].Speaker1} (Describing {Section3[i].Character})",
-                    Line = Section3[i].Line1,
-                    Metadata = [.. (new string[] { Section3[i].CharacterFlag, Section3[i].VoiceFile1, "2", $"{i}", "1" })],
+                    Speaker = $"{Characters[i].HoverSpeaker} (Describing {Characters[i].Character})",
+                    Line = Characters[i].HoverLine,
+                    Metadata = [.. (new string[] { Characters[i].CharacterUnlockFlag, Characters[i].HoverVoiceFile, "2", $"{i}", "1" })],
                 });
                 lines.Add(new()
                 {
-                    Speaker = $"{Section3[i].Speaker2} (Describing {Section3[i].Character})",
-                    Line = Section3[i].Line2,
-                    Metadata = [.. (new string[] { Section3[i].CharacterFlag, Section3[i].VoiceFile2, "2", $"{i}", "1" })],
+                    Speaker = $"{Characters[i].SelectSpeaker} (Describing {Characters[i].Character})",
+                    Line = Characters[i].SelectLine,
+                    Metadata = [.. (new string[] { Characters[i].CharacterUnlockFlag, Characters[i].SelectVoiceFile, "2", $"{i}", "1" })],
                 });
             }
 
@@ -182,20 +191,20 @@ namespace HaruhiHeiretsuLib.Data
             switch (section)
             {
                 case 0:
-                    Section1[itemIndex].Line = line.Line;
+                    Animations[itemIndex].Line = line.Line;
                     break;
 
                 case 1:
                     switch (lineIndex)
                     {
                         case 0:
-                            Section2[itemIndex].OutfitDescription = line.Line;
+                            Outfits[itemIndex].OutfitDescription = line.Line;
                             break;
                         case 1:
-                            Section2[itemIndex].Line1 = line.Line;
+                            Outfits[itemIndex].Line1 = line.Line;
                             break;
                         case 2:
-                            Section2[itemIndex].Line2 = line.Line;
+                            Outfits[itemIndex].Line2 = line.Line;
                             break;
                     }
                     break;
@@ -204,13 +213,13 @@ namespace HaruhiHeiretsuLib.Data
                     switch (lineIndex)
                     {
                         case 0:
-                            Section3[itemIndex].CharacterName = line.Line;
+                            Characters[itemIndex].CharacterName = line.Line;
                             break;
                         case 1:
-                            Section3[itemIndex].Line1 = line.Line;
+                            Characters[itemIndex].HoverLine = line.Line;
                             break;
                         case 2:
-                            Section3[itemIndex].Line2 = line.Line;
+                            Characters[itemIndex].SelectLine = line.Line;
                             break;
                     }
                     break;
@@ -219,8 +228,9 @@ namespace HaruhiHeiretsuLib.Data
     }
 
     // 0x24 bytes
-    public class ClfEntry
+    public class ModelViewerCharacterAnimation
     {
+        ///
         public string Speaker { get; set; }
         public string Line { get; set; }
         public int Unknown08 { get; set; }
@@ -232,7 +242,7 @@ namespace HaruhiHeiretsuLib.Data
         public short Unknown1E { get; set; }
         public int Unknown20 { get; set; }
 
-        public ClfEntry(IEnumerable<byte> data, int offset)
+        public ModelViewerCharacterAnimation(IEnumerable<byte> data, int offset)
         {
             int speakerPointer = BitConverter.ToInt32(data.Skip(offset + 0x00).Take(4).Reverse().ToArray());
             Speaker = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(speakerPointer).TakeWhile(b => b != 0x00).ToArray());
@@ -276,7 +286,7 @@ namespace HaruhiHeiretsuLib.Data
     }
 
     // 0x2C bytes
-    public class ClaOutfitEntry
+    public class ModelViewerCharacterOutfit
     {
         public string OutfitOwner { get; set; }
         public string OutfitDescription { get; set; }
@@ -291,7 +301,7 @@ namespace HaruhiHeiretsuLib.Data
         public string OutfitFlag { get; set; }
         public string OutfitType { get; set; }
 
-        public ClaOutfitEntry(IEnumerable<byte> data, int offset)
+        public ModelViewerCharacterOutfit(IEnumerable<byte> data, int offset)
         {
             int outfitOwnerOffset = BitConverter.ToInt32(data.Skip(offset + 0x00).Take(4).Reverse().ToArray());
             OutfitOwner = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(outfitOwnerOffset).TakeWhile(b => b != 0x00).ToArray());
@@ -360,32 +370,57 @@ namespace HaruhiHeiretsuLib.Data
     }
 
     // 0x34 bytes
-    public class ClaCharacterEntry
+    /// <summary>
+    /// A class representing a character viewable in the clubroom's model viewer
+    /// </summary>
+    public class ModelViewerCharacter
     {
         // 0x20 bytes
-        public struct UnknownFloatStruct
+        /// <summary>
+        /// Unknown
+        /// </summary>
+        /// <remarks>
+        /// Simple constructor from raw binary data
+        /// </remarks>
+        public struct UnknownFloatStruct(IEnumerable<byte> data)
         {
-            public float Unknown00 { get; set; }
-            public float Unknown04 { get; set; }
-            public float Unknown08 { get; set; }
-            public float Unknown0C { get; set; }
-            public float Unknown10 { get; set; }
-            public float Unknown14 { get; set; }
-            public float Unknown18 { get; set; }
-            public float Unknown1C { get; set; }
+            /// <summary>
+            /// Unknown
+            /// </summary>
+            public float Unknown00 { get; set; } = BitConverter.ToSingle(data.Skip(0x00).Take(4).Reverse().ToArray());
+            /// <summary>
+            /// Unknown
+            /// </summary>
+            public float Unknown04 { get; set; } = BitConverter.ToSingle(data.Skip(0x04).Take(4).Reverse().ToArray());
+            /// <summary>
+            /// Unknown
+            /// </summary>
+            public float Unknown08 { get; set; } = BitConverter.ToSingle(data.Skip(0x08).Take(4).Reverse().ToArray());
+            /// <summary>
+            /// Unknown
+            /// </summary>
+            public float Unknown0C { get; set; } = BitConverter.ToSingle(data.Skip(0x0C).Take(4).Reverse().ToArray());
+            /// <summary>
+            /// Unknown
+            /// </summary>
+            public float Unknown10 { get; set; } = BitConverter.ToSingle(data.Skip(0x10).Take(4).Reverse().ToArray());
+            /// <summary>
+            /// Unknown
+            /// </summary>
+            public float Unknown14 { get; set; } = BitConverter.ToSingle(data.Skip(0x14).Take(4).Reverse().ToArray());
+            /// <summary>
+            /// Unknown
+            /// </summary>
+            public float Unknown18 { get; set; } = BitConverter.ToSingle(data.Skip(0x18).Take(4).Reverse().ToArray());
+            /// <summary>
+            /// Unknown
+            /// </summary>
+            public float Unknown1C { get; set; } = BitConverter.ToSingle(data.Skip(0x1C).Take(4).Reverse().ToArray());
 
-            public UnknownFloatStruct(IEnumerable<byte> data)
-            {
-                Unknown00 = BitConverter.ToSingle(data.Skip(0x00).Take(4).Reverse().ToArray());
-                Unknown04 = BitConverter.ToSingle(data.Skip(0x04).Take(4).Reverse().ToArray());
-                Unknown08 = BitConverter.ToSingle(data.Skip(0x08).Take(4).Reverse().ToArray());
-                Unknown0C = BitConverter.ToSingle(data.Skip(0x0C).Take(4).Reverse().ToArray());
-                Unknown10 = BitConverter.ToSingle(data.Skip(0x10).Take(4).Reverse().ToArray());
-                Unknown14 = BitConverter.ToSingle(data.Skip(0x14).Take(4).Reverse().ToArray());
-                Unknown18 = BitConverter.ToSingle(data.Skip(0x18).Take(4).Reverse().ToArray());
-                Unknown1C = BitConverter.ToSingle(data.Skip(0x1C).Take(4).Reverse().ToArray());
-            }
-
+            /// <summary>
+            /// Returns binary data representation of the float struct
+            /// </summary>
+            /// <returns>A list of bytes representing the float struct's binary data</returns>
             public List<byte> GetBytes()
             {
                 List<byte> bytes =
@@ -404,38 +439,62 @@ namespace HaruhiHeiretsuLib.Data
             }
         }
 
+        /// <summary>
+        /// The name of the character as displayed in the model viewer
+        /// </summary>
         public string CharacterName { get; set; }
-        public string CharacterFlag { get; set; }
-        public string VoiceFile1 { get; set; }
-        public string Speaker1 { get; set; }
-        public string Line1 { get; set; }
-        public string VoiceFile2 { get; set; }
-        public string Speaker2 { get; set; }
-        public string Line2 { get; set; }
+        /// <summary>
+        /// The flag which, when set, unlocks this character in the model viewer
+        /// </summary>
+        public string CharacterUnlockFlag { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public string HoverVoiceFile { get; set; }
+        public string HoverSpeaker { get; set; }
+        public string HoverLine { get; set; }
+        public string SelectVoiceFile { get; set; }
+        public string SelectSpeaker { get; set; }
+        public string SelectLine { get; set; }
+        /// <summary>
+        /// The name of the character as will be referenced by other classes
+        /// </summary>
         public string Character { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public UnknownFloatStruct FloatStruct { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public float UnknownFloat { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public int Unknown2C { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public int Unknown30 { get; set; }
 
-        public ClaCharacterEntry(IEnumerable<byte> data, int offset)
+        public ModelViewerCharacter(IEnumerable<byte> data, int offset)
         {
             int characterNameOffset = BitConverter.ToInt32(data.Skip(offset + 0x00).Take(4).Reverse().ToArray());
             CharacterName = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(characterNameOffset).TakeWhile(b => b != 0x00).ToArray());
             int characterFlagOffset = BitConverter.ToInt32(data.Skip(offset + 0x04).Take(4).Reverse().ToArray());
-            CharacterFlag = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(characterFlagOffset).TakeWhile(b => b != 0x00).ToArray());
+            CharacterUnlockFlag = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(characterFlagOffset).TakeWhile(b => b != 0x00).ToArray());
             int voiceFile1Offset = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).Reverse().ToArray());
-            VoiceFile1 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(voiceFile1Offset).TakeWhile(b => b != 0x00).ToArray());
+            HoverVoiceFile = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(voiceFile1Offset).TakeWhile(b => b != 0x00).ToArray());
             int speaker1Offset = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).Reverse().ToArray());
-            Speaker1 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(speaker1Offset).TakeWhile(b => b != 0x00).ToArray());
+            HoverSpeaker = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(speaker1Offset).TakeWhile(b => b != 0x00).ToArray());
             int line1Offset = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).Reverse().ToArray());
-            Line1 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(line1Offset).TakeWhile(b => b != 0x00).ToArray());
+            HoverLine = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(line1Offset).TakeWhile(b => b != 0x00).ToArray());
             int voiceFile2Offset = BitConverter.ToInt32(data.Skip(offset + 0x14).Take(4).Reverse().ToArray());
-            VoiceFile2 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(voiceFile2Offset).TakeWhile(b => b != 0x00).ToArray());
+            SelectVoiceFile = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(voiceFile2Offset).TakeWhile(b => b != 0x00).ToArray());
             int speaker2Offset = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).Reverse().ToArray());
-            Speaker2 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(speaker2Offset).TakeWhile(b => b != 0x00).ToArray());
+            SelectSpeaker = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(speaker2Offset).TakeWhile(b => b != 0x00).ToArray());
             int line2Offset = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).Reverse().ToArray());
-            Line2 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(line2Offset).TakeWhile(b => b != 0x00).ToArray());
+            SelectLine = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(line2Offset).TakeWhile(b => b != 0x00).ToArray());
             int characterOffset = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).Reverse().ToArray());
             Character = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(characterOffset).TakeWhile(b => b != 0x00).ToArray());
             int floatStructOffset = BitConverter.ToInt32(data.Skip(offset + 0x24).Take(4).Reverse().ToArray());
@@ -455,25 +514,25 @@ namespace HaruhiHeiretsuLib.Data
             stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(CharacterName));
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());
-            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(CharacterFlag));
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(CharacterUnlockFlag));
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());
-            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(VoiceFile1));
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(HoverVoiceFile));
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());
-            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Speaker1));
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(HoverSpeaker));
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());
-            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Line1));
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(HoverLine));
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());
-            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(VoiceFile2));
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(SelectVoiceFile));
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());
-            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Speaker2));
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(SelectSpeaker));
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());
-            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Line2));
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(SelectLine));
             endPointers.Add(offset + dataBytes.Count);
             dataBytes.AddRange(BitConverter.GetBytes(stringsOffset + stringBytes.Count).Reverse());
             stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(Character));

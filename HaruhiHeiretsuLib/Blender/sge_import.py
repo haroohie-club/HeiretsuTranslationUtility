@@ -42,16 +42,16 @@ def construct_armature(sge):
         bone_name = f"Bone{bone['Address']}"
         new_bone = armature.edit_bones.new(bone_name)
         new_bone.head = json_vector_to_vector(bone['Position']) * model_scale
-        new_bone.tail = new_bone.head + Vector((0, 0.1, 0))
+        tail = (new_bone.head + json_vector_to_vector(bone['Unknown00'])) * model_scale
+        if tail == new_bone.head:
+            tail += Vector((0, 0.1, 0))
+        new_bone.tail = tail
         bones_list.append(bone_name)
     for bone in armature.edit_bones:
         i = 0
         for potential_child in sge['SgeBones']:
             if (f"Bone{potential_child['ParentAddress']}" == bone.name):
-                if armature.edit_bones[i].head == bone.head:
-                    armature.edit_bones[i].head += Vector((0, 0.1, 0))
                 armature.edit_bones[i].parent = bone
-                armature.edit_bones[i].tail = bone.head
             i += 1
     return (obj, bones_list)
 
@@ -106,36 +106,10 @@ def construct_mesh(sge, submesh, materials , mesh_num):
 
 def construct_animation(sge, anim, bones_list : list, anim_num):
     print(f'Creating animation {anim_num}...')
+    bpy.context.scene.render.fps = 60
     bpy.ops.object.mode_set(mode='POSE')
     pose = bpy.context.object.pose
     bpy.ops.pose.group_add()
-    bone_idx = 0
-    # for armature_bone in bones_list:
-    #     if bone_idx < 1:
-    #         bone_idx += 1
-    #         continue
-    #     bone = pose.bones[armature_bone]
-    #     trans_vec = Vector((0, 0, 0))
-    #     scale_vec = Vector((1, 1, 1))
-    #     rot_euler = Euler(json_vector_to_vector(sge['SgeBones'][bone_idx]['Unknown00']))
-    #     matrix = Matrix.LocRotScale(trans_vec, rot_euler, scale_vec)
-    #     bone.matrix = bone.matrix @ matrix
-    #     bone.keyframe_insert(
-    #         data_path=f'location',
-    #         frame=0,
-    #         group=f'Animation{anim_num}'
-    #     )
-    #     bone.keyframe_insert(
-    #         data_path=f'rotation_quaternion',
-    #         frame=0,
-    #         group=f'Animation{anim_num}'
-    #     )
-    #     bone.keyframe_insert(
-    #         data_path=f'scale',
-    #         frame=0,
-    #         group=f'Animation{anim_num}'
-    #     )
-    #     bone_idx += 1
     
     i = 0
     for keyframe_idx in anim['UsedKeyframes']:
@@ -151,12 +125,7 @@ def construct_animation(sge, anim, bones_list : list, anim_num):
             rot_quaternion = json_quaternion_to_quaternion(sge['RotateDataEntries'][bone_keyframe[i]['RotateIndex']])
             scale_vec = json_vector_to_vector(sge['ScaleDataEntries'][bone_keyframe[i]['ScaleIndex']])
             matrix = Matrix.LocRotScale(trans_vec, rot_quaternion, scale_vec)
-            if i == 0:
-                bone.matrix = bone.matrix @ matrix
-                prev_mat = bone.matrix
-            else:
-                bone.matrix = prev_mat @ matrix
-                prev_mat = bone.matrix
+            bone.matrix = bone.matrix @ matrix
 
             bone.keyframe_insert(
                 data_path=f'location',

@@ -42,8 +42,14 @@ namespace HaruhiHeiretsuLib.Graphics
         public short ScaleDataCount { get; set; } // *AnimTransformDataOffset + 20
         public short NumKeyframes { get; set; } // *AnimTransformDataOffset + 22
 
+        private JsonSerializerOptions _serializerOptions = new();
+
         public Sge(IEnumerable<byte> data)
         {
+            _serializerOptions.Converters.Add(new SgeBoneAttchedVertexConverter());
+            _serializerOptions.MaxDepth = 100;
+            _serializerOptions.IncludeFields = true;
+
             // SGEs are little-endian so no need for .Reverse() here
             SgeStartOffset = BitConverter.ToInt32(data.Skip(0x1C).Take(4).ToArray());
             IEnumerable<byte> sgeData = data.Skip(SgeStartOffset);
@@ -280,7 +286,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 }
             }
 
-            return JsonSerializer.Serialize(this);
+            return JsonSerializer.Serialize(this, _serializerOptions);
         }
     }
 
@@ -615,8 +621,8 @@ namespace HaruhiHeiretsuLib.Graphics
         [JsonIgnore]
         public SgeBone Parent { get; set; }
         public int Address { get; set; }
-        public Vector3 Unknown00 { get; set; }      // 1
-        public Vector3 Position { get; set; }
+        public Vector3 TailOffset { get; set; }      // 1
+        public Vector3 HeadPosition { get; set; }
         public int ParentAddress { get; set; }
         public int AddressToBone1 { get; set; }     // 4
         public int AddressToBone2 { get; set; }     // 5
@@ -627,11 +633,11 @@ namespace HaruhiHeiretsuLib.Graphics
         public SgeBone(IEnumerable<byte> data, int offset)
         {
             Address = offset;
-            Unknown00 = new Vector3(
+            TailOffset = new Vector3(
                 BitConverter.ToSingle(data.Skip(offset).Take(4).ToArray()),
                 BitConverter.ToSingle(data.Skip(offset + 0x04).Take(4).ToArray()),
                 BitConverter.ToSingle(data.Skip(offset + 0x08).Take(4).ToArray()));
-            Position = new Vector3(
+            HeadPosition = new Vector3(
                 BitConverter.ToSingle(data.Skip(offset + 0x0C).Take(4).ToArray()),
                 BitConverter.ToSingle(data.Skip(offset + 0x10).Take(4).ToArray()),
                 BitConverter.ToSingle(data.Skip(offset + 0x14).Take(4).ToArray()));
