@@ -41,8 +41,8 @@ def construct_armature(sge):
     for bone in sge['SgeBones']:
         bone_name = f"Bone{bone['Address']}"
         new_bone = armature.edit_bones.new(bone_name)
-        new_bone.head = json_vector_to_vector(bone['HeadPosition']) * model_scale
-        tail = (new_bone.head + json_vector_to_vector(bone['TailOffset'])) * model_scale
+        new_bone.head = (json_vector_to_vector(bone['HeadPosition'])) * model_scale + json_vector_to_vector(bone['TailOffset'])
+        tail = new_bone.head + new_bone.head.normalized()
         if tail == new_bone.head:
             tail += Vector((0, 0.1, 0))
         new_bone.tail = tail
@@ -51,7 +51,12 @@ def construct_armature(sge):
         i = 0
         for potential_child in sge['SgeBones']:
             if (f"Bone{potential_child['ParentAddress']}" == bone.name):
+                # if armature.edit_bones[i].head == bone.head:
+                #     armature.edit_bones[i].head += Vector((0, 0.1, 0))
                 armature.edit_bones[i].parent = bone
+                # mag_vec = bone.head - armature.edit_bones[i].head
+                # if (mag_vec.x != 0 or mag_vec.y != 0 or mag_vec.z != 0):
+                #     armature.edit_bones[i].length = math.sqrt(math.pow(mag_vec.x, 2) + math.pow(mag_vec.y, 2) + math.pow(mag_vec.z, 2))
             i += 1
     return (obj, bones_list)
 

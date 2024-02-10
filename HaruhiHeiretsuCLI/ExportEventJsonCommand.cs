@@ -30,7 +30,7 @@ namespace HaruhiHeiretsuCLI
 
             BinArchive<EventFile> evt = BinArchive<EventFile>.FromFile(_evt);
             EventFile eventFile = evt.Files.First(f => f.BinArchiveIndex == _index);
-            File.WriteAllText(_output, JsonSerializer.Serialize(eventFile.CutsceneData, new JsonSerializerOptions() { IncludeFields = true, NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals }));
+            File.WriteAllText(_output, JsonSerializer.Serialize(eventFile.CutsceneData, new JsonSerializerOptions() { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, IncludeFields = true, NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals }));
 
             return 0;
         }
