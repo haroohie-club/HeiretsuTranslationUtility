@@ -31,7 +31,7 @@ def construct_armature(sge):
     bpy.ops.object.add(
         type='ARMATURE',
         enter_editmode=True,
-        location=(json_vector_to_vector(sge['SgeBones'][0]['Position']))
+        location=(json_vector_to_vector(sge['SgeBones'][0]['HeadPosition']))
     )
     obj = bpy.context.object
     obj.name = sge['Name']
@@ -41,8 +41,8 @@ def construct_armature(sge):
     for bone in sge['SgeBones']:
         bone_name = f"Bone{bone['Address']}"
         new_bone = armature.edit_bones.new(bone_name)
-        new_bone.head = json_vector_to_vector(bone['Position']) * model_scale
-        tail = (new_bone.head + json_vector_to_vector(bone['Unknown00'])) * model_scale
+        new_bone.head = json_vector_to_vector(bone['HeadPosition']) * model_scale
+        tail = (new_bone.head + json_vector_to_vector(bone['TailOffset'])) * model_scale
         if tail == new_bone.head:
             tail += Vector((0, 0.1, 0))
         new_bone.tail = tail
