@@ -41,11 +41,11 @@ def construct_armature(sge):
     for bone in sge['SgeBones']:
         bone_name = f"Bone{bone['Address']}"
         new_bone = armature.edit_bones.new(bone_name)
-        new_bone.head = (json_vector_to_vector(bone['HeadPosition'])) * model_scale + json_vector_to_vector(bone['TailOffset'])
-        tail = new_bone.head + new_bone.head.normalized()
-        if tail == new_bone.head:
-            tail += Vector((0, 0.1, 0))
-        new_bone.tail = tail
+        new_bone.head = (json_vector_to_vector(bone['HeadPosition'])) * model_scale
+        # tail = new_bone.head + new_bone.head.normalized()
+        # if tail == new_bone.head:
+        #     tail += Vector((0, 0.1, 0))
+        new_bone.tail = new_bone.head + Vector((0, 1, 0))
         bones_list.append(bone_name)
     for bone in armature.edit_bones:
         i = 0
@@ -111,7 +111,6 @@ def construct_mesh(sge, submesh, materials , mesh_num):
 
 def construct_animation(sge, anim, bones_list : list, anim_num):
     print(f'Creating animation {anim_num}...')
-    bpy.context.scene.render.fps = 60
     bpy.ops.object.mode_set(mode='POSE')
     pose = bpy.context.object.pose
     bpy.ops.pose.group_add()
@@ -159,12 +158,13 @@ def json_vector2_to_vector2(json_vector):
 def json_quaternion_to_quaternion(json_quaternion):
     return Quaternion((float(json_quaternion['W']), float(json_quaternion['X']), float(json_quaternion['Y']), float(json_quaternion['Z'])))
 
-def main(filename, anim_number):
+def main(filename):
     f = open(filename)
     sge = json.load(f)
     materials = construct_materials(sge)
     (armature, bones_list) = construct_armature(sge)
 
+    bpy.context.scene.render.fps = 60
     sge_collection = bpy.data.collections.new('sge_collection')
     bpy.context.scene.collection.children.link(sge_collection)
 
@@ -178,16 +178,21 @@ def main(filename, anim_number):
         mesh.parent = armature
         modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
         modifier.object = armature
-    
+
+    if armature.animation_data is None:
+        armature.animation_data_create()
+        armature.animation_data.use_nla = True
+
     if i >= 0:
         i = 0
         for anim in sge['SgeAnimations']:
-            if i < anim_number:
-                i += 1
-                continue
+            action = bpy.data.actions.new(f'Animation{i}')
+            
+            armature.animation_data.action = action
             construct_animation(sge, anim, bones_list, i)
-            break
-            # i += 1
+            nla = armature.animation_data.nla_tracks.new()
+            nla.strips.new(f'Animation{i}', 0, action)
+            i += 1
     
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.object.matrix_world = bpy.context.object.matrix_world @ Matrix.Rotation(math.radians(90), 4, 'X')
@@ -204,11 +209,10 @@ if __name__ == '__main__':
         o.select_set(True)
     bpy.ops.object.delete()
 
-    input_file = sys.argv[-3]
-    output_format = sys.argv[-2]
-    anim_number = int(sys.argv[-1])
+    input_file = sys.argv[-2]
+    output_format = sys.argv[-1]
 
-    main(input_file, anim_number)
+    main(input_file)
     output_file = os.path.join(os.path.dirname(input_file), os.path.splitext(os.path.basename(input_file))[0])
 
     if output_format.lower() == 'gltf':
