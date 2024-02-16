@@ -1,5 +1,5 @@
 import bpy
-from mathutils import Vector, Matrix, Quaternion, Euler
+from mathutils import Vector, Matrix, Quaternion
 import math
 import json
 import os
@@ -111,10 +111,11 @@ def construct_mesh(sge, submesh, materials , mesh_num):
 
 def construct_animation(sge, anim, bones_list : list, anim_num):
     print(f'Creating animation {anim_num}...')
-    bpy.ops.object.mode_set(mode='POSE')
     pose = bpy.context.object.pose
-    bpy.ops.pose.group_add()
-    
+
+    # for bone in pose.bones:
+    #     bone.matrix_basis = Matrix()
+
     i = 0
     for keyframe_idx in anim['UsedKeyframes']:
         keyframe = sge['KeyframeDefinitions'][keyframe_idx]
@@ -133,18 +134,15 @@ def construct_animation(sge, anim, bones_list : list, anim_num):
 
             bone.keyframe_insert(
                 data_path=f'location',
-                frame=keyframe['EndFrame'] - keyframe['NumFrames'],
-                group=f'Animation{anim_num}'
+                frame=keyframe['EndFrame'] - keyframe['NumFrames']
             )
             bone.keyframe_insert(
                 data_path=f'rotation_quaternion',
-                frame=keyframe['EndFrame'] - keyframe['NumFrames'],
-                group=f'Animation{anim_num}'
+                frame=keyframe['EndFrame'] - keyframe['NumFrames']
             )
             bone.keyframe_insert(
                 data_path=f'scale',
-                frame=keyframe['EndFrame'] - keyframe['NumFrames'],
-                group=f'Animation{anim_num}'
+                frame=keyframe['EndFrame'] - keyframe['NumFrames']
             )
             bone_idx += 1
         i += 1
@@ -182,16 +180,24 @@ def main(filename):
     if armature.animation_data is None:
         armature.animation_data_create()
         armature.animation_data.use_nla = True
-
-    if i >= 0:
+    
+    if i >= 0:    
+        bpy.ops.object.mode_set(mode='POSE')
         i = 0
         for anim in sge['SgeAnimations']:
-            action = bpy.data.actions.new(f'Animation{i}')
-            
-            armature.animation_data.action = action
-            construct_animation(sge, anim, bones_list, i)
-            nla = armature.animation_data.nla_tracks.new()
-            nla.strips.new(f'Animation{i}', 0, action)
+            if len(anim['UsedKeyframes']) > 0:
+                action = bpy.data.actions.new(f'Animation{i:3d}')
+                armature.animation_data.action = action
+                action.animation_data_clear()
+                nla = armature.animation_data.nla_tracks.new()
+                nla.strips.new(f'Animation{i:3d}', 0, action)
+            i += 1
+
+        i = 0
+        for anim in sge['SgeAnimations']:
+            if len(anim['UsedKeyframes']) > 0:
+                armature.animation_data.action = bpy.data.actions[f'Animation{i:3d}']
+                construct_animation(sge, anim, bones_list, i)
             i += 1
     
     bpy.ops.object.mode_set(mode='OBJECT')

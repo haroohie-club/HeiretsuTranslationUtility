@@ -11,7 +11,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
      * Op Code Table:
      * 0x01 - Camera Position
      * 0x02 - Camera Look-To
-     * 0x03 - Animation Path Effect
+     * 0x03 - Play Model Animation
      * 0x04 - Animation Path
      * 0x05 -
      * 0x06 -
@@ -32,8 +32,8 @@ namespace HaruhiHeiretsuLib.Strings.Events
      * 0x15 -
      * 0x16 -
      * 0x17 -
-     * 0x18 -
-     * 0x19 -
+     * 0x18 - 
+     * 0x19 - 
      */
     public class ActionDefinition
     {
