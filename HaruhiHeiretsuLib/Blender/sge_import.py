@@ -113,9 +113,6 @@ def construct_animation(sge, anim, bones_list : list, anim_num):
     print(f'Creating animation {anim_num}...')
     pose = bpy.context.object.pose
 
-    # for bone in pose.bones:
-    #     bone.matrix_basis = Matrix()
-
     i = 0
     for keyframe_idx in anim['UsedKeyframes']:
         keyframe = sge['KeyframeDefinitions'][keyframe_idx]

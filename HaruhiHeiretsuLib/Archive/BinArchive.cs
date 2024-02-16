@@ -1,5 +1,4 @@
-﻿using HaruhiChokuretsuLib.Util;
-using HaruhiHeiretsuLib.Util;
+﻿using HaruhiHeiretsuLib.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;

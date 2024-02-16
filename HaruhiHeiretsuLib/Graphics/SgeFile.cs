@@ -51,7 +51,7 @@ namespace HaruhiHeiretsuLib.Graphics
             _serializerOptions.IncludeFields = true;
 
             // SGEs are little-endian so no need for .Reverse() here
-            SgeStartOffset = BitConverter.ToInt32(data.Skip(0x1C).Take(4).ToArray());
+            SgeStartOffset = IO.ReadIntLE(data, 0x1C);
             IEnumerable<byte> sgeData = data.Skip(SgeStartOffset);
             SgeHeader = new(sgeData.Take(0x80));
             for (int i = 0; i < 1; i++)
@@ -86,16 +86,16 @@ namespace HaruhiHeiretsuLib.Graphics
 
                     for (int i = 0; i < 2; i++)
                     {
-                        int vertexTableAddress = BitConverter.ToInt32(sgeData.Skip(meshTableEntry.VertexAddress + i * 4).Take(4).ToArray());
-                        int numVertices = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress).Take(4).ToArray());
-                        int vertexStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x04).Take(4).ToArray());
+                        int vertexTableAddress = IO.ReadIntLE(sgeData, meshTableEntry.VertexAddress + i * 4);
+                        int numVertices = IO.ReadIntLE(sgeData, vertexTableAddress);
+                        int vertexStartAddress = IO.ReadIntLE(sgeData, vertexTableAddress + 0x04);
                         if (numVertices == vertexStartAddress) // tell tale sign that we're actually at the end of the file
                         {
                             break;
                         }
                         vertexTables.Add((numVertices, vertexStartAddress));
-                        int numFaces = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x08).Take(4).ToArray());
-                        int facesStartAddress = BitConverter.ToInt32(sgeData.Skip(vertexTableAddress + 0x0C).Take(4).ToArray());
+                        int numFaces = IO.ReadIntLE(sgeData, vertexTableAddress + 0x08);
+                        int facesStartAddress = IO.ReadIntLE(sgeData, vertexTableAddress + 0x0C);
                         if (facesStartAddress == 0) // another sign that things are amiss
                         {
                             vertexTables.RemoveAt(1);
@@ -133,7 +133,7 @@ namespace HaruhiHeiretsuLib.Graphics
                         faceLists.Add([]);
                         for (int i = 0; i < numFaces; i++)
                         {
-                            faceLists[currentTable].Add(BitConverter.ToInt32(sgeData.Skip(startAddress + i * 4).Take(4).ToArray()));
+                            faceLists[currentTable].Add(IO.ReadIntLE(sgeData, startAddress + i * 4));
                         }
                         currentTable++;
                     }
@@ -201,15 +201,15 @@ namespace HaruhiHeiretsuLib.Graphics
                     }
                 }
             }
-
-            TranslateDataOffset = BitConverter.ToInt32(sgeData.Skip(SgeHeader.AnimationTransformTableAddress).Take(4).ToArray());
-            RotateDataOffset = BitConverter.ToInt32(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x04).Take(4).ToArray());
-            ScaleDataOffset = BitConverter.ToInt32(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x08).Take(4).ToArray());
-            KeyframeDefinitionsOffset = BitConverter.ToInt32(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x0C).Take(4).ToArray());
-            TranslateDataCount = BitConverter.ToInt16(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x10).Take(2).ToArray());
-            RotateDataCount = BitConverter.ToInt16(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x12).Take(2).ToArray());
-            ScaleDataCount = BitConverter.ToInt16(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x14).Take(2).ToArray());
-            NumKeyframes = BitConverter.ToInt16(sgeData.Skip(SgeHeader.AnimationTransformTableAddress + 0x16).Take(2).ToArray());
+            
+            TranslateDataOffset = IO.ReadIntLE(sgeData, SgeHeader.AnimationTransformTableAddress);
+            RotateDataOffset = IO.ReadIntLE(sgeData, SgeHeader.AnimationTransformTableAddress + 0x04);
+            ScaleDataOffset = IO.ReadIntLE(sgeData, SgeHeader.AnimationTransformTableAddress + 0x08);
+            KeyframeDefinitionsOffset = IO.ReadIntLE(sgeData, SgeHeader.AnimationTransformTableAddress + 0x0C);
+            TranslateDataCount = IO.ReadShortLE(sgeData, SgeHeader.AnimationTransformTableAddress + 0x10);
+            RotateDataCount = IO.ReadShortLE(sgeData, SgeHeader.AnimationTransformTableAddress + 0x12);
+            ScaleDataCount = IO.ReadShortLE(sgeData, SgeHeader.AnimationTransformTableAddress + 0x14);
+            NumKeyframes = IO.ReadShortLE(sgeData, SgeHeader.AnimationTransformTableAddress + 0x16);
 
             for (int i = 0; i < SgeHeader.NumAnimations; i++)
             {
@@ -328,39 +328,39 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public SgeHeader(IEnumerable<byte> headerData)
         {
-            Version = BitConverter.ToInt16(headerData.Take(2).ToArray());
-            ModelType = BitConverter.ToInt16(headerData.Skip(0x02).Take(2).ToArray());
-            Unknown38Count = BitConverter.ToInt32(headerData.Skip(0x04).Take(4).ToArray());
-            Unknown08 = BitConverter.ToInt32(headerData.Skip(0x08).Take(4).ToArray());
-            Unknown0C = BitConverter.ToInt32(headerData.Skip(0x0C).Take(4).ToArray());
-            BonesCount = BitConverter.ToInt32(headerData.Skip(0x10).Take(4).ToArray());
-            TexturesCount = BitConverter.ToInt32(headerData.Skip(0x14).Take(4).ToArray());
-            Unknown18 = BitConverter.ToInt32(headerData.Skip(0x18).Take(4).ToArray());
-            Unknown1C = BitConverter.ToInt32(headerData.Skip(0x1C).Take(4).ToArray());
-            Unknown20 = BitConverter.ToInt32(headerData.Skip(0x20).Take(4).ToArray());
-            Unknown24 = BitConverter.ToInt32(headerData.Skip(0x24).Take(4).ToArray());
-            Unknown28 = BitConverter.ToInt32(headerData.Skip(0x28).Take(4).ToArray());
-            Unknown2C = BitConverter.ToInt32(headerData.Skip(0x2C).Take(4).ToArray());
-            MeshTableAddress = BitConverter.ToInt32(headerData.Skip(0x30).Take(4).ToArray());
-            Unknown34 = BitConverter.ToInt32(headerData.Skip(0x34).Take(4).ToArray());
-            Unknown38TableOffset = BitConverter.ToInt32(headerData.Skip(0x38).Take(4).ToArray());
-            Unknown3C = BitConverter.ToInt32(headerData.Skip(0x3C).Take(4).ToArray());
-            Unknown40 = BitConverter.ToInt32(headerData.Skip(0x40).Take(4).ToArray());
-            BonesTableAddress = BitConverter.ToInt32(headerData.Skip(0x44).Take(4).ToArray());
-            TextureTableAddress = BitConverter.ToInt32(headerData.Skip(0x48).Take(4).ToArray());
-            Unknown4C = BitConverter.ToInt32(headerData.Skip(0x4C).Take(4).ToArray());
-            Unknown50 = BitConverter.ToInt32(headerData.Skip(0x50).Take(4).ToArray());
-            Unknown54 = BitConverter.ToInt32(headerData.Skip(0x54).Take(4).ToArray());
-            Unknown58 = BitConverter.ToInt32(headerData.Skip(0x58).Take(4).ToArray());
-            NumAnimations = BitConverter.ToInt32(headerData.Skip(0x5C).Take(4).ToArray());
-            AnimationDataTableAddress = BitConverter.ToInt32(headerData.Skip(0x60).Take(4).ToArray());
-            AnimationTransformTableAddress = BitConverter.ToInt32(headerData.Skip(0x64).Take(4).ToArray());
-            NumEventAnimations = BitConverter.ToInt32(headerData.Skip(0x68).Take(4).ToArray());
-            EventAnimationDataTableAddress = BitConverter.ToInt32(headerData.Skip(0x6C).Take(4).ToArray()); // These tables are accessed when
-            EventAnimationTransformTableAddress = BitConverter.ToInt32(headerData.Skip(0x70).Take(4).ToArray()); // (anim number & 0x8000) is true
-            Unknown74 = BitConverter.ToInt32(headerData.Skip(0x74).Take(4).ToArray());
-            Unknown78 = BitConverter.ToInt32(headerData.Skip(0x78).Take(4).ToArray());
-            Unknown7C = BitConverter.ToInt32(headerData.Skip(0x7C).Take(4).ToArray());
+            Version = IO.ReadShortLE(headerData, 0x00);
+            ModelType = IO.ReadShortLE(headerData, 0x02);
+            Unknown38Count = IO.ReadIntLE(headerData, 0x04);
+            Unknown08 = IO.ReadIntLE(headerData, 0x08);
+            Unknown0C = IO.ReadIntLE(headerData, 0x0C);
+            BonesCount = IO.ReadIntLE(headerData, 0x10);
+            TexturesCount = IO.ReadIntLE(headerData, 0x14);
+            Unknown18 = IO.ReadIntLE(headerData, 0x18);
+            Unknown1C = IO.ReadIntLE(headerData, 0x1C);
+            Unknown20 = IO.ReadIntLE(headerData, 0x20);
+            Unknown24 = IO.ReadIntLE(headerData, 0x24);
+            Unknown28 = IO.ReadIntLE(headerData, 0x28);
+            Unknown2C = IO.ReadIntLE(headerData, 0x2C);
+            MeshTableAddress = IO.ReadIntLE(headerData, 0x30);
+            Unknown34 = IO.ReadIntLE(headerData, 0x34);
+            Unknown38TableOffset = IO.ReadIntLE(headerData, 0x38);
+            Unknown3C = IO.ReadIntLE(headerData, 0x3C);
+            Unknown40 = IO.ReadIntLE(headerData, 0x40);
+            BonesTableAddress = IO.ReadIntLE(headerData, 0x44);
+            TextureTableAddress = IO.ReadIntLE(headerData, 0x48);
+            Unknown4C = IO.ReadIntLE(headerData, 0x4C);
+            Unknown50 = IO.ReadIntLE(headerData, 0x50);
+            Unknown54 = IO.ReadIntLE(headerData, 0x54);
+            Unknown58 = IO.ReadIntLE(headerData, 0x58);
+            NumAnimations = IO.ReadIntLE(headerData, 0x5C);
+            AnimationDataTableAddress = IO.ReadIntLE(headerData, 0x60);
+            AnimationTransformTableAddress = IO.ReadIntLE(headerData, 0x64);
+            NumEventAnimations = IO.ReadIntLE(headerData, 0x68);
+            EventAnimationDataTableAddress = IO.ReadIntLE(headerData, 0x6C); // These tables are accessed when
+            EventAnimationTransformTableAddress = IO.ReadIntLE(headerData, 0x70); // (anim number & 0x8000) is true
+            Unknown74 = IO.ReadIntLE(headerData, 0x74);
+            Unknown78 = IO.ReadIntLE(headerData, 0x78);
+            Unknown7C = IO.ReadIntLE(headerData, 0x7C);
         }
     }
 
@@ -386,29 +386,29 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public SgeAnimation(IEnumerable<byte> data, int baseOffset, int numBones, int defOffset)
         {
-            TotalFrames = BitConverter.ToSingle(data.Skip(defOffset).Take(4).ToArray());
-            Unknown04 = BitConverter.ToInt32(data.Skip(defOffset + 0x04).Take(4).ToArray());
-            BoneTableOffset = BitConverter.ToInt32(data.Skip(defOffset + 0x08).Take(4).ToArray());
-            NumKeyframes = BitConverter.ToInt32(data.Skip(defOffset + 0x0C).Take(4).ToArray());
-            Unknown10 = BitConverter.ToInt32(data.Skip(defOffset + 0x10).Take(4).ToArray());
-            Unknown14 = BitConverter.ToInt32(data.Skip(defOffset + 0x14).Take(4).ToArray());
-            Unknown18 = BitConverter.ToInt32(data.Skip(defOffset + 0x18).Take(4).ToArray());
-            Unknown1C = BitConverter.ToInt32(data.Skip(defOffset + 0x1C).Take(4).ToArray());
-            Unknown20 = BitConverter.ToInt32(data.Skip(defOffset + 0x20).Take(4).ToArray());
-            Unknown24 = BitConverter.ToInt32(data.Skip(defOffset + 0x24).Take(4).ToArray());
-            Unknown28 = BitConverter.ToInt32(data.Skip(defOffset + 0x28).Take(4).ToArray());
-            Unknown2C = BitConverter.ToInt32(data.Skip(defOffset + 0x2C).Take(4).ToArray());
-            Unknown30 = BitConverter.ToInt32(data.Skip(defOffset + 0x30).Take(4).ToArray());
-            Unknown34 = BitConverter.ToInt32(data.Skip(defOffset + 0x34).Take(4).ToArray());
+            TotalFrames = IO.ReadFloat(data, defOffset);
+            Unknown04 = IO.ReadIntLE(data, defOffset + 0x04);
+            BoneTableOffset = IO.ReadIntLE(data, defOffset + 0x08);
+            NumKeyframes = IO.ReadIntLE(data, defOffset + 0x0C);
+            Unknown10 = IO.ReadIntLE(data, defOffset + 0x10);
+            Unknown14 = IO.ReadIntLE(data, defOffset + 0x14);
+            Unknown18 = IO.ReadIntLE(data, defOffset + 0x18);
+            Unknown1C = IO.ReadIntLE(data, defOffset + 0x1C);
+            Unknown20 = IO.ReadIntLE(data, defOffset + 0x20);
+            Unknown24 = IO.ReadIntLE(data, defOffset + 0x24);
+            Unknown28 = IO.ReadIntLE(data, defOffset + 0x28);
+            Unknown2C = IO.ReadIntLE(data, defOffset + 0x2C);
+            Unknown30 = IO.ReadIntLE(data, defOffset + 0x30);
+            Unknown34 = IO.ReadIntLE(data, defOffset + 0x34);
 
-            int usedKeyframesOffset = BitConverter.ToInt32(data.Skip(baseOffset + BoneTableOffset).Take(4).ToArray());
+            int usedKeyframesOffset = IO.ReadIntLE(data, baseOffset + BoneTableOffset);
             for (int i = 0; i < NumKeyframes; i++)
             {
-                UsedKeyframes.Add(BitConverter.ToInt16(data.Skip(baseOffset + usedKeyframesOffset + i * 6).Take(2).ToArray()));
+                UsedKeyframes.Add(IO.ReadShortLE(data, baseOffset + usedKeyframesOffset + i * 6));
             }
             for (int i = 1; i < numBones; i++)
             {
-                int offset = BitConverter.ToInt32(data.Skip(baseOffset + BoneTableOffset + i * 4).Take(4).ToArray()) + baseOffset;
+                int offset = IO.ReadIntLE(data, baseOffset + BoneTableOffset + i * 4) + baseOffset;
                 BoneTable.Add(new(data.Skip(offset).Take(6 * NumKeyframes), offset, NumKeyframes));
             }
         }
@@ -425,9 +425,9 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 Offset = offset;
                 Keyframes.Add(new(
-                    BitConverter.ToInt16(data.Skip(i * 6).Take(2).ToArray()),
-                    BitConverter.ToInt16(data.Skip(i * 6 + 2).Take(2).ToArray()),
-                    BitConverter.ToInt16(data.Skip(i * 6 + 4).Take(2).ToArray())
+                    IO.ReadShortLE(data, i * 6),
+                    IO.ReadShortLE(data, i * 6 + 2),
+                    IO.ReadShortLE(data, i * 6 + 4)
                     ));
             }
         }
@@ -457,9 +457,9 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public TranslateDataEntry(IEnumerable<byte> data)
         {
-            X = BitConverter.ToSingle(data.Take(4).ToArray());
-            Y = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
-            Z = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
+            X = IO.ReadFloat(data, 0x00);
+            Y = IO.ReadFloat(data, 0x04);
+            Z = IO.ReadFloat(data, 0x08);
         }
     }
 
@@ -474,10 +474,10 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public RotateDataEntry(IEnumerable<byte> data)
         {
-            X = BitConverter.ToSingle(data.Take(4).ToArray());
-            Y = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
-            Z = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
-            W = BitConverter.ToSingle(data.Skip(0x0C).Take(4).ToArray());
+            X = IO.ReadFloat(data, 0x00);
+            Y = IO.ReadFloat(data, 0x04);
+            Z = IO.ReadFloat(data, 0x08);
+            W = IO.ReadFloat(data, 0x0C);
         }
     }
 
@@ -491,9 +491,9 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public ScaleDataEntry(IEnumerable<byte> data)
         {
-            X = BitConverter.ToSingle(data.Take(4).ToArray());
-            Y = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
-            Z = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
+            X = IO.ReadFloat(data, 0x00);
+            Y = IO.ReadFloat(data, 0x04);
+            Z = IO.ReadFloat(data, 0x08);
         }
     }
 
@@ -515,18 +515,18 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public KeyframeDefinition(IEnumerable<byte> data)
         {
-            Unknown00 = BitConverter.ToSingle(data.Take(4).ToArray());
-            Unknown04 = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
-            Unknown08 = BitConverter.ToUInt16(data.Skip(0x08).Take(2).ToArray());
-            Unknown0A = BitConverter.ToUInt16(data.Skip(0x0A).Take(2).ToArray());
-            Unknown0C = BitConverter.ToInt32(data.Skip(0x0C).Take(4).ToArray());
-            NumFrames = BitConverter.ToUInt16(data.Skip(0x10).Take(2).ToArray());
-            EndFrame = BitConverter.ToUInt16(data.Skip(0x12).Take(2).ToArray());
-            Unknown14 = BitConverter.ToInt32(data.Skip(0x14).Take(4).ToArray());
-            Unknown18 = BitConverter.ToInt32(data.Skip(0x18).Take(4).ToArray());
-            Unknown1C = BitConverter.ToInt32(data.Skip(0x1C).Take(4).ToArray());
-            Unknown20 = BitConverter.ToInt32(data.Skip(0x20).Take(4).ToArray());
-            Unknown24 = BitConverter.ToInt32(data.Skip(0x24).Take(4).ToArray());
+            Unknown00 = IO.ReadFloat(data, 0x00);
+            Unknown04 = IO.ReadFloat(data, 0x04);
+            Unknown08 = IO.ReadUShortLE(data, 0x08);
+            Unknown0A = IO.ReadUShortLE(data, 0x0A);
+            Unknown0C = IO.ReadIntLE(data, 0x0C);
+            NumFrames = IO.ReadUShortLE(data, 0x10);
+            EndFrame = IO.ReadUShortLE(data, 0x12);
+            Unknown14 = IO.ReadIntLE(data, 0x14);
+            Unknown18 = IO.ReadIntLE(data, 0x18);
+            Unknown1C = IO.ReadIntLE(data, 0x1C);
+            Unknown20 = IO.ReadIntLE(data, 0x20);
+            Unknown24 = IO.ReadIntLE(data, 0x24);
         }
     }
 
@@ -553,24 +553,24 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public Unknown38Entry(IEnumerable<byte> data)
         {
-            Unknown00 = BitConverter.ToSingle(data.Take(4).ToArray());
-            Unknown04 = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
-            Unknown08 = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
-            Unknown0C = BitConverter.ToSingle(data.Skip(0x0C).Take(4).ToArray());
-            Unknown10 = BitConverter.ToSingle(data.Skip(0x10).Take(4).ToArray());
-            Unknown14 = BitConverter.ToSingle(data.Skip(0x14).Take(4).ToArray());
-            Unknown18 = BitConverter.ToSingle(data.Skip(0x18).Take(4).ToArray());
-            Unknown1C = BitConverter.ToSingle(data.Skip(0x1C).Take(4).ToArray());
-            Unknown20 = BitConverter.ToSingle(data.Skip(0x20).Take(4).ToArray());
-            Unknown24 = BitConverter.ToSingle(data.Skip(0x24).Take(4).ToArray());
-            Unknown28 = BitConverter.ToSingle(data.Skip(0x28).Take(4).ToArray());
-            Unknown2C = BitConverter.ToSingle(data.Skip(0x2C).Take(4).ToArray());
-            Unknown30 = BitConverter.ToInt32(data.Skip(0x30).Take(4).ToArray());
-            Unknown34 = BitConverter.ToInt32(data.Skip(0x34).Take(4).ToArray());
-            Unknown38 = BitConverter.ToInt32(data.Skip(0x38).Take(4).ToArray());
-            Unknown3C = BitConverter.ToInt32(data.Skip(0x3C).Take(4).ToArray());
-            Unknown40 = BitConverter.ToSingle(data.Skip(0x3C).Take(4).ToArray());
-            Unknown44 = BitConverter.ToInt32(data.Skip(0x3C).Take(4).ToArray());
+            Unknown00 = IO.ReadFloat(data, 0x00);
+            Unknown04 = IO.ReadFloat(data, 0x04);
+            Unknown08 = IO.ReadFloat(data, 0x08);
+            Unknown0C = IO.ReadFloat(data, 0x0C);
+            Unknown10 = IO.ReadFloat(data, 0x10);
+            Unknown14 = IO.ReadFloat(data, 0x14);
+            Unknown18 = IO.ReadFloat(data, 0x18);
+            Unknown1C = IO.ReadFloat(data, 0x1C);
+            Unknown20 = IO.ReadFloat(data, 0x20);
+            Unknown24 = IO.ReadFloat(data, 0x24);
+            Unknown28 = IO.ReadFloat(data, 0x28);
+            Unknown2C = IO.ReadFloat(data, 0x2C);
+            Unknown30 = IO.ReadIntLE(data, 0x30);
+            Unknown34 = IO.ReadIntLE(data, 0x34);
+            Unknown38 = IO.ReadIntLE(data, 0x38);
+            Unknown3C = IO.ReadIntLE(data, 0x3C);
+            Unknown40 = IO.ReadFloat(data, 0x3C);
+            Unknown44 = IO.ReadIntLE(data, 0x3C);
         }
     }
 
@@ -596,23 +596,23 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public SgeMesh(IEnumerable<byte> data, int offset)
         {
-            Unknown00 = BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
-            Unknown04 = BitConverter.ToInt32(data.Skip(offset + 0x04).Take(4).ToArray());
-            SubmeshAddress = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).ToArray());
-            SubmeshCount = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).ToArray());
-            Unknown10 = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).ToArray());
-            VertexAddress = BitConverter.ToInt32(data.Skip(offset + 0x14).Take(4).ToArray());
-            Unknown18 = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).ToArray());
-            Unknown1C = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).ToArray());
-            Unknown20 = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).ToArray());
-            Unknown24 = BitConverter.ToSingle(data.Skip(offset + 0x24).Take(4).ToArray());
-            Unknown28 = BitConverter.ToSingle(data.Skip(offset + 0x28).Take(4).ToArray());
-            Unknown2C = BitConverter.ToSingle(data.Skip(offset + 0x2C).Take(4).ToArray());
-            Unknown30 = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).ToArray());
-            Unknown34 = BitConverter.ToInt32(data.Skip(offset + 0x34).Take(4).ToArray());
-            Unknown38 = BitConverter.ToSingle(data.Skip(offset + 0x38).Take(4).ToArray());
-            Unknown3C = BitConverter.ToSingle(data.Skip(offset + 0x3C).Take(4).ToArray());
-            Unknown40 = BitConverter.ToSingle(data.Skip(offset + 0x40).Take(4).ToArray());
+            Unknown00 = IO.ReadIntLE(data, offset);
+            Unknown04 = IO.ReadIntLE(data, offset + 0x04);
+            SubmeshAddress = IO.ReadIntLE(data, offset + 0x08);
+            SubmeshCount = IO.ReadIntLE(data, offset + 0x0C);
+            Unknown10 = IO.ReadIntLE(data, offset + 0x10);
+            VertexAddress = IO.ReadIntLE(data, offset + 0x14);
+            Unknown18 = IO.ReadIntLE(data, offset + 0x18);
+            Unknown1C = IO.ReadIntLE(data, offset + 0x1C);
+            Unknown20 = IO.ReadIntLE(data, offset + 0x20);
+            Unknown24 = IO.ReadFloat(data, offset + 0x24);
+            Unknown28 = IO.ReadFloat(data, offset + 0x28);
+            Unknown2C = IO.ReadFloat(data, offset + 0x2C);
+            Unknown30 = IO.ReadIntLE(data, offset + 0x30);
+            Unknown34 = IO.ReadIntLE(data, offset + 0x34);
+            Unknown38 = IO.ReadFloat(data, offset + 0x38);
+            Unknown3C = IO.ReadFloat(data, offset + 0x3C);
+            Unknown40 = IO.ReadFloat(data, offset + 0x40);
         }
     }
 
@@ -634,17 +634,17 @@ namespace HaruhiHeiretsuLib.Graphics
         {
             Address = offset;
             TailOffset = new Vector3(
-                BitConverter.ToSingle(data.Skip(offset).Take(4).ToArray()),
-                BitConverter.ToSingle(data.Skip(offset + 0x04).Take(4).ToArray()),
-                BitConverter.ToSingle(data.Skip(offset + 0x08).Take(4).ToArray()));
+                IO.ReadFloat(data, offset + 0x00),
+                IO.ReadFloat(data, offset + 0x04),
+                IO.ReadFloat(data, offset + 0x08));
             HeadPosition = new Vector3(
-                BitConverter.ToSingle(data.Skip(offset + 0x0C).Take(4).ToArray()),
-                BitConverter.ToSingle(data.Skip(offset + 0x10).Take(4).ToArray()),
-                BitConverter.ToSingle(data.Skip(offset + 0x14).Take(4).ToArray()));
-            ParentAddress = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).ToArray());
-            AddressToBone1 = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).ToArray());
-            AddressToBone2 = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).ToArray());
-            Count = BitConverter.ToInt32(data.Skip(offset + 0x24).Take(4).ToArray());
+                IO.ReadFloat(data, offset + 0x0C),
+                IO.ReadFloat(data, offset + 0x10),
+                IO.ReadFloat(data, offset + 0x14));
+            ParentAddress = IO.ReadIntLE(data, offset + 0x18);
+            AddressToBone1 = IO.ReadIntLE(data, offset + 0x1C);
+            AddressToBone2 = IO.ReadIntLE(data, offset + 0x20);
+            Count = IO.ReadIntLE(data, offset + 0x24);
         }
 
         public void ResolveConnections(List<SgeBone> bones)
@@ -709,30 +709,30 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public SgeSubmesh(IEnumerable<byte> data, int offset, List<SgeMaterial> materials, List<SgeBone> bones)
         {
-            Unknown00 = BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
-            Unknown04 = BitConverter.ToInt32(data.Skip(offset + 0x04).Take(4).ToArray());
-            MaterialStringAddress = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).ToArray());
+            Unknown00 = IO.ReadIntLE(data, offset);
+            Unknown04 = IO.ReadIntLE(data, offset + 0x04);
+            MaterialStringAddress = IO.ReadIntLE(data, offset + 0x08);
             string materialString = Encoding.ASCII.GetString(data.Skip(MaterialStringAddress).TakeWhile(b => b != 0x00).ToArray());
             Material = materials.FirstOrDefault(m => m.Name == materialString);
-            Unknown0C = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).ToArray());
-            Unknown10 = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).ToArray());
-            BoneAddress = BitConverter.ToInt32(data.Skip(offset + 0x14).Take(4).ToArray());
+            Unknown0C = IO.ReadIntLE(data, offset + 0x0C);
+            Unknown10 = IO.ReadIntLE(data, offset + 0x10);
+            BoneAddress = IO.ReadIntLE(data, offset + 0x14);
             Bone = bones.FirstOrDefault(b => b.Address == BoneAddress);
-            Unknown18 = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).ToArray());
-            Unknown1C = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).ToArray());
-            Unknown20 = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).ToArray());
-            StartVertex = BitConverter.ToInt32(data.Skip(offset + 0x24).Take(4).ToArray());
-            EndVertex = BitConverter.ToInt32(data.Skip(offset + 0x28).Take(4).ToArray());
-            StartFace = BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).ToArray());
-            FaceCount = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).ToArray());
+            Unknown18 = IO.ReadIntLE(data, offset + 0x18);
+            Unknown1C = IO.ReadIntLE(data, offset + 0x1C);
+            Unknown20 = IO.ReadIntLE(data, offset + 0x20);
+            StartVertex = IO.ReadIntLE(data, offset + 0x24);
+            EndVertex = IO.ReadIntLE(data, offset + 0x28);
+            StartFace = IO.ReadIntLE(data, offset + 0x2C);
+            FaceCount = IO.ReadIntLE(data, offset + 0x30);
             for (int i = 0; i < 16; i++)
             {
-                BonePalette.Add(BitConverter.ToInt16(data.Skip(offset + 0x34 + i * 2).Take(2).ToArray()));
+                BonePalette.Add(IO.ReadShortLE(data, offset + 0x34 + i * 2));
             }
-            Unknown54 = BitConverter.ToSingle(data.Skip(offset + 0x54).Take(4).ToArray());
-            Unknown58 = BitConverter.ToSingle(data.Skip(offset + 0x58).Take(4).ToArray());
-            Unknown5C = BitConverter.ToSingle(data.Skip(offset + 0x5C).Take(4).ToArray());
-            Unknown60 = BitConverter.ToSingle(data.Skip(offset + 0x60).Take(4).ToArray());
+            Unknown54 = IO.ReadFloat(data, offset + 0x54);
+            Unknown58 = IO.ReadFloat(data, offset + 0x58);
+            Unknown5C = IO.ReadFloat(data, offset + 0x5C);
+            Unknown60 = IO.ReadFloat(data, offset + 0x60);
         }
     }
 
@@ -750,17 +750,17 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public SgeVertex(IEnumerable<byte> data)
         {
-            Position = new Vector3(BitConverter.ToSingle(data.Skip(0x00).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray()));
-            float weight1 = BitConverter.ToSingle(data.Skip(0x0C).Take(4).ToArray());
-            float weight2 = BitConverter.ToSingle(data.Skip(0x10).Take(4).ToArray());
-            float weight3 = BitConverter.ToSingle(data.Skip(0x14).Take(4).ToArray());
-            Weight = new float[] { weight1, weight2, weight3, 1 - (weight1 + weight2 + weight3) };
-            BoneIds = new byte[] { data.ElementAt(0x18), data.ElementAt(0x19), data.ElementAt(0x1A), data.ElementAt(0x1B) };
-            Normal = new Vector3(BitConverter.ToSingle(data.Skip(0x1C).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x20).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x24).Take(4).ToArray()));
-            int color = BitConverter.ToInt32(data.Skip(0x28).Take(4).ToArray());
+            Position = new Vector3(IO.ReadFloat(data, 0x00), IO.ReadFloat(data, 0x04), IO.ReadFloat(data, 0x08));
+            float weight1 = IO.ReadFloat(data, 0x0C);
+            float weight2 = IO.ReadFloat(data, 0x10);
+            float weight3 = IO.ReadFloat(data, 0x14);
+            Weight = [weight1, weight2, weight3, 1 - (weight1 + weight2 + weight3)];
+            BoneIds = [data.ElementAt(0x18), data.ElementAt(0x19), data.ElementAt(0x1A), data.ElementAt(0x1B)];
+            Normal = new Vector3(IO.ReadFloat(data, 0x1C), IO.ReadFloat(data, 0x20), IO.ReadFloat(data, 0x24));
+            int color = IO.ReadIntLE(data, 0x28);
             Color = new VertexColor(((color & 0x00FF0000) >> 16) / 255.0f, ((color & 0x0000FF00) >> 8) / 255.0f, (color & 0x000000FF) / 255.0f, ((color & 0xFF000000) >> 24) / 255.0f);
-            UVCoords = new Vector2(BitConverter.ToSingle(data.Skip(0x2C).Take(4).ToArray()), BitConverter.ToSingle(data.Skip(0x30).Take(4).ToArray()));
-            Unknown2 = BitConverter.ToInt32(data.Skip(0x34).Take(4).ToArray());
+            UVCoords = new Vector2(IO.ReadFloat(data, 0x2C), IO.ReadFloat(data, 0x30));
+            Unknown2 = IO.ReadIntLE(data, 0x34);
         }
 
         public override string ToString()

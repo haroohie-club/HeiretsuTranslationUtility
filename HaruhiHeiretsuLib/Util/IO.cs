@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace HaruhiChokuretsuLib.Util
+namespace HaruhiHeiretsuLib.Util
 {
     internal static class IO
     {
