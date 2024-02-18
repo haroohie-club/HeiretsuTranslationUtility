@@ -11,7 +11,28 @@ namespace HaruhiHeiretsuLib.Util
     {
         public override Dictionary<SgeBoneAttachedVertex, float> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            throw new NotImplementedException();
+            Dictionary<SgeBoneAttachedVertex, float> values = [];
+
+            if (reader.TokenType == JsonTokenType.StartObject)
+            {
+                reader.Read();
+            }
+            while (reader.TokenType != JsonTokenType.EndObject)
+            {
+                string boneData = reader.GetString();
+                reader.Read();
+                if (string.IsNullOrEmpty(boneData))
+                {
+                    throw new InvalidOperationException("Bone data in SgeBoneAttachedVertex dictionary was null or empty!");
+                }
+                string[] boneDataSplit = boneData.Split(',');
+                SgeBoneAttachedVertex boneAttachedVertex = new(int.Parse(boneDataSplit[0]), int.Parse(boneDataSplit[1]));
+                float weight = reader.GetSingle();
+                reader.Read();
+                values.Add(boneAttachedVertex, weight);
+            }
+
+            return values;
         }
 
         public override void Write(Utf8JsonWriter writer, Dictionary<SgeBoneAttachedVertex, float> value, JsonSerializerOptions options)

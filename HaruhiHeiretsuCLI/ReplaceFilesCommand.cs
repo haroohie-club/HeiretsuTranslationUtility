@@ -124,6 +124,31 @@ namespace HaruhiHeiretsuCLI
 
                         CommandSet.Out.WriteLine($"Finished replacing {Path.GetFileName(file)} in MCB & SCR");
                     }
+                    else if (file.EndsWith(".sge.json", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (archive != "grp")
+                        {
+                            CommandSet.Out.WriteLine($"WARNING: SGE file {file} targets {archive}.bin rather than grp.bin, skipping...");
+                            continue;
+                        }
+
+                        File.WriteAllBytes(@"C:\Users\User\PortableApps\ROMHacking\WiiHacking\games\heiretsu\DATA\files\sge.bin", [.. Sge.LoadFromJson(File.ReadAllText(file)).GetBytes()]);
+                        //grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Sge = Sge.LoadFromJson(File.ReadAllText(file));
+                        //grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Data = grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Sge.GetBytes();
+
+
+                        //int i = mcb.GraphicsFiles.Count;
+                        //mcb.LoadGraphicsFiles(file.Split('_'));
+                        //for (; i < mcb.GraphicsFiles.Count; i++)
+                        //{
+                        //    mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Data = grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Data;
+                        //    mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Edited = true;
+                        //}
+
+                        //archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
+
+                        CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
+                    }
                     else if (file.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
                     {
                         if (archive != "grp")

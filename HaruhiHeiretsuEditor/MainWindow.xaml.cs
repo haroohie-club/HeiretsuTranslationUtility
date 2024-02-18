@@ -473,7 +473,7 @@ namespace HaruhiHeiretsuEditor
                 }
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.SGE)
                 {
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes; {selectedFile.Sge.SgeHeader.BonesCount} bones and {selectedFile.Sge.SgeHeader.Unknown0C} meshes", Background = Brushes.White });
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes; {selectedFile.Sge.SgeHeader.BonesCount} bones and {selectedFile.Sge.SgeHeader.Unknown40Count} meshes", Background = Brushes.White });
                     foreach (SgeMaterial mat in selectedFile.Sge.SgeMaterials)
                     {
                         graphicsEditStackPanel.Children.Add(new TextBlock { Text = mat.Name });
@@ -702,7 +702,7 @@ namespace HaruhiHeiretsuEditor
                 csv += "Unknown08\n";
                 valueLine = string.Empty;
                 percentageLine = string.Empty;
-                var unknown08HeaderValues = headers.GroupBy(h => h.Unknown08).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                var unknown08HeaderValues = headers.GroupBy(h => h.Unknown3CCount).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
                 foreach (var header08 in unknown08HeaderValues)
                 {
                     valueLine += $"{header08.Key},";
@@ -713,7 +713,7 @@ namespace HaruhiHeiretsuEditor
                 csv += "Unknown0C\n";
                 valueLine = string.Empty;
                 percentageLine = string.Empty;
-                var unknown0CHeaderValues = headers.GroupBy(h => h.Unknown0C).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                var unknown0CHeaderValues = headers.GroupBy(h => h.Unknown40Count).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
                 foreach (var header0C in unknown0CHeaderValues)
                 {
                     valueLine += $"{header0C.Key},";

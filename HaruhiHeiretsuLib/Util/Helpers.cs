@@ -23,6 +23,20 @@ namespace HaruhiHeiretsuLib.Util
             }
         }
 
+        public static int RoundToNearest16(int i)
+        {
+            return (int)((i + 0xF) & 0xFFFFFFF0);
+        }
+
+        public static void PadToNearest16(this List<byte> bytes)
+        {
+            int padding = 16 - (bytes.Count % 16);
+            if (padding != 16)
+            {
+                bytes.AddRange(new byte[padding]);
+            }
+        }
+
         public static int FloatToInt(float value)
         {
             double d1 = value / BitConverter.UInt64BitsToDouble(F0);
