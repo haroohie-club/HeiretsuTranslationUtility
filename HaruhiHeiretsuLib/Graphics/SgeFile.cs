@@ -70,7 +70,7 @@ namespace HaruhiHeiretsuLib.Graphics
             SgeStartOffset = IO.ReadIntLE(data, 0x1C);
             IEnumerable<byte> sgeData = data.Skip(SgeStartOffset);
             SgeHeader = new(sgeData.Take(0x80));
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 10; i++) // There's always ten meshes
             {
                 SgeMeshes.Add(new(sgeData, SgeHeader.MeshTableAddress + 0x44 * i));
             }
@@ -88,7 +88,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 bone.ResolveConnections(SgeBones);
             }
 
-            foreach (SgeMesh meshTableEntry in SgeMeshes)
+            foreach (SgeMesh meshTableEntry in SgeMeshes.Take(1)) // but only the first mesh ever seems to matter
             {
                 if (meshTableEntry.SubmeshAddress > 0 && meshTableEntry.SubmeshAddress % 4 == 0 && meshTableEntry.SubmeshCount > 0 && meshTableEntry.VertexAddress > 0)
                 {
@@ -242,7 +242,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 Unknown3CTable.Add(new(sgeData.Skip(SgeHeader.Unknown3CTableOffset + i * 0x14).Take(0x14)));
             }
 
-            for (int i = 0; i < SgeHeader.MeshCount; i++)
+            for (int i = 0; i < SgeHeader.Unknown40Count; i++)
             {
                 Unknown40Table.Add(new(sgeData.Skip(SgeHeader.Unknown40TableOffset + i * 0x18).Take(0x18)));
             }
@@ -350,7 +350,7 @@ namespace HaruhiHeiretsuLib.Graphics
             // Calculate stuff
             SgeHeader.Unknown38Count = Unknown38Table.Count;
             SgeHeader.Unknown3CCount = Unknown3CTable.Count;
-            SgeHeader.MeshCount = Unknown40Table.Count;
+            SgeHeader.Unknown40Count = Unknown40Table.Count;
             SgeHeader.Unknown50Count = Unknown50Table.Count;
             SgeHeader.BonesCount = SgeBones.Count;
             SgeHeader.TexturesCount = SgeMaterials.Count;
@@ -453,16 +453,43 @@ namespace HaruhiHeiretsuLib.Graphics
 
             bool triStripped = SgeHeader.ModelType == 4;
 
+            SgeMeshes[0].SubmeshCount = SgeSubmeshes.Count;
+            SgeMeshes[0].SubmeshAddress = Helpers.RoundToNearest16(SgeHeader.MeshTableAddress + SgeMeshes.Count * 0x44);
+            SgeMeshes[0].VertexAddress = Helpers.RoundToNearest16(SgeMeshes[0].SubmeshAddress + SgeSubmeshes.Count * 0x64);
+            int previousVertexEndAddress = SgeMeshes[0].VertexAddress + 0x10 + Helpers.RoundToNearest16(SgeSubmeshes.Sum(m => m.SubmeshVertices.Count * 0x38)) + Helpers.RoundToNearest16(SgeSubmeshes.Sum(m => m.SubmeshFaces.Count * (triStripped ? 4 : 12)));
+            foreach (SgeMesh mesh in SgeMeshes.Skip(1))
+            {
+                mesh.VertexAddress = previousVertexEndAddress + 0x10;
+                previousVertexEndAddress += 0x10;
+            }
             foreach (SgeMesh mesh in SgeMeshes)
             {
-                mesh.SubmeshCount = SgeSubmeshes.Count;
-                mesh.SubmeshAddress = Helpers.RoundToNearest16(SgeHeader.MeshTableAddress + SgeMeshes.Count * 0x44);
-                mesh.VertexAddress = Helpers.RoundToNearest16(mesh.SubmeshAddress + SgeSubmeshes.Count * 0x64);
                 bytes.AddRange(mesh.GetBytes());
             }
             bytes.PadToNearest16();
             bytes.AddRange(SgeSubmeshes.SelectMany(s => s.GetBytes(textureTable)));
             bytes.PadToNearest16();
+            bytes.AddRange(BitConverter.GetBytes(bytes.Count + 0x10).Concat(BitConverter.GetBytes(Helpers.RoundToNearest16(bytes.Count + 0x10 + SgeSubmeshes.Sum(s => s.SubmeshVertices.Count) * 0x38) + Helpers.RoundToNearest16(SgeSubmeshes.Sum(s => s.SubmeshFaces.Count * (triStripped ? 4 : 12))))));
+            bytes.AddRange(BitConverter.GetBytes(1).Concat(BitConverter.GetBytes(0)));
+            bytes.AddRange(BitConverter.GetBytes(SgeSubmeshes.Sum(s => s.SubmeshVertices.Count)).Concat(BitConverter.GetBytes(bytes.Count + 0x10))
+                .Concat(BitConverter.GetBytes(SgeSubmeshes.Sum(s => s.SubmeshFaces.Count * (triStripped ? 1 : 3)))).Concat(BitConverter.GetBytes(bytes.Count + 0x10 + Helpers.RoundToNearest16(SgeSubmeshes.Sum(s => s.SubmeshVertices.Count) * 0x38))));
+            bytes.PadToNearest16();
+            bytes.AddRange(SgeSubmeshes.SelectMany(s => s.SubmeshVertices.SelectMany(v => v.GetBytes())));
+            bytes.PadToNearest16();
+            if (triStripped)
+            {
+
+            }
+            else
+            {
+                bytes.AddRange(SgeSubmeshes.SelectMany(s => s.SubmeshFaces.SelectMany(f => BitConverter.GetBytes(f.Polygon[2]).Concat(BitConverter.GetBytes(f.Polygon[1])).Concat(BitConverter.GetBytes(f.Polygon[0])))));
+            }
+            bytes.PadToNearest16();
+            foreach (SgeMesh mesh in SgeMeshes.Skip(1))
+            {
+                bytes.AddRange(BitConverter.GetBytes(bytes.Count + 0x10).Concat(BitConverter.GetBytes(bytes.Count + 0x10)));
+                bytes.PadToNearest16();
+            }
 
             preBytes.AddRange(BitConverter.GetBytes(bytes.Count + 0x5555));
             preBytes.AddRange(BitConverter.GetBytes(SgeHeader.MeshTableAddress + 0x20));
@@ -479,7 +506,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public int Unknown38Count { get; set; }      // 0x04
         [JsonIgnore]
         public int Unknown3CCount { get; set; }      // 0x08
-        public int MeshCount { get; set; }   // 0x0C , also the count of Unknown40s
+        public int Unknown40Count { get; set; }   // 0x0C , also related to the mesh count, maybe
         [JsonIgnore]
         public int BonesCount { get; set; }     // 0x10
         [JsonIgnore]
@@ -524,7 +551,7 @@ namespace HaruhiHeiretsuLib.Graphics
             ModelType = IO.ReadShortLE(headerData, 0x02);
             Unknown38Count = IO.ReadIntLE(headerData, 0x04);
             Unknown3CCount = IO.ReadIntLE(headerData, 0x08);
-            MeshCount = IO.ReadIntLE(headerData, 0x0C);
+            Unknown40Count = IO.ReadIntLE(headerData, 0x0C);
             BonesCount = IO.ReadIntLE(headerData, 0x10);
             TexturesCount = IO.ReadIntLE(headerData, 0x14);
             Unknown18 = IO.ReadIntLE(headerData, 0x18);
@@ -563,7 +590,7 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(ModelType));
             bytes.AddRange(BitConverter.GetBytes(Unknown38Count));
             bytes.AddRange(BitConverter.GetBytes(Unknown3CCount));
-            bytes.AddRange(BitConverter.GetBytes(MeshCount));
+            bytes.AddRange(BitConverter.GetBytes(Unknown40Count));
             bytes.AddRange(BitConverter.GetBytes(BonesCount));
             bytes.AddRange(BitConverter.GetBytes(TexturesCount));
             bytes.AddRange(BitConverter.GetBytes(Unknown18));
@@ -1099,6 +1126,8 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(Unknown28));
             bytes.AddRange(BitConverter.GetBytes(Unknown2C));
             bytes.AddRange(BitConverter.GetBytes(Unknown30));
+            bytes.AddRange(BitConverter.GetBytes(Unknown34));
+            bytes.AddRange(BitConverter.GetBytes(Unknown38));
             bytes.AddRange(BitConverter.GetBytes(Unknown3C));
             bytes.AddRange(BitConverter.GetBytes(Unknown40));
 
@@ -1210,7 +1239,6 @@ namespace HaruhiHeiretsuLib.Graphics
         public int Unknown0C { get; set; }          // 5
         public int Unknown10 { get; set; }          // 6
         public SgeBone Bone { get; set; }
-        [JsonIgnore]
         public int BoneAddress { get; set; }        // 7
         public int Unknown18 { get; set; }          // 8
         public int Unknown1C { get; set; }          // 9
@@ -1266,7 +1294,7 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(materialAddresses[Material.Name]));
             bytes.AddRange(BitConverter.GetBytes(Unknown0C));
             bytes.AddRange(BitConverter.GetBytes(Unknown10));
-            bytes.AddRange(BitConverter.GetBytes(Bone?.Address ?? 0));
+            bytes.AddRange(BitConverter.GetBytes(BoneAddress));
             bytes.AddRange(BitConverter.GetBytes(Unknown18));
             bytes.AddRange(BitConverter.GetBytes(Unknown1C));
             bytes.AddRange(BitConverter.GetBytes(Unknown20));
