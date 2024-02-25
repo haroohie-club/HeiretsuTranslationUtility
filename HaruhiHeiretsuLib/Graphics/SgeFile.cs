@@ -1,10 +1,12 @@
-﻿using HaruhiHeiretsuLib.Util;
+﻿using HarfBuzzSharp;
+using HaruhiHeiretsuLib.Util;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -27,14 +29,16 @@ namespace HaruhiHeiretsuLib.Graphics
         public List<RotateDataEntry> RotateDataEntries { get; set; } = [];
         public List<ScaleDataEntry> ScaleDataEntries { get; set; } = [];
         public List<KeyframeDefinition> KeyframeDefinitions { get; set; } = [];
-        public List<Unknown38Entry> Unknown38Table { get; set; } = [];
-        public List<Unknown3CEntry> Unknown3CTable { get; set; } = [];
+        public List<SgeGXLightingData> SgeGXLightingDataTable { get; set; } = [];
+        public List<SubmeshBlendData> SubmeshBlendDataTable { get; set; } = [];
         public List<Unknown40Entry> Unknown40Table { get; set; } = [];
+        public List<Unknown4CEntry> Unknown4CTable { get; set; } = [];
         public List<Unknown50Entry> Unknown50Table { get; set; } = [];
+        public List<Unknown58Entry> Unknown58Table { get; set; } = [];
         public List<SgeMesh> SgeMeshes { get; set; } = [];
         public List<SgeMaterial> SgeMaterials { get; set; } = [];
         public List<SgeBone> SgeBones { get; set; } = [];
-        public List<SgeSubmesh> SgeSubmeshes { get; set; } = [];
+        public List<List<SgeSubmesh>> SgeSubmeshes { get; set; } = [];
 
         // AnimTransformData
         [JsonIgnore]
@@ -87,133 +91,121 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 bone.ResolveConnections(SgeBones);
             }
+            for (int i = 0; i < SgeHeader.SubmeshBlendDataCount; i++)
+            {
+                SubmeshBlendDataTable.Add(new(sgeData.Skip(SgeHeader.SubmeshBlendDataTableOffset + i * 0x14).Take(0x14), SgeHeader.SubmeshBlendDataTableOffset + i * 0x14));
+            }
 
             foreach (SgeMesh meshTableEntry in SgeMeshes.Take(1)) // but only the first mesh ever seems to matter
             {
                 if (meshTableEntry.SubmeshAddress > 0 && meshTableEntry.SubmeshAddress % 4 == 0 && meshTableEntry.SubmeshCount > 0 && meshTableEntry.VertexAddress > 0)
                 {
+                    SgeSubmeshes.Add([]);
+                    int prevStartVertex = 0;
+                    if (meshTableEntry.SubmeshCount == 6)
+                    {
+                    }
                     for (int i = 0; i < meshTableEntry.SubmeshCount; i++)
                     {
-                        SgeSubmeshes.Add(new(sgeData, meshTableEntry.SubmeshAddress + i * 0x64, SgeMaterials, SgeBones));
+                        SgeSubmesh nextSubmesh = new(sgeData, meshTableEntry.SubmeshAddress + i * 0x64, SgeMaterials, SgeBones, SubmeshBlendDataTable);
+                        if (nextSubmesh.StartVertex < prevStartVertex)
+                        {
+                            SgeSubmeshes.Add([]);
+                        }
+                        SgeSubmeshes.Last().Add(nextSubmesh);
+                        prevStartVertex = nextSubmesh.StartVertex;
                     }
 
-                    List<(int numVertices, int startAddress)> vertexTables = [];
                     List<(int numFaces, int startAddress)> faceTables = [];
 
-                    for (int i = 0; i < 2; i++)
-                    {
-                        int vertexTableAddress = IO.ReadIntLE(sgeData, meshTableEntry.VertexAddress + i * 4);
-                        int numVertices = IO.ReadIntLE(sgeData, vertexTableAddress);
-                        int vertexStartAddress = IO.ReadIntLE(sgeData, vertexTableAddress + 0x04);
-                        if (numVertices == vertexStartAddress) // tell tale sign that we're actually at the end of the file
-                        {
-                            break;
-                        }
-                        vertexTables.Add((numVertices, vertexStartAddress));
-                        int numFaces = IO.ReadIntLE(sgeData, vertexTableAddress + 0x08);
-                        int facesStartAddress = IO.ReadIntLE(sgeData, vertexTableAddress + 0x0C);
-                        if (facesStartAddress == 0) // another sign that things are amiss
-                        {
-                            vertexTables.RemoveAt(1);
-                            break;
-                        }
-                        faceTables.Add((numFaces, facesStartAddress));
-                    }
                     List<List<SgeVertex>> vertexLists = [];
-                    foreach ((int numVertices, int startAddress) in vertexTables)
+                    List<int> vertexStartAddresses = [];
+                    for (int j = 0; j <  SgeSubmeshes.Count; j++)
                     {
                         vertexLists.Add([]);
+                        vertexStartAddresses.Add(IO.ReadIntLE(sgeData, meshTableEntry.VertexAddress + j * 0x04));
+                        int numVertices = IO.ReadIntLE(sgeData, vertexStartAddresses[j]);
+                        int vertexStartAddress = IO.ReadIntLE(sgeData, vertexStartAddresses[j] + 0x04);
                         for (int i = 0; i < numVertices; i++)
                         {
-                            vertexLists.Last().Add(new(sgeData.Skip(startAddress + i * 0x38).Take(0x38)));
+                            vertexLists.Last().Add(new(sgeData.Skip(vertexStartAddress + i * 0x38).Take(0x38)));
                         }
                     }
 
-                    int count = 0;
-                    int currentTable = 0;
-                    foreach (SgeSubmesh submesh in SgeSubmeshes)
+                    for (int i = 0; i < SgeSubmeshes.Count; i++)
                     {
-                        if (count > vertexTables[currentTable].numVertices)
+                        foreach (SgeSubmesh submesh in SgeSubmeshes[i])
                         {
-                            count = 0;
-                            currentTable++;
+                            submesh.SubmeshVertices = vertexLists[i].Skip(submesh.StartVertex).Take(submesh.EndVertex - submesh.StartVertex + 1).ToList();
                         }
-                        submesh.SubmeshVertices = vertexLists[currentTable].Skip(submesh.StartVertex).Take(submesh.EndVertex - submesh.StartVertex + 1).ToList();
-                        count += submesh.SubmeshVertices.Count;
-                    }
-
-                    List<List<int>> faceLists = [];
-                    currentTable = 0;
-                    foreach ((int numFaces, int startAddress) in faceTables)
-                    {
-                        faceLists.Add([]);
-                        for (int i = 0; i < numFaces; i++)
-                        {
-                            faceLists[currentTable].Add(IO.ReadIntLE(sgeData, startAddress + i * 4));
-                        }
-                        currentTable++;
                     }
 
                     bool triStripped = SgeHeader.ModelType == 4;
-                    currentTable = 0;
-                    count = 0;
-                    int previousStartVertex = 0;
-                    int currentMesh = 0;
-                    foreach (SgeSubmesh submesh in SgeSubmeshes)
+                    List<List<int>> faceLists = [];
+                    for (int j = 0; j < vertexStartAddresses.Count; j++)
                     {
-                        for (int i = 0; (triStripped && i < submesh.FaceCount) || (!triStripped && i < submesh.FaceCount * 3);)
+                        faceLists.Add([]);
+                        int numFaces = IO.ReadIntLE(sgeData, vertexStartAddresses[j] + 0x08);
+                        int faceStartAddress = IO.ReadIntLE(sgeData, vertexStartAddresses[j] + 0x0C);
+                        for (int i = 0; i < numFaces; i++)
                         {
-                            if (previousStartVertex > submesh.StartVertex || count > faceTables[currentTable].numFaces)
-                            {
-                                previousStartVertex = 0;
-                                count = 0;
-                                currentTable++;
-                            }
-                            else
-                            {
-                                previousStartVertex = submesh.StartVertex;
-                            }
+                            faceLists[j].Add(IO.ReadIntLE(sgeData, faceStartAddress + i * 4));
+                        }
+                    }
 
-                            if (triStripped)
+                    try
+                    {
+                        for (int listIdx = 0; listIdx < SgeSubmeshes.Count; listIdx++)
+                        {
+                            int currentMesh = 0;
+                            foreach (SgeSubmesh submesh in SgeSubmeshes[listIdx])
                             {
-                                submesh.SubmeshFaces.Add(new(faceLists[currentTable][submesh.StartFace + i + 2], faceLists[currentTable][submesh.StartFace + i + 1], faceLists[currentTable][submesh.StartFace + i], submesh.Material, i & 1));
-                                i++;
-                                count++;
-                            }
-                            else
-                            {
-                                submesh.SubmeshFaces.Add(new(faceLists[currentTable][submesh.StartFace + i + 2], faceLists[currentTable][submesh.StartFace + i + 1], faceLists[currentTable][submesh.StartFace + i], submesh.Material));
-                                i += 3;
-                                count += 3;
-                            }
-
-                            if (submesh.SubmeshFaces.Last().Polygon.Any(v => v >= submesh.SubmeshVertices.Count))
-                            {
-                                break;
-                            }
-
-                            IEnumerable<(int, SgeBone, float)> attachedBones = submesh.SubmeshFaces.Last().Polygon.SelectMany(v => submesh.SubmeshVertices[v].BoneIds.Select(b =>
-                            {
-                                int boneIndex = submesh.BonePalette[b];
-                                if (boneIndex >= 0)
+                                for (int i = 0; (triStripped && i < submesh.FaceCount) || (!triStripped && i < submesh.FaceCount * 3);)
                                 {
-                                    return (v, SgeBones[boneIndex], submesh.SubmeshVertices[v].Weight[Array.IndexOf(submesh.SubmeshVertices[v].BoneIds, b)]);
-                                }
-                                return (v, null, 0);
-                            }));
-                            foreach ((int vertexIndex, SgeBone bone, float weight) in attachedBones)
-                            {
-                                if (bone is not null)
-                                {
-                                    SgeBoneAttachedVertex attachedVertex = new(currentMesh, vertexIndex);
-                                    if (!bone.VertexGroup.ContainsKey(attachedVertex) && weight > 0)
+                                    if (triStripped)
                                     {
-                                        bone.VertexGroup.Add(attachedVertex, weight);
+                                        submesh.SubmeshFaces.Add(new(faceLists[listIdx][submesh.StartFace + i + 2], faceLists[listIdx][submesh.StartFace + i + 1], faceLists[listIdx][submesh.StartFace + i], submesh.Material, i & 1));
+                                        i++;
+                                    }
+                                    else
+                                    {
+                                        submesh.SubmeshFaces.Add(new(faceLists[listIdx][submesh.StartFace + i + 2], faceLists[listIdx][submesh.StartFace + i + 1], faceLists[listIdx][submesh.StartFace + i], submesh.Material));
+                                        i += 3;
+                                    }
+
+                                    if (submesh.SubmeshFaces.Last().Polygon.Any(v => v >= submesh.SubmeshVertices.Count))
+                                    {
+                                        break;
+                                    }
+
+                                    IEnumerable<(int, SgeBone, float)> attachedBones = submesh.SubmeshFaces.Last().Polygon.SelectMany(v => submesh.SubmeshVertices[v].BoneIds.Select(b =>
+                                    {
+                                        int boneIndex = submesh.BonePalette[b];
+                                        if (boneIndex >= 0)
+                                        {
+                                            return (v, SgeBones[boneIndex], submesh.SubmeshVertices[v].Weight[Array.IndexOf(submesh.SubmeshVertices[v].BoneIds, b)]);
+                                        }
+                                        return (v, null, 0);
+                                    }));
+                                    foreach ((int vertexIndex, SgeBone bone, float weight) in attachedBones)
+                                    {
+                                        if (bone is not null)
+                                        {
+                                            SgeBoneAttachedVertex attachedVertex = new(listIdx, currentMesh, vertexIndex);
+                                            if (!bone.VertexGroup.ContainsKey(attachedVertex) && weight > 0)
+                                            {
+                                                bone.VertexGroup.Add(attachedVertex, weight);
+                                            }
+                                        }
                                     }
                                 }
+                                currentMesh++;
                             }
                         }
-                        currentMesh++;
+                    }
+                    catch
+                    {
+                        Console.WriteLine($"Failed to create SGE faces: {SgeMaterials.FirstOrDefault(m => !string.IsNullOrEmpty(m.Name))?.Name ?? string.Empty}");
                     }
                 }
             }
@@ -232,14 +224,9 @@ namespace HaruhiHeiretsuLib.Graphics
                 SgeAnimations.Add(new(sgeData, 0, SgeHeader.BonesCount, SgeHeader.AnimationDataTableAddress + i * 0x38));
             }
 
-            for (int i = 0; i < SgeHeader.Unknown38Count; i++)
+            for (int i = 0; i < SgeHeader.SgeGXLightingDataCount; i++)
             {
-                Unknown38Table.Add(new(sgeData.Skip(SgeHeader.Unknown38TableOffset + i * 0x48).Take(0x48)));
-            }
-
-            for (int i = 0; i < SgeHeader.Unknown3CCount; i++)
-            {
-                Unknown3CTable.Add(new(sgeData.Skip(SgeHeader.Unknown3CTableOffset + i * 0x14).Take(0x14)));
+                SgeGXLightingDataTable.Add(new(sgeData.Skip(SgeHeader.SgeGXLightingDataTableOffset + i * 0x48).Take(0x48)));
             }
 
             for (int i = 0; i < SgeHeader.Unknown40Count; i++)
@@ -247,9 +234,19 @@ namespace HaruhiHeiretsuLib.Graphics
                 Unknown40Table.Add(new(sgeData.Skip(SgeHeader.Unknown40TableOffset + i * 0x18).Take(0x18)));
             }
 
+            for (int i = 0; i < SgeHeader.Unknown4CCount; i++)
+            {
+                Unknown4CTable.Add(new(sgeData.Skip(SgeHeader.Unknown4CTableOffset + i * 0x18).Take(0x18)));
+            }
+
             for (int i = 0; i < SgeHeader.Unknown50Count; i++)
             {
                 Unknown50Table.Add(new(sgeData, SgeHeader.Unknown50TableOffset + i * 0x08));
+            }
+
+            for (int i = 0; i < SgeHeader.Unknown58Count; i++)
+            {
+                Unknown58Table.Add(new(sgeData.Skip(SgeHeader.Unknown58TableOffset + i * 0x20).Take(0x20)));
             }
 
             for (int i = 0; i < TranslateDataCount; i++)
@@ -348,30 +345,48 @@ namespace HaruhiHeiretsuLib.Graphics
             preBytes.AddRange(new byte[6]);
 
             // Calculate stuff
-            SgeHeader.Unknown38Count = Unknown38Table.Count;
-            SgeHeader.Unknown3CCount = Unknown3CTable.Count;
+            SgeHeader.SgeGXLightingDataCount = SgeGXLightingDataTable.Count;
+            SgeHeader.SubmeshBlendDataCount = SubmeshBlendDataTable.Count;
             SgeHeader.Unknown40Count = Unknown40Table.Count;
+            SgeHeader.Unknown4CCount = Unknown4CTable.Count;
             SgeHeader.Unknown50Count = Unknown50Table.Count;
+            SgeHeader.Unknown58Count = Unknown58Table.Count;
             SgeHeader.BonesCount = SgeBones.Count;
             SgeHeader.TexturesCount = SgeMaterials.Count;
             SgeHeader.NumAnimations = SgeAnimations.Count;
             int offset = 0x80;
-            SgeHeader.Unknown38TableOffset = offset;
-            offset += Helpers.RoundToNearest16(Unknown38Table.Count * 0x48);
-            SgeHeader.Unknown3CTableOffset = offset;
-            offset += Helpers.RoundToNearest16(Unknown3CTable.Count * 0x14);
+            SgeHeader.SgeGXLightingDataTableOffset = offset;
+            offset += Helpers.RoundToNearest16(SgeGXLightingDataTable.Count * 0x48);
+            SgeHeader.SubmeshBlendDataTableOffset = offset;
+            offset += Helpers.RoundToNearest16(SubmeshBlendDataTable.Count * 0x14);
             SgeHeader.TextureTableAddress = offset;
             offset += Helpers.RoundToNearest16(SgeMaterials.Count * 0x18);
             SgeHeader.Unknown40TableOffset = offset;
             offset += Helpers.RoundToNearest16(Unknown40Table.Count * 0x18);
+            if (SgeHeader.Unknown4CCount > 0)
+            {
+                SgeHeader.Unknown4CTableOffset = offset;
+                offset += Helpers.RoundToNearest16(Unknown4CTable.Count * 0x18);
+            }
             SgeHeader.BonesTableAddress = offset;
             offset += Helpers.RoundToNearest16(SgeBones.Count * 0x28);
-            SgeHeader.Unknown50TableOffset = offset;
-            offset += Helpers.RoundToNearest16(Unknown50Table.Count * 0x08 + Unknown50Table.Sum(u => Helpers.RoundToNearest16(u.UnknownShorts.Count * 0x02 + 2)));
+            if (SgeHeader.Unknown50Count > 0)
+            {
+                SgeHeader.Unknown50TableOffset = offset;
+                offset += Helpers.RoundToNearest16(Unknown50Table.Count * 0x08 + Unknown50Table.Sum(u => Helpers.RoundToNearest16(u.UnknownShorts.Count * 0x02 + 2)));
+            }
+            if (SgeHeader.Unknown58Count > 0)
+            {
+                SgeHeader.Unknown58TableOffset = offset;
+                offset += Helpers.RoundToNearest16(Unknown58Table.Count * 0x20);
+            }
             SgeHeader.Unknown34Offset = offset;
             offset += 0x40;
-            SgeHeader.AnimationDataTableAddress = offset;
-            offset += SgeAnimations.Count * 0x38; // anim entries
+            if (SgeHeader.NumAnimations > 0)
+            {
+                SgeHeader.AnimationDataTableAddress = offset;
+                offset += Helpers.RoundToNearest16(SgeAnimations.Count * 0x38); // anim entries
+            }
             int animBoneTableOffset = offset;
             offset += SgeAnimations.Sum(a => a.UsedKeyframes.Count == 0 ? 0 : Helpers.RoundToNearest16(SgeBones.Count * 4) + Helpers.RoundToNearest16(a.UsedKeyframes.Count * 6) + a.BoneTable.Sum(b => Helpers.RoundToNearest16(b.Keyframes.Count * 6))); // bone tables
             SgeHeader.AnimationTransformTableAddress = offset;
@@ -382,9 +397,19 @@ namespace HaruhiHeiretsuLib.Graphics
             preBytes.AddRange(BitConverter.GetBytes(SgeHeader.MeshTableAddress + 0x3A7));
 
             bytes.AddRange(SgeHeader.GetBytes());
-            bytes.AddRange(Unknown38Table.SelectMany(u => u.GetBytes()));
+            bytes.AddRange(SgeGXLightingDataTable.SelectMany(u => u.GetBytes()));
             bytes.PadToNearest16();
-            bytes.AddRange(Unknown3CTable.SelectMany(u => u.GetBytes()));
+
+            Dictionary<int, int> blendAddresses = [];
+            int currentBlendAddress = bytes.Count;
+            foreach (SubmeshBlendData blend in SubmeshBlendDataTable)
+            {
+                int oldAddress = blend.Offset;
+                blend.Offset = currentBlendAddress;
+                blendAddresses.Add(oldAddress, blend.Offset);
+                bytes.AddRange(blend.GetBytes());
+                currentBlendAddress = bytes.Count;
+            }
             bytes.PadToNearest16();
             Dictionary<string, int> textureTable = [];
             foreach (SgeMaterial material in SgeMaterials)
@@ -394,6 +419,8 @@ namespace HaruhiHeiretsuLib.Graphics
             }
             bytes.PadToNearest16();
             bytes.AddRange(Unknown40Table.SelectMany(u => u.GetBytes()));
+            bytes.PadToNearest16();
+            bytes.AddRange(Unknown4CTable.SelectMany(u => u.GetBytes()));
             bytes.PadToNearest16();
             foreach (SgeBone bone in SgeBones)
             {
@@ -410,6 +437,9 @@ namespace HaruhiHeiretsuLib.Graphics
                 unknown50TableBytes.PadToNearest16();
             }
             bytes.AddRange(unknown50TableBytes);
+            bytes.PadToNearest16();
+            bytes.AddRange(Unknown58Table.SelectMany(u => u.GetBytes()));
+            bytes.PadToNearest16();
             bytes.AddRange(new byte[] { 1 }.Concat(new byte[0x3F]));
 
             List<byte> boneTableBytes = [];
@@ -453,10 +483,10 @@ namespace HaruhiHeiretsuLib.Graphics
 
             bool triStripped = SgeHeader.ModelType == 4;
 
-            SgeMeshes[0].SubmeshCount = SgeSubmeshes.Count;
+            SgeMeshes[0].SubmeshCount = SgeSubmeshes.Sum(s => s.Count);
             SgeMeshes[0].SubmeshAddress = Helpers.RoundToNearest16(SgeHeader.MeshTableAddress + SgeMeshes.Count * 0x44);
-            SgeMeshes[0].VertexAddress = Helpers.RoundToNearest16(SgeMeshes[0].SubmeshAddress + SgeSubmeshes.Count * 0x64);
-            int previousVertexEndAddress = SgeMeshes[0].VertexAddress + 0x10 + Helpers.RoundToNearest16(SgeSubmeshes.Sum(m => m.SubmeshVertices.Count * 0x38)) + Helpers.RoundToNearest16(SgeSubmeshes.Sum(m => m.SubmeshFaces.Count * (triStripped ? 4 : 12)));
+            SgeMeshes[0].VertexAddress = Helpers.RoundToNearest16(SgeMeshes[0].SubmeshAddress + SgeSubmeshes.Sum(s => s.Count * 0x64));
+            int previousVertexEndAddress = SgeMeshes[0].VertexAddress + SgeSubmeshes.Count * 0x10 + SgeSubmeshes.Sum(l => Helpers.RoundToNearest16(l.Sum(m => m.SubmeshVertices.Count) * 0x38)) + SgeSubmeshes.Sum(l => Helpers.RoundToNearest16(l.Sum(m => (m.SubmeshFaces.Count + (triStripped ? 2 : 0)) * (triStripped ? 4 : 12))));
             foreach (SgeMesh mesh in SgeMeshes.Skip(1))
             {
                 mesh.VertexAddress = previousVertexEndAddress + 0x10;
@@ -467,22 +497,44 @@ namespace HaruhiHeiretsuLib.Graphics
                 bytes.AddRange(mesh.GetBytes());
             }
             bytes.PadToNearest16();
-            bytes.AddRange(SgeSubmeshes.SelectMany(s => s.GetBytes(textureTable)));
+            bytes.AddRange(SgeSubmeshes.SelectMany(l => l.SelectMany(s => s.GetBytes(textureTable, blendAddresses))));
             bytes.PadToNearest16();
-            bytes.AddRange(BitConverter.GetBytes(bytes.Count + 0x10).Concat(BitConverter.GetBytes(Helpers.RoundToNearest16(bytes.Count + 0x10 + SgeSubmeshes.Sum(s => s.SubmeshVertices.Count) * 0x38) + Helpers.RoundToNearest16(SgeSubmeshes.Sum(s => s.SubmeshFaces.Count * (triStripped ? 4 : 12))))));
-            bytes.AddRange(BitConverter.GetBytes(1).Concat(BitConverter.GetBytes(0)));
-            bytes.AddRange(BitConverter.GetBytes(SgeSubmeshes.Sum(s => s.SubmeshVertices.Count)).Concat(BitConverter.GetBytes(bytes.Count + 0x10))
-                .Concat(BitConverter.GetBytes(SgeSubmeshes.Sum(s => s.SubmeshFaces.Count * (triStripped ? 1 : 3)))).Concat(BitConverter.GetBytes(bytes.Count + 0x10 + Helpers.RoundToNearest16(SgeSubmeshes.Sum(s => s.SubmeshVertices.Count) * 0x38))));
-            bytes.PadToNearest16();
-            bytes.AddRange(SgeSubmeshes.SelectMany(s => s.SubmeshVertices.SelectMany(v => v.GetBytes())));
-            bytes.PadToNearest16();
-            if (triStripped)
+            bytes.AddRange(BitConverter.GetBytes(bytes.Count + 0x10).Concat(BitConverter.GetBytes(bytes.Count + SgeSubmeshes.Count * 0x10 + Helpers.RoundToNearest16(SgeSubmeshes.First().Sum(s => s.SubmeshVertices.Count) * 0x38) + Helpers.RoundToNearest16(SgeSubmeshes.First().Sum(s => (s.SubmeshFaces.Count + (triStripped ? 2 : 0)) * (triStripped ? 4 : 12))))));
+            bytes.AddRange(BitConverter.GetBytes(1).Concat(BitConverter.GetBytes(SgeSubmeshes.Count > 1 ? 1 : 0)));
+            foreach (List<SgeSubmesh> submeshList in SgeSubmeshes)
             {
-
-            }
-            else
-            {
-                bytes.AddRange(SgeSubmeshes.SelectMany(s => s.SubmeshFaces.SelectMany(f => BitConverter.GetBytes(f.Polygon[2]).Concat(BitConverter.GetBytes(f.Polygon[1])).Concat(BitConverter.GetBytes(f.Polygon[0])))));
+                bytes.AddRange(BitConverter.GetBytes(submeshList.Sum(s => s.SubmeshVertices.Count)).Concat(BitConverter.GetBytes(bytes.Count + 0x10))
+                    .Concat(BitConverter.GetBytes(submeshList.Sum(s => s.SubmeshFaces.Count * (triStripped ? 1 : 3) + (triStripped ? 2 : 0)))).Concat(BitConverter.GetBytes(bytes.Count + 0x10 + Helpers.RoundToNearest16(submeshList.Sum(s => s.SubmeshVertices.Count) * 0x38))));
+                bytes.PadToNearest16();
+                bytes.AddRange(submeshList.SelectMany(s => s.SubmeshVertices.SelectMany(v => v.GetBytes())));
+                bytes.PadToNearest16();
+                if (triStripped)
+                {
+                    foreach (SgeSubmesh submesh in submeshList)
+                    {
+                        SgeFace firstFace = submesh.SubmeshFaces.First();
+                        foreach (SgeFace face in submesh.SubmeshFaces)
+                        {
+                            bytes.AddRange(BitConverter.GetBytes(face.Polygon[2]));
+                        }
+                        SgeFace lastFace = submesh.SubmeshFaces.Last();
+                        if (submesh.SubmeshFaces.Count % 2 == 0)
+                        {
+                            bytes.AddRange(BitConverter.GetBytes(lastFace.Polygon[0]));
+                            bytes.AddRange(BitConverter.GetBytes(lastFace.Polygon[1]));
+                        }
+                        else
+                        {
+                            bytes.AddRange(BitConverter.GetBytes(lastFace.Polygon[1]));
+                            bytes.AddRange(BitConverter.GetBytes(lastFace.Polygon[0]));
+                        }
+                    }
+                }
+                else
+                {
+                    bytes.AddRange(submeshList.SelectMany(s => s.SubmeshFaces.SelectMany(f => BitConverter.GetBytes(f.Polygon[2]).Concat(BitConverter.GetBytes(f.Polygon[1])).Concat(BitConverter.GetBytes(f.Polygon[0])))));
+                }
+                bytes.PadToNearest16();
             }
             bytes.PadToNearest16();
             foreach (SgeMesh mesh in SgeMeshes.Skip(1))
@@ -503,32 +555,33 @@ namespace HaruhiHeiretsuLib.Graphics
         public short Version { get; set; }    // 0x00
         public short ModelType { get; set; }    // 0x02 -- value of 0, 3, 4 or 5; of 3 gives outline on character model; 4 is tristriped
         [JsonIgnore]
-        public int Unknown38Count { get; set; }      // 0x04
+        public int SgeGXLightingDataCount { get; set; }      // 0x04
         [JsonIgnore]
-        public int Unknown3CCount { get; set; }      // 0x08
-        public int Unknown40Count { get; set; }   // 0x0C , also related to the mesh count, maybe
+        public int SubmeshBlendDataCount { get; set; }      // 0x08
+        public int Unknown40Count { get; set; }   // 0x0C
         [JsonIgnore]
         public int BonesCount { get; set; }     // 0x10
         [JsonIgnore]
         public int TexturesCount { get; set; }  // 0x14
-        public int Unknown18 { get; set; }      // 0x18
+        [JsonIgnore]
+        public int Unknown4CCount { get; set; }      // 0x18
         public int Unknown1C { get; set; }      // 0x1C
         public int Unknown20 { get; set; }      // 0x20
-        public int Unknown24 { get; set; }      // 0x24
+        public int Unknown58Count { get; set; }      // 0x24
         [JsonIgnore]
         public int Unknown50Count { get; set; }      // 0x28
         public int Unknown2C { get; set; }      // 0x2C
         public int MeshTableAddress { get; set; } // 0x30
         public int Unknown34Offset { get; set; }      // 0x34
-        public int Unknown38TableOffset { get; set; }      // 0x38
-        public int Unknown3CTableOffset { get; set; }      // 0x3C
+        public int SgeGXLightingDataTableOffset { get; set; }      // 0x38
+        public int SubmeshBlendDataTableOffset { get; set; }      // 0x3C
         public int Unknown40TableOffset { get; set; }      // 0x40
         public int BonesTableAddress { get; set; }  // 0x44
         public int TextureTableAddress { get; set; }    // 0x48
-        public int Unknown4C { get; set; }      // 0x4C
+        public int Unknown4CTableOffset { get; set; }      // 0x4C
         public int Unknown50TableOffset { get; set; }      // 0x50
         public int Unknown54 { get; set; }      // 0x54
-        public int Unknown58 { get; set; }      // 0x58
+        public int Unknown58TableOffset { get; set; }      // 0x58
         [JsonIgnore]
         public int NumAnimations { get; set; }      // 0x5C
         public int AnimationDataTableAddress { get; set; }      // 0x60
@@ -549,28 +602,28 @@ namespace HaruhiHeiretsuLib.Graphics
         {
             Version = IO.ReadShortLE(headerData, 0x00);
             ModelType = IO.ReadShortLE(headerData, 0x02);
-            Unknown38Count = IO.ReadIntLE(headerData, 0x04);
-            Unknown3CCount = IO.ReadIntLE(headerData, 0x08);
+            SgeGXLightingDataCount = IO.ReadIntLE(headerData, 0x04);
+            SubmeshBlendDataCount = IO.ReadIntLE(headerData, 0x08);
             Unknown40Count = IO.ReadIntLE(headerData, 0x0C);
             BonesCount = IO.ReadIntLE(headerData, 0x10);
             TexturesCount = IO.ReadIntLE(headerData, 0x14);
-            Unknown18 = IO.ReadIntLE(headerData, 0x18);
+            Unknown4CCount = IO.ReadIntLE(headerData, 0x18);
             Unknown1C = IO.ReadIntLE(headerData, 0x1C);
             Unknown20 = IO.ReadIntLE(headerData, 0x20);
-            Unknown24 = IO.ReadIntLE(headerData, 0x24);
+            Unknown58Count = IO.ReadIntLE(headerData, 0x24);
             Unknown50Count = IO.ReadIntLE(headerData, 0x28);
             Unknown2C = IO.ReadIntLE(headerData, 0x2C);
             MeshTableAddress = IO.ReadIntLE(headerData, 0x30);
             Unknown34Offset = IO.ReadIntLE(headerData, 0x34);
-            Unknown38TableOffset = IO.ReadIntLE(headerData, 0x38);
-            Unknown3CTableOffset = IO.ReadIntLE(headerData, 0x3C);
+            SgeGXLightingDataTableOffset = IO.ReadIntLE(headerData, 0x38);
+            SubmeshBlendDataTableOffset = IO.ReadIntLE(headerData, 0x3C);
             Unknown40TableOffset = IO.ReadIntLE(headerData, 0x40);
             BonesTableAddress = IO.ReadIntLE(headerData, 0x44);
             TextureTableAddress = IO.ReadIntLE(headerData, 0x48);
-            Unknown4C = IO.ReadIntLE(headerData, 0x4C);
+            Unknown4CTableOffset = IO.ReadIntLE(headerData, 0x4C);
             Unknown50TableOffset = IO.ReadIntLE(headerData, 0x50);
             Unknown54 = IO.ReadIntLE(headerData, 0x54);
-            Unknown58 = IO.ReadIntLE(headerData, 0x58);
+            Unknown58TableOffset = IO.ReadIntLE(headerData, 0x58);
             NumAnimations = IO.ReadIntLE(headerData, 0x5C);
             AnimationDataTableAddress = IO.ReadIntLE(headerData, 0x60);
             AnimationTransformTableAddress = IO.ReadIntLE(headerData, 0x64);
@@ -588,28 +641,28 @@ namespace HaruhiHeiretsuLib.Graphics
 
             bytes.AddRange(BitConverter.GetBytes(Version));
             bytes.AddRange(BitConverter.GetBytes(ModelType));
-            bytes.AddRange(BitConverter.GetBytes(Unknown38Count));
-            bytes.AddRange(BitConverter.GetBytes(Unknown3CCount));
+            bytes.AddRange(BitConverter.GetBytes(SgeGXLightingDataCount));
+            bytes.AddRange(BitConverter.GetBytes(SubmeshBlendDataCount));
             bytes.AddRange(BitConverter.GetBytes(Unknown40Count));
             bytes.AddRange(BitConverter.GetBytes(BonesCount));
             bytes.AddRange(BitConverter.GetBytes(TexturesCount));
-            bytes.AddRange(BitConverter.GetBytes(Unknown18));
+            bytes.AddRange(BitConverter.GetBytes(Unknown4CCount));
             bytes.AddRange(BitConverter.GetBytes(Unknown1C));
             bytes.AddRange(BitConverter.GetBytes(Unknown20));
-            bytes.AddRange(BitConverter.GetBytes(Unknown24));
+            bytes.AddRange(BitConverter.GetBytes(Unknown58Count));
             bytes.AddRange(BitConverter.GetBytes(Unknown50Count));
             bytes.AddRange(BitConverter.GetBytes(Unknown2C));
             bytes.AddRange(BitConverter.GetBytes(MeshTableAddress));
             bytes.AddRange(BitConverter.GetBytes(Unknown34Offset));
-            bytes.AddRange(BitConverter.GetBytes(Unknown38TableOffset));
-            bytes.AddRange(BitConverter.GetBytes(Unknown3CTableOffset));
+            bytes.AddRange(BitConverter.GetBytes(SgeGXLightingDataTableOffset));
+            bytes.AddRange(BitConverter.GetBytes(SubmeshBlendDataTableOffset));
             bytes.AddRange(BitConverter.GetBytes(Unknown40TableOffset));
             bytes.AddRange(BitConverter.GetBytes(BonesTableAddress));
             bytes.AddRange(BitConverter.GetBytes(TextureTableAddress));
-            bytes.AddRange(BitConverter.GetBytes(Unknown4C));
+            bytes.AddRange(BitConverter.GetBytes(Unknown4CTableOffset));
             bytes.AddRange(BitConverter.GetBytes(Unknown50TableOffset));
             bytes.AddRange(BitConverter.GetBytes(Unknown54));
-            bytes.AddRange(BitConverter.GetBytes(Unknown58));
+            bytes.AddRange(BitConverter.GetBytes(Unknown58TableOffset));
             bytes.AddRange(BitConverter.GetBytes(NumAnimations));
             bytes.AddRange(BitConverter.GetBytes(AnimationDataTableAddress));
             bytes.AddRange(BitConverter.GetBytes(AnimationTransformTableAddress));
@@ -898,110 +951,149 @@ namespace HaruhiHeiretsuLib.Graphics
         }
     }
 
-    public class Unknown38Entry
+    public class SgeGXLightingData
     {
-        public float Unknown00 { get; set; }
-        public float Unknown04 { get; set; }
-        public float Unknown08 { get; set; }
-        public float Unknown0C { get; set; }
-        public float Unknown10 { get; set; }
-        public float Unknown14 { get; set; }
-        public float Unknown18 { get; set; }
-        public float Unknown1C { get; set; }
-        public float Unknown20 { get; set; }
-        public float Unknown24 { get; set; }
-        public float Unknown28 { get; set; }
-        public float Unknown2C { get; set; }
+        public float AmbientR { get; set; }
+        public float AmbientG { get; set; }
+        public float AmbientB { get; set; }
+        public float AmbientA { get; set; }
+        public float MaterialR { get; set; }
+        public float MaterialG { get; set; }
+        public float MaterialB { get; set; }
+        public float MaterialA { get; set; }
+        public float CombinedR { get; set; }
+        public float CombinedG { get; set; }
+        public float CombinedB { get; set; }
+        public float CombinedA { get; set; }
         public int Unknown30 { get; set; }
         public int Unknown34 { get; set; }
         public int Unknown38 { get; set; }
         public int Unknown3C { get; set; }
         public float Unknown40 { get; set; }
-        public int Unknown44 { get; set; }
+        public bool DefaultLightingEnabled { get; set; }
 
-        public Unknown38Entry()
+        public SgeGXLightingData()
         {
         }
 
-        public Unknown38Entry(IEnumerable<byte> data)
+        public SgeGXLightingData(IEnumerable<byte> data)
         {
-            Unknown00 = IO.ReadFloat(data, 0x00);
-            Unknown04 = IO.ReadFloat(data, 0x04);
-            Unknown08 = IO.ReadFloat(data, 0x08);
-            Unknown0C = IO.ReadFloat(data, 0x0C);
-            Unknown10 = IO.ReadFloat(data, 0x10);
-            Unknown14 = IO.ReadFloat(data, 0x14);
-            Unknown18 = IO.ReadFloat(data, 0x18);
-            Unknown1C = IO.ReadFloat(data, 0x1C);
-            Unknown20 = IO.ReadFloat(data, 0x20);
-            Unknown24 = IO.ReadFloat(data, 0x24);
-            Unknown28 = IO.ReadFloat(data, 0x28);
-            Unknown2C = IO.ReadFloat(data, 0x2C);
+            AmbientR = IO.ReadFloat(data, 0x00);
+            AmbientG = IO.ReadFloat(data, 0x04);
+            AmbientB = IO.ReadFloat(data, 0x08);
+            AmbientA = IO.ReadFloat(data, 0x0C);
+            MaterialR = IO.ReadFloat(data, 0x10);
+            MaterialG = IO.ReadFloat(data, 0x14);
+            MaterialB = IO.ReadFloat(data, 0x18);
+            MaterialA = IO.ReadFloat(data, 0x1C);
+            CombinedR = IO.ReadFloat(data, 0x20);
+            CombinedG = IO.ReadFloat(data, 0x24);
+            CombinedB = IO.ReadFloat(data, 0x28);
+            CombinedA = IO.ReadFloat(data, 0x2C);
             Unknown30 = IO.ReadIntLE(data, 0x30);
             Unknown34 = IO.ReadIntLE(data, 0x34);
             Unknown38 = IO.ReadIntLE(data, 0x38);
             Unknown3C = IO.ReadIntLE(data, 0x3C);
             Unknown40 = IO.ReadFloat(data, 0x40);
-            Unknown44 = IO.ReadIntLE(data, 0x44);
+            DefaultLightingEnabled = (IO.ReadIntLE(data, 0x44) & 1) != 0;
         }
 
         public List<byte> GetBytes()
         {
             List<byte> bytes = [];
 
-            bytes.AddRange(BitConverter.GetBytes(Unknown00));
-            bytes.AddRange(BitConverter.GetBytes(Unknown04));
-            bytes.AddRange(BitConverter.GetBytes(Unknown08));
-            bytes.AddRange(BitConverter.GetBytes(Unknown0C));
-            bytes.AddRange(BitConverter.GetBytes(Unknown10));
-            bytes.AddRange(BitConverter.GetBytes(Unknown14));
-            bytes.AddRange(BitConverter.GetBytes(Unknown18));
-            bytes.AddRange(BitConverter.GetBytes(Unknown1C));
-            bytes.AddRange(BitConverter.GetBytes(Unknown20));
-            bytes.AddRange(BitConverter.GetBytes(Unknown24));
-            bytes.AddRange(BitConverter.GetBytes(Unknown28));
-            bytes.AddRange(BitConverter.GetBytes(Unknown2C));
+            bytes.AddRange(BitConverter.GetBytes(AmbientR));
+            bytes.AddRange(BitConverter.GetBytes(AmbientG));
+            bytes.AddRange(BitConverter.GetBytes(AmbientB));
+            bytes.AddRange(BitConverter.GetBytes(AmbientA));
+            bytes.AddRange(BitConverter.GetBytes(MaterialR));
+            bytes.AddRange(BitConverter.GetBytes(MaterialG));
+            bytes.AddRange(BitConverter.GetBytes(MaterialB));
+            bytes.AddRange(BitConverter.GetBytes(MaterialA));
+            bytes.AddRange(BitConverter.GetBytes(CombinedR));
+            bytes.AddRange(BitConverter.GetBytes(CombinedG));
+            bytes.AddRange(BitConverter.GetBytes(CombinedB));
+            bytes.AddRange(BitConverter.GetBytes(CombinedA));
             bytes.AddRange(BitConverter.GetBytes(Unknown30));
             bytes.AddRange(BitConverter.GetBytes(Unknown34));
             bytes.AddRange(BitConverter.GetBytes(Unknown38));
             bytes.AddRange(BitConverter.GetBytes(Unknown3C));
             bytes.AddRange(BitConverter.GetBytes(Unknown40));
-            bytes.AddRange(BitConverter.GetBytes(Unknown44));
+            bytes.AddRange(BitConverter.GetBytes(DefaultLightingEnabled ? 1 : 0));
 
             return bytes;
         }
     }
 
-    public class Unknown3CEntry
+    /// <summary>
+    /// Data for applying GX blend to the first few submeshes of the model
+    /// </summary>
+    public class SubmeshBlendData
     {
-        public int Unknown00 { get; set; }
-        public int Unknown04 { get; set; }
-        public int Unknown08 { get; set; }
+        /// <summary>
+        /// The offset this blend data is located at (used for submesh lookup)
+        /// </summary>
+        public int Offset { get; set; }
+        /// <summary>
+        /// When false, the game will ignore the custom blend factors for this object and use the default
+        /// blend mode (src_factor = GX_BL_DSTCLR, dst_factor = GX_BL_INVDSTCLR)
+        /// </summary>
+        public bool UseCustomBlendMode { get; set; }
+        /// <summary>
+        /// The blend src_factor to pass to GXSetBlendMode for this object
+        /// The options are:
+        /// * 0 (GX_BL_ZERO)        0.0
+        /// * 1 (GX_BL_ONE)         1.0
+        /// * 4 (GX_BL_DSTCLR)      Frame buffer color
+        /// * 5 (GX_BL_INVDSTCLR)   1.0 - (frame buffer color)
+        /// * 6 (GX_BL_SRCALPHA)    Source alpha
+        /// * 7 (GX_BL_INVSRCALPHA) 1.0 - (source alpha)
+        /// * 8 (GX_BL_DSTALPHA)    Frame buffer alpha
+        /// * 9 (GX_BL_INVDSTALPHA) 1.0 - (frame buffer alpha)
+        /// </summary>
+        public int CustomBlendSrcFactor { get; set; }
+        /// <summary>
+        /// The blend src_factor to pass to GXSetBlendMode for this object
+        /// The options are:
+        /// * 0 (GX_BL_ZERO)        0.0
+        /// * 1 (GX_BL_ONE)         1.0
+        /// * 2 (GX_BL_SRCCLR)      Source color
+        /// * 3 (GX_BL_INVSRCCLR)   1.0 - (source color)
+        /// * 6 (GX_BL_SRCALPHA)    Source alpha
+        /// * 7 (GX_BL_INVSRCALPHA) 1.0 - (source alpha)
+        /// * 8 (GX_BL_DSTALPHA)    Frame buffer alpha
+        /// * 9 (GX_BL_INVDSTALPHA) 1.0 - (frame buffer alpha)
+        /// </summary>
+        public int CustomBlendDstFactor { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public float Unknown0C { get; set; }
-        public int Unknown10 { get; set; }
+        public int AlphaCompareAndZMode { get; set; }
 
-        public Unknown3CEntry()
+        public SubmeshBlendData()
         {
         }
 
-        public Unknown3CEntry(IEnumerable<byte> data)
+        public SubmeshBlendData(IEnumerable<byte> data, int offset)
         {
-            Unknown00 = IO.ReadIntLE(data, 0x00);
-            Unknown04 = IO.ReadIntLE(data, 0x04);
-            Unknown08 = IO.ReadIntLE(data, 0x08);
+            Offset = offset;
+            UseCustomBlendMode = IO.ReadIntLE(data, 0x00) != 0;
+            CustomBlendSrcFactor = IO.ReadIntLE(data, 0x04);
+            CustomBlendDstFactor = IO.ReadIntLE(data, 0x08);
             Unknown0C = IO.ReadFloat(data, 0x0C);
-            Unknown10 = IO.ReadInt(data, 0x10);
+            AlphaCompareAndZMode = IO.ReadIntLE(data, 0x10);
         }
 
         public List<byte> GetBytes()
         {
             List<byte> bytes = [];
 
-            bytes.AddRange(BitConverter.GetBytes(Unknown00));
-            bytes.AddRange(BitConverter.GetBytes(Unknown04));
-            bytes.AddRange(BitConverter.GetBytes(Unknown08));
+            bytes.AddRange(BitConverter.GetBytes(UseCustomBlendMode ? 1 : 0));
+            bytes.AddRange(BitConverter.GetBytes(CustomBlendSrcFactor));
+            bytes.AddRange(BitConverter.GetBytes(CustomBlendDstFactor));
             bytes.AddRange(BitConverter.GetBytes(Unknown0C));
-            bytes.AddRange(BitConverter.GetBytes(Unknown10));
+            bytes.AddRange(BitConverter.GetBytes(AlphaCompareAndZMode));
 
             return bytes;
         }
@@ -1009,12 +1101,12 @@ namespace HaruhiHeiretsuLib.Graphics
 
     public class Unknown40Entry
     {
-        public float Unknown00 { get; set; }
+        public int Unknown00 { get; set; }
         public float Unknown04 { get; set; }
         public float Unknown08 { get; set; }
         public float Unknown0C { get; set; }
         public float Unknown10 { get; set; }
-        public float Unknown14 { get; set; }
+        public int Unknown14 { get; set; }
 
         public Unknown40Entry()
         {
@@ -1022,12 +1114,12 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public Unknown40Entry(IEnumerable<byte> data)
         {
-            Unknown00 = IO.ReadFloat(data, 0x00);
+            Unknown00 = IO.ReadIntLE(data, 0x00);
             Unknown04 = IO.ReadFloat(data, 0x04);
             Unknown08 = IO.ReadFloat(data, 0x08);
             Unknown0C = IO.ReadFloat(data, 0x0C);
             Unknown10 = IO.ReadFloat(data, 0x10);
-            Unknown14 = IO.ReadFloat(data, 0x14);
+            Unknown14 = IO.ReadInt(data, 0x14);
         }
 
         public List<byte> GetBytes()
@@ -1039,6 +1131,53 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(Unknown08));
             bytes.AddRange(BitConverter.GetBytes(Unknown0C));
             bytes.AddRange(BitConverter.GetBytes(Unknown10));
+            bytes.AddRange(BitConverter.GetBytes(Unknown14).Reverse());
+
+            return bytes;
+        }
+    }
+
+    public class Unknown4CEntry
+    {
+        public short Unknown00 { get; set; }
+        public short Unknown02 { get; set; }
+        public int Unknown04 { get; set; }
+        public float Unknown08 { get; set; }
+        public short Unknown0C { get; set; }
+        public short Unknown0E { get; set; }
+        public short Unknown10 { get; set; }
+        public short Unknown12 { get; set; }
+        public int Unknown14 { get; set; }
+
+        public Unknown4CEntry()
+        {
+        }
+
+        public Unknown4CEntry(IEnumerable<byte> data)
+        {
+            Unknown00 = IO.ReadShortLE(data, 0x00);
+            Unknown02 = IO.ReadShortLE(data, 0x02);
+            Unknown04 = IO.ReadIntLE(data, 0x04);
+            Unknown08 = IO.ReadFloat(data, 0x08);
+            Unknown0C = IO.ReadShortLE(data, 0x0C);
+            Unknown0E = IO.ReadShortLE(data, 0x0E);
+            Unknown10 = IO.ReadShortLE(data, 0x10);
+            Unknown12 = IO.ReadShortLE(data, 0x12);
+            Unknown14 = IO.ReadIntLE(data, 0x14);
+        }
+
+        public List<byte> GetBytes()
+        {
+            List<byte> bytes = [];
+
+            bytes.AddRange(BitConverter.GetBytes(Unknown00));
+            bytes.AddRange(BitConverter.GetBytes(Unknown02));
+            bytes.AddRange(BitConverter.GetBytes(Unknown04));
+            bytes.AddRange(BitConverter.GetBytes(Unknown08));
+            bytes.AddRange(BitConverter.GetBytes(Unknown0C));
+            bytes.AddRange(BitConverter.GetBytes(Unknown0E));
+            bytes.AddRange(BitConverter.GetBytes(Unknown10));
+            bytes.AddRange(BitConverter.GetBytes(Unknown12));
             bytes.AddRange(BitConverter.GetBytes(Unknown14));
 
             return bytes;
@@ -1064,25 +1203,69 @@ namespace HaruhiHeiretsuLib.Graphics
         }
     }
 
+    public class Unknown58Entry
+    {
+        public float Unknown00 { get; set; }
+        public float Unknown04 { get; set; }
+        public float Unknown08 { get; set; }
+        public float Unknown0C { get; set; }
+        public float Unknown10 { get; set; }
+        public float Unknown14 { get; set; }
+        public int Unknown18 { get; set; }
+        public int Unknown1C { get; set; }
+
+        public Unknown58Entry()
+        {
+        }
+
+        public Unknown58Entry(IEnumerable<byte> data)
+        {
+            Unknown00 = IO.ReadFloat(data, 0x00);
+            Unknown04 = IO.ReadFloat(data, 0x04);
+            Unknown08 = IO.ReadFloat(data, 0x08);
+            Unknown0C = IO.ReadFloat(data, 0x0C);
+            Unknown10 = IO.ReadFloat(data, 0x10);
+            Unknown14 = IO.ReadFloat(data, 0x14);
+            Unknown18 = IO.ReadIntLE(data, 0x18);
+            Unknown1C = IO.ReadIntLE(data, 0x1C);
+        }
+
+        public List<byte> GetBytes()
+        {
+            List<byte> bytes = [];
+
+            bytes.AddRange(BitConverter.GetBytes(Unknown00));
+            bytes.AddRange(BitConverter.GetBytes(Unknown04));
+            bytes.AddRange(BitConverter.GetBytes(Unknown08));
+            bytes.AddRange(BitConverter.GetBytes(Unknown0C));
+            bytes.AddRange(BitConverter.GetBytes(Unknown10));
+            bytes.AddRange(BitConverter.GetBytes(Unknown14));
+            bytes.AddRange(BitConverter.GetBytes(Unknown18));
+            bytes.AddRange(BitConverter.GetBytes(Unknown1C));
+
+            return bytes;
+        }
+    }
+
     public class SgeMesh
     {
-        public int Unknown00 { get; set; }          // 1
-        public int Unknown04 { get; set; }          // 2
-        public int SubmeshAddress { get; set; }            // 3
-        public int SubmeshCount { get; set; }       // 4
-        public int Unknown10 { get; set; }          // 5
-        public int VertexAddress { get; set; }      // 6
-        public int Unknown18 { get; set; }          // 7
-        public int Unknown1C { get; set; }          // 8
-        public int Unknown20 { get; set; }          // 9
-        public float Unknown24 { get; set; }          // 10
-        public float Unknown28 { get; set; }          // 11
-        public float Unknown2C { get; set; }          // 12
-        public int Unknown30 { get; set; }          // 13
-        public int Unknown34 { get; set; }          // 14
-        public float Unknown38 { get; set; }          // 15
-        public float Unknown3C { get; set; }          // 16
-        public float Unknown40 { get; set; }          // 17
+        public int Unknown00 { get; set; }
+        public int Unknown04 { get; set; }
+        public int SubmeshAddress { get; set; }
+        public int SubmeshCount { get; set; }
+        public int Unknown10 { get; set; }
+        public int VertexAddress { get; set; }
+        public int Unknown18 { get; set; }
+        public int Unknown1C { get; set; }
+        public int Unknown20 { get; set; }
+        public float Unknown24 { get; set; }
+        public float Unknown28 { get; set; }
+        public float Unknown2C { get; set; }
+        public int Unknown30 { get; set; }
+        public int Unknown34 { get; set; }
+        public float Unknown38 { get; set; }
+        public float Unknown3C { get; set; }
+        public float Unknown40 { get; set; }
 
         public SgeMesh()
         {
@@ -1140,13 +1323,31 @@ namespace HaruhiHeiretsuLib.Graphics
         [JsonIgnore]
         public SgeBone Parent { get; set; }
         public int Address { get; set; }
-        public Vector3 Unknown00 { get; set; }      // 1
+        public Vector3 Unknown00 { get; set; }
         public Vector3 HeadPosition { get; set; }
         public int ParentAddress { get; set; }
-        public int AddressToBone1 { get; set; }     // 4
-        public int AddressToBone2 { get; set; }     // 5
-        public short Unknown24 { get; set; }              // 6
-        public short Unknown26 { get; set; }              // 6
+        public int AddressToBone1 { get; set; }
+        public int AddressToBone2 { get; set; }
+        /// <summary>
+        /// A flag indicating which part of the body this bone belongs to on a character model
+        /// 0x0002 - Neck bone
+        /// 0x0004 - Face bone (Camera will focus on this bone when this model is the gazing point)
+        /// 0x0008 - Chest bones
+        /// 0x0010 - Stomach bone
+        /// 0x0020 - Right hand bone
+        /// 0x0040 - Left hand bone
+        /// 0x0080 - Unknown
+        /// 0x0100 - Unknown
+        /// 0x0200 - Right foot bone (creates shadow)
+        /// 0x0400 - Left foot bone (creates shadow)
+        /// 0x0800 - Eyebrow bones
+        /// 0x1000 - Right leg bone
+        /// 0x2000 - Left leg bone
+        /// 0x4000 - Right cheek bone
+        /// 0x8000 - Left cheek bone
+        /// </summary>
+        public short BodyPart { get; set; }
+        public short Unknown26 { get; set; }
 
         public Dictionary<SgeBoneAttachedVertex, float> VertexGroup { get; set; } = [];
 
@@ -1168,7 +1369,7 @@ namespace HaruhiHeiretsuLib.Graphics
             ParentAddress = IO.ReadIntLE(data, offset + 0x18);
             AddressToBone1 = IO.ReadIntLE(data, offset + 0x1C);
             AddressToBone2 = IO.ReadIntLE(data, offset + 0x20);
-            Unknown24 = IO.ReadShortLE(data, offset + 0x24);
+            BodyPart = IO.ReadShortLE(data, offset + 0x24);
             Unknown26 = IO.ReadShortLE(data, offset + 0x26);
         }
 
@@ -1202,27 +1403,22 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(Parent?.Address ?? 0));
             bytes.AddRange(BitConverter.GetBytes(AddressToBone1));
             bytes.AddRange(BitConverter.GetBytes(AddressToBone2));
-            bytes.AddRange(BitConverter.GetBytes(Unknown24));
+            bytes.AddRange(BitConverter.GetBytes(BodyPart));
             bytes.AddRange(BitConverter.GetBytes(Unknown26));
 
             return bytes;
         }
     }
 
-    public struct SgeBoneAttachedVertex
+    public struct SgeBoneAttachedVertex(int submeshGroup, int mesh, int vertexIndex)
     {
-        public int Mesh { get; set; }
-        public int VertexIndex { get; set; }
-
-        public SgeBoneAttachedVertex(int mesh, int vertexIndex)
-        {
-            Mesh = mesh;
-            VertexIndex = vertexIndex;
-        }
+        public int SubmeshGroup { get; set; } = submeshGroup;
+        public int Submesh { get; set; } = mesh;
+        public int VertexIndex { get; set; } = vertexIndex;
 
         public override string ToString()
         {
-            return $"{Mesh},{VertexIndex}";
+            return $"{SubmeshGroup},{Submesh},{VertexIndex}";
         }
     }
 
@@ -1232,39 +1428,45 @@ namespace HaruhiHeiretsuLib.Graphics
         public List<SgeFace> SubmeshFaces { get; set; } = [];
 
         public SgeMaterial Material { get; set; }
-        public int Unknown00 { get; set; }          // 2
-        public int Unknown04 { get; set; }          // 3
+        public SubmeshBlendData BlendData { get; set; }
+
+        public short Unknown00 { get; set; }
+        public short Unknown02 { get; set; }
+        public int Unknown04 { get; set; }
         [JsonIgnore]
         public int MaterialStringAddress { get; set; }
-        public int Unknown0C { get; set; }          // 5
-        public int Unknown10 { get; set; }          // 6
+        [JsonIgnore]
+        public int BlendDataAddress { get; set; }
+        public int Unknown10 { get; set; }
         public SgeBone Bone { get; set; }
-        public int BoneAddress { get; set; }        // 7
-        public int Unknown18 { get; set; }          // 8
-        public int Unknown1C { get; set; }          // 9
-        public int Unknown20 { get; set; }              // 11
+        public int BoneAddress { get; set; }
+        public int Unknown18 { get; set; }
+        public int Unknown1C { get; set; }
+        public int Unknown20 { get; set; }
         public int StartVertex { get; set; }
-        public int EndVertex { get; set; }      // 12
-        public int StartFace { get; set; }             // 13
+        public int EndVertex { get; set; }
+        public int StartFace { get; set; }
         public int FaceCount { get; set; }
         public List<short> BonePalette { get; set; } = [];
-        public float Unknown54 { get; set; }          // 23
-        public float Unknown58 { get; set; }          // 24
-        public float Unknown5C { get; set; }          // 25
-        public float Unknown60 { get; set; }          // 26
+        public float Unknown54 { get; set; }
+        public float Unknown58 { get; set; }
+        public float Unknown5C { get; set; }
+        public float Unknown60 { get; set; }
 
         public SgeSubmesh()
         {
         }
 
-        public SgeSubmesh(IEnumerable<byte> data, int offset, List<SgeMaterial> materials, List<SgeBone> bones)
+        public SgeSubmesh(IEnumerable<byte> data, int offset, List<SgeMaterial> materials, List<SgeBone> bones, List<SubmeshBlendData> blendData)
         {
-            Unknown00 = IO.ReadIntLE(data, offset);
+            Unknown00 = IO.ReadShortLE(data, offset);
+            Unknown02 = IO.ReadShortLE(data, offset + 0x02);
             Unknown04 = IO.ReadIntLE(data, offset + 0x04);
             MaterialStringAddress = IO.ReadIntLE(data, offset + 0x08);
             string materialString = Encoding.ASCII.GetString(data.Skip(MaterialStringAddress).TakeWhile(b => b != 0x00).ToArray());
             Material = materials.FirstOrDefault(m => m.Name == materialString);
-            Unknown0C = IO.ReadIntLE(data, offset + 0x0C);
+            BlendDataAddress = IO.ReadIntLE(data, offset + 0x0C);
+            BlendData = blendData.FirstOrDefault(b => b.Offset == BlendDataAddress);
             Unknown10 = IO.ReadIntLE(data, offset + 0x10);
             BoneAddress = IO.ReadIntLE(data, offset + 0x14);
             Bone = bones.FirstOrDefault(b => b.Address == BoneAddress);
@@ -1285,14 +1487,29 @@ namespace HaruhiHeiretsuLib.Graphics
             Unknown60 = IO.ReadFloat(data, offset + 0x60);
         }
 
-        public List<byte> GetBytes(Dictionary<string, int> materialAddresses)
+        public List<byte> GetBytes(Dictionary<string, int> materialAddresses, Dictionary<int, int> blendAddresses)
         {
             List<byte> bytes = [];
 
             bytes.AddRange(BitConverter.GetBytes(Unknown00));
+            bytes.AddRange(BitConverter.GetBytes(Unknown02));
             bytes.AddRange(BitConverter.GetBytes(Unknown04));
-            bytes.AddRange(BitConverter.GetBytes(materialAddresses[Material.Name]));
-            bytes.AddRange(BitConverter.GetBytes(Unknown0C));
+            if (materialAddresses.TryGetValue(Material?.Name ?? string.Empty, out int materialAddress))
+            {
+                bytes.AddRange(BitConverter.GetBytes(materialAddress));
+            }
+            else
+            {
+                bytes.AddRange(new byte[4]);
+            }
+            if (blendAddresses.TryGetValue(BlendData?.Offset ?? 0, out int blendAddress))
+            {
+                bytes.AddRange(BitConverter.GetBytes(blendAddress));
+            }
+            else
+            {
+                bytes.AddRange(new byte[4]);
+            }
             bytes.AddRange(BitConverter.GetBytes(Unknown10));
             bytes.AddRange(BitConverter.GetBytes(BoneAddress));
             bytes.AddRange(BitConverter.GetBytes(Unknown18));

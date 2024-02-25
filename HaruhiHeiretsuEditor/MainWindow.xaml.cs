@@ -691,7 +691,7 @@ namespace HaruhiHeiretsuEditor
                 csv += "Unknown04\n";
                 valueLine = string.Empty;
                 percentageLine = string.Empty;
-                var unknown04HeaderValues = headers.GroupBy(h => h.Unknown38Count).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                var unknown04HeaderValues = headers.GroupBy(h => h.SgeGXLightingDataCount).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
                 foreach (var header04 in unknown04HeaderValues)
                 {
                     valueLine += $"{header04.Key},";
@@ -702,7 +702,7 @@ namespace HaruhiHeiretsuEditor
                 csv += "Unknown08\n";
                 valueLine = string.Empty;
                 percentageLine = string.Empty;
-                var unknown08HeaderValues = headers.GroupBy(h => h.Unknown3CCount).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                var unknown08HeaderValues = headers.GroupBy(h => h.SubmeshBlendDataCount).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
                 foreach (var header08 in unknown08HeaderValues)
                 {
                     valueLine += $"{header08.Key},";

@@ -3,9 +3,7 @@ from mathutils import Vector, Matrix, Quaternion
 import math
 import json
 import os
-from re import U
 import sys
-from random import randrange
 
 model_scale = 25.4
 
@@ -50,14 +48,61 @@ def construct_armature(sge):
             if (f"Bone{potential_child['ParentAddress']}" == bone.name):
                 armature.edit_bones[i].parent = bone
             i += 1
+    bpy.ops.object.mode_set(mode='OBJECT')
+    neck_bone = armature.collections.new('NeckBone')
+    face_bone = armature.collections.new('FaceBone')
+    chest_bones = armature.collections.new('ChestBones')
+    stomach_bone = armature.collections.new('StomachBone')
+    right_hand_bone = armature.collections.new('RightHandBone')
+    left_hand_bone = armature.collections.new('LeftHandBone')
+    unknown0080_group = armature.collections.new('Unknown0080Group')
+    unknown0100_group = armature.collections.new('Unknown0100Group')
+    right_foot_bone = armature.collections.new('RightFootBone')
+    left_foot_bone = armature.collections.new('LeftFootBone')
+    eyebrow_bones = armature.collections.new('EybrowBones')
+    right_leg_bone = armature.collections.new('RightLegBone')
+    left_leg_bone = armature.collections.new('LeftLegBone')
+    right_cheek_bone = armature.collections.new('RightCheekBone')
+    left_cheek_bone = armature.collections.new('LeftCheekBone')
+    for bone in sge['SgeBones']:
+        if bone['BodyPart'] == 0x0002:
+            neck_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x0004:
+            face_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x0008:
+            chest_bones.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x0010:
+            stomach_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x0020:
+            right_hand_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x0040:
+            left_hand_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x0080:
+            unknown0080_group.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x0100:
+            unknown0100_group.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x0200:
+            right_foot_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x0400:
+            left_foot_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x0800:
+            eyebrow_bones.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x1000:
+            right_leg_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x2000:
+            left_leg_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == 0x4000:
+            right_cheek_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+        elif bone['BodyPart'] == -32768: # 0x8000 but since it's a short it'll be negative
+            left_cheek_bone.assign(armature.bones[f"Bone{bone['Address']}"])
     return (obj, bones_list)
 
-def construct_mesh(sge, submesh, materials , mesh_num):
+def construct_mesh(sge, submesh, materials, group_num, submesh_num):
     print('Constructing mesh...')
-    mesh = bpy.data.meshes.new(sge['Name'] + "_Mesh" + str(mesh_num))
+    mesh = bpy.data.meshes.new(sge['Name'] + "_Group" + str(group_num) + "_Submesh" + str(submesh_num))
     mesh.validate(verbose=True)
     mesh.use_auto_smooth = True
-    obj = bpy.data.objects.new(sge['Name'] + "_Mesh" + str(mesh_num), mesh)
+    obj = bpy.data.objects.new(sge['Name'] + "_Group" + str(group_num) + "_Submesh" + str(submesh_num), mesh)
     for material in materials:
         obj.data.materials.append(material)
 
@@ -96,8 +141,8 @@ def construct_mesh(sge, submesh, materials , mesh_num):
         bone_vertex_group = obj.vertex_groups.new(name='Bone' + str(bone['Address']))
         for attached_vertex in bone['VertexGroup']:
             attached_vertex_split = attached_vertex.split(',')
-            (attached_vertex_mesh, attached_vertex_index) = (int(attached_vertex_split[0]), int(attached_vertex_split[1]))
-            if attached_vertex_mesh == mesh_num:
+            (attached_vertex_group, attached_vertex_submesh, attached_vertex_index) = (int(attached_vertex_split[0]), int(attached_vertex_split[1]), int(attached_vertex_split[2]))
+            if attached_vertex_group == group_num and attached_vertex_submesh == submesh_num:
                 bone_vertex_group.add([attached_vertex_index], bone['VertexGroup'][attached_vertex], 'ADD')
     return obj
 
@@ -152,26 +197,29 @@ def main(filename):
     (armature, bones_list) = construct_armature(sge)
 
     bpy.context.scene.render.fps = 60
-    sge_collection = bpy.data.collections.new('sge_collection')
-    bpy.context.scene.collection.children.link(sge_collection)
 
     i = 0
-    for submesh in sge['SgeSubmeshes']:
-        mesh = construct_mesh(sge, submesh, materials, i)
-        i += 1
+    j = 0
+    for submeshGroup in sge['SgeSubmeshes']:
+        sge_collection = bpy.data.collections.new(f'sge_collection{j}')
+        bpy.context.scene.collection.children.link(sge_collection)
+        for submesh in submeshGroup:
+            mesh = construct_mesh(sge, submesh, materials, j, i)
+            i += 1
 
-        sge_collection.objects.link(mesh)
+            sge_collection.objects.link(mesh)
 
-        mesh.parent = armature
-        modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
-        modifier.object = armature
+            mesh.parent = armature
+            modifier = mesh.modifiers.new(type='ARMATURE', name='Armature')
+            modifier.object = armature
+        j += 1
 
     if armature.animation_data is None:
         armature.animation_data_create()
         armature.animation_data.use_nla = True
-    
+
+    bpy.ops.object.mode_set(mode='POSE')
     if i >= 0:    
-        bpy.ops.object.mode_set(mode='POSE')
         i = 0
         for anim in sge['SgeAnimations']:
             if len(anim['UsedKeyframes']) > 0:
