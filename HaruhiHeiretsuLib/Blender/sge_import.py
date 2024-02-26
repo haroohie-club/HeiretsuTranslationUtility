@@ -144,8 +144,6 @@ def construct_mesh(sge, submesh, materials, group_num, submesh_num):
     uvlayer = mesh.uv_layers[uvlayer_name]
     for face in mesh.polygons:
         for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-            if vert_idx >= len(colors):
-                print(f'{vert_idx}; {len(colors)}')
             color_layer.data[vert_idx].color_srgb = (colors[vert_idx]['R'], colors[vert_idx]['G'], colors[vert_idx]['B'], colors[vert_idx]['A'])
             uvlayer.uv[loop_idx].vector = uvcoords[vert_idx]
     

@@ -7,13 +7,22 @@ import sys
 
 model_scale = 25.4
 
-def extract_submesh(obj, model, start_vertex, start_face):
+def extract_submesh(obj, model, start_vertex, start_face, skip_to = 0):
     submesh = obj.data
+    sge_submeshes = []
     sge_submesh = {}
     sge_submesh["SubmeshVertices"] = []
     bone_palette = []
     submesh.calc_normals_split()
+    cut_off_vertex = -1
+    i = 0
     for vert in submesh.vertices:
+        if skip_to > 0 and i <= skip_to:
+            i += 1
+            continue
+        if len(list(set(bone_palette))) + len(list(set(vert.groups))) > 16:
+            cut_off_vertex = i - 1
+            break
         for group in vert.groups:
             bone = [b for b in model["SgeBones"] if b["BlenderName"] == obj.vertex_groups[group.group].name][0]
             bone_palette.append(bone['Address'])
@@ -21,10 +30,15 @@ def extract_submesh(obj, model, start_vertex, start_face):
             "Position": vector_to_json_vector(vert.co / model_scale),
             "Unknown2": 65535
         })
+        i += 1
     bone_palette = list(set(bone_palette))
     while len(bone_palette) < 16:
         bone_palette.append(0) # will be -1 when we subtract below
+    i = 0
     for vert in submesh.vertices:
+        if skip_to > 0 and i <= skip_to:
+            i += 1
+            continue
         bone_indices = []
         weight = []
         for group in vert.groups:
@@ -35,8 +49,11 @@ def extract_submesh(obj, model, start_vertex, start_face):
             bone_indices.append(0)
         while len(weight) < 4:
             weight.append(0)
-        sge_submesh["SubmeshVertices"][vert.index]["BoneIndices"] = bone_indices
-        sge_submesh["SubmeshVertices"][vert.index]["Weight"] = weight
+        sge_submesh["SubmeshVertices"][vert.index - skip_to - 1 if skip_to > 0 else vert.index]["BoneIndices"] = bone_indices
+        sge_submesh["SubmeshVertices"][vert.index - skip_to - 1 if skip_to > 0 else vert.index]["Weight"] = weight
+        if i == cut_off_vertex:
+            break
+        i += 1
     bone_palette = [b - 1 for b in bone_palette] # modify bone palette to reflect actual indices
     sge_submesh["BonePalette"] = bone_palette
     uv_layer = submesh.uv_layers[0]
@@ -45,34 +62,40 @@ def extract_submesh(obj, model, start_vertex, start_face):
         color = submesh.color_attributes[0]
     sge_submesh["SubmeshFaces"] = []
     for face in submesh.polygons:
+        if (cut_off_vertex > 0 and any([v >= cut_off_vertex for v in face.vertices])) or (skip_to > 0 and any([v <= skip_to for v in face.vertices])):
+            continue
         for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-            sge_submesh["SubmeshVertices"][vert_idx]["Normal"] = vector_to_json_vector(submesh.loops[loop_idx].normal)
-            sge_submesh["SubmeshVertices"][vert_idx]["UVCoords"] = vector2_to_json_vector2(uv_layer.uv[loop_idx].vector)
+            sge_submesh["SubmeshVertices"][vert_idx - skip_to - 1 if skip_to > 0 else vert_idx]["Normal"] = vector_to_json_vector(submesh.loops[loop_idx].normal)
+            sge_submesh["SubmeshVertices"][vert_idx - skip_to - 1 if skip_to > 0 else vert_idx]["UVCoords"] = vector2_to_json_vector2(uv_layer.uv[loop_idx].vector)
             if color is not None:
                 sge_submesh["SubmeshVertices"][vert_idx]["Color"] = {
-                    "R": color.data[vert_idx].color_srgb[0],
-                    "G": color.data[vert_idx].color_srgb[1],
-                    "B": color.data[vert_idx].color_srgb[2],
-                    "A": color.data[vert_idx].color_srgb[3]
+                    "R": color.data[vert_idx - skip_to - 1 if skip_to > 0 else vert_idx].color_srgb[0],
+                    "G": color.data[vert_idx - skip_to - 1 if skip_to > 0 else vert_idx].color_srgb[1],
+                    "B": color.data[vert_idx - skip_to - 1 if skip_to > 0 else vert_idx].color_srgb[2],
+                    "A": color.data[vert_idx - skip_to - 1 if skip_to > 0 else vert_idx].color_srgb[3]
                 }
             else:
-                sge_submesh["SubmeshVertices"][vert_idx]["Color"] = {
+                sge_submesh["SubmeshVertices"][vert_idx - skip_to - 1 if skip_to > 0 else vert_idx]["Color"] = {
                     "R": 1,
                     "G": 1,
                     "B": 1,
                     "A": 1
                 }
         sge_submesh["SubmeshFaces"].append({
-            "Polygon": [ int(face.vertices[0]), int(face.vertices[1]), int(face.vertices[2]) ],
+            "Polygon": [ int(face.vertices[0]) - skip_to - 1 if skip_to > 0 else int(face.vertices[0]), int(face.vertices[1]) - skip_to - 1 if skip_to > 0 else int(face.vertices[1]), int(face.vertices[2]) - skip_to - 1 if skip_to > 0 else int(face.vertices[2]) ],
         })
         sge_submesh["Material"] = model["SgeMaterials"][face.material_index]
     
     sge_submesh["GXLightingAddress"] = 1
-    sge_submesh["StartVertex"] = start_vertex
-    sge_submesh["EndVertex"] = start_vertex + len(sge_submesh["SubmeshVertices"]) - 1
+    sge_submesh["StartVertex"] = skip_to + 1 if skip_to > 0 else start_vertex
+    sge_submesh["EndVertex"] = cut_off_vertex if cut_off_vertex > 0 else start_vertex + len(sge_submesh["SubmeshVertices"]) - 1
     sge_submesh["StartFace"] = start_face
     sge_submesh["FaceCount"] = len(sge_submesh["SubmeshFaces"])
-    return sge_submesh
+    sge_submeshes.append(sge_submesh)
+    if cut_off_vertex > 0:
+        for next_submesh in extract_submesh(obj, model, cut_off_vertex + 1, start_face + len(sge_submesh["SubmeshFaces"]), cut_off_vertex + 1):
+            sge_submeshes.append(next_submesh)
+    return sge_submeshes
 
 def main(filename, model_type):
     if os.path.exists(filename):
@@ -85,7 +108,7 @@ def main(filename, model_type):
     bpy.ops.transform.mirror(constraint_axis=(False, True, False), orient_type='GLOBAL')
     bpy.ops.object.select_all(action='DESELECT')
 
-    model = {}
+    model = {"Name": os.path.basename(bpy.data.filepath).split('.')[0]}
     # Header
     model["SgeHeader"] = {}
     model["SgeHeader"]["Version"] = 8
@@ -239,7 +262,8 @@ def main(filename, model_type):
         face = 0
         for obj in collection.objects:
             if obj.type == 'MESH':
-                submesh_group.append(extract_submesh(obj, model, vtx, face))
+                for submesh in extract_submesh(obj, model, vtx, face):
+                    submesh_group.append(submesh)
                 vtx = submesh_group[-1]["EndVertex"] + 1
                 if model_type == 4:
                     face += submesh_group[-1]["FaceCount"]
@@ -253,12 +277,13 @@ def main(filename, model_type):
         vtx = 0
         face = 0
         for obj in bpy.context.selected_objects:
-            submesh_group.append(extract_submesh(obj, model, vtx, face))
-            vtx = submesh_group[-1]["EndVertex"] + 1
-            if model_type == 4:
-                face += submesh_group[-1]["FaceCount"]
-            else:
-                face += submesh_group[-1]["FaceCount"] * 3
+            for submesh in extract_submesh(obj, model, vtx, face):
+                submesh_group.append(submesh)
+                vtx = submesh_group[-1]["EndVertex"] + 1
+                if model_type == 4:
+                    face += submesh_group[-1]["FaceCount"]
+                else:
+                    face += submesh_group[-1]["FaceCount"] * 3
         model["SgeSubmeshes"].append(submesh_group)
 
     json.dump(model, f)
