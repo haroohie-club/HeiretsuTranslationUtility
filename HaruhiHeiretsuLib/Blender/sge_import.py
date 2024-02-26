@@ -42,6 +42,11 @@ def construct_armature(sge):
         new_bone.head = (json_vector_to_vector(bone['HeadPosition'])) * model_scale
         new_bone.tail = new_bone.head + Vector((0, 1, 0))
         bones_list.append(bone_name)
+        # Uncomment to visualize Unknown00
+        # new_00_bone = armature.edit_bones.new(f'{bone_name}_00')
+        # new_00_bone.head = new_bone.head
+        # new_00_bone.tail = new_00_bone.head + json_vector_to_vector(bone['TailOffset']) * model_scale
+        # new_00_bone.color.palette = 'THEME02'
     for bone in armature.edit_bones:
         i = 0
         for potential_child in sge['SgeBones']:
@@ -95,6 +100,15 @@ def construct_armature(sge):
             right_cheek_bone.assign(armature.bones[f"Bone{bone['Address']}"])
         elif bone['BodyPart'] == -32768: # 0x8000 but since it's a short it'll be negative
             left_cheek_bone.assign(armature.bones[f"Bone{bone['Address']}"])
+
+    animation_groups = ["Face", "Mouth", "RightBody", "LeftBody", "RightArm", "LeftArm"]
+    u = 0
+    for anim_gorup in sge['BoneAnimationGroups']:
+        bone_animation_group = armature.collections.new(f'{animation_groups[u]}AnimationGroup')
+        for bone_idx in anim_gorup['BoneIndices']:
+            bone_animation_group.assign(armature.bones[f"Bone{sge['SgeBones'][bone_idx]['Address']}"])
+        u += 1
+
     return (obj, bones_list)
 
 def construct_mesh(sge, submesh, materials, group_num, submesh_num):
@@ -120,21 +134,24 @@ def construct_mesh(sge, submesh, materials, group_num, submesh_num):
         faces.append((sge_face['Polygon'][0], sge_face['Polygon'][1], sge_face['Polygon'][2])) # Faces are inverted so this is the correct order
 
     mesh.from_pydata(vertices, [], faces) # Edges are autocalculated by blender so we can pass a blank array
+    mesh.normals_split_custom_set([(0, 0, 0) for l in mesh.loops])
     mesh.normals_split_custom_set_from_vertices(normals)
 
     uvlayer = mesh.uv_layers.new()
     uvlayer_name = uvlayer.name
-    color_layer = mesh.vertex_colors.new()
+    color_layer = mesh.color_attributes.new('vertex_colors', 'FLOAT_COLOR', 'POINT')
     # Creating the color layer has invalidated the reference to the uv layer, so get it again.
     uvlayer = mesh.uv_layers[uvlayer_name]
     for face in mesh.polygons:
         for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-            color_layer.data[vert_idx].color = (colors[vert_idx]['R'], colors[vert_idx]['G'], colors[vert_idx]['B'], colors[vert_idx]['A'])
+            if vert_idx >= len(colors):
+                print(f'{vert_idx}; {len(colors)}')
+            color_layer.data[vert_idx].color_srgb = (colors[vert_idx]['R'], colors[vert_idx]['G'], colors[vert_idx]['B'], colors[vert_idx]['A'])
             uvlayer.uv[loop_idx].vector = uvcoords[vert_idx]
     
     for i in range(len(mesh.polygons)):
-        if submesh['SubmeshFaces'][i]['Material'] is not None:
-            mesh.polygons[i].material_index = submesh['SubmeshFaces'][i]['Material']['Index']
+        if submesh['Material'] is not None:
+            mesh.polygons[i].material_index = submesh['Material']['Index']
     mesh.update()
     
     for bone in sge['SgeBones']:

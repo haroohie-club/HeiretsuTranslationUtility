@@ -69,7 +69,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public short ScaleDataCount { get; set; } // *AnimTransformDataOffset + 20
         public short NumKeyframes { get; set; } // *AnimTransformDataOffset + 22
         public List<SgeAnimation> AnimationDefinitions { get; set; } = [];
-        public List<SgeGXLightingData> Unknown38Table { get; set; } = [];
+        public List<SgeGXLightingData> GXLightingDataTable { get; set; } = [];
         public List<TranslateDataEntry> TranslateDataEntries { get; set; } = [];
         public List<RotateDataEntry> RotateDataEntries { get; set; } = [];
         public List<ScaleDataEntry> ScaleDataEntries { get; set; } = [];
@@ -119,7 +119,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
             for (int i = 0; i < Unknown38TableCount; i++)
             {
-                Unknown38Table.Add(new(data.Skip(Unknown38TableOffset + i * 0x48).Take(0x48)));
+                GXLightingDataTable.Add(new(data.Skip(Unknown38TableOffset + i * 0x48).Take(0x48), Unknown38TableOffset + i * 0x48));
             }
 
             for (int i = 0; i < TranslateDataCount; i++)
