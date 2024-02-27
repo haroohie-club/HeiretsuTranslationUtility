@@ -222,7 +222,7 @@ def main(filename, model_type):
         if 'LeftCheekBone' in list(bone.collections.keys()):
             sge_bone['BodyPart'] = -32768 # 0x8000 but since it's a short it has to be negative
         
-        if 'FaceAnimationGroup' in list(bone.collections.keys()):
+        if 'EyesAnimationGroup' in list(bone.collections.keys()):
             model["BoneAnimationGroups"][0]["BoneIndices"].append(i - 1)
         if 'MouthAnimationGroup' in list(bone.collections.keys()):
             model["BoneAnimationGroups"][1]["BoneIndices"].append(i - 1)

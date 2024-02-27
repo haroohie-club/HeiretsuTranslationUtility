@@ -2,9 +2,9 @@ bl_info = {
     "name": "SGE Model Importer",
     "author": "Jonko",
     "version": (0, 1),
-    "blender": (3, 2, 0),
+    "blender": (4, 0, 2),
     "location": "File > Import-Export",
-    "description": "Import Shade Graphics Environment (SGE) files from games like Suzumiya Haruhi no Heiretsu",
+    "description": "Import Shade Graphics Environment (SGE) JSON intermediary files from games like Suzumiya Haruhi no Heiretsu",
     "category": "Import-Export"
 }
 

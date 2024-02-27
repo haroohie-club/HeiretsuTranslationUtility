@@ -13,10 +13,10 @@ def construct_materials(sge):
     for sge_material in sge['SgeMaterials']:
         material = bpy.data.materials.new(sge_material['Name'])
         material.use_nodes = True
-        bsdf = material.node_tree.nodes['Principled BSDF']
+        bsdf = material.node_tree.nodes[bpy.app.translations.pgettext('Principled BSDF')]
         if sge_material['TexturePath'] is not None and len(sge_material['TexturePath']) > 0:
             img = bpy.data.images.load(sge_material['TexturePath'])
-            texture = material.node_tree.nodes.new('ShaderNodeTexImage')
+            texture = material.node_tree.nodes.new(bpy.app.translations.pgettext('ShaderNodeTexImage'))
             texture.image = img
             material.node_tree.links.new(texture.outputs['Color'], bsdf.inputs['Base Color'])
             material.node_tree.links.new(texture.outputs['Alpha'], bsdf.inputs['Alpha'])
@@ -101,7 +101,7 @@ def construct_armature(sge):
         elif bone['BodyPart'] == -32768: # 0x8000 but since it's a short it'll be negative
             left_cheek_bone.assign(armature.bones[f"Bone{bone['Address']}"])
 
-    animation_groups = ["Face", "Mouth"]
+    animation_groups = ["Eyes", "Mouth"]
     u = 0
     for anim_gorup in sge['BoneAnimationGroups']:
         bone_animation_group = armature.collections.new(f'{animation_groups[u] if u < len(animation_groups) else u}AnimationGroup')
