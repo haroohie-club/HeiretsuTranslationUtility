@@ -84,7 +84,8 @@ def extract_submesh(obj, model, start_vertex, start_face, skip_to = 0):
         sge_submesh["SubmeshFaces"].append({
             "Polygon": [ int(face.vertices[0]) - skip_to - 1 if skip_to > 0 else int(face.vertices[0]), int(face.vertices[1]) - skip_to - 1 if skip_to > 0 else int(face.vertices[1]), int(face.vertices[2]) - skip_to - 1 if skip_to > 0 else int(face.vertices[2]) ],
         })
-        sge_submesh["Material"] = model["SgeMaterials"][face.material_index]
+        # print(submesh.materials[face.material_index].name)
+        sge_submesh["Material"] = [m for m in model['SgeMaterials'] if m["Name"] == submesh.materials[face.material_index].name]
     
     sge_submesh["GXLightingAddress"] = 1
     sge_submesh["StartVertex"] = skip_to + 1 if skip_to > 0 else start_vertex

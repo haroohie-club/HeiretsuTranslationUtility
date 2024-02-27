@@ -10,20 +10,79 @@ namespace HaruhiHeiretsuLib.Graphics
     {
         public int Width { get; set; }
         public int Height { get; set; }
-        public ImageMode Mode { get; set; }
+        public ImageFormat Format { get; set; }
         public int PointerPointer { get; set; }
         public int SizePointer { get; set; }
         public int DataPointer { get; set; }
 
+        /// <summary>
+        /// The image format of a texture file
+        /// </summary>
+        public enum ImageFormat
+        {
+            /// <summary>
+            /// The I4 image format, a 4bpp image format where each pixel is represented by 4 bits of grayscale data
+            /// </summary>
+            I4 = 0x00,
+            /// <summary>
+            /// The I8 image format, an 8bpp image format where each pixel is represented by 8 bits of grayscale data
+            /// </summary>
+            I8 = 0x01,
+            /// <summary>
+            /// The IA4 image format, an 8bpp image format where each pixel is represented by 4 bits of grayscale data and 4 bits of alpha data
+            /// </summary>
+            IA4 = 0x02,
+            /// <summary>
+            /// The IA8 image format, a 16bpp image format where each pixel is represented by 8 bits of grayscale data and 8 bits of alpha data
+            /// </summary>
+            IA8 = 0x03,
+            /// <summary>
+            /// The RGB565 format, a 16bpp format where each pixel is represented by 5 bits of red color data, 6 bits of green color data, and 5 bits of blue color data (alpha is always 255)
+            /// Currently unimplemented in this library
+            /// </summary>
+            RGB565 = 0x04,
+            /// <summary>
+            /// The RGBA5A3 format, a 16bpp format where each pixel is represented by either 4 bits each of red, green, and blue data and 3 bits of alpha data or 5 bits each of red, green, and blue data with alpha set to 255
+            /// </summary>
+            RGB5A3 = 0x05,
+            /// <summary>
+            /// The RGBA8 format (also know as RGBA32), a 32bpp format where each color and alpha are stored as one byte
+            /// </summary>
+            RGBA8 = 0x06,
+            /// <summary>
+            /// The CI4 or C4 format, 4bpp palette format
+            /// Currently unimplemented in this library
+            /// </summary>
+            CI4 = 0x08,
+            /// <summary>
+            /// The CI8 or C8 format, an 8bpp palette format
+            /// Currently unimplemented in this library
+            /// </summary>
+            CI8 = 0x09,
+            /// <summary>
+            /// The CI14X2 format, a 14bpp palette format
+            /// Currently unimplemented in this library
+            /// </summary>
+            CI14X2 = 0x0A,
+            /// <summary>
+            /// The CMPR format, a compressed image format that uses the DXT1 lossy compression algorithm which achieves 4bpp size for 16bpp color
+            /// </summary>
+            CMPR = 0x0E,
+        }
+
+        /// <summary>
+        /// Gets a bitmap image corresponding to the texture data
+        /// </summary>
+        /// <returns>An SKBitmap of this texture</returns>
         public SKBitmap GetImage()
         {
             if (FileType == GraphicsFileType.TEXTURE)
             {
                 SKBitmap bitmap = new(Width, Height);
 
-                switch (Mode)
+                switch (Format)
                 {
-                    case ImageMode.IA4:
+                    case ImageFormat.IA4:
                         int ia4Index = DataPointer;
                         for (int y = 0; y < Height; y += 4)
                         {
@@ -52,7 +111,7 @@ namespace HaruhiHeiretsuLib.Graphics
                         }
                         break;
 
-                    case ImageMode.IA8:
+                    case ImageFormat.IA8:
                         int ia8Index = DataPointer;
                         for (int y = 0; y < Height; y += 4)
                         {
@@ -82,7 +141,7 @@ namespace HaruhiHeiretsuLib.Graphics
                         }
                         break;
 
-                    case ImageMode.RGB5A3:
+                    case ImageFormat.RGB5A3:
                         int rgb5a3Index = DataPointer;
                         for (int y = 0; y < Height; y += 4)
                         {
@@ -118,7 +177,7 @@ namespace HaruhiHeiretsuLib.Graphics
                         }
                         break;
 
-                    case ImageMode.RGBA8:
+                    case ImageFormat.RGBA8:
                         int rgba8HeightMod = (4 - (Height % 4)) == 4 ? 0 : 4 - (Height % 4);
                         for (int y = 0; y < Height + rgba8HeightMod; y += 4)
                         {
@@ -148,7 +207,7 @@ namespace HaruhiHeiretsuLib.Graphics
                         }
                         break;
 
-                    case ImageMode.CMPR:
+                    case ImageFormat.CMPR:
                         int cmprIndex = DataPointer;
                         for (int y = 0; y < Height; y += 8)
                         {
@@ -164,11 +223,11 @@ namespace HaruhiHeiretsuLib.Graphics
                                         {
                                             break;
                                         }
-                                        ushort[] paletteData = new ushort[]
-                                        {
+                                        ushort[] paletteData =
+                                        [
                                             BitConverter.ToUInt16(Data.Skip(cmprIndex).Take(2).Reverse().ToArray()),
                                             BitConverter.ToUInt16(Data.Skip(cmprIndex + 2).Take(2).Reverse().ToArray())
-                                        };
+                                        ];
                                         SKColor[] palette = new SKColor[4];
                                         for (int i = 0; i < paletteData.Length; i++)
                                         {
@@ -228,12 +287,16 @@ namespace HaruhiHeiretsuLib.Graphics
             return null;
         }
 
-        public void Set20AF30Image(SKBitmap bitmap)
+        /// <summary>
+        /// Sets the texture data for this file based on a provided bitmap
+        /// </summary>
+        /// <param name="bitmap">An SKBitmap to set the image data to</param>
+        public void SetTextureImage(SKBitmap bitmap)
         {
             Edited = true;
-            switch (Mode)
+            switch (Format)
             {
-                case ImageMode.IA4:
+                case ImageFormat.IA4:
                     int ia4Index = DataPointer;
                     for (int y = 0; y < Height; y += 4)
                     {
@@ -261,7 +324,7 @@ namespace HaruhiHeiretsuLib.Graphics
                     }
                     break;
 
-                case ImageMode.IA8:
+                case ImageFormat.IA8:
                     int ia8Index = DataPointer;
                     int ia8HeightMod = (4 - (Height % 4)) == 4 ? 0 : 4 - (Height % 4);
                     for (int y = 0; y < Height + ia8HeightMod; y += 4)
@@ -290,7 +353,7 @@ namespace HaruhiHeiretsuLib.Graphics
                     }
                     break;
 
-                case ImageMode.RGB5A3:
+                case ImageFormat.RGB5A3:
                     int rgb5a3Index = DataPointer;
                     bool useAlpha = bitmap.Pixels.Any(p => p.Alpha < 0xFF); // if the alpha channel is used, we want to set top bit to 0
                     for (int y = 0; y < Height; y += 4)
@@ -338,7 +401,7 @@ namespace HaruhiHeiretsuLib.Graphics
                     }
                     break;
 
-                case ImageMode.RGBA8:
+                case ImageFormat.RGBA8:
                     int rgba8HeightMod = (4 - (Height % 4)) == 4 ? 0 : 4 - (Height % 4);
                     for (int y = 0; y < Height + rgba8HeightMod; y += 4)
                     {
@@ -367,7 +430,7 @@ namespace HaruhiHeiretsuLib.Graphics
                     }
                     break;
 
-                case ImageMode.CMPR:
+                case ImageFormat.CMPR:
                     int cmprIndex = DataPointer;
                     for (int y = 0; y < Height; y += 8)
                     {
@@ -436,6 +499,68 @@ namespace HaruhiHeiretsuLib.Graphics
                     }
                     break;
             }
+        }
+
+        /// <summary>
+        /// Initializes a new texture from a bitmap image
+        /// </summary>
+        /// <param name="name">The name of the texture (as defined in dat.bin #0008)</param>
+        /// <param name="format">The image format of the texture</param>
+        /// <param name="bitmap">The bitmap to use for texture data</param>
+        public void InitializeNewTexture(string name, ImageFormat format, SKBitmap bitmap)
+        {
+            FileType = GraphicsFileType.TEXTURE;
+            Format = format;
+            Name = name;
+            Data = [0x00, 0x20, 0xAF, 0x30, 0x00, 0x00, 0x00, 0x00];
+            PointerPointer = Data.Count + 4;
+            Data.AddRange(BitConverter.GetBytes(PointerPointer).Reverse());
+            SizePointer = Data.Count + 4;
+            Data.AddRange(BitConverter.GetBytes(SizePointer).Reverse());
+            Width = (ushort)bitmap.Width;
+            Height = (ushort)bitmap.Height;
+            Data.AddRange(BitConverter.GetBytes(bitmap.Width).Reverse());
+            Data.AddRange(BitConverter.GetBytes(bitmap.Height).Reverse());
+            Data.AddRange(BitConverter.GetBytes((int)format));
+            DataPointer = Data.Count + 4;
+            Data.AddRange(BitConverter.GetBytes(DataPointer).Reverse());
+            switch (format)
+            {
+                case ImageFormat.I4:
+                    Data.AddRange(new byte[Width * Height / 2]);
+                    break;
+                case ImageFormat.I8:
+                    Data.AddRange(new byte[Width * Height]);
+                    break;
+                case ImageFormat.IA4:
+                    Data.AddRange(new byte[Width * Height]);
+                    break;
+                case ImageFormat.IA8:
+                    Data.AddRange(new byte[Width * Height * 2]);
+                    break;
+                case ImageFormat.RGB565:
+                    Data.AddRange(new byte[Width * Height * 2]);
+                    break;
+                case ImageFormat.RGB5A3:
+                    Data.AddRange(new byte[Width * Height * 2]);
+                    break;
+                case ImageFormat.RGBA8:
+                    Data.AddRange(new byte[Width * Height * 4]);
+                    break;
+                case ImageFormat.CI4:
+                    Data.AddRange(new byte[Width * Height / 2 + 2 << 5]);
+                    break;
+                case ImageFormat.CI8:
+                    Data.AddRange(new byte[Width * Height + 2 << 9]);
+                    break;
+                case ImageFormat.CI14X2:
+                    Data.AddRange(new byte[Width * Height + 2 << 15]);
+                    break;
+                case ImageFormat.CMPR:
+                    Data.AddRange(new byte[Width * Height / 2]);
+                    break;
+            }
+            SetTextureImage(bitmap);
         }
 
         public void SetFontCharacterImage(string character, SKFont font, float fontSize, int verticalOffset = 0)

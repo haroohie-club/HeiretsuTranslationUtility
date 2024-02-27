@@ -435,7 +435,7 @@ namespace HaruhiHeiretsuEditor
                 graphicsEditStackPanel.Children.Clear();
                 GraphicsFile graphicsFile = new();
                 graphicsFile.Initialize(File.ReadAllBytes(openFileDialog.FileName), 0);
-                graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {graphicsFile.Mode}", Background = Brushes.White });
+                graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {graphicsFile.Format}", Background = Brushes.White });
                 graphicsEditStackPanel.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(graphicsFile.GetImage()), MaxWidth = graphicsFile.Width });
                 _loadedGraphicsFile = graphicsFile;
             }
@@ -473,7 +473,7 @@ namespace HaruhiHeiretsuEditor
                 }
                 if (selectedFile.FileType == GraphicsFile.GraphicsFileType.SGE)
                 {
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes; {selectedFile.Sge.SgeHeader.BonesCount} bones and {selectedFile.Sge.SgeHeader.Unknown40Count} meshes", Background = Brushes.White });
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"SGE {selectedFile.Data.Count} bytes; {selectedFile.Sge.SgeHeader.BonesCount} bones and {selectedFile.Sge.SgeHeader.OutlineDataCount} meshes", Background = Brushes.White });
                     foreach (SgeMaterial mat in selectedFile.Sge.SgeMaterials)
                     {
                         graphicsEditStackPanel.Children.Add(new TextBlock { Text = mat.Name });
@@ -498,7 +498,7 @@ namespace HaruhiHeiretsuEditor
                 else if (selectedFile.FileType == GraphicsFile.GraphicsFileType.TEXTURE)
                 {
                     graphicsEditStackPanel.Background = Brushes.Gray;
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {selectedFile.Mode}", Background = Brushes.White });
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {selectedFile.Format}", Background = Brushes.White });
                     graphicsEditStackPanel.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(selectedFile.GetImage()), MaxWidth = selectedFile.Width });
                     _loadedGraphicsFile = selectedFile;
                 }
@@ -713,7 +713,7 @@ namespace HaruhiHeiretsuEditor
                 csv += "Unknown0C\n";
                 valueLine = string.Empty;
                 percentageLine = string.Empty;
-                var unknown0CHeaderValues = headers.GroupBy(h => h.Unknown40Count).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
+                var unknown0CHeaderValues = headers.GroupBy(h => h.OutlineDataCount).OrderByDescending(g => (double)g.Count() / headers.Count * 100);
                 foreach (var header0C in unknown0CHeaderValues)
                 {
                     valueLine += $"{header0C.Key},";
@@ -823,9 +823,9 @@ namespace HaruhiHeiretsuEditor
                 };
                 if (openFileDialog.ShowDialog() == true)
                 {
-                    _loadedGraphicsFile.Set20AF30Image(SKBitmap.Decode(openFileDialog.FileName));
+                    _loadedGraphicsFile.SetTextureImage(SKBitmap.Decode(openFileDialog.FileName));
                     graphicsEditStackPanel.Children.Clear();
-                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {_loadedGraphicsFile.Mode}", Background = Brushes.White });
+                    graphicsEditStackPanel.Children.Add(new TextBlock { Text = $"20AF30: {_loadedGraphicsFile.Format}", Background = Brushes.White });
                     graphicsEditStackPanel.Children.Add(new Image { Source = GuiHelpers.GetBitmapImageFromBitmap(_loadedGraphicsFile.GetImage()), MaxWidth = _loadedGraphicsFile.Width });
                 }
             }

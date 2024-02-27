@@ -1,4 +1,5 @@
 ﻿using HaruhiHeiretsuLib.Archive;
+using HaruhiHeiretsuLib.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,17 +7,28 @@ using System.Text;
 
 namespace HaruhiHeiretsuLib.Graphics
 {
+    /// <summary>
+    /// A representation of a file in grp.bin
+    /// </summary>
     public partial class GraphicsFile : FileInArchive
     {
+        /// <summary>
+        /// The type of file (e.g. texture, SGE model, layout, etc.)
+        /// </summary>
         public GraphicsFileType FileType { get; set; }
+        /// <summary>
+        /// The name of the file as defined by dat #0008
+        /// </summary>
         public string Name { get; set; } = string.Empty;
 
-        // SGE Properties
-
+        /// <summary>
+        /// Blank constructor
+        /// </summary>
         public GraphicsFile()
         {
         }
 
+        /// <inheritdoc/>
         public override void Initialize(byte[] decompressedData, int offset)
         {
             Data = [.. decompressedData];
@@ -29,12 +41,12 @@ namespace HaruhiHeiretsuLib.Graphics
             else if (Data.Take(4).SequenceEqual(new byte[] { 0x00, 0x20, 0xAF, 0x30 }))
             {
                 FileType = GraphicsFileType.TEXTURE;
-                PointerPointer = BitConverter.ToInt32(Data.Skip(0x08).Take(4).Reverse().ToArray());
-                SizePointer = BitConverter.ToInt32(Data.Skip(PointerPointer).Take(4).Reverse().ToArray());
-                Height = BitConverter.ToUInt16(Data.Skip(SizePointer).Take(2).Reverse().ToArray());
-                Width = BitConverter.ToUInt16(Data.Skip(SizePointer + 2).Take(2).Reverse().ToArray());
-                Mode = (ImageMode)BitConverter.ToInt32(Data.Skip(SizePointer + 4).Take(4).Reverse().ToArray());
-                DataPointer = BitConverter.ToInt32(Data.Skip(SizePointer + 8).Take(4).Reverse().ToArray());
+                PointerPointer = IO.ReadInt(Data, 0x08);
+                SizePointer = IO.ReadInt(Data, PointerPointer);
+                Height = IO.ReadUShort(Data, SizePointer);
+                Width = IO.ReadUShort(Data, SizePointer + 2);
+                Format = (ImageFormat)IO.ReadInt(Data, SizePointer + 4);
+                DataPointer = IO.ReadInt(Data, SizePointer + 8);
             }
             else if (Data.Take(4).SequenceEqual(new byte[] { 0x80, 0x02, 0xE0, 0x01 }))
             {
@@ -47,18 +59,18 @@ namespace HaruhiHeiretsuLib.Graphics
                 {
                     LayoutComponents.Add(new LayoutComponent
                     {
-                        UnknownShort1 = BitConverter.ToInt16(Data.Skip(i).Take(2).ToArray()),
-                        Index = BitConverter.ToInt16(Data.Skip(i + 0x02).Take(2).ToArray()),
-                        UnknownShort2 = BitConverter.ToInt16(Data.Skip(i + 0x04).Take(2).ToArray()),
-                        ScreenX = BitConverter.ToInt16(Data.Skip(i + 0x06).Take(2).ToArray()),
-                        ScreenY = BitConverter.ToInt16(Data.Skip(i + 0x08).Take(2).ToArray()),
-                        ImageWidth = BitConverter.ToInt16(Data.Skip(i + 0x0A).Take(2).ToArray()),
-                        ImageHeight = BitConverter.ToInt16(Data.Skip(i + 0x0C).Take(2).ToArray()),
-                        ImageX = BitConverter.ToInt16(Data.Skip(i + 0x0E).Take(2).ToArray()),
-                        ImageY = BitConverter.ToInt16(Data.Skip(i + 0x10).Take(2).ToArray()),
-                        ScreenWidth = BitConverter.ToInt16(Data.Skip(i + 0x12).Take(2).ToArray()),
-                        ScreenHeight = BitConverter.ToInt16(Data.Skip(i + 0x14).Take(2).ToArray()),
-                        UnknownShort3 = BitConverter.ToInt16(Data.Skip(i + 0x16).Take(2).ToArray()),
+                        UnknownShort1 = IO.ReadShortLE(Data, i),
+                        Index = IO.ReadShortLE(Data, i + 0x02),
+                        UnknownShort2 = IO.ReadShortLE(Data, i + 0x04),
+                        ScreenX = IO.ReadShortLE(Data, i + 0x06),
+                        ScreenY = IO.ReadShortLE(Data, i + 0x08),
+                        ImageWidth = IO.ReadShortLE(Data, i + 0x0A),
+                        ImageHeight = IO.ReadShortLE(Data, i + 0x0C),
+                        ImageX = IO.ReadShortLE(Data, i + 0x0E),
+                        ImageY = IO.ReadShortLE(Data, i + 0x10),
+                        ScreenWidth = IO.ReadShortLE(Data, i + 0x12),
+                        ScreenHeight = IO.ReadShortLE(Data, i + 0x14),
+                        UnknownShort3 = IO.ReadShortLE(Data, i + 0x16),
                         AlphaTint = Data[i + 0x1B],
                         RedTint = Data[i + 0x1A],
                         GreenTint = Data[i + 0x19],
@@ -70,7 +82,7 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 FileType = GraphicsFileType.MAP;
                 MapHeader = Data.Take(0xB0).ToArray();
-                MapModel = Encoding.ASCII.GetString(Data.Skip(0xB0).TakeWhile(b => b != 0x00).ToArray());
+                MapModel = IO.ReadAsciiString(Data, 0xB0);
                 MapBackgroundModel = Encoding.ASCII.GetString(Data.Skip(0xC0).TakeWhile(b => b != 0x00).ToArray());
                 for (int i = 0; i < 256; i++)
                 {
@@ -78,7 +90,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 }
                 for (int i = 0; i < 512; i++)
                 {
-                    int nameIndex = BitConverter.ToInt16(Data.Skip(i * 0x2C + 0x110E).Take(2).ToArray());
+                    int nameIndex = IO.ReadShortLE(Data, i * 0x2C + 0x110E);
                     if (nameIndex > 0)
                     {
                         string name = MapModelNames[nameIndex - 1];
@@ -98,11 +110,17 @@ namespace HaruhiHeiretsuLib.Graphics
             }
         }
 
+        /// <inheritdoc/>
         public override byte[] GetBytes()
         {
             return [.. Data];
         }
 
+        /// <summary>
+        /// Attempts to resolve the name of this file (if in the MCB)
+        /// </summary>
+        /// <param name="offsetIndexDictionary">The MCB's offset-index dictionary</param>
+        /// <param name="textureNameDictionary">The texture name dictionary (grp.bin index to name) cosntructed from dat #0008</param>
         public void TryResolveName(Dictionary<int, int> offsetIndexDictionary, Dictionary<int, string> textureNameDictionary)
         {
             if (textureNameDictionary.TryGetValue(offsetIndexDictionary[McbEntryData.ArchiveOffset], out string name))
@@ -111,6 +129,10 @@ namespace HaruhiHeiretsuLib.Graphics
             }
         }
 
+        /// <summary>
+        /// Attempts to resolve the name of this file (if it's in grp.bin)
+        /// </summary>
+        /// <param name="textureNameDictionary">The texture name dictionary (grp.bin index to name) constructed from dat #0008</param>
         public void TryResolveName(Dictionary<int, string> textureNameDictionary)
         {
             if (textureNameDictionary.TryGetValue(BinArchiveIndex, out string name))
@@ -119,6 +141,7 @@ namespace HaruhiHeiretsuLib.Graphics
             }
         }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
             if (Location != (-1, -1))
@@ -131,29 +154,35 @@ namespace HaruhiHeiretsuLib.Graphics
             }
         }
 
+        /// <summary>
+        /// The type of graphics file this is
+        /// </summary>
         public enum GraphicsFileType
         {
+            /// <summary>
+            /// A character in the font file
+            /// </summary>
             FONT_CHARACTER,
+            /// <summary>
+            /// A layout file
+            /// </summary>
             LAYOUT,
+            /// <summary>
+            /// An SGE (Shade Graphics Engine) 3D model
+            /// </summary>
             SGE,
+            /// <summary>
+            /// A texture file
+            /// </summary>
             TEXTURE,
+            /// <summary>
+            /// A map file (containing level data)
+            /// </summary>
             MAP,
+            /// <summary>
+            /// An unknown file
+            /// </summary>
             UNKNOWN
-        }
-
-        public enum ImageMode
-        {
-            I4 = 0x00,
-            I8 = 0x01,
-            IA4 = 0x02,
-            IA8 = 0x03,
-            RGB565 = 0x04,
-            RGB5A3 = 0x05,
-            RGBA8 = 0x06,
-            CI4 = 0x08,
-            CI8 = 0x09,
-            CI14X2 = 0x0A,
-            CMPR = 0x0E,
         }
     }
 }

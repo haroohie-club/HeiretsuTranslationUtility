@@ -13,55 +13,110 @@ namespace HaruhiHeiretsuLib.Graphics
 {
     public partial class GraphicsFile
     {
+        /// <summary>
+        /// Representation of SGE data for an SGE model
+        /// </summary>
         public Sge Sge { get; set; }
     }
 
+    /// <summary>
+    /// Representation of an SGE model (Shade Graphics Engine 3D model)
+    /// </summary>
     public class Sge
     {
+        /// <summary>
+        /// The name of the model
+        /// </summary>
         public string Name { get; set; }
         [JsonIgnore]
-        public int SgeStartOffset { get; set; }
+        internal int SgeStartOffset { get; set; }
+        /// <summary>
+        /// The SGE header data
+        /// </summary>
         public SgeHeader SgeHeader { get; set; }
+        /// <summary>
+        /// List of SGE animations
+        /// </summary>
         public List<SgeAnimation> SgeAnimations { get; set; } = [];
+        /// <summary>
+        /// List of all the animation translation operations
+        /// </summary>
         public List<TranslateDataEntry> TranslateDataEntries { get; set; } = [];
+        /// <summary>
+        /// List of all the animation rotation operations
+        /// </summary>
         public List<RotateDataEntry> RotateDataEntries { get; set; } = [];
+        /// <summary>
+        /// List of all the animation scale operations
+        /// </summary>
         public List<ScaleDataEntry> ScaleDataEntries { get; set; } = [];
+        /// <summary>
+        /// List of all the animation keyframe definitions
+        /// </summary>
         public List<KeyframeDefinition> KeyframeDefinitions { get; set; } = [];
+        /// <summary>
+        /// List of GX (Wii graphics) lighting data (assigned at the submesh level)
+        /// </summary>
         public List<SgeGXLightingData> SgeGXLightingDataTable { get; set; } = [];
+        /// <summary>
+        /// List of blend data (assigned at the submesh level)
+        /// </summary>
         public List<SubmeshBlendData> SubmeshBlendDataTable { get; set; } = [];
-        public List<Unknown40Entry> Unknown40Table { get; set; } = [];
+        public List<OutlineDataEntry> OutlineDataTable { get; set; } = [];
         public List<Unknown4CEntry> Unknown4CTable { get; set; } = [];
+        /// <summary>
+        /// List of bone animation groups (i.e. facial animation, mouth animation, various body part groups)
+        /// </summary>
         public List<BoneAnimationGroup> BoneAnimationGroups { get; set; } = [];
         public List<Unknown58Entry> Unknown58Table { get; set; } = [];
+        /// <summary>
+        /// List of mesh objects -- technically these contain submeshes, but we store those separately
+        /// </summary>
         public List<SgeMesh> SgeMeshes { get; set; } = [];
+        /// <summary>
+        /// List of materials (with textures)
+        /// </summary>
         public List<SgeMaterial> SgeMaterials { get; set; } = [];
+        /// <summary>
+        /// List of bones (the armature/skeleton)
+        /// </summary>
         public List<SgeBone> SgeBones { get; set; } = [];
+        /// <summary>
+        /// List of submeshes containing the geometry data
+        /// </summary>
         public List<List<SgeSubmesh>> SgeSubmeshes { get; set; } = [];
 
         // AnimTransformData
         [JsonIgnore]
-        public int TranslateDataOffset { get; set; } // *AnimTransformDataOffset + 0
+        internal int TranslateDataOffset { get; set; } // *AnimTransformDataOffset + 0
         [JsonIgnore]
-        public int RotateDataOffset { get; set; } // *AnimTransformDataOffset + 4
+        internal int RotateDataOffset { get; set; } // *AnimTransformDataOffset + 4
         [JsonIgnore]
-        public int ScaleDataOffset { get; set; } // *AnimTransformDataOffset + 8
+        internal int ScaleDataOffset { get; set; } // *AnimTransformDataOffset + 8
         [JsonIgnore]
-        public int KeyframeDefinitionsOffset { get; set; } // *AnimTransformDataOffset + 12
+        internal int KeyframeDefinitionsOffset { get; set; } // *AnimTransformDataOffset + 12
         [JsonIgnore]
-        public short TranslateDataCount { get; set; } // *AnimTransformDataOffset + 16
+        internal short TranslateDataCount { get; set; } // *AnimTransformDataOffset + 16
         [JsonIgnore]
-        public short RotateDataCount { get; set; } // *AnimTransformDataOffset + 18
+        internal short RotateDataCount { get; set; } // *AnimTransformDataOffset + 18
         [JsonIgnore]
-        public short ScaleDataCount { get; set; } // *AnimTransformDataOffset + 20
+        internal short ScaleDataCount { get; set; } // *AnimTransformDataOffset + 20
         [JsonIgnore]
-        public short NumKeyframes { get; set; } // *AnimTransformDataOffset + 22
+        internal short NumKeyframes { get; set; } // *AnimTransformDataOffset + 22
 
         private readonly JsonSerializerOptions _serializerOptions = new();
 
+        /// <summary>
+        /// Blank constructor for deserialization
+        /// </summary>
         public Sge()
         {
         }
 
+        /// <summary>
+        /// Constructs an SGE given binary SGE data
+        /// </summary>
+        /// <param name="data">The full, decompressed binary data from the SGE file in grp.bin</param>
         public Sge(IEnumerable<byte> data)
         {
             _serializerOptions.Converters.Add(new SgeBoneAttchedVertexConverter());
@@ -96,6 +151,10 @@ namespace HaruhiHeiretsuLib.Graphics
             for (int i = 0; i < SgeHeader.SubmeshBlendDataCount; i++)
             {
                 SubmeshBlendDataTable.Add(new(sgeData.Skip(SgeHeader.SubmeshBlendDataTableOffset + i * 0x14).Take(0x14), SgeHeader.SubmeshBlendDataTableOffset + i * 0x14));
+            }
+            for (int i = 0; i < SgeHeader.OutlineDataCount; i++)
+            {
+                OutlineDataTable.Add(new(sgeData.Skip(SgeHeader.OutlineDataTableOffset + i * 0x18).Take(0x18)));
             }
 
             foreach (SgeMesh meshTableEntry in SgeMeshes.Take(1)) // but only the first mesh ever seems to matter
@@ -226,11 +285,6 @@ namespace HaruhiHeiretsuLib.Graphics
                 SgeAnimations.Add(new(sgeData, 0, SgeHeader.BonesCount, SgeHeader.AnimationDataTableAddress + i * 0x38));
             }
 
-            for (int i = 0; i < SgeHeader.Unknown40Count; i++)
-            {
-                Unknown40Table.Add(new(sgeData.Skip(SgeHeader.Unknown40TableOffset + i * 0x18).Take(0x18)));
-            }
-
             for (int i = 0; i < SgeHeader.Unknown4CCount; i++)
             {
                 Unknown4CTable.Add(new(sgeData.Skip(SgeHeader.Unknown4CTableOffset + i * 0x18).Take(0x18)));
@@ -267,16 +321,30 @@ namespace HaruhiHeiretsuLib.Graphics
             }
         }
 
-        public void ResolveTextures(string name, List<GraphicsFile> textures)
+        /// <summary>
+        /// Finds the textures (in grp.bin) associated with each material
+        /// As this needs to be called after resolving the names for every file in grp.bin,
+        /// this method also will name the SGE with the provided name
+        /// </summary>
+        /// <param name="name">The name of this SGE (from dat.bin #008)</param>
+        /// <param name="grpFiles">A list of all graphics files in grp.bin</param>
+        public void ResolveTextures(string name, List<GraphicsFile> grpFiles)
         {
             Name = name;
             foreach (SgeMaterial material in SgeMaterials)
             {
-                material.Texture = textures.FirstOrDefault(t => t.Name == material.Name);
+                material.Texture = grpFiles.FirstOrDefault(t => t.Name == material.Name);
             }
         }
 
-        public void ResolveTextures(string name, string[] graphicsFiles)
+        /// <summary>
+        /// Adds textures from disk to the SGE and give sthe SGE a name
+        /// Note that while this creates the texture files, it does not add them to the grp/mcb
+        /// You will need to loop through the materials after the fact to do this
+        /// </summary>
+        /// <param name="name">The name of the SGE</param>
+        /// <param name="graphicsFiles">A list of paths to bitmap files -- the filenames must contain both the material name and texture format</param>
+        public void AddExternalTextures(string name, string[] graphicsFiles)
         {
             Name = name;
             foreach (SgeMaterial material in SgeMaterials)
@@ -284,12 +352,24 @@ namespace HaruhiHeiretsuLib.Graphics
                 string graphicsFile = graphicsFiles.FirstOrDefault(f => f.Contains(material.Name));
                 if (!string.IsNullOrEmpty(graphicsFile))
                 {
-                    material.Texture = new GraphicsFile();
-                    material.Texture.Initialize(File.ReadAllBytes(graphicsFile), 0);
+                    material.Texture = new();
+                    foreach (string mode in Enum.GetNames<GraphicsFile.ImageFormat>())
+                    {
+                        if (graphicsFile.Contains(mode))
+                        {
+                            material.Texture.InitializeNewTexture(material.Name, Enum.Parse<GraphicsFile.ImageFormat>(mode), SKBitmap.Decode(graphicsFile));
+                            break;
+                        }
+                    }
                 }
             }
         }
 
+        /// <summary>
+        /// Dumps this model to an SGE JSON intermediary file (and dumps all textures to a directory)
+        /// </summary>
+        /// <param name="texDirectory">A directory to dump textures to; if not provided, will dump them to a temp directory</param>
+        /// <returns>A string of the JSON-encoded SGE</returns>
         public string DumpJson(string texDirectory = "")
         {
             if (string.IsNullOrEmpty(texDirectory))
@@ -335,6 +415,10 @@ namespace HaruhiHeiretsuLib.Graphics
             return sge;
         }
 
+        /// <summary>
+        /// Gets a binary representation of the SGE
+        /// </summary>
+        /// <returns>A byte list containing the SGE's binary data</returns>
         public List<byte> GetBytes()
         {
             List<byte> bytes = [];
@@ -346,7 +430,7 @@ namespace HaruhiHeiretsuLib.Graphics
             // Calculate stuff
             SgeHeader.SgeGXLightingDataCount = SgeGXLightingDataTable.Count;
             SgeHeader.SubmeshBlendDataCount = SubmeshBlendDataTable.Count;
-            SgeHeader.Unknown40Count = Unknown40Table.Count;
+            SgeHeader.OutlineDataCount = OutlineDataTable.Count;
             SgeHeader.Unknown4CCount = Unknown4CTable.Count;
             SgeHeader.Unknown50Count = BoneAnimationGroups.Count;
             SgeHeader.Unknown58Count = Unknown58Table.Count;
@@ -366,10 +450,10 @@ namespace HaruhiHeiretsuLib.Graphics
             }
             SgeHeader.TextureTableAddress = offset;
             offset += Helpers.RoundToNearest16(SgeMaterials.Count * 0x18);
-            if (SgeHeader.Unknown40Count > 0)
+            if (SgeHeader.OutlineDataCount > 0)
             {
-                SgeHeader.Unknown40TableOffset = offset;
-                offset += Helpers.RoundToNearest16(Unknown40Table.Count * 0x18);
+                SgeHeader.OutlineDataTableOffset = offset;
+                offset += Helpers.RoundToNearest16(OutlineDataTable.Count * 0x18);
             }
             if (SgeHeader.Unknown4CCount > 0)
             {
@@ -429,6 +513,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 currentBlendAddress = bytes.Count;
             }
             bytes.PadToNearest16();
+
             Dictionary<string, int> textureTable = [];
             foreach (SgeMaterial material in SgeMaterials)
             {
@@ -436,10 +521,22 @@ namespace HaruhiHeiretsuLib.Graphics
                 bytes.AddRange(material.GetBytes());
             }
             bytes.PadToNearest16();
-            bytes.AddRange(Unknown40Table.SelectMany(u => u.GetBytes()));
+
+            Dictionary<int, int> outlineAddresses = [];
+            int currentOutlineAddress = bytes.Count;
+            foreach (OutlineDataEntry outline in OutlineDataTable)
+            {
+                int oldAddress = outline.Offset;
+                outline.Offset = currentOutlineAddress;
+                blendAddresses.Add(oldAddress, outline.Offset);
+                bytes.AddRange(outline.GetBytes());
+                currentOutlineAddress = bytes.Count;
+            }
             bytes.PadToNearest16();
+
             bytes.AddRange(Unknown4CTable.SelectMany(u => u.GetBytes()));
             bytes.PadToNearest16();
+
             int boneAddress = bytes.Count;
             int boneTableAddress = boneAddress;
             foreach (SgeBone bone in SgeBones)
@@ -575,15 +672,34 @@ namespace HaruhiHeiretsuLib.Graphics
         }
     }
 
+    /// <summary>
+    /// The SGE's initial header
+    /// </summary>
     public class SgeHeader
     {
+        /// <summary>
+        /// The version of the SGE (Heiretsu uses version 8)
+        /// </summary>
         public short Version { get; set; }    // 0x00
-        public short ModelType { get; set; }    // 0x02 -- value of 0, 3, 4 or 5; of 3 gives outline on character model; 4 is tristriped
+        /// <summary>
+        /// The model type for this SGE; the types appear to be as follows:
+        /// 0: various object models
+        /// 3: character models
+        /// 4: map models (indicates tristripping)
+        /// 5: unknown
+        /// </summary>
+        public short ModelType { get; set; }    // 0x02 -- value of 0, 3, 4 or 5; 4 is tristriped
+        /// <summary>
+        /// Count of GX lighting data objects
+        /// </summary>
         [JsonIgnore]
         public int SgeGXLightingDataCount { get; set; }      // 0x04
+        /// <summary>
+        /// Count of submesh blend data objects
+        /// </summary>
         [JsonIgnore]
         public int SubmeshBlendDataCount { get; set; }      // 0x08
-        public int Unknown40Count { get; set; }   // 0x0C
+        public int OutlineDataCount { get; set; }   // 0x0C
         [JsonIgnore]
         public int BonesCount { get; set; }     // 0x10
         [JsonIgnore]
@@ -600,7 +716,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public int Unknown34Offset { get; set; }      // 0x34
         public int SgeGXLightingDataTableOffset { get; set; }      // 0x38
         public int SubmeshBlendDataTableOffset { get; set; }      // 0x3C
-        public int Unknown40TableOffset { get; set; }      // 0x40
+        public int OutlineDataTableOffset { get; set; }      // 0x40
         public int BonesTableAddress { get; set; }  // 0x44
         public int TextureTableAddress { get; set; }    // 0x48
         public int Unknown4CTableOffset { get; set; }      // 0x4C
@@ -629,7 +745,7 @@ namespace HaruhiHeiretsuLib.Graphics
             ModelType = IO.ReadShortLE(headerData, 0x02);
             SgeGXLightingDataCount = IO.ReadIntLE(headerData, 0x04);
             SubmeshBlendDataCount = IO.ReadIntLE(headerData, 0x08);
-            Unknown40Count = IO.ReadIntLE(headerData, 0x0C);
+            OutlineDataCount = IO.ReadIntLE(headerData, 0x0C);
             BonesCount = IO.ReadIntLE(headerData, 0x10);
             TexturesCount = IO.ReadIntLE(headerData, 0x14);
             Unknown4CCount = IO.ReadIntLE(headerData, 0x18);
@@ -642,7 +758,7 @@ namespace HaruhiHeiretsuLib.Graphics
             Unknown34Offset = IO.ReadIntLE(headerData, 0x34);
             SgeGXLightingDataTableOffset = IO.ReadIntLE(headerData, 0x38);
             SubmeshBlendDataTableOffset = IO.ReadIntLE(headerData, 0x3C);
-            Unknown40TableOffset = IO.ReadIntLE(headerData, 0x40);
+            OutlineDataTableOffset = IO.ReadIntLE(headerData, 0x40);
             BonesTableAddress = IO.ReadIntLE(headerData, 0x44);
             TextureTableAddress = IO.ReadIntLE(headerData, 0x48);
             Unknown4CTableOffset = IO.ReadIntLE(headerData, 0x4C);
@@ -668,7 +784,7 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(ModelType));
             bytes.AddRange(BitConverter.GetBytes(SgeGXLightingDataCount));
             bytes.AddRange(BitConverter.GetBytes(SubmeshBlendDataCount));
-            bytes.AddRange(BitConverter.GetBytes(Unknown40Count));
+            bytes.AddRange(BitConverter.GetBytes(OutlineDataCount));
             bytes.AddRange(BitConverter.GetBytes(BonesCount));
             bytes.AddRange(BitConverter.GetBytes(TexturesCount));
             bytes.AddRange(BitConverter.GetBytes(Unknown4CCount));
@@ -681,7 +797,7 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(Unknown34Offset));
             bytes.AddRange(BitConverter.GetBytes(SgeGXLightingDataTableOffset));
             bytes.AddRange(BitConverter.GetBytes(SubmeshBlendDataTableOffset));
-            bytes.AddRange(BitConverter.GetBytes(Unknown40TableOffset));
+            bytes.AddRange(BitConverter.GetBytes(OutlineDataTableOffset));
             bytes.AddRange(BitConverter.GetBytes(BonesTableAddress));
             bytes.AddRange(BitConverter.GetBytes(TextureTableAddress));
             bytes.AddRange(BitConverter.GetBytes(Unknown4CTableOffset));
@@ -1128,25 +1244,32 @@ namespace HaruhiHeiretsuLib.Graphics
         }
     }
 
-    public class Unknown40Entry
+    public class OutlineDataEntry
     {
+        /// <summary>
+        /// The offset this outline data is located at (used for submesh lookup)
+        /// </summary>
+        public int Offset { get; set; }
         public int Unknown00 { get; set; }
         public float Unknown04 { get; set; }
         public float Unknown08 { get; set; }
-        public float Unknown0C { get; set; }
+        /// <summary>
+        /// The color of the outline (note that alpha is always 255)
+        /// </summary>
+        public SKColor Color { get; set; }
         public float Unknown10 { get; set; }
         public int Unknown14 { get; set; }
 
-        public Unknown40Entry()
+        public OutlineDataEntry()
         {
         }
 
-        public Unknown40Entry(IEnumerable<byte> data)
+        public OutlineDataEntry(IEnumerable<byte> data)
         {
             Unknown00 = IO.ReadIntLE(data, 0x00);
             Unknown04 = IO.ReadFloat(data, 0x04);
             Unknown08 = IO.ReadFloat(data, 0x08);
-            Unknown0C = IO.ReadFloat(data, 0x0C);
+            Color = new SKColor(data.ElementAt(0x0C), data.ElementAt(0x0D), data.ElementAt(0x0E));
             Unknown10 = IO.ReadFloat(data, 0x10);
             Unknown14 = IO.ReadInt(data, 0x14);
         }
@@ -1158,7 +1281,7 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(Unknown00));
             bytes.AddRange(BitConverter.GetBytes(Unknown04));
             bytes.AddRange(BitConverter.GetBytes(Unknown08));
-            bytes.AddRange(BitConverter.GetBytes(Unknown0C));
+            bytes.AddRange(BitConverter.GetBytes((uint)Color));
             bytes.AddRange(BitConverter.GetBytes(Unknown10));
             bytes.AddRange(BitConverter.GetBytes(Unknown14).Reverse());
 
@@ -1541,8 +1664,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public int MaterialStringAddress { get; set; }
         public int BlendDataAddress { get; set; }
         public int GXLightingAddress { get; set; }
-        public SgeBone Bone { get; set; }
-        public int BoneAddress { get; set; }
+        public int OutlineAddress { get; set; }
         public int Unknown18 { get; set; }
         public int Unknown1C { get; set; }
         public int Unknown20 { get; set; }
@@ -1570,8 +1692,7 @@ namespace HaruhiHeiretsuLib.Graphics
             Material = materials.FirstOrDefault(m => m.Name == materialString);
             BlendDataAddress = IO.ReadIntLE(data, offset + 0x0C);
             GXLightingAddress = IO.ReadIntLE(data, offset + 0x10);
-            BoneAddress = IO.ReadIntLE(data, offset + 0x14);
-            Bone = bones.FirstOrDefault(b => b.Address == BoneAddress);
+            OutlineAddress = IO.ReadIntLE(data, offset + 0x14);
             Unknown18 = IO.ReadIntLE(data, offset + 0x18);
             Unknown1C = IO.ReadIntLE(data, offset + 0x1C);
             Unknown20 = IO.ReadIntLE(data, offset + 0x20);
@@ -1620,7 +1741,7 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 bytes.AddRange(new byte[4]);
             }
-            bytes.AddRange(BitConverter.GetBytes(BoneAddress));
+            bytes.AddRange(BitConverter.GetBytes(OutlineAddress));
             bytes.AddRange(BitConverter.GetBytes(Unknown18));
             bytes.AddRange(BitConverter.GetBytes(Unknown1C));
             bytes.AddRange(BitConverter.GetBytes(Unknown20));

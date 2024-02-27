@@ -84,14 +84,14 @@ namespace HaruhiHeiretsuCLI
 
                         SKBitmap bitmap = SKBitmap.Decode(file);
 
-                        grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Set20AF30Image(bitmap);
+                        grp.Files.First(f => f.BinArchiveIndex == archiveIndex).SetTextureImage(bitmap);
 
                         int i = mcb.GraphicsFiles.Count;
                         mcb.LoadGraphicsFiles(file.Split('_'));
                         for (; i < mcb.GraphicsFiles.Count; i++)
                         {
                             GraphicsFile g = mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].CastTo<GraphicsFile>();
-                            g.Set20AF30Image(bitmap);
+                            g.SetTextureImage(bitmap);
                             mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc] = g;
                         }
 

@@ -21,27 +21,27 @@ namespace HaruhiHeiretsuLib
                     int sizePointer = BitConverter.ToInt32(dolBytes.Skip(pointerPointer).Take(4).Reverse().ToArray()) + i;
                     int height = BitConverter.ToUInt16(dolBytes.Skip(sizePointer).Take(2).Reverse().ToArray());
                     int width = BitConverter.ToUInt16(dolBytes.Skip(sizePointer + 2).Take(2).Reverse().ToArray());
-                    GraphicsFile.ImageMode mode = (GraphicsFile.ImageMode)BitConverter.ToInt32(dolBytes.Skip(sizePointer + 4).Take(4).Reverse().ToArray());
+                    GraphicsFile.ImageFormat mode = (GraphicsFile.ImageFormat)BitConverter.ToInt32(dolBytes.Skip(sizePointer + 4).Take(4).Reverse().ToArray());
 
                     int numPixels = height * width;
                     int numBytes = 0;
                     switch (mode)
                     {
-                        case GraphicsFile.ImageMode.CMPR:
+                        case GraphicsFile.ImageFormat.CMPR:
                             numBytes = numPixels / 2;
                             break;
 
-                        case GraphicsFile.ImageMode.IA4:
+                        case GraphicsFile.ImageFormat.IA4:
                             numBytes = numPixels;
                             break;
 
-                        case GraphicsFile.ImageMode.IA8:
-                        case GraphicsFile.ImageMode.RGB565:
-                        case GraphicsFile.ImageMode.RGB5A3:
+                        case GraphicsFile.ImageFormat.IA8:
+                        case GraphicsFile.ImageFormat.RGB565:
+                        case GraphicsFile.ImageFormat.RGB5A3:
                             numBytes = numPixels * 2;
                             break;
 
-                        case GraphicsFile.ImageMode.RGBA8:
+                        case GraphicsFile.ImageFormat.RGBA8:
                             numBytes = numPixels * 4;
                             break;
                     }
