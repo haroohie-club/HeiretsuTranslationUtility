@@ -1,4 +1,5 @@
 ﻿using HaruhiHeiretsuLib.Graphics;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +8,12 @@ using System.Text.Json.Serialization;
 
 namespace HaruhiHeiretsuLib.Util
 {
+    /// <summary>
+    /// A JSON converter for the SGE JSON vertex groups
+    /// </summary>
     public class SgeBoneAttchedVertexConverter : JsonConverter<Dictionary<SgeBoneAttachedVertex, float>>
     {
+        /// <inheritdoc/>
         public override Dictionary<SgeBoneAttachedVertex, float> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             Dictionary<SgeBoneAttachedVertex, float> values = [];
@@ -35,6 +40,7 @@ namespace HaruhiHeiretsuLib.Util
             return values;
         }
 
+        /// <inheritdoc/>
         public override void Write(Utf8JsonWriter writer, Dictionary<SgeBoneAttachedVertex, float> value, JsonSerializerOptions options)
         {
             Dictionary<string, float> convertedKvp = value.ToDictionary(kv => $"{kv.Key.SubmeshGroup},{kv.Key.Submesh},{kv.Key.VertexIndex}", kv => kv.Value);
@@ -44,6 +50,24 @@ namespace HaruhiHeiretsuLib.Util
                 writer.WriteNumber(key, convertedKvp[key]);
             }
             writer.WriteEndObject();
+        }
+    }
+
+    /// <summary>
+    /// A JSON converter for SKColors
+    /// </summary>
+    public class SKColorConverter : JsonConverter<SKColor>
+    {
+        /// <inheritdoc/>
+        public override SKColor Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return SKColor.Parse(reader.GetString());
+        }
+
+        /// <inheritdoc/>
+        public override void Write(Utf8JsonWriter writer, SKColor value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString());
         }
     }
 }

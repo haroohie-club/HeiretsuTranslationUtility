@@ -145,7 +145,7 @@ def main(filename, model_type):
     model["SubmeshBlendDataTable"] = []
     model["Unknown40Table"] = []
     model["Unknown4CTable"] = []
-    model["BoneAnimationGroups"] = [ {"BoneIndices": []}, {"BoneIndices": []}, {"BoneIndices": []}, {"BoneIndices": []}, {"BoneIndices": []}, {"BoneIndices": []} ] # just prepopulate the list for ease of use
+    model["BoneAnimationGroups"] = [ {"BoneIndices": []}, {"BoneIndices": []} ] # just prepopulate the list for ease of use
     model["Unknown58Table"] = []
     model["SgeMeshes"] = []
     for i in range(10):
@@ -226,14 +226,11 @@ def main(filename, model_type):
             model["BoneAnimationGroups"][0]["BoneIndices"].append(i - 1)
         if 'MouthAnimationGroup' in list(bone.collections.keys()):
             model["BoneAnimationGroups"][1]["BoneIndices"].append(i - 1)
-        if 'RightBodyAnimationGroup' in list(bone.collections.keys()):
-            model["BoneAnimationGroups"][2]["BoneIndices"].append(i - 1)
-        if 'LeftBodyAnimationGroup' in list(bone.collections.keys()):
-            model["BoneAnimationGroups"][3]["BoneIndices"].append(i - 1)
-        if 'RightArmAnimationGroup' in list(bone.collections.keys()):
-            model["BoneAnimationGroups"][4]["BoneIndices"].append(i - 1)
-        if 'LeftArmAnimationGroup' in list(bone.collections.keys()):
-            model["BoneAnimationGroups"][5]["BoneIndices"].append(i - 1)
+        for u in range(2, 50): # just an arbitrarily large number; there will never be this many groups
+            if f'{u}AnimationGroup' in list(bone.collections.keys()):
+                if u >= model["BoneAnimationGroups"]:
+                    model["BoneAnimationGroups"].append({ "BoneIndices": [] })
+                model["BoneAnimationGroups"][u]["BoneIndices"].append(i - 1)
 
         model["SgeBones"].append(sge_bone)
         armature_map[bone.name] = bone

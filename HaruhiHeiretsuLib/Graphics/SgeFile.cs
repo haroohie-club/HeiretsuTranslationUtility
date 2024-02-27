@@ -120,6 +120,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public Sge(IEnumerable<byte> data)
         {
             _serializerOptions.Converters.Add(new SgeBoneAttchedVertexConverter());
+            _serializerOptions.Converters.Add(new SKColorConverter());
             _serializerOptions.MaxDepth = 100;
             _serializerOptions.IncludeFields = true;
 
@@ -154,7 +155,7 @@ namespace HaruhiHeiretsuLib.Graphics
             }
             for (int i = 0; i < SgeHeader.OutlineDataCount; i++)
             {
-                OutlineDataTable.Add(new(sgeData.Skip(SgeHeader.OutlineDataTableOffset + i * 0x18).Take(0x18)));
+                OutlineDataTable.Add(new(sgeData.Skip(SgeHeader.OutlineDataTableOffset + i * 0x18).Take(0x18), SgeHeader.OutlineDataTableOffset + i * 0x18));
             }
 
             foreach (SgeMesh meshTableEntry in SgeMeshes.Take(1)) // but only the first mesh ever seems to matter
@@ -403,6 +404,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
             JsonSerializerOptions serializerOptions = new();
             serializerOptions.Converters.Add(new SgeBoneAttchedVertexConverter());
+            serializerOptions.Converters.Add(new SKColorConverter());
             serializerOptions.MaxDepth = 100;
             serializerOptions.IncludeFields = true;
             Sge sge = JsonSerializer.Deserialize<Sge>(json, serializerOptions);
@@ -528,7 +530,7 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 int oldAddress = outline.Offset;
                 outline.Offset = currentOutlineAddress;
-                blendAddresses.Add(oldAddress, outline.Offset);
+                outlineAddresses.Add(oldAddress, outline.Offset);
                 bytes.AddRange(outline.GetBytes());
                 currentOutlineAddress = bytes.Count;
             }
@@ -619,7 +621,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 bytes.AddRange(mesh.GetBytes());
             }
             bytes.PadToNearest16();
-            bytes.AddRange(SgeSubmeshes.SelectMany(l => l.SelectMany(s => s.GetBytes(textureTable, blendAddresses, gxLightingAddresses, boneTableAddress))));
+            bytes.AddRange(SgeSubmeshes.SelectMany(l => l.SelectMany(s => s.GetBytes(textureTable, blendAddresses, gxLightingAddresses, outlineAddresses, boneTableAddress))));
             bytes.PadToNearest16();
             bytes.AddRange(BitConverter.GetBytes(bytes.Count + 0x10).Concat(BitConverter.GetBytes(bytes.Count + SgeSubmeshes.Count * 0x10 + Helpers.RoundToNearest16(SgeSubmeshes.First().Sum(s => s.SubmeshVertices.Count) * 0x38) + Helpers.RoundToNearest16(SgeSubmeshes.First().Sum(s => (s.SubmeshFaces.Count + (triStripped ? 2 : 0)) * (triStripped ? 4 : 12))))));
             bytes.AddRange(BitConverter.GetBytes(1).Concat(BitConverter.GetBytes(SgeSubmeshes.Count > 1 ? 1 : 0)));
@@ -1123,6 +1125,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public SgeGXLightingData(IEnumerable<byte> data, int offset)
         {
+            Offset = offset;
             AmbientR = IO.ReadFloat(data, 0x00);
             AmbientG = IO.ReadFloat(data, 0x04);
             AmbientB = IO.ReadFloat(data, 0x08);
@@ -1252,7 +1255,10 @@ namespace HaruhiHeiretsuLib.Graphics
         public int Offset { get; set; }
         public int Unknown00 { get; set; }
         public float Unknown04 { get; set; }
-        public float Unknown08 { get; set; }
+        /// <summary>
+        /// The weight of the outline
+        /// </summary>
+        public float Weight { get; set; }
         /// <summary>
         /// The color of the outline (note that alpha is always 255)
         /// </summary>
@@ -1264,14 +1270,15 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public OutlineDataEntry(IEnumerable<byte> data)
+        public OutlineDataEntry(IEnumerable<byte> data, int offset)
         {
+            Offset = offset;
             Unknown00 = IO.ReadIntLE(data, 0x00);
             Unknown04 = IO.ReadFloat(data, 0x04);
-            Unknown08 = IO.ReadFloat(data, 0x08);
-            Color = new SKColor(data.ElementAt(0x0C), data.ElementAt(0x0D), data.ElementAt(0x0E));
+            Weight = IO.ReadFloat(data, 0x08);
+            Color = new SKColor(data.ElementAt(0x0C), data.ElementAt(0x0D), data.ElementAt(0x0E), 0xFF);
             Unknown10 = IO.ReadFloat(data, 0x10);
-            Unknown14 = IO.ReadInt(data, 0x14);
+            Unknown14 = IO.ReadIntLE(data, 0x14);
         }
 
         public List<byte> GetBytes()
@@ -1280,10 +1287,10 @@ namespace HaruhiHeiretsuLib.Graphics
 
             bytes.AddRange(BitConverter.GetBytes(Unknown00));
             bytes.AddRange(BitConverter.GetBytes(Unknown04));
-            bytes.AddRange(BitConverter.GetBytes(Unknown08));
-            bytes.AddRange(BitConverter.GetBytes((uint)Color));
+            bytes.AddRange(BitConverter.GetBytes(Weight));
+            bytes.AddRange([Color.Red, Color.Green, Color.Blue, 0]);
             bytes.AddRange(BitConverter.GetBytes(Unknown10));
-            bytes.AddRange(BitConverter.GetBytes(Unknown14).Reverse());
+            bytes.AddRange(BitConverter.GetBytes(Unknown14));
 
             return bytes;
         }
@@ -1710,7 +1717,7 @@ namespace HaruhiHeiretsuLib.Graphics
             Unknown60 = IO.ReadFloat(data, offset + 0x60);
         }
 
-        public List<byte> GetBytes(Dictionary<string, int> materialAddresses, Dictionary<int, int> blendAddresses, Dictionary<int, int> gxLightingAddresses, int boneTableAddress)
+        public List<byte> GetBytes(Dictionary<string, int> materialAddresses, Dictionary<int, int> blendAddresses, Dictionary<int, int> gxLightingAddresses, Dictionary<int, int> outlineAddresses, int boneTableAddress)
         {
             List<byte> bytes = [];
 
@@ -1741,7 +1748,14 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 bytes.AddRange(new byte[4]);
             }
-            bytes.AddRange(BitConverter.GetBytes(OutlineAddress));
+            if (outlineAddresses.TryGetValue(OutlineAddress, out int outlineAddress))
+            {
+                bytes.AddRange(BitConverter.GetBytes(outlineAddress));
+            }
+            else
+            {
+                bytes.AddRange(new byte[4]);
+            }
             bytes.AddRange(BitConverter.GetBytes(Unknown18));
             bytes.AddRange(BitConverter.GetBytes(Unknown1C));
             bytes.AddRange(BitConverter.GetBytes(Unknown20));

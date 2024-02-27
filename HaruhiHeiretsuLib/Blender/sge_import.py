@@ -101,10 +101,10 @@ def construct_armature(sge):
         elif bone['BodyPart'] == -32768: # 0x8000 but since it's a short it'll be negative
             left_cheek_bone.assign(armature.bones[f"Bone{bone['Address']}"])
 
-    animation_groups = ["Face", "Mouth", "RightBody", "LeftBody", "RightArm", "LeftArm"]
+    animation_groups = ["Face", "Mouth"]
     u = 0
     for anim_gorup in sge['BoneAnimationGroups']:
-        bone_animation_group = armature.collections.new(f'{animation_groups[u]}AnimationGroup')
+        bone_animation_group = armature.collections.new(f'{animation_groups[u] if u < len(animation_groups) else u}AnimationGroup')
         for bone_idx in anim_gorup['BoneIndices']:
             bone_animation_group.assign(armature.bones[f"Bone{sge['SgeBones'][bone_idx]['Address']}"])
         u += 1
@@ -159,6 +159,11 @@ def construct_mesh(sge, submesh, materials, group_num, submesh_num):
             (attached_vertex_group, attached_vertex_submesh, attached_vertex_index) = (int(attached_vertex_split[0]), int(attached_vertex_split[1]), int(attached_vertex_split[2]))
             if attached_vertex_group == group_num and attached_vertex_submesh == submesh_num:
                 bone_vertex_group.add([attached_vertex_index], bone['VertexGroup'][attached_vertex], 'ADD')
+
+    outlineData = next((o for o in sge["OutlineDataTable"] if o["Offset"] == submesh["OutlineAddress"]), None)
+    if outlineData is not None:
+        obj["OutlineWeight"] = outlineData["Weight"]
+        obj["OutlineColor"] = outlineData["Color"]
     return obj
 
 def construct_animation(sge, anim, bones_list : list, anim_num):
@@ -275,7 +280,7 @@ if __name__ == '__main__':
 
     if output_format.lower() == 'gltf':
         output_file += ".glb"
-        bpy.ops.export_scene.gltf(filepath=os.path.abspath(output_file), check_existing=False, export_format="GLB")
+        bpy.ops.export_scene.gltf(filepath=os.path.abspath(output_file), check_existing=False, export_format="GLB", export_extras=True)
     elif output_format.lower() == 'fbx':
         output_file += '.fbx'
         bpy.ops.export_scene.fbx(filepath=os.path.abspath(output_file), check_existing=False, path_mode='COPY', batch_mode='OFF', embed_textures=True)
