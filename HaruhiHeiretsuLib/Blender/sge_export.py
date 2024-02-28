@@ -98,16 +98,16 @@ def extract_submesh(obj, model, start_vertex, start_face, skip_to = 0):
             sge_submeshes.append(next_submesh)
     return sge_submeshes
 
-def main(filename, model_type):
+def export_sge(filename, model_type):
     if os.path.exists(filename):
         os.remove(filename)
     f = open(filename, 'x')
     
     bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.context.object.matrix_world = bpy.context.object.matrix_world @ Matrix.Rotation(math.radians(-90), 4, 'X')
-    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.select_by_type(type='ARMATURE')
     bpy.ops.transform.mirror(constraint_axis=(False, True, False), orient_type='GLOBAL')
     bpy.ops.object.select_all(action='DESELECT')
+    bpy.context.object.matrix_world = bpy.context.object.matrix_world @ Matrix.Rotation(math.radians(-90), 4, 'X')
 
     model = {"Name": os.path.basename(bpy.data.filepath).split('.')[0]}
     # Header
@@ -145,14 +145,14 @@ def main(filename, model_type):
     model["SubmeshBlendDataTable"] = []
     model["Unknown40Table"] = []
     model["Unknown4CTable"] = []
-    model["BoneAnimationGroups"] = [ {"BoneIndices": []}, {"BoneIndices": []} ] # just prepopulate the list for ease of use
+    model["BoneAnimationGroups"] = []
     model["Unknown58Table"] = []
     model["SgeMeshes"] = []
     for i in range(10):
         model["SgeMeshes"].append({})
 
     # Materials/Textures
-    tex_folder = os.path.join(os.path.dirname(filename), os.path.splitext(os.path.basename(input_file))[0])
+    tex_folder = os.path.join(os.path.dirname(filename), os.path.splitext(os.path.basename(filename))[0])
     if not os.path.exists(tex_folder):
         os.makedirs(tex_folder)
     model["SgeMaterials"] = []
@@ -176,6 +176,8 @@ def main(filename, model_type):
     bpy.ops.object.mode_set(mode='EDIT')
     obj = bpy.context.object
     armature = obj.data
+    for collection in [c for c in list(armature.collections.keys()) if 'AnimationGroup' in c]:
+        model["BoneAnimationGroups"].append({ "BoneIndices": [] }) # just prepopulate the list for ease of use
     i = 1
     # Do initial bone map
     for (bone, edit_bone) in zip(armature.bones, armature.edit_bones):
@@ -226,10 +228,8 @@ def main(filename, model_type):
             model["BoneAnimationGroups"][0]["BoneIndices"].append(i - 1)
         if 'MouthAnimationGroup' in list(bone.collections.keys()):
             model["BoneAnimationGroups"][1]["BoneIndices"].append(i - 1)
-        for u in range(2, 50): # just an arbitrarily large number; there will never be this many groups
+        for u in range(50): # just an arbitrarily large number; there will never be this many groups
             if f'{u}AnimationGroup' in list(bone.collections.keys()):
-                if u >= model["BoneAnimationGroups"]:
-                    model["BoneAnimationGroups"].append({ "BoneIndices": [] })
                 model["BoneAnimationGroups"][u]["BoneIndices"].append(i - 1)
 
         model["SgeBones"].append(sge_bone)
@@ -286,6 +286,13 @@ def main(filename, model_type):
 
     json.dump(model, f)
     f.close()
+    
+    bpy.context.object.matrix_world = bpy.context.object.matrix_world @ Matrix.Rotation(math.radians(90), 4, 'X')
+    bpy.ops.object.select_by_type(type='ARMATURE')
+    bpy.ops.transform.mirror(constraint_axis=(False, True, False), orient_type='GLOBAL')
+    bpy.ops.object.select_all(action='DESELECT')
+    
+    return {'FINISHED'}
 
 def vector_to_json_vector(vector):
     return {
@@ -315,4 +322,4 @@ if __name__ == '__main__':
     bpy.ops.wm.open_mainfile(filepath=input_file)
 
     output_file = os.path.join(os.path.dirname(input_file), f'{os.path.splitext(os.path.basename(input_file))[0]}.sge.json')
-    main(output_file, model_type)
+    export_sge(output_file, model_type)

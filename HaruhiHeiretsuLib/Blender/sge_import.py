@@ -13,10 +13,10 @@ def construct_materials(sge):
     for sge_material in sge['SgeMaterials']:
         material = bpy.data.materials.new(sge_material['Name'])
         material.use_nodes = True
-        bsdf = material.node_tree.nodes[bpy.app.translations.pgettext('Principled BSDF')]
+        bsdf = material.node_tree.nodes['Principled BSDF']
         if sge_material['TexturePath'] is not None and len(sge_material['TexturePath']) > 0:
             img = bpy.data.images.load(sge_material['TexturePath'])
-            texture = material.node_tree.nodes.new(bpy.app.translations.pgettext('ShaderNodeTexImage'))
+            texture = material.node_tree.nodes.new('ShaderNodeTexImage')
             texture.image = img
             material.node_tree.links.new(texture.outputs['Color'], bsdf.inputs['Base Color'])
             material.node_tree.links.new(texture.outputs['Alpha'], bsdf.inputs['Alpha'])
@@ -210,11 +210,14 @@ def json_vector2_to_vector2(json_vector):
 def json_quaternion_to_quaternion(json_quaternion):
     return Quaternion((float(json_quaternion['W']), float(json_quaternion['X']), float(json_quaternion['Y']), float(json_quaternion['Z'])))
 
-def main(filename):
+def import_sge(filename):
     f = open(filename)
     sge = json.load(f)
     materials = construct_materials(sge)
+    sge_armature_collection = bpy.data.collections.new(f'sge_armature')
+    bpy.context.scene.collection.children.link(sge_armature_collection)
     (armature, bones_list) = construct_armature(sge)
+    sge_armature_collection.objects.link(armature)
 
     bpy.context.scene.render.fps = 60
 
@@ -259,7 +262,7 @@ def main(filename):
     
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.object.matrix_world = bpy.context.object.matrix_world @ Matrix.Rotation(math.radians(90), 4, 'X')
-    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.select_same_collection(collection=sge_armature_collection.name)
     bpy.ops.transform.mirror(constraint_axis=(False, True, False), orient_type='GLOBAL')
     bpy.ops.object.select_all(action='DESELECT')
     bpy.ops.object.mode_set(mode='POSE')
@@ -275,7 +278,7 @@ if __name__ == '__main__':
     input_file = sys.argv[-2]
     output_format = sys.argv[-1]
 
-    main(input_file)
+    import_sge(input_file)
     output_file = os.path.join(os.path.dirname(input_file), os.path.splitext(os.path.basename(input_file))[0])
 
     if output_format.lower() == 'gltf':
