@@ -61,6 +61,7 @@ def extract_submesh(obj, model, start_vertex, start_face, skip_to = 0):
     if len(submesh.color_attributes) > 0:
         color = submesh.color_attributes[0]
     sge_submesh["SubmeshFaces"] = []
+    sge_submesh["Material"] = None
     for face in submesh.polygons:
         if (cut_off_vertex > 0 and any([v >= cut_off_vertex for v in face.vertices])) or (skip_to > 0 and any([v <= skip_to for v in face.vertices])):
             continue
@@ -84,8 +85,11 @@ def extract_submesh(obj, model, start_vertex, start_face, skip_to = 0):
         sge_submesh["SubmeshFaces"].append({
             "Polygon": [ int(face.vertices[0]) - skip_to - 1 if skip_to > 0 else int(face.vertices[0]), int(face.vertices[1]) - skip_to - 1 if skip_to > 0 else int(face.vertices[1]), int(face.vertices[2]) - skip_to - 1 if skip_to > 0 else int(face.vertices[2]) ],
         })
-        # print(submesh.materials[face.material_index].name)
-        sge_submesh["Material"] = [m for m in model['SgeMaterials'] if m["Name"] == submesh.materials[face.material_index].name]
+        if sge_submesh["Material"] == None:
+            if submesh.materials[face.material_index] and submesh.materials[face.material_index].use_nodes:
+                for n in submesh.materials[face.material_index].node_tree.nodes:
+                    if n.type == 'TEX_IMAGE':
+                        sge_submesh["Material"] = [m for m in model["SgeMaterials"] if m["Name"] == n.image.name][0]
     
     sge_submesh["GXLightingAddress"] = 1
     sge_submesh["StartVertex"] = skip_to + 1 if skip_to > 0 else start_vertex
