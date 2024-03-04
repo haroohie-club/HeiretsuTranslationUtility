@@ -7,22 +7,13 @@ import sys
 
 model_scale = 25.4
 
-def extract_submesh(obj, model, start_vertex, start_face, skip_to = 0):
-    submesh = obj.data
-    sge_submeshes = []
+def extract_submesh(obj, submesh, model, start_vertex, start_face):
     sge_submesh = {}
     sge_submesh["SubmeshVertices"] = []
+    sge_submesh["Material"] = None
     bone_palette = []
     submesh.calc_normals_split()
-    cut_off_vertex = -1
-    i = 0
     for vert in submesh.vertices:
-        if skip_to > 0 and i <= skip_to:
-            i += 1
-            continue
-        if len(list(set(bone_palette))) + len(list(set(vert.groups))) > 16:
-            cut_off_vertex = i - 1
-            break
         for group in vert.groups:
             bone = [b for b in model["SgeBones"] if b["BlenderName"] == obj.vertex_groups[group.group].name][0]
             bone_palette.append(bone['Address'])
@@ -30,15 +21,10 @@ def extract_submesh(obj, model, start_vertex, start_face, skip_to = 0):
             "Position": vector_to_json_vector(vert.co / model_scale),
             "Unknown2": 65535
         })
-        i += 1
     bone_palette = list(set(bone_palette))
     while len(bone_palette) < 16:
         bone_palette.append(0) # will be -1 when we subtract below
-    i = 0
     for vert in submesh.vertices:
-        if skip_to > 0 and i <= skip_to:
-            i += 1
-            continue
         bone_indices = []
         weight = []
         for group in vert.groups:
@@ -49,11 +35,8 @@ def extract_submesh(obj, model, start_vertex, start_face, skip_to = 0):
             bone_indices.append(0)
         while len(weight) < 4:
             weight.append(0)
-        sge_submesh["SubmeshVertices"][vert.index - skip_to - 1 if skip_to > 0 else vert.index]["BoneIndices"] = bone_indices
-        sge_submesh["SubmeshVertices"][vert.index - skip_to - 1 if skip_to > 0 else vert.index]["Weight"] = weight
-        if i == cut_off_vertex:
-            break
-        i += 1
+        sge_submesh["SubmeshVertices"][vert.index]["BoneIndices"] = bone_indices
+        sge_submesh["SubmeshVertices"][vert.index]["Weight"] = weight
     bone_palette = [b - 1 for b in bone_palette] # modify bone palette to reflect actual indices
     sge_submesh["BonePalette"] = bone_palette
     uv_layer = submesh.uv_layers[0]
@@ -61,46 +44,142 @@ def extract_submesh(obj, model, start_vertex, start_face, skip_to = 0):
     if len(submesh.color_attributes) > 0:
         color = submesh.color_attributes[0]
     sge_submesh["SubmeshFaces"] = []
-    sge_submesh["Material"] = None
     for face in submesh.polygons:
-        if (cut_off_vertex > 0 and any([v >= cut_off_vertex for v in face.vertices])) or (skip_to > 0 and any([v <= skip_to for v in face.vertices])):
-            continue
         for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-            sge_submesh["SubmeshVertices"][vert_idx - skip_to - 1 if skip_to > 0 else vert_idx]["Normal"] = vector_to_json_vector(submesh.loops[loop_idx].normal)
-            sge_submesh["SubmeshVertices"][vert_idx - skip_to - 1 if skip_to > 0 else vert_idx]["UVCoords"] = vector2_to_json_vector2(uv_layer.uv[loop_idx].vector)
+            # print(f'{len(submesh.loops)}, {vert_idx}, {loop_idx}')
+            sge_submesh["SubmeshVertices"][vert_idx]["Normal"] = vector_to_json_vector(submesh.loops[loop_idx].normal)
+            sge_submesh["SubmeshVertices"][vert_idx]["UVCoords"] = vector2_to_json_vector2(uv_layer.uv[loop_idx].vector)
             if color is not None:
                 sge_submesh["SubmeshVertices"][vert_idx]["Color"] = {
-                    "R": color.data[vert_idx - skip_to - 1 if skip_to > 0 else vert_idx].color_srgb[0],
-                    "G": color.data[vert_idx - skip_to - 1 if skip_to > 0 else vert_idx].color_srgb[1],
-                    "B": color.data[vert_idx - skip_to - 1 if skip_to > 0 else vert_idx].color_srgb[2],
-                    "A": color.data[vert_idx - skip_to - 1 if skip_to > 0 else vert_idx].color_srgb[3]
+                    "R": color.data[vert_idx].color_srgb[0],
+                    "G": color.data[vert_idx].color_srgb[1],
+                    "B": color.data[vert_idx].color_srgb[2],
+                    "A": color.data[vert_idx].color_srgb[3]
                 }
             else:
-                sge_submesh["SubmeshVertices"][vert_idx - skip_to - 1 if skip_to > 0 else vert_idx]["Color"] = {
+                sge_submesh["SubmeshVertices"][vert_idx]["Color"] = {
                     "R": 1,
                     "G": 1,
                     "B": 1,
                     "A": 1
                 }
         sge_submesh["SubmeshFaces"].append({
-            "Polygon": [ int(face.vertices[0]) - skip_to - 1 if skip_to > 0 else int(face.vertices[0]), int(face.vertices[1]) - skip_to - 1 if skip_to > 0 else int(face.vertices[1]), int(face.vertices[2]) - skip_to - 1 if skip_to > 0 else int(face.vertices[2]) ],
+            "Polygon": [ int(face.vertices[0]), int(face.vertices[1]), int(face.vertices[2]) ],
         })
         if sge_submesh["Material"] == None:
             if submesh.materials[face.material_index] and submesh.materials[face.material_index].use_nodes:
                 for n in submesh.materials[face.material_index].node_tree.nodes:
                     if n.type == 'TEX_IMAGE':
-                        sge_submesh["Material"] = [m for m in model["SgeMaterials"] if m["Name"] == n.image.name][0]
+                        sge_submesh["Material"] = [m for m in model["SgeMaterials"] if m["Name"] == n.image.name.split(".")[0]][0]
     
     sge_submesh["GXLightingAddress"] = 1
-    sge_submesh["StartVertex"] = skip_to + 1 if skip_to > 0 else start_vertex
-    sge_submesh["EndVertex"] = cut_off_vertex if cut_off_vertex > 0 else start_vertex + len(sge_submesh["SubmeshVertices"]) - 1
+    sge_submesh["StartVertex"] = start_vertex
+    sge_submesh["EndVertex"] = start_vertex + len(sge_submesh["SubmeshVertices"]) - 1
     sge_submesh["StartFace"] = start_face
     sge_submesh["FaceCount"] = len(sge_submesh["SubmeshFaces"])
-    sge_submeshes.append(sge_submesh)
-    if cut_off_vertex > 0:
-        for next_submesh in extract_submesh(obj, model, cut_off_vertex + 1, start_face + len(sge_submesh["SubmeshFaces"]), cut_off_vertex + 1):
-            sge_submeshes.append(next_submesh)
-    return sge_submeshes
+    return sge_submesh
+
+def split_submeshes(obj):
+    orig_submesh = obj.data
+    submeshes = []
+
+    bone_palette = []
+    verts = []
+    verts_groups = []
+    verts_weights = []
+    faces = []
+    uvs = []
+    colors = None
+    prev_verts_len = 0
+    if len(orig_submesh.color_attributes) > 0:
+        colors = []
+    i = 0
+    for face in orig_submesh.polygons:
+        new_bone_palette = list(bone_palette)
+        next_bone_palette = []
+        for vert_idx in face.vertices:
+            verts_groups.append([])
+            verts_weights.append({})
+            for group in orig_submesh.vertices[vert_idx].groups:
+                new_bone_palette.append(obj.vertex_groups[group.group].name)
+                next_bone_palette.append(obj.vertex_groups[group.group].name)
+                verts_groups[len(verts_groups) - 1].append(obj.vertex_groups[group.group].name)
+                verts_weights[len(verts_weights) - 1][obj.vertex_groups[group.group].name] = group.weight
+        new_bone_palette = list(set(new_bone_palette))
+        if len(new_bone_palette) > 16:
+            submesh = bpy.data.meshes.new(f'submesh{i}')
+            subobj = bpy.data.objects.new(f'submesh{i}', submesh)
+            min_face = min(min([[a, b, c] for a, b, c in faces]))
+            faces = [(a - min_face, b - min_face, c - min_face) for a, b, c in faces]
+            submesh.from_pydata(verts, [], faces)
+            uvlayer = submesh.uv_layers.new()
+            uvlayer_name = uvlayer.name
+            if colors is not None:
+                color_layer = submesh.color_attributes.new('vertex_colors', 'FLOAT_COLOR', 'POINT')
+            # Creating the color layer has invalidated the reference to the uv layer, so get it again.
+            uvlayer = submesh.uv_layers[uvlayer_name]
+            for loop_idx in range(len(uvs)):
+                uvlayer.uv[loop_idx].vector = uvs[loop_idx]
+            if colors is not None:
+                for vert_idx in range(len(colors)):
+                    color_layer.data[vert_idx].color_srgb = colors[vert_idx]
+            for material in orig_submesh.materials:
+                submesh.materials.append(material)
+            if len(submesh.materials) > 0:
+                for face in submesh.polygons:
+                    face.material_index = 0
+            for vertex_group in obj.vertex_groups:
+                new_group = subobj.vertex_groups.new(name=vertex_group.name)
+                for v_idx in range(len(verts_groups)):
+                    if new_group.name in verts_groups[v_idx]:
+                        new_group.add([v_idx], verts_weights[v_idx][new_group.name], 'ADD')
+            submeshes.append((submesh, subobj))
+            verts = []
+            faces = []
+            uvs = []
+            if colors is not None:
+                colors = []
+            new_bone_palette = list(set(next_bone_palette))
+            i += 1
+        bone_palette = new_bone_palette
+        faces.append(face.vertices)
+        for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+            verts.append(orig_submesh.vertices[vert_idx].co)
+            uvs.append(orig_submesh.uv_layers[0].uv[loop_idx].vector)
+            if colors is not None:
+                colors.append(orig_submesh.color_attributes[0].data[vert_idx].color_srgb)
+    
+    if len(submeshes) == 0:
+        submeshes.append((orig_submesh, obj))
+    elif len(verts) > 0 and len(faces) > 0:
+        submesh = bpy.data.meshes.new(f'submesh{i}')
+        subobj = bpy.data.objects.new(f'submesh{i}', submesh)
+        min_face = min(min([[a, b, c] for a, b, c in faces]))
+        faces = [(a - min_face, b - min_face, c - min_face) for a, b, c in faces]
+        submesh.from_pydata(verts, [], faces)
+        uvlayer = submesh.uv_layers.new()
+        uvlayer_name = uvlayer.name
+        if colors is not None:
+            color_layer = submesh.color_attributes.new('vertex_colors', 'FLOAT_COLOR', 'POINT')
+        # Creating the color layer has invalidated the reference to the uv layer, so get it again.
+        uvlayer = submesh.uv_layers[uvlayer_name]
+        for loop_idx in range(len(uvs)):
+            uvlayer.uv[loop_idx].vector = uvs[loop_idx]
+        if colors is not None:
+            for vert_idx in range(len(colors)):
+                color_layer.data[vert_idx].color_srgb = colors[vert_idx]
+        for material in orig_submesh.materials:
+            submesh.materials.append(material)
+        if len(submesh.materials) > 0:
+            for face in submesh.polygons:
+                face.material_index = 0
+        for vertex_group in obj.vertex_groups:
+            new_group = subobj.vertex_groups.new(name=vertex_group.name)
+            for v_idx in range(len(verts_groups)):
+                if new_group.name in verts_groups[v_idx]:
+                    new_group.add([v_idx], verts_weights[v_idx][new_group.name], 'ADD')
+        submeshes.append((submesh, subobj))
+    return submeshes
 
 def export_sge(filename, model_type):
     if os.path.exists(filename):
@@ -264,8 +343,7 @@ def export_sge(filename, model_type):
         face = 0
         for obj in collection.objects:
             if obj.type == 'MESH':
-                for submesh in extract_submesh(obj, model, vtx, face):
-                    submesh_group.append(submesh)
+                submesh_group.append(extract_submesh(obj, obj.data, model, vtx, face))
                 vtx = submesh_group[-1]["EndVertex"] + 1
                 if model_type == 4:
                     face += submesh_group[-1]["FaceCount"]
@@ -279,8 +357,8 @@ def export_sge(filename, model_type):
         vtx = 0
         face = 0
         for obj in bpy.context.selected_objects:
-            for submesh in extract_submesh(obj, model, vtx, face):
-                submesh_group.append(submesh)
+            for submesh, subobj in split_submeshes(obj):
+                submesh_group.append(extract_submesh(subobj, submesh, model, vtx, face))
                 vtx = submesh_group[-1]["EndVertex"] + 1
                 if model_type == 4:
                     face += submesh_group[-1]["FaceCount"]
