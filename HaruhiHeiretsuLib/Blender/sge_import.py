@@ -14,13 +14,26 @@ def construct_materials(sge):
         material = bpy.data.materials.new(sge_material['Name'])
         material.use_nodes = True
         bsdf = material.node_tree.nodes['Principled BSDF']
+        vertex_color = material.node_tree.nodes.new('ShaderNodeVertexColor')
         if sge_material['TexturePath'] is not None and len(sge_material['TexturePath']) > 0:
             img = bpy.data.images.load(sge_material['TexturePath'])
             texture = material.node_tree.nodes.new('ShaderNodeTexImage')
             texture.image = img
-            material.node_tree.links.new(texture.outputs['Color'], bsdf.inputs['Base Color'])
-            material.node_tree.links.new(texture.outputs['Alpha'], bsdf.inputs['Alpha'])
+            color_mix = material.node_tree.nodes.new('ShaderNodeMix')
+            alpha_mix = material.node_tree.nodes.new('ShaderNodeMix')
+            color_mix.data_type = 'RGBA'
+            alpha_mix.data_type = 'RGBA'
+            color_mix.blend_type = 'SOFT_LIGHT'
+            material.node_tree.links.new(texture.outputs['Color'], color_mix.inputs['A'])
+            material.node_tree.links.new(texture.outputs['Alpha'], alpha_mix.inputs['A'])
+            material.node_tree.links.new(vertex_color.outputs['Color'], color_mix.inputs['B'])
+            material.node_tree.links.new(vertex_color.outputs['Alpha'], alpha_mix.inputs['B'])
+            material.node_tree.links.new(color_mix.outputs['Result'], bsdf.inputs['Base Color'])
+            material.node_tree.links.new(alpha_mix.outputs['Result'], bsdf.inputs['Alpha'])
             material.blend_method = 'CLIP'
+        else:
+            material.node_tree.links.new(vertex_color.outputs['Color'], bsdf.inputs['Base Color'])
+            material.node_tree.links.new(vertex_color.outputs['Alpha'], bsdf.inputs['Alpha'])
         materials.append(material)
     return materials
 
@@ -134,7 +147,7 @@ def construct_mesh(sge, submesh, materials, group_num, submesh_num):
         faces.append((sge_face['Polygon'][0], sge_face['Polygon'][1], sge_face['Polygon'][2])) # Faces are inverted so this is the correct order
 
     mesh.from_pydata(vertices, [], faces) # Edges are autocalculated by blender so we can pass a blank array
-    mesh.normals_split_custom_set([(0, 0, 0) for l in mesh.loops])
+    # mesh.normals_split_custom_set([(0, 0, 0) for l in mesh.loops])
     mesh.normals_split_custom_set_from_vertices(normals)
 
     uvlayer = mesh.uv_layers.new()
@@ -210,7 +223,7 @@ def json_vector2_to_vector2(json_vector):
 def json_quaternion_to_quaternion(json_quaternion):
     return Quaternion((float(json_quaternion['W']), float(json_quaternion['X']), float(json_quaternion['Y']), float(json_quaternion['Z'])))
 
-def import_sge(filename):
+def import_sge(filename, output_format):
     f = open(filename)
     sge = json.load(f)
     materials = construct_materials(sge)
@@ -241,24 +254,25 @@ def import_sge(filename):
         armature.animation_data_create()
         armature.animation_data.use_nla = True
 
-    bpy.ops.object.mode_set(mode='POSE')
-    if i >= 0:    
-        i = 0
-        for anim in sge['SgeAnimations']:
-            if len(anim['UsedKeyframes']) > 0:
-                action = bpy.data.actions.new(f'Animation{i:3d}')
-                armature.animation_data.action = action
-                action.animation_data_clear()
-                nla = armature.animation_data.nla_tracks.new()
-                nla.strips.new(f'Animation{i:3d}', 0, action)
-            i += 1
+    if output_format.lower() != 'obj':
+        bpy.ops.object.mode_set(mode='POSE')
+        if i >= 0:    
+            i = 0
+            for anim in sge['SgeAnimations']:
+                if len(anim['UsedKeyframes']) > 0:
+                    action = bpy.data.actions.new(f'Animation{i:3d}')
+                    armature.animation_data.action = action
+                    action.animation_data_clear()
+                    nla = armature.animation_data.nla_tracks.new()
+                    nla.strips.new(f'Animation{i:3d}', 0, action)
+                i += 1
 
-        i = 0
-        for anim in sge['SgeAnimations']:
-            if len(anim['UsedKeyframes']) > 0:
-                armature.animation_data.action = bpy.data.actions[f'Animation{i:3d}']
-                construct_animation(sge, anim, bones_list, i)
-            i += 1
+            i = 0
+            for anim in sge['SgeAnimations']:
+                if len(anim['UsedKeyframes']) > 0:
+                    armature.animation_data.action = bpy.data.actions[f'Animation{i:3d}']
+                    construct_animation(sge, anim, bones_list, i)
+                i += 1
     
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.context.object.matrix_world = bpy.context.object.matrix_world @ Matrix.Rotation(math.radians(90), 4, 'X')
@@ -278,7 +292,7 @@ if __name__ == '__main__':
     input_file = sys.argv[-2]
     output_format = sys.argv[-1]
 
-    import_sge(input_file)
+    import_sge(input_file, output_format)
     output_file = os.path.join(os.path.dirname(input_file), os.path.splitext(os.path.basename(input_file))[0])
 
     if output_format.lower() == 'gltf':
@@ -287,6 +301,10 @@ if __name__ == '__main__':
     elif output_format.lower() == 'fbx':
         output_file += '.fbx'
         bpy.ops.export_scene.fbx(filepath=os.path.abspath(output_file), check_existing=False, path_mode='COPY', batch_mode='OFF', embed_textures=True)
+    elif output_format.lower() == 'obj':
+        output_file += '.obj'
+        bpy.ops.wm.obj_export(filepath=os.path.abspath(output_file), check_existing=False, forward_axis='NEGATIVE_Z', up_axis='Y', export_uv=True, export_normals=True,
+                              export_colors=True, export_materials=True, path_mode='COPY', export_vertex_groups=True, export_material_groups=True)
     else:
         output_file += '.blend'
         bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(output_file), check_existing=False)

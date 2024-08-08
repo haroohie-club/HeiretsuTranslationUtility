@@ -19,7 +19,7 @@ If exporting a character model:
   - LeftHandBone -- center of the left palm (this bone will indicate that a shadow should be cast below it)
   - RightFootBone -- center of the right foot (this bone will indicate that a shadow should be case below it)
   - LeftFootBone -- center of the left foot
-  - EybrowBones -- bones controlling the eyebrows of the model
+  - EyebrowBones -- bones controlling the eyebrows of the model
   - RightLegBone -- center of the right leg
   - LeftLegBone -- center of the left leg
   - RightCheekBone -- bone below the right eye
