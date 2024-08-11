@@ -12,6 +12,7 @@ def construct_materials(sge):
     materials = []
     for sge_material in sge['SgeMaterials']:
         material = bpy.data.materials.new(sge_material['Name'])
+        material.use_backface_culling = True
         material.use_nodes = True
         bsdf = material.node_tree.nodes['Principled BSDF']
         vertex_color = material.node_tree.nodes.new('ShaderNodeVertexColor')
@@ -149,6 +150,7 @@ def construct_mesh(sge, submesh, materials, group_num, submesh_num):
     mesh.from_pydata(vertices, [], faces) # Edges are autocalculated by blender so we can pass a blank array
     # mesh.normals_split_custom_set([(0, 0, 0) for l in mesh.loops])
     mesh.normals_split_custom_set_from_vertices(normals)
+    mesh.flip_normals()
 
     uvlayer = mesh.uv_layers.new()
     uvlayer_name = uvlayer.name
