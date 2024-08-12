@@ -9,6 +9,9 @@ evt.bin
 grp.bin
 scn.bin
 
+# Compiled shader files
+*.oso
+
 # VS Launch Settings
 launchSettings.json
 

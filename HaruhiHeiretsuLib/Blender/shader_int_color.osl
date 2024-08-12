@@ -1,0 +1,7 @@
+shader shader_int_color(
+    color Color = color(1.0, 1.0, 1.0),
+    output int IntegerColor = 0)
+{
+    IntegerColor = (((int) (Color[0] * 255)) << 16) + (((int) (Color[1] * 255)) << 8) + ((int) Color[2]);
+    // printf("%d", IntegerColor);
+}

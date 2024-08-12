@@ -3,9 +3,164 @@ from mathutils import Vector, Matrix, Quaternion
 import math
 import json
 import os
+import shutil
 import sys
 
-model_scale = 25.4
+model_scale = 1
+
+def gen_shader_text(filename):
+    file = open(filename)
+    text = bpy.data.texts.new('shader_int_color_text')
+    line = file.readline()
+    while line:
+        text.write(line)
+        line = file.readline()
+    file.close()
+    return text
+
+def add_shader_script_node(mat, type):
+    if type == 'SHADER_INT_COLOR':
+        shader_int_color = mat.node_tree.nodes.new('ShaderNodeScript')
+        shader_int_color.script = gen_shader_text(os.path.join(os.path.dirname(__file__ ), './shader_int_color.osl'))
+        shader_int_color.update()
+        return shader_int_color
+    elif type == 'SHADER_VEC_COLOR':
+        shader_vec_color = mat.node_tree.nodes.new('ShaderNodeScript')
+        shader_vec_color.script = gen_shader_text(os.path.join(os.path.dirname(__file__ ), './shader_vec_color.osl'))
+        shader_vec_color.update()
+        return shader_vec_color
+
+def create_blend_nodes(obj, mat, manip, manip_alpha, src, src_alpha, dst, dst_alpha, color_mix, alpha_mix, op, input_index):
+    if obj[op] == 0:
+        clr_zero_node = mat.node_tree.nodes.new('ShaderNodeVectorMath')
+        clr_zero_node.operation = 'MULTIPLY'
+        mat.node_tree.links.new(manip.outputs['Color'], clr_zero_node.inputs[0])
+        clr_zero_node.inputs[1].default_value = Vector((0, 0, 0))
+        mat.node_tree.links.new(clr_zero_node.outputs[0], color_mix.inputs[input_index])
+        # alpha_zero_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        # alpha_zero_node.operation = 'MULTIPLY'
+        # mat.node_tree.links.new(manip.outputs['Alpha', alpha_zero_node.inputs[0]])
+        # alpha_zero_node.inputs[1].default_value = 0
+        # mat.node_tree.links.new(alpha_zero_node.outputs[0], alpha_mix.inputs[input_index])
+    if obj[op] == 1:
+        color_conv_manip = add_shader_script_node(mat, 'SHADER_INT_COLOR')
+        mat.node_tree.links.new(manip.outputs['Color'], color_conv_manip.inputs[0])
+        mat.node_tree.links.new(color_conv_manip.outputs[0], color_mix.inputs[input_index])
+        # mat.node_tree.links.new(manip.outputs['Alpha'], alpha_mix.inputs[input_index])
+    if obj[op] == 2:
+        color_conv_manip = add_shader_script_node(mat, 'SHADER_INT_COLOR')
+        color_conv_src = add_shader_script_node(mat, 'SHADER_INT_COLOR')
+        src_clr_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        src_clr_node.operation = 'MULTIPLY'
+        mat.node_tree.links.new(manip.outputs['Color'], color_conv_manip.inputs[0])
+        mat.node_tree.links.new(src.outputs['Color'], color_conv_src.inputs[0])
+        mat.node_tree.links.new(color_conv_manip.outputs[0], src_clr_node.inputs[0])
+        mat.node_tree.links.new(color_conv_src.outputs[0], src_clr_node.inputs[1])
+        mat.node_tree.links.new(src_clr_node.outputs[0], color_mix.inputs[input_index])
+        # src_alpha_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        # src_alpha_node.operation = 'MULTIPLY'
+        # mat.node_tree.links.new(manip.outputs['Alpha'], src_alpha_node.inputs[0])
+        # mat.node_tree.links.new(src.outputs['Alpha'], src_alpha_node.inputs[1])
+        # mat.node_tree.links.new(src_alpha_node.outputs[0], alpha_mix.inputs[input_index])
+    if obj[op] == 3:
+        src_clr_sub_conv = add_shader_script_node(mat, 'SHADER_INT_COLOR')
+        src_clr_sub_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        src_clr_sub_node.operation = 'SUBTRACT'
+        src_clr_sub_node.inputs[0].default_value = 1.0
+        mat.node_tree.links.new(src.outputs['Color'], src_clr_sub_conv.inputs[0])
+        mat.node_tree.links.new(src_clr_sub_conv.outputs[0], src_clr_sub_node.inputs[1])
+        src_clr_conv = add_shader_script_node(mat, 'SHADER_INT_COLOR')
+        src_clr_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        src_clr_node.operation = 'MULTIPLY'
+        mat.node_tree.links.new(manip.outputs['Color'], src_clr_conv.inputs[0])
+        mat.node_tree.links.new(src_clr_conv.outputs[0], src_clr_node.inputs[0])
+        mat.node_tree.links.new(src_clr_sub_node.outputs[0], src_clr_node.inputs[1])
+        mat.node_tree.links.new(src_clr_node.outputs[0], color_mix.inputs[input_index])
+        # src_alpha_sub_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        # src_alpha_sub_node.operation = 'SUBTRACT'
+        # src_alpha_sub_node.inputs[0].default_value = 1
+        # mat.node_tree.links.new(src.outputs['Alpha'], src_alpha_sub_node.inputs[1])
+        # src_alpha_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        # src_alpha_node.operation = 'MULTIPLY'
+        # mat.node_tree.links.new(manip.outputs['Alpha'], src_alpha_node.inputs[0])
+        # mat.node_tree.links.new(src_alpha_sub_node.outputs[0], src_alpha_node.inputs[1])
+        # mat.node_tree.links.new(src_alpha_node.outputs[0], alpha_mix.inputs[input_index])
+    if obj[op] == 4:
+        src_clr_conv = add_shader_script_node(mat, 'SHADER_INT_COLOR')
+        src_clr_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        src_clr_node.operation = 'MULTIPLY'
+        mat.node_tree.links.new(manip.outputs['Color'], src_clr_conv.inputs[0])
+        mat.node_tree.links.new(src_clr_conv.outputs[0], src_clr_node.inputs[0])
+        if src_alpha is None:
+            mat.node_tree.links.new(src.outputs['Alpha'], src_clr_node.inputs[1])
+        else:
+            mat.node_tree.links.new(src_alpha.outputs[0], src_clr_node.inputs[1])
+        mat.node_tree.links.new(src_clr_node.outputs[0], color_mix.inputs[input_index])
+        # src_alpha_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        # src_alpha_node.operation = 'MULTIPLY'
+        # mat.node_tree.links.new(manip.outputs['Alpha'], src_alpha_node.inputs[0])
+        # mat.node_tree.links.new(src.outputs['Alpha'], src_alpha_node.inputs[1])
+        # mat.node_tree.links.new(src_alpha_node.outputs[0], alpha_mix.inputs[input_index])
+    if obj[op] == 5:
+        src_clr_sub_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        src_clr_sub_node.operation = 'SUBTRACT'
+        src_clr_sub_node.inputs[0].default_value = 1
+        if src_alpha is None:
+            mat.node_tree.links.new(src.outputs['Alpha'], src_clr_sub_node.inputs[1])
+        else:
+            mat.node_tree.links.new(src_alpha.outputs[0], src_clr_sub_node.inputs[1])
+        src_clr_conv = add_shader_script_node(mat, 'SHADER_INT_COLOR')
+        src_clr_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        src_clr_node.operation = 'MULTIPLY'
+        mat.node_tree.links.new(manip.outputs['Color'], src_clr_conv.inputs[0])
+        mat.node_tree.links.new(src_clr_conv.outputs[0], src_clr_node.inputs[0])
+        mat.node_tree.links.new(src_clr_sub_node.outputs[0], src_clr_node.inputs[1])
+        mat.node_tree.links.new(src_clr_node.outputs[0], color_mix.inputs[input_index])
+        # src_alpha_sub_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        # src_alpha_sub_node.operation = 'SUBTRACT'
+        # src_alpha_sub_node.inputs[0].default_value = 1
+        # mat.node_tree.links.new(src.outputs['Alpha'], src_alpha_sub_node.inputs[1])
+        # src_alpha_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        # src_alpha_node.operation = 'MULTIPLY'
+        # mat.node_tree.links.new(manip.outputs['Alpha'], src_alpha_node.inputs[0])
+        # mat.node_tree.links.new(src_alpha_sub_node.outputs[0], src_alpha_node.inputs[1])
+        # mat.node_tree.links.new(src_alpha_node.outputs[0], alpha_mix.inputs[input_index])
+    # if obj[op] == 6:
+    #     dst_clr_node = mat.node_tree.nodes.new('ShaderNodeVectorMath')
+    #     dst_clr_node.operation = 'MULTIPLY'
+    #     mat.node_tree.links.new(manip.outputs['Color'], dst_clr_node.inputs[0])
+    #     if dst_alpha is None:
+    #         mat.node_tree.links.new(dst.outputs['Alpha'], dst_clr_node.inputs[1])
+    #     else:
+    #         mat.node_tree.links.new(dst_alpha.outputs[0], dst_clr_node.inputs[1])
+    #     mat.node_tree.links.new(dst_clr_node.outputs[0], color_mix.inputs[input_index])
+        # dst_alpha_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        # dst_alpha_node.operation = 'MULTIPLY'
+        # mat.node_tree.links.new(manip.outputs['Alpha'], dst_alpha_node.inputs[0])
+        # mat.node_tree.links.new(dst.outputs['Alpha'], dst_alpha_node.inputs[1])
+        # mat.node_tree.links.new(dst_alpha_node.outputs[0], alpha_mix.inputs[input_index])
+    # if obj[op] == 7:
+    #     dst_clr_sub_node = mat.node_tree.nodes.new('ShaderNodeMath')
+    #     dst_clr_sub_node.operation = 'SUBTRACT'
+    #     dst_clr_sub_node.inputs[0].default_value = 1
+    #     if dst_alpha is None:
+    #         mat.node_tree.links.new(dst.outputs['Alpha'], dst_clr_sub_node.inputs[1])
+    #     else:
+    #         mat.node_tree.links.new(dst_alpha.outputs[0], dst_clr_sub_node.inputs[1])
+    #     dst_clr_node = mat.node_tree.nodes.new('ShaderNodeVectorMath')
+    #     dst_clr_node.operation = 'MULTIPLY'
+    #     mat.node_tree.links.new(manip.outputs['Color'], dst_clr_node.inputs[0])
+    #     mat.node_tree.links.new(dst_clr_sub_node.outputs[0], dst_clr_node.inputs[1])
+    #     mat.node_tree.links.new(dst_clr_node.outputs[0], color_mix.inputs[input_index])
+        # dst_alpha_sub_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        # dst_alpha_sub_node.operation = 'SUBTRACT'
+        # dst_alpha_sub_node.inputs[0].default_value = 1
+        # mat.node_tree.links.new(dst.outputs['Alpha', dst_alpha_sub_node.inputs[1]])
+        # dst_alpha_node = mat.node_tree.nodes.new('ShaderNodeMath')
+        # dst_alpha_node.operation = 'MULTIPLY'
+        # mat.node_tree.links.new(manip.outputs['Alpha'], dst_alpha_node.inputs[0])
+        # mat.node_tree.links.new(dst_alpha_sub_node.outputs[0], dst_alpha_node.inputs[1])
+        # mat.node_tree.links.new(dst_alpha_node.outputs[0], alpha_mix.inputs[input_index])
 
 def construct_materials(sge):
     print('Constructing materials...')
@@ -15,24 +170,25 @@ def construct_materials(sge):
         material.use_backface_culling = True
         material.use_nodes = True
         bsdf = material.node_tree.nodes['Principled BSDF']
-        vertex_color = material.node_tree.nodes.new('ShaderNodeVertexColor')
-        if sge_material['TexturePath'] is not None and len(sge_material['TexturePath']) > 0:
-            img = bpy.data.images.load(sge_material['TexturePath'])
-            texture = material.node_tree.nodes.new('ShaderNodeTexImage')
-            texture.image = img
-            color_mix = material.node_tree.nodes.new('ShaderNodeMix')
-            alpha_mix = material.node_tree.nodes.new('ShaderNodeMix')
-            color_mix.data_type = 'RGBA'
-            alpha_mix.data_type = 'RGBA'
-            color_mix.blend_type = 'SOFT_LIGHT'
-            material.node_tree.links.new(texture.outputs['Color'], color_mix.inputs['A'])
-            material.node_tree.links.new(texture.outputs['Alpha'], alpha_mix.inputs['A'])
-            material.node_tree.links.new(vertex_color.outputs['Color'], color_mix.inputs['B'])
-            material.node_tree.links.new(vertex_color.outputs['Alpha'], alpha_mix.inputs['B'])
-            material.node_tree.links.new(color_mix.outputs['Result'], bsdf.inputs['Base Color'])
-            material.node_tree.links.new(alpha_mix.outputs['Result'], bsdf.inputs['Alpha'])
-            material.blend_method = 'CLIP'
-        else:
+        if not (sge_material['TexturePath'] is not None and len(sge_material['TexturePath']) > 0):
+            # img = bpy.data.images.load(sge_material['TexturePath'])
+            # texture = material.node_tree.nodes.new('ShaderNodeTexImage')
+            # texture.image = img
+            # color_mix = material.node_tree.nodes.new('ShaderNodeMix')
+            # alpha_mix = material.node_tree.nodes.new('ShaderNodeMix')
+            # color_mix.data_type = 'RGBA'
+            # alpha_mix.data_type = 'RGBA'
+            # color_mix.blend_type = 'BURN'
+            # alpha_mix.blend_type = 'MIX'
+            # material.node_tree.links.new(texture.outputs['Color'], color_mix.inputs['A'])
+            # material.node_tree.links.new(texture.outputs['Alpha'], alpha_mix.inputs['A'])
+            # material.node_tree.links.new(vertex_color.outputs['Color'], color_mix.inputs['B'])
+            # material.node_tree.links.new(vertex_color.outputs['Alpha'], alpha_mix.inputs['B'])
+            # material.node_tree.links.new(color_mix.outputs['Result'], bsdf.inputs['Base Color'])
+            # material.node_tree.links.new(alpha_mix.outputs['Result'], bsdf.inputs['Alpha'])
+        # else:
+            vertex_color = material.node_tree.nodes.new('ShaderNodeVertexColor')
+            vertex_color.layer_name = 'vertex_colors'
             material.node_tree.links.new(vertex_color.outputs['Color'], bsdf.inputs['Base Color'])
             material.node_tree.links.new(vertex_color.outputs['Alpha'], bsdf.inputs['Alpha'])
         materials.append(material)
@@ -131,8 +287,8 @@ def construct_mesh(sge, submesh, materials, group_num, submesh_num):
     mesh.validate(verbose=True)
     mesh.use_auto_smooth = True
     obj = bpy.data.objects.new(sge['Name'] + "_Group" + str(group_num) + "_Submesh" + str(submesh_num), mesh)
-    for material in materials:
-        obj.data.materials.append(material)
+    # for material in materials:
+    #     obj.data.materials.append(material)
 
     vertices = []
     normals = []
@@ -162,11 +318,6 @@ def construct_mesh(sge, submesh, materials, group_num, submesh_num):
             color_layer.data[vert_idx].color_srgb = (colors[vert_idx]['R'], colors[vert_idx]['G'], colors[vert_idx]['B'], colors[vert_idx]['A'])
             uvlayer.uv[loop_idx].vector = uvcoords[vert_idx]
     
-    for i in range(len(mesh.polygons)):
-        if submesh['Material'] is not None:
-            mesh.polygons[i].material_index = submesh['Material']['Index']
-    mesh.update()
-    
     for bone in sge['SgeBones']:
         bone_vertex_group = obj.vertex_groups.new(name='Bone' + str(bone['Address']))
         for attached_vertex in bone['VertexGroup']:
@@ -175,10 +326,56 @@ def construct_mesh(sge, submesh, materials, group_num, submesh_num):
             if attached_vertex_group == group_num and attached_vertex_submesh == submesh_num:
                 bone_vertex_group.add([attached_vertex_index], bone['VertexGroup'][attached_vertex], 'ADD')
 
-    outlineData = next((o for o in sge["OutlineDataTable"] if o["Offset"] == submesh["OutlineAddress"]), None)
-    if outlineData is not None:
-        obj["OutlineWeight"] = outlineData["Weight"]
-        obj["OutlineColor"] = outlineData["Color"]
+    blend_data = next((b for b in sge["SubmeshBlendDataTable"] if b["Offset"] == submesh["BlendDataAddress"]), None)
+    if blend_data is not None:
+        obj["UseCustomBlendMode"] = blend_data["UseCustomBlendMode"]
+        obj["CustomBlendSrcFactor"] = blend_data["CustomBlendSrcFactor"] - 1
+        obj["CustomBlendDstFactor"] = blend_data["CustomBlendDstFactor"] - 1
+        obj["BlendVertexColorAlpha"] = blend_data["VertexColorAlpha"]
+        obj["BlendAlphaCompareAndZMode"] = blend_data["AlphaCompareAndZMode"]
+    
+    if submesh['Material'] is not None:
+        obj['MaterialIndex'] = submesh['Material']['Index']
+        obj.data.materials.append(materials[submesh['Material']['Index']].copy())
+        mat = obj.data.materials[0]
+        texture = mat.node_tree.nodes.new('ShaderNodeTexImage')
+        bsdf = mat.node_tree.nodes['Principled BSDF']
+        img_file = submesh['Material']['TexturePath']
+        new_img_file = os.path.join(os.path.dirname(img_file), f'{mat.name}.png')
+        shutil.copyfile(img_file, new_img_file)
+        img = bpy.data.images.load(new_img_file)
+        texture.image = img
+        if "UseCustomBlendMode" in obj.keys() and obj["UseCustomBlendMode"] == True:
+            # mat.blend_method = 'BLEND'
+            vertex_color = mat.node_tree.nodes.new('ShaderNodeVertexColor')
+            vertex_color.layer_name = 'vertex_colors'
+            vertex_alpha = mat.node_tree.nodes.new('ShaderNodeValue')
+            vertex_alpha.outputs[0].default_value = obj["BlendVertexColorAlpha"]
+            color_conv = add_shader_script_node(mat, 'SHADER_VEC_COLOR')
+            color_mix = mat.node_tree.nodes.new('ShaderNodeMath')
+            color_mix.operation = 'ADD'
+            alpha_mix = mat.node_tree.nodes.new('ShaderNodeMath')
+            alpha_mix.operation = 'MULTIPLY'
+            create_blend_nodes(obj, mat, texture, None, texture, None, vertex_color, vertex_alpha, color_mix, alpha_mix, 'CustomBlendSrcFactor', 0)
+            create_blend_nodes(obj, mat, vertex_color, vertex_alpha, vertex_color, vertex_alpha, texture, None, color_mix, alpha_mix, 'CustomBlendDstFactor', 1)
+            mat.node_tree.links.new(texture.outputs['Alpha'], alpha_mix.inputs[0])
+            mat.node_tree.links.new(vertex_alpha.outputs[0], alpha_mix.inputs[1])
+            mat.node_tree.links.new(color_mix.outputs[0], color_conv.inputs[0])
+            mat.node_tree.links.new(color_conv.outputs[0], bsdf.inputs['Base Color'])
+            mat.node_tree.links.new(alpha_mix.outputs[0], bsdf.inputs['Alpha'])
+        else:
+            mat.node_tree.links.new(texture.outputs['Color'], bsdf.inputs['Base Color'])
+            mat.node_tree.links.new(texture.outputs['Alpha'], bsdf.inputs['Alpha'])
+    
+    for i in range(len(mesh.polygons)):
+        if submesh['Material'] is not None:
+            mesh.polygons[i].material_index = submesh['Material']['Index']
+    mesh.update()
+
+    outline_data = next((o for o in sge["OutlineDataTable"] if o["Offset"] == submesh["OutlineAddress"]), None)
+    if outline_data is not None:
+        obj["OutlineWeight"] = outline_data["Weight"]
+        obj["OutlineColor"] = outline_data["Color"]
     return obj
 
 def construct_animation(sge, anim, bones_list : list, anim_num):
@@ -226,6 +423,10 @@ def json_quaternion_to_quaternion(json_quaternion):
     return Quaternion((float(json_quaternion['W']), float(json_quaternion['X']), float(json_quaternion['Y']), float(json_quaternion['Z'])))
 
 def import_sge(filename, output_format):
+    bpy.context.scene.render.engine = 'CYCLES'
+    bpy.context.scene.cycles.shading_system = True
+    bpy.context.scene.cycles.device = 'GPU'
+    print()
     f = open(filename)
     sge = json.load(f)
     materials = construct_materials(sge)

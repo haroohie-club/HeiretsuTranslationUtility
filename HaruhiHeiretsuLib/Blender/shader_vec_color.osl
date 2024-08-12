@@ -1,0 +1,9 @@
+
+
+shader shader_vec_color(
+    int Color = 0xFFFFFF,
+    output color VectorColor = color(1.0, 1.0, 1.0))
+{
+    VectorColor = color(((float) ((Color & 0xFF0000) >> 16)) / 255, (float) ((Color & 0x00FF00) >> 8) / 255, ((float) (Color & 0x0000FF)) / 255);
+    // printf("(%f, %f, %f)", VectorColor[0], VectorColor[1], VectorColor[2]);
+}

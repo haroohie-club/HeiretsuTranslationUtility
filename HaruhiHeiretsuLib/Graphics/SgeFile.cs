@@ -62,6 +62,9 @@ namespace HaruhiHeiretsuLib.Graphics
         /// List of blend data (assigned at the submesh level)
         /// </summary>
         public List<SubmeshBlendData> SubmeshBlendDataTable { get; set; } = [];
+        /// <summary>
+        /// List of outline data (assigned at the submesh level)
+        /// </summary>
         public List<OutlineDataEntry> OutlineDataTable { get; set; } = [];
         public List<Unknown4CEntry> Unknown4CTable { get; set; } = [];
         /// <summary>
@@ -1214,9 +1217,9 @@ namespace HaruhiHeiretsuLib.Graphics
         /// </summary>
         public int CustomBlendDstFactor { get; set; }
         /// <summary>
-        /// Unknown
+        /// The vertex color alpha factor (0.0f through 1.0f)
         /// </summary>
-        public float Unknown0C { get; set; }
+        public float VertexColorAlpha { get; set; }
         public int AlphaCompareAndZMode { get; set; }
 
         public SubmeshBlendData()
@@ -1229,7 +1232,7 @@ namespace HaruhiHeiretsuLib.Graphics
             UseCustomBlendMode = IO.ReadIntLE(data, 0x00) != 0;
             CustomBlendSrcFactor = IO.ReadIntLE(data, 0x04);
             CustomBlendDstFactor = IO.ReadIntLE(data, 0x08);
-            Unknown0C = IO.ReadFloat(data, 0x0C);
+            VertexColorAlpha = IO.ReadFloat(data, 0x0C);
             AlphaCompareAndZMode = IO.ReadIntLE(data, 0x10);
         }
 
@@ -1240,7 +1243,7 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(UseCustomBlendMode ? 1 : 0));
             bytes.AddRange(BitConverter.GetBytes(CustomBlendSrcFactor));
             bytes.AddRange(BitConverter.GetBytes(CustomBlendDstFactor));
-            bytes.AddRange(BitConverter.GetBytes(Unknown0C));
+            bytes.AddRange(BitConverter.GetBytes(VertexColorAlpha));
             bytes.AddRange(BitConverter.GetBytes(AlphaCompareAndZMode));
 
             return bytes;
@@ -1672,7 +1675,9 @@ namespace HaruhiHeiretsuLib.Graphics
         public int BlendDataAddress { get; set; }
         public int GXLightingAddress { get; set; }
         public int OutlineAddress { get; set; }
-        public int Unknown18 { get; set; }
+        public byte Unknown18 { get; set; }
+        public byte Unknown19 { get; set; }
+        public short Unknown1A { get; set; }
         public int Unknown1C { get; set; }
         public int Unknown20 { get; set; }
         public int StartVertex { get; set; }
@@ -1700,7 +1705,9 @@ namespace HaruhiHeiretsuLib.Graphics
             BlendDataAddress = IO.ReadIntLE(data, offset + 0x0C);
             GXLightingAddress = IO.ReadIntLE(data, offset + 0x10);
             OutlineAddress = IO.ReadIntLE(data, offset + 0x14);
-            Unknown18 = IO.ReadIntLE(data, offset + 0x18);
+            Unknown18 = data.ElementAt(offset + 0x18);
+            Unknown19 = data.ElementAt(offset + 0x19);
+            Unknown1A = IO.ReadShortLE(data, offset + 0x1A);
             Unknown1C = IO.ReadIntLE(data, offset + 0x1C);
             Unknown20 = IO.ReadIntLE(data, offset + 0x20);
             StartVertex = IO.ReadIntLE(data, offset + 0x24);
@@ -1756,7 +1763,8 @@ namespace HaruhiHeiretsuLib.Graphics
             {
                 bytes.AddRange(new byte[4]);
             }
-            bytes.AddRange(BitConverter.GetBytes(Unknown18));
+            bytes.AddRange([Unknown18, Unknown19]);
+            bytes.AddRange(BitConverter.GetBytes(Unknown1A));
             bytes.AddRange(BitConverter.GetBytes(Unknown1C));
             bytes.AddRange(BitConverter.GetBytes(Unknown20));
             bytes.AddRange(BitConverter.GetBytes(StartVertex));
@@ -1783,7 +1791,10 @@ namespace HaruhiHeiretsuLib.Graphics
         public Vector3 Normal { get; set; }
         public VertexColor Color { get; set; }
         public Vector2 UVCoords { get; set; }
-        public int Unknown2 { get; set; }
+        public byte Unknown34 { get; set; }
+        public byte Unknown35 { get; set; }
+        public byte Unknown36 { get; set; }
+        public byte Unknown37 { get; set; }
 
         public SgeVertex()
         {
@@ -1801,7 +1812,10 @@ namespace HaruhiHeiretsuLib.Graphics
             int color = IO.ReadIntLE(data, 0x28);
             Color = new VertexColor(((color & 0x00FF0000) >> 16) / 255.0f, ((color & 0x0000FF00) >> 8) / 255.0f, (color & 0x000000FF) / 255.0f, ((color & 0xFF000000) >> 24) / 255.0f);
             UVCoords = new Vector2(IO.ReadFloat(data, 0x2C), IO.ReadFloat(data, 0x30));
-            Unknown2 = IO.ReadIntLE(data, 0x34);
+            Unknown34 = data.ElementAt(0x34);
+            Unknown35 = data.ElementAt(0x35);
+            Unknown36 = data.ElementAt(0x36);
+            Unknown37 = data.ElementAt(0x37);
         }
 
         public List<byte> GetBytes()
@@ -1822,7 +1836,7 @@ namespace HaruhiHeiretsuLib.Graphics
             bytes.AddRange(BitConverter.GetBytes(color));
             bytes.AddRange(BitConverter.GetBytes(UVCoords.X));
             bytes.AddRange(BitConverter.GetBytes(UVCoords.Y));
-            bytes.AddRange(BitConverter.GetBytes(Unknown2));
+            bytes.AddRange([Unknown34, Unknown35, Unknown36, Unknown37]);
 
             return bytes;
         }

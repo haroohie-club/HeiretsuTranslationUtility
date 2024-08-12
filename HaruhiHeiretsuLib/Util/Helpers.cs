@@ -300,6 +300,11 @@ namespace HaruhiHeiretsuLib.Util
             writeTo.AddRange(writeFrom.Skip(position - numBytesToWrite).Take(numBytesToWrite));
         }
 
+        /// <summary>
+        /// Decompression implementation of the Shade compression algorithm
+        /// </summary>
+        /// <param name="compressedData">Compressed data to decompress</param>
+        /// <returns>A byte array of decompressed data</returns>
         public static byte[] DecompressData(byte[] compressedData)
         {
             List<byte> decompressedData = [];

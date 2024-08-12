@@ -226,7 +226,7 @@ def export_sge(filename, model_type):
         "DefaultLightingEnabled": True
     }]
     model["SubmeshBlendDataTable"] = []
-    model["Unknown40Table"] = []
+    model["OutlineDataTable"] = []
     model["Unknown4CTable"] = []
     model["BoneAnimationGroups"] = []
     model["Unknown58Table"] = []
