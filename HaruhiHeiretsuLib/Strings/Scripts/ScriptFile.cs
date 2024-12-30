@@ -58,7 +58,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         private static string ReadString(byte[] data, int currentPosition, out int newPosition)
         {
             int stringLength = IO.ReadInt(data, currentPosition);
-            string result = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(currentPosition + 4).Take(stringLength - 1).ToArray());
+            string result = IO.ReadShiftJisString(data, currentPosition + 4);
             newPosition = currentPosition + stringLength + 4;
             return result;
         }
