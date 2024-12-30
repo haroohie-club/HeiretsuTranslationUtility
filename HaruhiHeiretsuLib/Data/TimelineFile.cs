@@ -16,17 +16,17 @@ namespace HaruhiHeiretsuLib.Data
             base.Initialize(decompressedData, offset);
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            int numSections = BitConverter.ToInt32(Data.Skip(0x00).Take(4).Reverse().ToArray());
+            int numSections = IO.ReadInt(decompressedData, 0x00);
 
             for (int i = 0; i < numSections; i++)
             {
                 List<TimelineEntry> entries = [];
-                int sectionStartPointer = BitConverter.ToInt32(Data.Skip(0x0C + i * 0x08).Take(4).Reverse().ToArray());
-                int numEntries = BitConverter.ToInt32(Data.Skip(0x0C + i * 0x08 + 0x04).Take(4).Reverse().ToArray());
+                int sectionStartPointer = IO.ReadInt(decompressedData, 0x0C + i * 0x08);
+                int numEntries = IO.ReadInt(decompressedData, 0x0C + i * 0x08 + 0x04);
 
                 for (int j = 0; j < numEntries; j++)
                 {
-                    entries.Add(new(Data, sectionStartPointer + j * 0x54));
+                    entries.Add(new(decompressedData, sectionStartPointer + j * 0x54));
                 }
 
                 TimelineSections.Add(entries);
@@ -200,41 +200,41 @@ namespace HaruhiHeiretsuLib.Data
         public int Unknown4C { get; set; }
         public int Unknown50 { get; set; }
 
-        public TimelineEntry(IEnumerable<byte> data, int offset)
+        public TimelineEntry(byte[] data, int offset)
         {
-            Index = BitConverter.ToInt32(data.Skip(offset + 0x00).Take(4).Reverse().ToArray());
-            int entryTitleOffset = BitConverter.ToInt32(data.Skip(offset + 0x04).Take(4).Reverse().ToArray());
-            EntryTitle = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(entryTitleOffset).TakeWhile(b => b != 0x00).ToArray());
-            Unknown08 = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).Reverse().ToArray());
-            int entryDescription1Offset = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).Reverse().ToArray());
-            EntryDescription = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(entryDescription1Offset).TakeWhile(b => b != 0x00).ToArray());
-            int entryDescription2Offset = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).Reverse().ToArray());
-            EntryDescription2 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(entryDescription2Offset).TakeWhile(b => b != 0x00).ToArray());
-            int entryFlag0Offset = BitConverter.ToInt32(data.Skip(offset + 0x14).Take(4).Reverse().ToArray());
+            Index = IO.ReadInt(data, offset + 0x00);
+            int entryTitleOffset = IO.ReadInt(data, offset + 0x04);
+            EntryTitle = IO.ReadShiftJisString(data, entryTitleOffset);
+            Unknown08 = IO.ReadInt(data, offset + 0x08);
+            int entryDescription1Offset = IO.ReadInt(data, offset + 0x0C);
+            EntryDescription = IO.ReadShiftJisString(data, entryDescription1Offset);
+            int entryDescription2Offset = IO.ReadInt(data, offset + 0x10);
+            EntryDescription2 = IO.ReadShiftJisString(data, entryDescription2Offset);
+            int entryFlag0Offset = IO.ReadInt(data, offset + 0x14);
             EntryFlag0 = Encoding.ASCII.GetString(data.Skip(entryFlag0Offset).TakeWhile(b => b != 0x00).ToArray());
-            Unknown18 = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).Reverse().ToArray());
-            int entryDescriptionCompletedOffset = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).Reverse().ToArray());
-            EntryDescriptionCompleted = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(entryDescriptionCompletedOffset).TakeWhile(b => b != 0x00).ToArray());
-            int entryDescriptionCompleted2Offset = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).Reverse().ToArray());
-            EntryDescriptionCompleted2 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(entryDescriptionCompleted2Offset).TakeWhile(b => b != 0x00).ToArray());
-            Unknown24 = BitConverter.ToInt32(data.Skip(offset + 0x24).Take(4).Reverse().ToArray());
-            int entryFlag1Offset = BitConverter.ToInt32(data.Skip(offset + 0x28).Take(4).Reverse().ToArray());
+            Unknown18 = IO.ReadInt(data, offset + 0x18);
+            int entryDescriptionCompletedOffset = IO.ReadInt(data, offset + 0x1C);
+            EntryDescriptionCompleted = IO.ReadShiftJisString(data, entryDescriptionCompletedOffset);
+            int entryDescriptionCompleted2Offset = IO.ReadInt(data, offset + 0x20);
+            EntryDescriptionCompleted2 = IO.ReadShiftJisString(data, entryDescriptionCompleted2Offset);
+            Unknown24 = IO.ReadInt(data, offset + 0x24);
+            int entryFlag1Offset = IO.ReadInt(data, offset + 0x28);
             EntryFlag1 = Encoding.ASCII.GetString(data.Skip(entryFlag1Offset).TakeWhile(b => b != 0x00).ToArray());
-            int entryFlag2Offset = BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).Reverse().ToArray());
+            int entryFlag2Offset = IO.ReadInt(data, offset + 0x2C);
             EntryFlag2 = Encoding.ASCII.GetString(data.Skip(entryFlag2Offset).TakeWhile(b => b != 0x00).ToArray());
-            Unknown30 = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).Reverse().ToArray());
-            int entryFlag3Offset = BitConverter.ToInt32(data.Skip(offset + 0x34).Take(4).Reverse().ToArray());
+            Unknown30 = IO.ReadInt(data, offset + 0x30);
+            int entryFlag3Offset = IO.ReadInt(data, offset + 0x34);
             EntryFlag3 = Encoding.ASCII.GetString(data.Skip(entryFlag3Offset).TakeWhile(b => b != 0x00).ToArray());
-            Unknown38 = BitConverter.ToInt16(data.Skip(offset + 0x38).Take(2).Reverse().ToArray());
-            Unknown3A = BitConverter.ToInt16(data.Skip(offset + 0x3A).Take(2).Reverse().ToArray());
-            Unknown3C = BitConverter.ToInt16(data.Skip(offset + 0x3C).Take(2).Reverse().ToArray());
-            Unknown3E = BitConverter.ToInt16(data.Skip(offset + 0x3E).Take(2).Reverse().ToArray());
-            int entryIdOffset = BitConverter.ToInt32(data.Skip(offset + 0x40).Take(4).Reverse().ToArray());
+            Unknown38 = IO.ReadShort(data, offset + 0x38);
+            Unknown3A = IO.ReadShort(data, offset + 0x3A);
+            Unknown3C = IO.ReadShort(data, offset + 0x3C);
+            Unknown3E = IO.ReadShort(data, offset + 0x3E);
+            int entryIdOffset = IO.ReadInt(data, offset + 0x40);
             EntryId = Encoding.ASCII.GetString(data.Skip(entryIdOffset).TakeWhile(b => b != 0x00).ToArray());
-            Unknown44 = BitConverter.ToInt32(data.Skip(offset + 0x44).Take(4).ToArray());
-            Unknown48 = BitConverter.ToInt32(data.Skip(offset + 0x48).Take(4).ToArray());
-            Unknown4C = BitConverter.ToInt32(data.Skip(offset + 0x4C).Take(4).ToArray());
-            Unknown50 = BitConverter.ToInt32(data.Skip(offset + 0x50).Take(4).ToArray());
+            Unknown44 = IO.ReadInt(data, offset + 0x44);
+            Unknown48 = IO.ReadInt(data, offset + 0x48);
+            Unknown4C = IO.ReadInt(data, offset + 0x4C);
+            Unknown50 = IO.ReadInt(data, offset + 0x50);
         }
 
         public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int currentOffset, int currentStringsOffset, List<int> endPointers)

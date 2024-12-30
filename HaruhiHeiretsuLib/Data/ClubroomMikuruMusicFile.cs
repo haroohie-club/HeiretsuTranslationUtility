@@ -36,12 +36,6 @@ namespace HaruhiHeiretsuLib.Data
         }
 
         /// <inheritdoc/>
-        public override byte[] GetBytes()
-        {
-            return base.GetBytes();
-        }
-
-        /// <inheritdoc/>
         public List<DialogueLine> GetDialogueLines()
         {
             List<DialogueLine> lines = [];
@@ -71,7 +65,7 @@ namespace HaruhiHeiretsuLib.Data
             }
             else
             {
-                throw new Exception("Oh no! I couldn't find a line replacement!");
+                throw new("Oh no! I couldn't find a line replacement!");
             }
         }
     }

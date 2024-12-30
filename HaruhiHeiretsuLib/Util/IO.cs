@@ -50,12 +50,12 @@ namespace HaruhiHeiretsuLib.Util
 
         public static float ReadFloat(ReadOnlySpan<byte> data, int offset)
         {
-            return BitConverter.ToSingle(data[offset..(offset + 4)]);
-        }
-
-        public static float ReadFloatReverse(ReadOnlySpan<byte> data, int offset)
-        {
             return BinaryPrimitives.ReadSingleBigEndian(data[offset..(offset + 4)]);
+        }
+        
+        public static float ReadFloatLE(ReadOnlySpan<byte> data, int offset)
+        {
+            return BitConverter.ToSingle(data[offset..(offset + 4)]);
         }
 
         public static string ReadShiftJisString(IEnumerable<byte> data, int offset)

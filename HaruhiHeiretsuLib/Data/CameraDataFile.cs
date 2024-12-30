@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Data
 {
@@ -35,22 +36,22 @@ namespace HaruhiHeiretsuLib.Data
         {
             base.Initialize(decompressedData, offset);
 
-            int section1Offset = BitConverter.ToInt32(Data.Skip(0x0C).Take(4).Reverse().ToArray());
-            int numSection1Floats = BitConverter.ToInt32(Data.Skip(0x10).Take(4).Reverse().ToArray());
+            int section1Offset = IO.ReadInt(decompressedData, 0x0C);
+            int numSection1Floats = IO.ReadInt(decompressedData, 0x10);
             for (int i = 0; i < numSection1Floats; i++)
             {
                 Section1.Add(BitConverter.ToSingle(Data.Skip(section1Offset + 0x04 * i).Take(4).Reverse().ToArray()));
             }
 
-            int cameraDataSectionOffset = BitConverter.ToInt32(Data.Skip(0x14).Take(4).Reverse().ToArray());
-            int numCameraDataEntries = BitConverter.ToInt32(Data.Skip(0x18).Take(4).Reverse().ToArray());
+            int cameraDataSectionOffset = IO.ReadInt(decompressedData, 0x14);
+            int numCameraDataEntries = IO.ReadInt(decompressedData, 0x18);
             for (int i = 0; i < numCameraDataEntries; i++)
             {
-                CameraDataEntries.Add(new CameraDataEntry(Data.Skip(cameraDataSectionOffset + 0x34 * i).Take(0x34)));
+                CameraDataEntries.Add(new(decompressedData[(cameraDataSectionOffset + 0x34 * i)..(cameraDataSectionOffset + 0x34 * (i + 1))]));
             }
 
-            int section3Offset = BitConverter.ToInt32(Data.Skip(0x1C).Take(4).Reverse().ToArray());
-            StaticCameraIndex = BitConverter.ToInt16(Data.Skip(section3Offset).Take(2).Reverse().ToArray());
+            int section3Offset = IO.ReadInt(decompressedData, 0x1C);
+            StaticCameraIndex = IO.ReadShort(decompressedData, section3Offset);
         }
 
         /// <summary>
@@ -182,21 +183,21 @@ namespace HaruhiHeiretsuLib.Data
         /// Creates a camera entry from binary data
         /// </summary>
         /// <param name="bytes">The binary data representing the camera data (0x34 bytes)</param>
-        public CameraDataEntry(IEnumerable<byte> bytes)
+        public CameraDataEntry(byte[] bytes)
         {
-            XPosition = BitConverter.ToSingle(bytes.Take(4).Reverse().ToArray());
-            YPosition = BitConverter.ToSingle(bytes.Skip(0x04).Take(4).Reverse().ToArray());
-            ZPosition = BitConverter.ToSingle(bytes.Skip(0x08).Take(4).Reverse().ToArray());
-            XLook = BitConverter.ToSingle(bytes.Skip(0x0C).Take(4).Reverse().ToArray());
-            YLook = BitConverter.ToSingle(bytes.Skip(0x10).Take(4).Reverse().ToArray());
-            ZLook = BitConverter.ToSingle(bytes.Skip(0x14).Take(4).Reverse().ToArray());
-            Unknown18 = BitConverter.ToSingle(bytes.Skip(0x18).Take(4).Reverse().ToArray());
-            MinYaw = BitConverter.ToSingle(bytes.Skip(0x1C).Take(4).Reverse().ToArray());
-            MaxYaw = BitConverter.ToSingle(bytes.Skip(0x20).Take(4).Reverse().ToArray());
-            MinPitch = BitConverter.ToSingle(bytes.Skip(0x24).Take(4).Reverse().ToArray());
-            MaxPitch = BitConverter.ToSingle(bytes.Skip(0x28).Take(4).Reverse().ToArray());
-            Zoom = BitConverter.ToSingle(bytes.Skip(0x2C).Take(4).Reverse().ToArray());
-            Unknown30 = BitConverter.ToSingle(bytes.Skip(0x30).Take(4).Reverse().ToArray());
+            XPosition = IO.ReadFloat(bytes, 0x00);
+            YPosition = IO.ReadFloat(bytes, 0x04);
+            ZPosition = IO.ReadFloat(bytes, 0x08);
+            XLook = IO.ReadFloat(bytes, 0x0C);
+            YLook = IO.ReadFloat(bytes, 0x10);
+            ZLook = IO.ReadFloat(bytes, 0x14);
+            Unknown18 = IO.ReadFloat(bytes, 0x18);
+            MinYaw = IO.ReadFloat(bytes, 0x1C);
+            MaxYaw = IO.ReadFloat(bytes, 0x20);
+            MinPitch = IO.ReadFloat(bytes, 0x24);
+            MaxPitch = IO.ReadFloat(bytes, 0x28);
+            Zoom = IO.ReadFloat(bytes, 0x2C);
+            Unknown30 = IO.ReadFloat(bytes, 0x30);
         }
         
         /// <summary>

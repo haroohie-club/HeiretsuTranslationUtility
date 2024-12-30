@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Archive
 {
@@ -36,10 +37,10 @@ namespace HaruhiHeiretsuLib.Archive
             int parentLoc = 0;
             for (int i = 0; i < indexFileBytes.Length - 12; i += 12)
             {
-                ushort id = BitConverter.ToUInt16(indexFileBytes.Skip(i).Take(2).ToArray());
-                short padding = BitConverter.ToInt16(indexFileBytes.Skip(i + 2).Take(2).ToArray());
-                int offset = BitConverter.ToInt32(indexFileBytes.Skip(i + 4).Take(4).ToArray());
-                int size = BitConverter.ToInt32(indexFileBytes.Skip(i + 8).Take(4).ToArray());
+                ushort id = IO.ReadUShortLE(indexFileBytes, i);
+                short padding = IO.ReadShortLE(indexFileBytes, i + 2);
+                int offset = IO.ReadIntLE(indexFileBytes, i + 4);
+                int size = IO.ReadIntLE(indexFileBytes, i + 8);
 
                 if (id == 0)
                 {
@@ -137,12 +138,12 @@ namespace HaruhiHeiretsuLib.Archive
         public void ResolveGraphicsFileNames()
         {
             byte[] graphicsFileNameMap = McbSubArchives[0].Files[57].GetBytes();
-            int numGraphicsFiles = BitConverter.ToInt32(graphicsFileNameMap.Skip(0x10).Take(4).Reverse().ToArray());
+            int numGraphicsFiles = IO.ReadInt(graphicsFileNameMap, 0x10);
 
             Dictionary<int, string> indexToNameMap = [];
             for (int i = 0; i < numGraphicsFiles; i++)
             {
-                indexToNameMap.Add(BitConverter.ToInt32(graphicsFileNameMap.Skip(0x14 * (i + 1)).Take(4).Reverse().ToArray()), Encoding.ASCII.GetString(graphicsFileNameMap.Skip(0x14 * (i + 1) + 0x04).TakeWhile(b => b != 0x00).ToArray()));
+                indexToNameMap.Add(IO.ReadInt(graphicsFileNameMap, 0x14 * (i + 1)), IO.ReadAsciiString(graphicsFileNameMap, 0x14 * (i + 1) + 0x04));
             }
 
             foreach ((int parentLoc, int childLoc) in GraphicsFiles)

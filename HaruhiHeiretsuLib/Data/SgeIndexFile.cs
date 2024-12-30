@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Data
 {
@@ -20,25 +21,25 @@ namespace HaruhiHeiretsuLib.Data
         {
             base.Initialize(decompressedData, offset);
 
-            int section1Offset = BitConverter.ToInt32(Data.Skip(0x0C).Take(4).Reverse().ToArray());
-            int numSection1Entries = BitConverter.ToInt32(Data.Skip(0x10).Take(4).Reverse().ToArray());
+            int section1Offset = IO.ReadInt(decompressedData, 0x0C);
+            int numSection1Entries = IO.ReadInt(decompressedData, 0x10);
             for (int i = 0; i < numSection1Entries; i++)
             {
-                Section1Entries.Add(new(Data.Skip(section1Offset + i * 0x24).Take(0x24)));
+                Section1Entries.Add(new(decompressedData[(section1Offset + i * 0x24)..(section1Offset + (i + 1) * 0x24)]));
             }
 
-            int section2Offset = BitConverter.ToInt32(Data.Skip(0x14).Take(4).Reverse().ToArray());
-            int numSection2Entries = BitConverter.ToInt32(Data.Skip(0x18).Take(4).Reverse().ToArray());
+            int section2Offset = IO.ReadInt(decompressedData, 0x14);
+            int numSection2Entries = IO.ReadInt(decompressedData, 0x18);
             for (int i = 0; i < numSection2Entries; i++)
             {
-                Section2Entries.Add(new(Data.Skip(section2Offset + i * 8).Take(8)));
+                Section2Entries.Add(new(decompressedData[(section2Offset + i * 8)..(section2Offset + (i + 1) * 8)]));
             }
 
-            int section3Offset = BitConverter.ToInt32(Data.Skip(0x1C).Take(4).Reverse().ToArray());
-            int numSection3Entries = BitConverter.ToInt32(Data.Skip(0x20).Take(4).Reverse().ToArray());
+            int section3Offset = IO.ReadInt(decompressedData, 0x1C);
+            int numSection3Entries = IO.ReadInt(decompressedData, 0x20);
             for (int i = 0; i < numSection3Entries; i++)
             {
-                Section3Entries.Add(BitConverter.ToInt16(Data.Skip(section3Offset + i * 2).Take(2).Reverse().ToArray()));
+                Section3Entries.Add(IO.ReadShort(decompressedData, section3Offset + i * 2));
             }
         }
     }
@@ -58,20 +59,20 @@ namespace HaruhiHeiretsuLib.Data
         public int Unknown1C { get; set; }
         public int Unknown20 { get; set; }
 
-        public SgeIndexFileEntry(IEnumerable<byte> data)
+        public SgeIndexFileEntry(byte[] data)
         {
-            Index = BitConverter.ToInt16(data.Take(2).Reverse().ToArray());
-            Unknown02 = BitConverter.ToInt16(data.Skip(0x02).Take(2).Reverse().ToArray());
-            Unknown04 = BitConverter.ToInt32(data.Skip(0x04).Take(4).Reverse().ToArray());
-            Unknown08 = BitConverter.ToInt32(data.Skip(0x08).Take(4).Reverse().ToArray());
-            Unknown0C = BitConverter.ToInt32(data.Skip(0x0C).Take(4).Reverse().ToArray());
-            Unknown10 = BitConverter.ToInt16(data.Skip(0x10).Take(2).Reverse().ToArray());
-            Unknown12 = BitConverter.ToInt16(data.Skip(0x12).Take(4).Reverse().ToArray());
-            ModelGrpIndex = BitConverter.ToInt16(data.Skip(0x16).Take(2).Reverse().ToArray());
-            Unknown18 = BitConverter.ToInt16(data.Skip(0x18).Take(2).Reverse().ToArray());
-            Unknown1A = BitConverter.ToInt16(data.Skip(0x1A).Take(2).Reverse().ToArray());
-            Unknown1C = BitConverter.ToInt16(data.Skip(0x1C).Take(4).Reverse().ToArray());
-            Unknown20 = BitConverter.ToInt16(data.Skip(0x20).Take(4).Reverse().ToArray());
+            Index = IO.ReadShort(data, 0x00);
+            Unknown02 = IO.ReadShort(data, 0x02);
+            Unknown04 = IO.ReadInt(data, 0x04);
+            Unknown08 = IO.ReadInt(data, 0x08);
+            Unknown0C = IO.ReadInt(data, 0x0C);
+            Unknown10 = IO.ReadShort(data, 0x10);
+            Unknown12 = IO.ReadShort(data, 0x12);
+            ModelGrpIndex = IO.ReadShort(data, 0x16);
+            Unknown18 = IO.ReadShort(data, 0x18);
+            Unknown1A = IO.ReadShort(data, 0x1A);
+            Unknown1C = IO.ReadShort(data, 0x1C);
+            Unknown20 = IO.ReadShort(data, 0x20);
         }
     }
     public class SgeIndexFileSection2Entry
@@ -79,10 +80,10 @@ namespace HaruhiHeiretsuLib.Data
         public int Unknown00 { get; set; }
         public int Unknown04 { get; set; }
 
-        public SgeIndexFileSection2Entry(IEnumerable<byte> data)
+        public SgeIndexFileSection2Entry(byte[] data)
         {
-            Unknown00 = BitConverter.ToInt32(data.Take(4).Reverse().ToArray());
-            Unknown04 = BitConverter.ToInt32(data.Skip(0x04).Take(4).Reverse().ToArray());
+            Unknown00 = IO.ReadInt(data, 0x00);
+            Unknown04 = IO.ReadInt(data, 0x04);
         }
     }
 }

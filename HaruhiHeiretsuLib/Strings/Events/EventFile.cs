@@ -189,10 +189,10 @@ namespace HaruhiHeiretsuLib.Strings.Events
         {
             // Event files are little-endian, so no need to .Reverse
             Version = IO.ReadIntLE(data, 0);
-            TotalRuntimeInFrames = IO.ReadFloat(data, 0x04);
-            CurrentFrame = IO.ReadFloat(data, 0x08);
+            TotalRuntimeInFrames = IO.ReadFloatLE(data, 0x04);
+            CurrentFrame = IO.ReadFloatLE(data, 0x08);
             CurrentChapter = IO.ReadShortLE(data, 0x0E); // With two bytes of padding
-            Unknown10 = IO.ReadFloat(data, 0x10);
+            Unknown10 = IO.ReadFloatLE(data, 0x10);
             ChaptersCount = IO.ReadShortLE(data, 0x14);
             Padding16 = IO.ReadShortLE(data, 0x16);
             ChapterDefTableOffset = IO.ReadIntLE(data, 0x18);

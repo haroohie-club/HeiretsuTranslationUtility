@@ -56,9 +56,9 @@ namespace HaruhiHeiretsuLib.Data
                         topic.Unknown14 = IO.ReadShort(decompressedData, sectionPointer + j * 0x18 + 0x14);
                         topic.Unknown16 = IO.ReadShort(decompressedData, sectionPointer + j * 0x18 + 0x16);
 
-                        topic.Id = Encoding.ASCII.GetString(Data.Skip(idOffset).TakeWhile(b => b != 0).ToArray());
-                        topic.Name = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(nameOffset).TakeWhile(b => b != 0).ToArray());
-                        topic.Description = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(descriptionOffset).TakeWhile(b => b != 0).ToArray());
+                        topic.Id = IO.ReadAsciiString(decompressedData, idOffset);
+                        topic.Name = IO.ReadShiftJisString(decompressedData, nameOffset);
+                        topic.Description = IO.ReadShiftJisString(decompressedData, descriptionOffset);
 
                         Topics.Add(topic);
                     }
@@ -71,7 +71,7 @@ namespace HaruhiHeiretsuLib.Data
                         Flag flag = new();
                         flag.Index = IO.ReadInt(decompressedData, sectionPointer + j * 0x08);
                         int nameOffset = IO.ReadInt(decompressedData, sectionPointer + j * 0x08 + 4);
-                        flag.Name = Encoding.ASCII.GetString(Data.Skip(nameOffset).TakeWhile(b => b != 0).ToArray());
+                        flag.Name = IO.ReadAsciiString(decompressedData, nameOffset);
                         flag.Type = (FlagType)i;
 
                         Flags[flag.Type].Add(flag);
@@ -90,7 +90,7 @@ namespace HaruhiHeiretsuLib.Data
                         {
                             if (topicReference.TopicOffsets[j] > 0)
                             {
-                                topicReference.Topics[j] = Encoding.ASCII.GetString(Data.Skip(topicReference.TopicOffsets[j]).TakeWhile(b => b != 0).ToArray());
+                                topicReference.Topics[j] = IO.ReadAsciiString(decompressedData, topicReference.TopicOffsets[j]);
                             }
                         }
                     }

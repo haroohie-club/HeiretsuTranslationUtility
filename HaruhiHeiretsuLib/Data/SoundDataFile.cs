@@ -81,8 +81,8 @@ namespace HaruhiHeiretsuLib.Data
             {
                 SoundEffects.Add(new(
                     IO.ReadAsciiString(decompressedData, IO.ReadInt(decompressedData, soundEffectsOffset + i * 0x0C)),
-                    IO.ReadFloat(decompressedData, soundEffectsOffset + i * 0x0C + 4),
-                    IO.ReadFloat(decompressedData, soundEffectsOffset + i * 0x0C + 8)));
+                    IO.ReadFloatLE(decompressedData, soundEffectsOffset + i * 0x0C + 4),
+                    IO.ReadFloatLE(decompressedData, soundEffectsOffset + i * 0x0C + 8)));
             }
 
             int bgmsOffset = IO.ReadInt(decompressedData, 0x24);

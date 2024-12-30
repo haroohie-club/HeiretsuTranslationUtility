@@ -382,40 +382,40 @@ namespace HaruhiHeiretsuLib.Data
         /// <remarks>
         /// Simple constructor from raw binary data
         /// </remarks>
-        public struct UnknownFloatStruct(IEnumerable<byte> data)
+        public struct UnknownFloatStruct(byte[] data)
         {
             /// <summary>
             /// Unknown
             /// </summary>
-            public float Unknown00 { get; set; } = BitConverter.ToSingle(data.Skip(0x00).Take(4).Reverse().ToArray());
+            public float Unknown00 { get; set; } = IO.ReadFloat(data, 0x00);
             /// <summary>
             /// Unknown
             /// </summary>
-            public float Unknown04 { get; set; } = BitConverter.ToSingle(data.Skip(0x04).Take(4).Reverse().ToArray());
+            public float Unknown04 { get; set; } = IO.ReadFloat(data, 0x04);
             /// <summary>
             /// Unknown
             /// </summary>
-            public float Unknown08 { get; set; } = BitConverter.ToSingle(data.Skip(0x08).Take(4).Reverse().ToArray());
+            public float Unknown08 { get; set; } = IO.ReadFloat(data, 0x08);
             /// <summary>
             /// Unknown
             /// </summary>
-            public float Unknown0C { get; set; } = BitConverter.ToSingle(data.Skip(0x0C).Take(4).Reverse().ToArray());
+            public float Unknown0C { get; set; } = IO.ReadFloat(data, 0x0C);
             /// <summary>
             /// Unknown
             /// </summary>
-            public float Unknown10 { get; set; } = BitConverter.ToSingle(data.Skip(0x10).Take(4).Reverse().ToArray());
+            public float Unknown10 { get; set; } = IO.ReadFloat(data, 0x10);
             /// <summary>
             /// Unknown
             /// </summary>
-            public float Unknown14 { get; set; } = BitConverter.ToSingle(data.Skip(0x14).Take(4).Reverse().ToArray());
+            public float Unknown14 { get; set; } = IO.ReadFloat(data, 0x14);
             /// <summary>
             /// Unknown
             /// </summary>
-            public float Unknown18 { get; set; } = BitConverter.ToSingle(data.Skip(0x18).Take(4).Reverse().ToArray());
+            public float Unknown18 { get; set; } = IO.ReadFloat(data, 0x18);
             /// <summary>
             /// Unknown
             /// </summary>
-            public float Unknown1C { get; set; } = BitConverter.ToSingle(data.Skip(0x1C).Take(4).Reverse().ToArray());
+            public float Unknown1C { get; set; } = IO.ReadFloat(data, 0x1C);
 
             /// <summary>
             /// Returns binary data representation of the float struct
@@ -498,8 +498,8 @@ namespace HaruhiHeiretsuLib.Data
             int characterOffset = IO.ReadInt(data, offset + 0x20);
             Character = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(characterOffset).TakeWhile(b => b != 0x00).ToArray());
             int floatStructOffset = IO.ReadInt(data, offset + 0x24);
-            FloatStruct = new(data.Skip(floatStructOffset).Take(0x20));
-            UnknownFloat = IO.ReadFloatReverse(data, offset + 0x28);
+            FloatStruct = new(data[floatStructOffset..(floatStructOffset + 0x20)]);
+            UnknownFloat = IO.ReadFloat(data, offset + 0x28);
             Unknown2C = IO.ReadInt(data, offset + 0x2C);
             Unknown30 = IO.ReadInt(data, offset + 0x30);
         }

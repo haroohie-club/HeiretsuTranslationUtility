@@ -21,14 +21,14 @@ namespace HaruhiHeiretsuLib.Data
             base.Initialize(decompressedData, offset);
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            int numSections = BitConverter.ToInt32(Data.Take(4).Reverse().ToArray());
+            int numSections = IO.ReadInt(decompressedData, 0x00);
 
             for (int i = 0; i < numSections; i++)
             {
-                int sectionPointer = BitConverter.ToInt32(Data.Skip(0x0C + i * 8).Take(4).Reverse().ToArray());
-                int sectionItemCount = BitConverter.ToInt32(Data.Skip(0x10 + i * 8).Take(4).Reverse().ToArray());
+                int sectionPointer = IO.ReadInt(decompressedData, 0x0C + i * 8);
+                int sectionItemCount = IO.ReadInt(decompressedData, 0x10 + i * 8);
 
-                Sections.Add(new(Data, i + 2, sectionPointer, sectionItemCount));
+                Sections.Add(new(decompressedData, i + 2, sectionPointer, sectionItemCount));
             }
         }
 
@@ -130,7 +130,7 @@ namespace HaruhiHeiretsuLib.Data
         public int Index { get; set; }
         public List<MapDefinition> MapDefinitions { get; set; } = [];
 
-        public MapDefinitionSection(IEnumerable<byte> data, int index, int offset, int itemCount)
+        public MapDefinitionSection(byte[] data, int index, int offset, int itemCount)
         {
             Index = index;
             for (int i = 0; i < itemCount; i++)
@@ -305,54 +305,54 @@ namespace HaruhiHeiretsuLib.Data
         public string MapFlag { get; set; }
         public int Unknown64 { get; set; }
 
-        public MapDefinition(IEnumerable<byte> data, int parentIndex, int index, int definitionOffset)
+        public MapDefinition(byte[] data, int parentIndex, int index, int definitionOffset)
         {
             ParentIndex = parentIndex;
             Index = index;
 
-            TimeDay = data.ElementAt(definitionOffset);
-            TimeHour = data.ElementAt(definitionOffset + 0x01);
-            TimeMinute = data.ElementAt(definitionOffset + 0x02);
-            PaddingByte = data.ElementAt(definitionOffset + 0x03);
-            Unknown04 = BitConverter.ToInt16(data.Skip(definitionOffset + 0x04).Take(2).Reverse().ToArray());
-            ZeroMapSgeIndex = BitConverter.ToInt16(data.Skip(definitionOffset + 0x06).Take(2).Reverse().ToArray());
-            int locStringPointer = BitConverter.ToInt32(data.Skip(definitionOffset + 0x08).Take(4).Reverse().ToArray());
-            LocString = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(locStringPointer).TakeWhile(b => b != 0x00).ToArray());
-            int scriptDescriptionPointer = BitConverter.ToInt32(data.Skip(definitionOffset + 0x0C).Take(4).Reverse().ToArray());
-            ScriptDescription = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(scriptDescriptionPointer).TakeWhile(b => b != 0x00).ToArray());
-            McbChildLoc = BitConverter.ToInt16(data.Skip(definitionOffset + 0x10).Take(2).Reverse().ToArray());
-            Ffff56EntryIndex = BitConverter.ToInt16(data.Skip(definitionOffset + 0x12).Take(2).Reverse().ToArray());
-            MapDataIndex = BitConverter.ToInt16(data.Skip(definitionOffset + 0x14).Take(2).Reverse().ToArray());
-            BgDataIndex = BitConverter.ToInt16(data.Skip(definitionOffset + 0x16).Take(2).Reverse().ToArray());
-            CameraDataEntryIndex = BitConverter.ToInt16(data.Skip(definitionOffset + 0x18).Take(2).Reverse().ToArray());
-            Unknown1A = BitConverter.ToInt16(data.Skip(definitionOffset + 0x1A).Take(2).Reverse().ToArray());
-            CameraRotation = BitConverter.ToSingle(data.Skip(definitionOffset + 0x1C).Take(4).Reverse().ToArray());
-            DefaultBgmIndex = BitConverter.ToInt16(data.Skip(definitionOffset + 0x20).Take(2).Reverse().ToArray());
-            Unknown22 = BitConverter.ToInt16(data.Skip(definitionOffset + 0x22).Take(2).Reverse().ToArray());
-            int soundGroupNamePointer = BitConverter.ToInt32(data.Skip(definitionOffset + 0x24).Take(4).Reverse().ToArray());
-            SoundGroupName = Encoding.ASCII.GetString(data.Skip(soundGroupNamePointer).TakeWhile(b => b != 0x00).ToArray());
-            int scriptNamePointer = BitConverter.ToInt32(data.Skip(definitionOffset + 0x28).Take(4).Reverse().ToArray());
-            ScriptName = Encoding.ASCII.GetString(data.Skip(scriptNamePointer).TakeWhile(b => b != 0x00).ToArray());
+            TimeDay = data[definitionOffset];
+            TimeHour = data[definitionOffset + 0x01];
+            TimeMinute = data[definitionOffset + 0x02];
+            PaddingByte = data[definitionOffset + 0x03];
+            Unknown04 = IO.ReadShort(data, definitionOffset + 0x04);
+            ZeroMapSgeIndex = IO.ReadShort(data, definitionOffset + 0x06);
+            int locStringPointer = IO.ReadInt(data, definitionOffset + 0x08);
+            LocString = IO.ReadShiftJisString(data, locStringPointer);
+            int scriptDescriptionPointer = IO.ReadInt(data, definitionOffset + 0x0C);
+            ScriptDescription = IO.ReadShiftJisString(data, scriptDescriptionPointer);
+            McbChildLoc = IO.ReadShort(data, definitionOffset + 0x10);
+            Ffff56EntryIndex = IO.ReadShort(data, definitionOffset + 0x12);
+            MapDataIndex = IO.ReadShort(data, definitionOffset + 0x14);
+            BgDataIndex = IO.ReadShort(data, definitionOffset + 0x16);
+            CameraDataEntryIndex = IO.ReadShort(data, definitionOffset + 0x18);
+            Unknown1A = IO.ReadShort(data, definitionOffset + 0x1A);
+            CameraRotation = IO.ReadFloat(data, definitionOffset + 0x1C);
+            DefaultBgmIndex = IO.ReadShort(data, definitionOffset + 0x20);
+            Unknown22 = IO.ReadShort(data, definitionOffset + 0x22);
+            int soundGroupNamePointer = IO.ReadInt(data, definitionOffset + 0x24);
+            SoundGroupName = IO.ReadAsciiString(data, soundGroupNamePointer);
+            int scriptNamePointer = IO.ReadInt(data, definitionOffset + 0x28);
+            ScriptName = IO.ReadAsciiString(data, scriptNamePointer);
             DispFlags = new string[4];
             for (int i = 0; i < DispFlags.Length; i++)
             {
-                int dispFlagPointer = BitConverter.ToInt32(data.Skip(definitionOffset + 0x2C + i * 4).Take(4).Reverse().ToArray());
-                DispFlags[i] = Encoding.ASCII.GetString(data.Skip(dispFlagPointer).TakeWhile(b => b != 0x00).ToArray());
+                int dispFlagPointer = IO.ReadInt(data, definitionOffset + 0x2C + i * 4);
+                DispFlags[i] = IO.ReadAsciiString(data, dispFlagPointer);
             }
             BgModels1 = new short[4];
             for (int i = 0; i < BgModels1.Length; i++)
             {
-                BgModels1[i] = BitConverter.ToInt16(data.Skip(definitionOffset + 0x3C + i * 2).Take(2).Reverse().ToArray());
+                BgModels1[i] = IO.ReadShort(data, definitionOffset + 0x3C + i * 2);
             }
             BgModels2 = new short[4];
             for (int i = 0; i < BgModels2.Length; i++)
             {
-                BgModels2[i] = BitConverter.ToInt16(data.Skip(definitionOffset + 0x44 + i * 2).Take(2).Reverse().ToArray());
+                BgModels2[i] = IO.ReadShort(data, definitionOffset + 0x44 + i * 2);
             }
             Evts = new short[8];
             for (int i = 0; i < Evts.Length; i++)
             {
-                short evtId = BitConverter.ToInt16(data.Skip(definitionOffset + 0x4C + i * 2).Take(2).Reverse().ToArray());
+                short evtId = IO.ReadShort(data, definitionOffset + 0x4C + i * 2);
                 if (evtId < 0)
                 {
                     Evts[i] = evtId;
@@ -362,10 +362,10 @@ namespace HaruhiHeiretsuLib.Data
                     Evts[i] = (short)(evtId - EVT_SHIFT);
                 }
             }
-            Unknown5C = BitConverter.ToInt32(data.Skip(definitionOffset + 0x5C).Take(4).Reverse().ToArray());
-            MapFlagPointer = BitConverter.ToInt32(data.Skip(definitionOffset + 0x60).Take(4).Reverse().ToArray());
-            MapFlag = Encoding.ASCII.GetString(data.Skip(MapFlagPointer).TakeWhile(b => b != 0x00).ToArray());
-            Unknown64 = BitConverter.ToInt32(data.Skip(definitionOffset + 0x64).Take(4).Reverse().ToArray());
+            Unknown5C = IO.ReadInt(data, definitionOffset + 0x5C);
+            MapFlagPointer = IO.ReadInt(data, definitionOffset + 0x60);
+            MapFlag = IO.ReadAsciiString(data, MapFlagPointer);
+            Unknown64 = IO.ReadInt(data, definitionOffset + 0x64);
         }
 
         public MapDefinition(string csvLine, int parentIndex, int index)
