@@ -1,5 +1,4 @@
-﻿using FolderBrowserEx;
-using HaruhiHeiretsuLib;
+﻿using HaruhiHeiretsuLib;
 using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Graphics;
@@ -7,18 +6,6 @@ using HaruhiHeiretsuLib.Strings;
 using HaruhiHeiretsuLib.Strings.Data;
 using HaruhiHeiretsuLib.Strings.Events;
 using HaruhiHeiretsuLib.Strings.Scripts;
-using Microsoft.Win32;
-using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace HaruhiHeiretsuEditor
 {

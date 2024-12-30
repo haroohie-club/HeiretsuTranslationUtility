@@ -15,9 +15,6 @@ namespace HaruhiHeiretsuCLI
         {
             Options = new()
             {
-                "Replaces strings in the mcb and dat/evt/scr archives",
-                "Usage: HaruhiHeiretsuCLI repalce-strings -m [MCB_PATH] -d [DAT_BIN] -e [EVT_BIN] -s [SCR_BIN] -r [REPLACEMENT_FOLDER] -o [OUTPUT_FOLDER]",
-                "",
                 { "m|mcb=", "Path to mcb0.bln", m => _mcb = m },
                 { "d|dat=", "Path to dat.bin", d => _dat = d },
                 { "e|evt=", "Path to evt.bin", e => _evt = e },

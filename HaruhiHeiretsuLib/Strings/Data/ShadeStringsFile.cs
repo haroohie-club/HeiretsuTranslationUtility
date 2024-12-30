@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Data
 {
@@ -36,12 +37,12 @@ namespace HaruhiHeiretsuLib.Strings.Data
             Offset = offset;
             Data = [.. decompressedData];
 
-            int numFrontPointers = BitConverter.ToInt32(decompressedData.Take(4).Reverse().ToArray());
+            int numFrontPointers = IO.ReadInt(decompressedData, 0);
             bool reachedDramatisPersonae = false;
             for (int i = 0; i < numFrontPointers; i++)
             {
-                FrontPointers.Add(BitConverter.ToInt32(decompressedData.Skip(0x0C + (0x08 * i)).Take(4).Reverse().ToArray()));
-                uint pointerValue = BitConverter.ToUInt32(decompressedData.Skip(FrontPointers[i]).Take(4).Reverse().ToArray());
+                FrontPointers.Add(IO.ReadInt(decompressedData, 0x0C + 0x08 * i));
+                uint pointerValue = IO.ReadUInt(decompressedData, FrontPointers[i]);
                 if (pointerValue > 0x10000000 || pointerValue == 0x8596) // 8596 is 妹 which is a valid character name, sadly lol
                 {
                     reachedDramatisPersonae = true;
@@ -55,16 +56,16 @@ namespace HaruhiHeiretsuLib.Strings.Data
                 }
             }
 
-            PointerToNumEndPointers = BitConverter.ToInt32(decompressedData.Skip(4).Take(4).Reverse().ToArray());
-            int numEndPointers = BitConverter.ToInt32(decompressedData.Skip(PointerToNumEndPointers).Take(4).Reverse().ToArray());
+            PointerToNumEndPointers = IO.ReadInt(decompressedData, 4);
+            int numEndPointers = IO.ReadInt(decompressedData, PointerToNumEndPointers);
             for (int i = 0; i < numEndPointers; i++)
             {
-                EndPointers.Add(BitConverter.ToInt32(decompressedData.Skip(PointerToNumEndPointers + (0x04 * (i + 1))).Take(4).Reverse().ToArray()));
+                EndPointers.Add(IO.ReadInt(decompressedData, PointerToNumEndPointers + 0x04 * (i + 1)));
             }
 
-            EndPointerPointers = EndPointers.Select(p => { int x = offset; return BitConverter.ToInt32(decompressedData.Skip(p).Take(4).Reverse().ToArray()); }).ToList();
+            EndPointerPointers = EndPointers.Select(p => { int x = offset; return IO.ReadInt(decompressedData, p); }).ToList();
 
-            int titlePointer = BitConverter.ToInt32(decompressedData.Skip(0x08).Take(4).Reverse().ToArray());
+            int titlePointer = IO.ReadInt(decompressedData, 0x08);
             Title = Encoding.ASCII.GetString(decompressedData.Skip(titlePointer).TakeWhile(b => b != 0x00).ToArray());
 
             for (int i = 0; i < EndPointerPointers.Count; i++)

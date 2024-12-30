@@ -110,21 +110,21 @@ namespace HaruhiHeiretsuLib.Data
             int numBgmMetadatas = IO.ReadInt(decompressedData, 0x40);
             for (int i = 0; i < numBgmMetadatas; i++)
             {
-                BgmDebugMenu.Add(new(decompressedData.Skip(bgmMetadataOffset + i * 0x28).Take(0x28), IO.ReadShiftJisString(decompressedData, IO.ReadInt(decompressedData, bgmMetadataOffset + i * 0x28 + 4))));
+                BgmDebugMenu.Add(new(decompressedData.Skip(bgmMetadataOffset + i * 0x28).Take(0x28).ToArray(), IO.ReadShiftJisString(decompressedData, IO.ReadInt(decompressedData, bgmMetadataOffset + i * 0x28 + 4))));
             }
 
             int sfxMetadataOffset = IO.ReadInt(decompressedData, 0x44);
             int numSfxMetadatas = IO.ReadInt(decompressedData, 0x48);
             for (int i = 0; i < numSfxMetadatas; i++)
             {
-                SfxDebugMenu.Add(new(decompressedData.Skip(sfxMetadataOffset + i * 0x28).Take(0x28), IO.ReadShiftJisString(decompressedData, IO.ReadInt(decompressedData, sfxMetadataOffset + i * 0x28 + 4))));
+                SfxDebugMenu.Add(new(decompressedData.Skip(sfxMetadataOffset + i * 0x28).Take(0x28).ToArray(), IO.ReadShiftJisString(decompressedData, IO.ReadInt(decompressedData, sfxMetadataOffset + i * 0x28 + 4))));
             }
 
             int stMetadataOffset = IO.ReadInt(decompressedData, 0x4C);
             int numStMetadatas = IO.ReadInt(decompressedData, 0x50);
             for (int i = 0; i < numStMetadatas; i++)
             {
-                SfxDebugMenu.Add(new(decompressedData.Skip(stMetadataOffset + i * 0x28).Take(0x28), IO.ReadShiftJisString(decompressedData, IO.ReadInt(decompressedData, stMetadataOffset + i * 0x28 + 4))));
+                SfxDebugMenu.Add(new(decompressedData.Skip(stMetadataOffset + i * 0x28).Take(0x28).ToArray(), IO.ReadShiftJisString(decompressedData, IO.ReadInt(decompressedData, stMetadataOffset + i * 0x28 + 4))));
             }
         }
 
@@ -187,7 +187,7 @@ namespace HaruhiHeiretsuLib.Data
     /// <summary>
     /// An entry in one of the sound debug menu tables in the sound data file
     /// </summary>
-    public class SoundDebugMenuEntry(IEnumerable<byte> data, string idAndTitle)
+    public class SoundDebugMenuEntry(byte[] data, string idAndTitle)
     {
         /// <summary>
         /// Unknown

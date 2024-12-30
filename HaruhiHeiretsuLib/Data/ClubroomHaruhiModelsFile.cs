@@ -31,23 +31,23 @@ namespace HaruhiHeiretsuLib.Data
             base.Initialize(decompressedData, offset);
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            int animationSectionStartPointer = BitConverter.ToInt32(Data.Skip(0x0C).Take(4).Reverse().ToArray());
-            int animationCount = BitConverter.ToInt32(Data.Skip(0x10).Take(4).Reverse().ToArray());
+            int animationSectionStartPointer = IO.ReadInt(decompressedData, 0x0C);
+            int animationCount = IO.ReadInt(decompressedData, 0x10);
             for (int i = 0; i < animationCount; i++)
             {
-                Animations.Add(new(Data, animationSectionStartPointer + i * 0x24));
+                Animations.Add(new(decompressedData, animationSectionStartPointer + i * 0x24));
             }
-            int outfitStartPointer = BitConverter.ToInt32(Data.Skip(0x14).Take(4).Reverse().ToArray());
-            int outfitCount = BitConverter.ToInt32(Data.Skip(0x18).Take(4).Reverse().ToArray());
+            int outfitStartPointer = IO.ReadInt(decompressedData, 0x14);
+            int outfitCount = IO.ReadInt(decompressedData, 0x18);
             for (int i = 0; i < outfitCount; i++)
             {
-                Outfits.Add(new(Data, outfitStartPointer + i * 0x2C));
+                Outfits.Add(new(decompressedData, outfitStartPointer + i * 0x2C));
             }
-            int characterStartPointer = BitConverter.ToInt32(Data.Skip(0x1C).Take(4).Reverse().ToArray());
-            int characterCount = BitConverter.ToInt32(Data.Skip(0x20).Take(4).Reverse().ToArray());
+            int characterStartPointer = IO.ReadInt(decompressedData, 0x1C);
+            int characterCount = IO.ReadInt(decompressedData, 0x20);
             for (int i = 0; i < characterCount; i++)
             {
-                Characters.Add(new(Data, characterStartPointer + i * 0x34));
+                Characters.Add(new(decompressedData, characterStartPointer + i * 0x34));
             }
         }
 
@@ -242,21 +242,21 @@ namespace HaruhiHeiretsuLib.Data
         public short Unknown1E { get; set; }
         public int Unknown20 { get; set; }
 
-        public ModelViewerCharacterAnimation(IEnumerable<byte> data, int offset)
+        public ModelViewerCharacterAnimation(byte[] data, int offset)
         {
-            int speakerPointer = BitConverter.ToInt32(data.Skip(offset + 0x00).Take(4).Reverse().ToArray());
+            int speakerPointer = IO.ReadInt(data, offset + 0x00);
             Speaker = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(speakerPointer).TakeWhile(b => b != 0x00).ToArray());
-            int linePointer = BitConverter.ToInt32(data.Skip(offset + 0x04).Take(4).Reverse().ToArray());
+            int linePointer = IO.ReadInt(data, offset + 0x04);
             Line = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(linePointer).TakeWhile(b => b != 0x00).ToArray());
-            Unknown08 = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).Reverse().ToArray());
-            Unknown0C = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).Reverse().ToArray());
-            Unknown10 = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).Reverse().ToArray());
-            int voiceFilePointer = BitConverter.ToInt32(data.Skip(offset + 0x14).Take(4).Reverse().ToArray());
+            Unknown08 = IO.ReadInt(data, offset + 0x08);
+            Unknown0C = IO.ReadInt(data, offset + 0x0C);
+            Unknown10 = IO.ReadInt(data, offset + 0x10);
+            int voiceFilePointer = IO.ReadInt(data, offset + 0x14);
             VoiceFile = Encoding.ASCII.GetString(data.Skip(voiceFilePointer).TakeWhile(b => b != 0x00).ToArray());
-            Unknown18 = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).Reverse().ToArray());
-            Unknown1C = BitConverter.ToInt16(data.Skip(offset + 0x1C).Take(2).Reverse().ToArray());
-            Unknown1E = BitConverter.ToInt16(data.Skip(offset + 0x1E).Take(2).Reverse().ToArray());
-            Unknown20 = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).Reverse().ToArray());
+            Unknown18 = IO.ReadInt(data, offset + 0x18);
+            Unknown1C = IO.ReadShort(data, offset + 0x1C);
+            Unknown1E = IO.ReadShort(data, offset + 0x1E);
+            Unknown20 = IO.ReadInt(data, offset + 0x20);
         }
 
         public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int offset, int stringsOffset, List<int> endPointers)
@@ -301,29 +301,29 @@ namespace HaruhiHeiretsuLib.Data
         public string OutfitFlag { get; set; }
         public string OutfitType { get; set; }
 
-        public ModelViewerCharacterOutfit(IEnumerable<byte> data, int offset)
+        public ModelViewerCharacterOutfit(byte[] data, int offset)
         {
-            int outfitOwnerOffset = BitConverter.ToInt32(data.Skip(offset + 0x00).Take(4).Reverse().ToArray());
+            int outfitOwnerOffset = IO.ReadInt(data, offset + 0x00);
             OutfitOwner = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(outfitOwnerOffset).TakeWhile(b => b != 0x00).ToArray());
-            int outfitDescriptionOffset = BitConverter.ToInt32(data.Skip(offset + 0x04).Take(4).Reverse().ToArray());
+            int outfitDescriptionOffset = IO.ReadInt(data, offset + 0x04);
             OutfitDescription = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(outfitDescriptionOffset).TakeWhile(b => b != 0x00).ToArray());
-            int voiceFile1Offset = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).Reverse().ToArray());
+            int voiceFile1Offset = IO.ReadInt(data, offset + 0x08);
             VoiceFile1 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(voiceFile1Offset).TakeWhile(b => b != 0x00).ToArray());
-            int speaker1Offset = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).Reverse().ToArray());
+            int speaker1Offset = IO.ReadInt(data, offset + 0x0C);
             Speaker1 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(speaker1Offset).TakeWhile(b => b != 0x00).ToArray());
-            int line1Offset = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).Reverse().ToArray());
+            int line1Offset = IO.ReadInt(data, offset + 0x10);
             Line1 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(line1Offset).TakeWhile(b => b != 0x00).ToArray());
-            int voiceFile2Offset = BitConverter.ToInt32(data.Skip(offset + 0x14).Take(4).Reverse().ToArray());
+            int voiceFile2Offset = IO.ReadInt(data, offset + 0x14);
             VoiceFile2 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(voiceFile2Offset).TakeWhile(b => b != 0x00).ToArray());
-            int speaker2Offset = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).Reverse().ToArray());
+            int speaker2Offset = IO.ReadInt(data, offset + 0x18);
             Speaker2 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(speaker2Offset).TakeWhile(b => b != 0x00).ToArray());
-            int line2Offset = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).Reverse().ToArray());
+            int line2Offset = IO.ReadInt(data, offset + 0x1C);
             Line2 = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(line2Offset).TakeWhile(b => b != 0x00).ToArray());
-            Unknown20 = BitConverter.ToInt16(data.Skip(offset + 0x20).Take(2).Reverse().ToArray());
-            Unknown22 = BitConverter.ToInt16(data.Skip(offset + 0x22).Take(2).Reverse().ToArray());
-            int outfitFlagOffset = BitConverter.ToInt32(data.Skip(offset + 0x24).Take(4).Reverse().ToArray());
+            Unknown20 = IO.ReadShort(data, offset + 0x20);
+            Unknown22 = IO.ReadShort(data, offset + 0x22);
+            int outfitFlagOffset = IO.ReadInt(data, offset + 0x24);
             OutfitFlag = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(outfitFlagOffset).TakeWhile(b => b != 0x00).ToArray());
-            int outfitTypeOffset = BitConverter.ToInt32(data.Skip(offset + 0x28).Take(4).Reverse().ToArray());
+            int outfitTypeOffset = IO.ReadInt(data, offset + 0x28);
             OutfitType = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(outfitTypeOffset).TakeWhile(b => b != 0x00).ToArray());
         }
 
@@ -477,31 +477,31 @@ namespace HaruhiHeiretsuLib.Data
         /// </summary>
         public int Unknown30 { get; set; }
 
-        public ModelViewerCharacter(IEnumerable<byte> data, int offset)
+        public ModelViewerCharacter(byte[] data, int offset)
         {
-            int characterNameOffset = BitConverter.ToInt32(data.Skip(offset + 0x00).Take(4).Reverse().ToArray());
+            int characterNameOffset = IO.ReadInt(data, offset + 0x00);
             CharacterName = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(characterNameOffset).TakeWhile(b => b != 0x00).ToArray());
-            int characterFlagOffset = BitConverter.ToInt32(data.Skip(offset + 0x04).Take(4).Reverse().ToArray());
+            int characterFlagOffset = IO.ReadInt(data, offset + 0x04);
             CharacterUnlockFlag = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(characterFlagOffset).TakeWhile(b => b != 0x00).ToArray());
-            int voiceFile1Offset = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).Reverse().ToArray());
+            int voiceFile1Offset = IO.ReadInt(data, offset + 0x08);
             HoverVoiceFile = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(voiceFile1Offset).TakeWhile(b => b != 0x00).ToArray());
-            int speaker1Offset = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).Reverse().ToArray());
+            int speaker1Offset = IO.ReadInt(data, offset + 0x0C);
             HoverSpeaker = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(speaker1Offset).TakeWhile(b => b != 0x00).ToArray());
-            int line1Offset = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).Reverse().ToArray());
+            int line1Offset = IO.ReadInt(data, offset + 0x10);
             HoverLine = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(line1Offset).TakeWhile(b => b != 0x00).ToArray());
-            int voiceFile2Offset = BitConverter.ToInt32(data.Skip(offset + 0x14).Take(4).Reverse().ToArray());
+            int voiceFile2Offset = IO.ReadInt(data, offset + 0x14);
             SelectVoiceFile = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(voiceFile2Offset).TakeWhile(b => b != 0x00).ToArray());
-            int speaker2Offset = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).Reverse().ToArray());
+            int speaker2Offset = IO.ReadInt(data, offset + 0x18);
             SelectSpeaker = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(speaker2Offset).TakeWhile(b => b != 0x00).ToArray());
-            int line2Offset = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).Reverse().ToArray());
+            int line2Offset = IO.ReadInt(data, offset + 0x1C);
             SelectLine = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(line2Offset).TakeWhile(b => b != 0x00).ToArray());
-            int characterOffset = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).Reverse().ToArray());
+            int characterOffset = IO.ReadInt(data, offset + 0x20);
             Character = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(characterOffset).TakeWhile(b => b != 0x00).ToArray());
-            int floatStructOffset = BitConverter.ToInt32(data.Skip(offset + 0x24).Take(4).Reverse().ToArray());
+            int floatStructOffset = IO.ReadInt(data, offset + 0x24);
             FloatStruct = new(data.Skip(floatStructOffset).Take(0x20));
-            UnknownFloat = BitConverter.ToSingle(data.Skip(offset + 0x28).Take(4).Reverse().ToArray());
-            Unknown2C = BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).Reverse().ToArray());
-            Unknown30 = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).Reverse().ToArray());
+            UnknownFloat = IO.ReadFloatReverse(data, offset + 0x28);
+            Unknown2C = IO.ReadInt(data, offset + 0x2C);
+            Unknown30 = IO.ReadInt(data, offset + 0x30);
         }
 
         public (List<byte> dataBytes, List<byte> stringBytes, List<byte> floatStructBytes) GetBytes(int offset, int stringsOffset, int floatOffset, List<int> endPointers)

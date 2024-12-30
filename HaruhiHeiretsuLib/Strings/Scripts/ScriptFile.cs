@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Resources.NetStandard;
 using System.Text;
-using HaruhiHeiretsuLib.Data;
 using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Scripts
@@ -56,9 +55,9 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public override byte[] GetBytes() => Data.ToArray();
 
-        private static string ReadString(IEnumerable<byte> data, int currentPosition, out int newPosition)
+        private static string ReadString(byte[] data, int currentPosition, out int newPosition)
         {
-            int stringLength = BitConverter.ToInt32(data.Skip(currentPosition).Take(4).Reverse().ToArray());
+            int stringLength = IO.ReadInt(data, currentPosition);
             string result = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(currentPosition + 4).Take(stringLength - 1).ToArray());
             newPosition = currentPosition + stringLength + 4;
             return result;
@@ -66,10 +65,11 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public void ParseScript()
         {
+            byte[] quickData = Data.ToArray();
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             int pos = 0;
-            InternalName = ReadString(Data, pos, out pos);
+            InternalName = ReadString(quickData, pos, out pos);
 
             if (InternalName.Length > 20)
             {
@@ -77,28 +77,28 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 return;
             }
 
-            Room = ReadString(Data, pos, out pos);
-            Time = ReadString(Data, pos, out pos);
+            Room = ReadString(quickData, pos, out pos);
+            Time = ReadString(quickData, pos, out pos);
 
-            NumObjects = BitConverter.ToInt16(Data.Skip(pos).Take(2).Reverse().ToArray());
+            NumObjects = IO.ReadShort(quickData, pos);
             NumObjectssOffset = pos;
             pos += 2;
 
-            NumScriptCommandBlocks = BitConverter.ToInt16(Data.Skip(pos).Take(2).Reverse().ToArray());
+            NumScriptCommandBlocks = IO.ReadShort(quickData, pos);
             NumScriptCommandBlocksOffset = pos;
             pos += 2;
 
-            ObjectsEnd = BitConverter.ToInt32(Data.Skip(pos).Take(4).Reverse().ToArray());
+            ObjectsEnd = IO.ReadInt(quickData, pos);
             ObjectssEndOffset = pos;
             pos += 4;
 
-            ScriptCommandBlockDefinitionsEnd = BitConverter.ToInt32(Data.Skip(pos).Take(4).Reverse().ToArray());
+            ScriptCommandBlockDefinitionsEnd = IO.ReadInt(quickData, pos);
             ScriptCommandBlockDefinitionsEndOffset = pos;
             pos += 4;
 
             for (int i = 0; i < NumObjects; i++)
             {
-                Objects.Add(ReadString(Data, pos, out pos));
+                Objects.Add(ReadString(quickData, pos, out pos));
             }
 
             for (int i = ObjectsEnd; i < ScriptCommandBlockDefinitionsEnd; i += 0x08)
@@ -110,9 +110,9 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 }
                 else
                 {
-                    endAddress = BitConverter.ToInt32(Data.Skip(i + 12).Take(4).Reverse().ToArray());
+                    endAddress = IO.ReadInt(quickData, i + 12);
                 }
-                ScriptCommandBlocks.Add(new(i, endAddress, Data, Objects));
+                ScriptCommandBlocks.Add(new(i, endAddress, quickData, Objects));
             }
 
             (ScriptCommandBlock commandBlock, DialogueLine[] dialogue)[] dialogueLines = ScriptCommandBlocks
@@ -120,7 +120,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 .SelectMany(i => i.Parameters.Where(p => p.Type == ScriptCommand.ParameterType.DIALOGUE)
                 .Select(p => new DialogueLine()
                 {
-                    Line = Objects[BitConverter.ToInt16(p.Value.Reverse().ToArray())],
+                    Line = Objects[IO.ReadShort(p.Value, 0)],
                     Speaker = (i.CommandCode >= 0x2E && i.CommandCode <= 0x31 ? ScriptFileSpeaker.CHOICE : (ScriptFileSpeaker)i.CharacterEntity).ToString(),
                     Offset = i.Address,
                 })).ToArray())).ToArray();
@@ -137,7 +137,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         string voiceFile = Objects.ElementAtOrDefault(Helpers.ToShortOrDefault(ScriptCommandBlocks
                             .SelectMany(b => (b.Invocations
                             .FirstOrDefault(inv => (inv?.Address ?? -1) == dialogueLines[i].dialogue[j].Offset)?.Parameters ?? [])
-                            .FirstOrDefault(p => p.Type == ScriptCommand.ParameterType.VARINDEX)?.Value ?? Array.Empty<byte>())) ?? -1);
+                            .FirstOrDefault(p => p.Type == ScriptCommand.ParameterType.VARINDEX)?.Value ?? []).ToArray()) ?? -1);
                         if (!string.IsNullOrEmpty(voiceFile))
                         {
                             dialogueLines[i].dialogue[j].Metadata.Add(voiceFile);
@@ -332,7 +332,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
                     foreach (Parameter param in addressParams)
                     {
-                        int address = BitConverter.ToInt32(param.Value.Take(4).Reverse().ToArray());
+                        int address = IO.ReadInt(param.Value, 0);
                         ScriptCommandInvocation referencedCommand = allInvocations.First(a => a.Address == address);
                         if (string.IsNullOrEmpty(referencedCommand.Label))
                         {
@@ -415,7 +415,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                                 break;
                             }
 
-                            int targetLineNumber = allInvocations.First(v => v.Address == BitConverter.ToInt32(parameter.Value.Take(4).Reverse().ToArray())).LineNumber;
+                            int targetLineNumber = allInvocations.First(v => v.Address == IO.ReadInt(parameter.Value, 0)).LineNumber;
                             for (int j = 0; j < dialogueParams.Length; j++)
                             {
                                 if (dialogueParams[j].LineNumber >= targetLineNumber)
@@ -481,7 +481,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     || allInvocations[i].Command.Name == "TOPIC_CHANGE" || allInvocations[i].Command.Name == "TOPIC_VANISH"
                     || allInvocations[i].Command.Name == "TOPIC_USING")
                 {
-                    string topicName = Objects[BitConverter.ToInt16(allInvocations[i].Parameters[0].Value.Reverse().ToArray())];
+                    string topicName = Objects[IO.ReadShort(allInvocations[i].Parameters[0].Value, 0)];
 
                     int minDistance = int.MaxValue;
                     int minDistanceLine = 0;
@@ -506,7 +506,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         {
             List<string> scriptList = [];
 
-            int numScripts = BitConverter.ToInt32(scriptListFileData.Take(4).Reverse().ToArray());
+            int numScripts = IO.ReadInt(scriptListFileData, 0);
 
             for (int i = 0; i < numScripts; i++)
             {

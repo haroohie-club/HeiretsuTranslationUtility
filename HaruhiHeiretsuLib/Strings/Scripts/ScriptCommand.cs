@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Scripts
 {
@@ -17,27 +17,27 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         {
         }
 
-        public ScriptCommand(IEnumerable<byte> data)
+        public ScriptCommand(byte[] data)
         {
-            Index = BitConverter.ToInt16(data.Take(2).Reverse().ToArray());
-            ushort numParams = BitConverter.ToUInt16(data.Skip(2).Take(2).Reverse().ToArray());
-            int nameLength = BitConverter.ToInt32(data.Skip(4).Take(4).Reverse().ToArray());
+            Index = IO.ReadShort(data, 2);
+            ushort numParams = IO.ReadUShort(data, 0x02);
+            int nameLength = IO.ReadInt(data, 0x04);
             Name = Encoding.ASCII.GetString(data.Skip(8).Take(nameLength - 1).ToArray()); // minus one bc of the terminal character \x00 that we want to avoid
             for (ushort i = 0; i < numParams; i++)
             {
-                Parameters.Add(BitConverter.ToUInt16(data.Skip(8 + nameLength + i * 2).Take(2).Reverse().ToArray()));
+                Parameters.Add(IO.ReadUShort(data, 8 + nameLength + i * 2));
             }
             DefinitionLength = 8 + nameLength + numParams * 2;
         }
 
         public static List<ScriptCommand> ParseScriptCommandFile(byte[] scriptCommandFileData)
         {
-            int numCommands = BitConverter.ToInt32(scriptCommandFileData.Take(4).Reverse().ToArray());
+            int numCommands = IO.ReadInt(scriptCommandFileData, 0x00);
             List<ScriptCommand> scriptCommands = [];
 
             for (int i = 4; scriptCommands.Count < numCommands;)
             {
-                ScriptCommand scriptCommand = new(scriptCommandFileData.Skip(i));
+                ScriptCommand scriptCommand = new(scriptCommandFileData[i..]);
                 scriptCommands.Add(scriptCommand);
                 i += scriptCommand.DefinitionLength;
             }
@@ -55,7 +55,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             return $"{Index:X2} {Name}({string.Join(", ", Parameters.Select(s => $"{s:X4}"))})";
         }
 
-        public static int GetParameterLength(short paramTypeCode, IEnumerable<byte> data)
+        public static int GetParameterLength(short paramTypeCode, byte[] data)
         {
             switch (paramTypeCode)
             {
@@ -94,12 +94,12 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                 case 20:
                     return 24;
                 case 2:
-                    return BitConverter.ToInt16(data.Take(2).Reverse().ToArray()); // *a2
+                    return IO.ReadShort(data, 0); // *a2
                 case 17:
                 case 22:
-                    return 8 * BitConverter.ToInt32(data.Take(4).Reverse().ToArray()) + 4; // 8 * *(_DWORD *)a2 + 4
+                    return 8 * IO.ReadInt(data, 0) + 4; // 8 * *(_DWORD *)a2 + 4
                 case 29:
-                    return BitConverter.ToInt32(data.Take(4).Reverse().ToArray()); // *(_DWORD *)a2
+                    return IO.ReadInt(data, 0); // *(_DWORD *)a2
                 default:
                     return 0;
             }

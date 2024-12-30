@@ -780,8 +780,8 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
             {
                 byte comparatorByte = conditionalData[4 + i * 18];
                 byte combiningByte = conditionalData[5 + i * 18];
-                string value1 = CalculateIntParameter(Helpers.GetIntFromByteArray(conditionalData.Skip(6 + i * 18), 0), Helpers.GetIntFromByteArray(conditionalData.Skip(6 + i * 18), 1));
-                string value2 = CalculateIntParameter(Helpers.GetIntFromByteArray(conditionalData.Skip(14 + i * 18), 0), Helpers.GetIntFromByteArray(conditionalData.Skip(14 + i * 18), 1));
+                string value1 = CalculateIntParameter(IO.ReadInt(conditionalData, 6 + i * 18), IO.ReadInt(conditionalData, 10 + i * 18));
+                string value2 = CalculateIntParameter(IO.ReadInt(conditionalData, 14 + i * 18), IO.ReadInt(conditionalData, 18 + i * 18));
 
                 if (i > 0)
                 {

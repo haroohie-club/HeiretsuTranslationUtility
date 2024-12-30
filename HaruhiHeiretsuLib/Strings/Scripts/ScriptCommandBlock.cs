@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Scripts
 {
@@ -15,31 +16,31 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public List<ScriptCommandInvocation> Invocations { get; set; } = [];
         public int Length => Invocations.Sum(i => i.Length);
 
-        public ScriptCommandBlock(int address, int endAddress, IEnumerable<byte> data, List<string> objects)
+        public ScriptCommandBlock(int address, int endAddress, byte[] data, List<string> objects)
         {
             DefinitionAddress = address;
-            NameIndex = BitConverter.ToUInt16(data.Skip(address).Take(2).Reverse().ToArray());
+            NameIndex = IO.ReadUShort(data, address);
             Name = objects[NameIndex];
-            NumInvocations = BitConverter.ToUInt16(data.Skip(address + 2).Take(2).Reverse().ToArray());
-            BlockOffset = BitConverter.ToInt32(data.Skip(address + 4).Take(4).Reverse().ToArray());
+            NumInvocations = IO.ReadUShort(data, address + 0x02);
+            BlockOffset = IO.ReadInt(data, address + 0x04);
 
             for (int i = BlockOffset; i < endAddress - 8;)
             {
                 ScriptCommandInvocation invocation = new(objects, i);
-                invocation.LineNumber = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
+                invocation.LineNumber = IO.ReadShort(data, i);
                 i += 2;
-                invocation.CharacterEntity = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
+                invocation.CharacterEntity = IO.ReadShort(data, i);
                 i += 2;
-                invocation.CommandCode = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
+                invocation.CommandCode = IO.ReadShort(data, i);
                 i += 2;
-                short numParams = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
+                short numParams = IO.ReadShort(data, i);
                 i += 6;
                 for (int j = 0; j < numParams; j++)
                 {
-                    short paramTypeCode = BitConverter.ToInt16(data.Skip(i).Take(2).Reverse().ToArray());
+                    short paramTypeCode = IO.ReadShort(data, i);
                     i += 2;
-                    int paramLength = ScriptCommand.GetParameterLength(paramTypeCode, data.Skip(i));
-                    invocation.Parameters.Add(new Parameter() { Type = (ScriptCommand.ParameterType)paramTypeCode, Value = data.Skip(i).Take(paramLength).ToArray(), LineNumber = invocation.LineNumber });
+                    int paramLength = ScriptCommand.GetParameterLength(paramTypeCode, data[i..]);
+                    invocation.Parameters.Add(new() { Type = (ScriptCommand.ParameterType)paramTypeCode, Value = data.Skip(i).Take(paramLength).ToArray(), LineNumber = invocation.LineNumber });
                     i += paramLength;
                 }
                 Invocations.Add(invocation);

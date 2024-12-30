@@ -34,25 +34,27 @@ namespace HaruhiHeiretsuLib.Data
             base.Initialize(decompressedData, offset);
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            int numSections = BitConverter.ToInt32(Data.Take(4).Reverse().ToArray());
+            int numSections = IO.ReadInt(decompressedData, 0x00);
 
             for (int i = 0; i < numSections; i++)
             {
-                int sectionPointer = BitConverter.ToInt32(Data.Skip(0x0C + i * 8).Take(4).Reverse().ToArray());
-                int sectionItemCount = BitConverter.ToInt32(Data.Skip(0x10 + i * 8).Take(4).Reverse().ToArray());
+                int sectionPointer = IO.ReadInt(decompressedData, 0x0C + i * 8);
+                int sectionItemCount = IO.ReadInt(decompressedData, 0x10 + i * 8);
 
                 if (i == 0) // we're in the initial topics section
                 {
                     for (int j = 0; j < sectionItemCount; j++)
                     {
-                        Topic topic = new();
-                        topic.Index = BitConverter.ToInt32(Data.Skip(sectionPointer + j * 0x18).Take(4).Reverse().ToArray());
-                        topic.Unknown04 = BitConverter.ToInt32(Data.Skip(sectionPointer + j * 0x18 + 0x04).Take(4).Reverse().ToArray());
-                        int idOffset = BitConverter.ToInt32(Data.Skip(sectionPointer + j * 0x18 + 0x08).Take(4).Reverse().ToArray());
-                        int nameOffset = BitConverter.ToInt32(Data.Skip(sectionPointer + j * 0x18 + 0x0C).Take(4).Reverse().ToArray());
-                        int descriptionOffset = BitConverter.ToInt32(Data.Skip(sectionPointer + j * 0x18 + 0x10).Take(4).Reverse().ToArray());
-                        topic.Unknown14 = BitConverter.ToInt16(Data.Skip(sectionPointer + j * 0x18 + 0x14).Take(2).Reverse().ToArray());
-                        topic.Unknown16 = BitConverter.ToInt16(Data.Skip(sectionPointer + j * 0x18 + 0x16).Take(2).Reverse().ToArray());
+                        Topic topic = new()
+                        {
+                            Index = IO.ReadInt(decompressedData, sectionPointer + j * 0x18),
+                            Unknown04 = IO.ReadInt(decompressedData, sectionPointer + j * 0x18 + 0x04),
+                        };
+                        int idOffset = IO.ReadInt(decompressedData, sectionPointer + j * 0x18 + 0x08);
+                        int nameOffset = IO.ReadInt(decompressedData, sectionPointer + j * 0x18 + 0x0C);
+                        int descriptionOffset = IO.ReadInt(decompressedData, sectionPointer + j * 0x18 + 0x10);
+                        topic.Unknown14 = IO.ReadShort(decompressedData, sectionPointer + j * 0x18 + 0x14);
+                        topic.Unknown16 = IO.ReadShort(decompressedData, sectionPointer + j * 0x18 + 0x16);
 
                         topic.Id = Encoding.ASCII.GetString(Data.Skip(idOffset).TakeWhile(b => b != 0).ToArray());
                         topic.Name = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(nameOffset).TakeWhile(b => b != 0).ToArray());
@@ -67,8 +69,8 @@ namespace HaruhiHeiretsuLib.Data
                     for (int j = 0; j < sectionItemCount; j++)
                     {
                         Flag flag = new();
-                        flag.Index = BitConverter.ToInt32(Data.Skip(sectionPointer + j * 0x08).Take(4).Reverse().ToArray());
-                        int nameOffset = BitConverter.ToInt32(Data.Skip(sectionPointer + j * 0x08 + 4).Take(4).Reverse().ToArray());
+                        flag.Index = IO.ReadInt(decompressedData, sectionPointer + j * 0x08);
+                        int nameOffset = IO.ReadInt(decompressedData, sectionPointer + j * 0x08 + 4);
                         flag.Name = Encoding.ASCII.GetString(Data.Skip(nameOffset).TakeWhile(b => b != 0).ToArray());
                         flag.Type = (FlagType)i;
 
@@ -79,7 +81,7 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     for (int j = 0; j < sectionItemCount; j++)
                     {
-                        TopicReferences.Add(new(Data.Skip(sectionPointer + j * 0x34).Take(0x34)));
+                        TopicReferences.Add(new(decompressedData[(sectionPointer + j * 0x34)..(sectionPointer + j * 0x68)]));
                     }
                     int pointerArrayPointer = sectionPointer + sectionItemCount * 0x34;
                     foreach (TopicReference topicReference in TopicReferences)
@@ -179,13 +181,13 @@ namespace HaruhiHeiretsuLib.Data
                         dataBytes.AddRange(new byte[4]);
                     }
                 }
-                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown18).Reverse().ToArray());
-                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown1C).Reverse().ToArray());
-                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown20).Reverse().ToArray());
-                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown24).Reverse().ToArray());
-                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown28).Reverse().ToArray());
-                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown2C).Reverse().ToArray());
-                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown30).Reverse().ToArray());
+                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown18).Reverse());
+                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown1C).Reverse());
+                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown20).Reverse());
+                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown24).Reverse());
+                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown28).Reverse());
+                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown2C).Reverse());
+                dataBytes.AddRange(BitConverter.GetBytes(topicReference.Unknown30).Reverse());
             }
             dataBytes.AddRange(topicReferenceStringBytes);
             bytes.AddRange(dataBytes);
@@ -288,21 +290,21 @@ namespace HaruhiHeiretsuLib.Data
         public int Unknown2C { get; set; }
         public int Unknown30 { get; set; }
 
-        public TopicReference(IEnumerable<byte> data)
+        public TopicReference(byte[] data)
         {
-            Index = BitConverter.ToInt32(data.Skip(0x00).Take(4).Reverse().ToArray());
-            TopicOffsets[0] = BitConverter.ToInt32(data.Skip(0x04).Take(4).Reverse().ToArray());
-            TopicOffsets[1] = BitConverter.ToInt32(data.Skip(0x08).Take(4).Reverse().ToArray());
-            TopicOffsets[2] = BitConverter.ToInt32(data.Skip(0x0C).Take(4).Reverse().ToArray());
-            TopicOffsets[3] = BitConverter.ToInt32(data.Skip(0x10).Take(4).Reverse().ToArray());
-            TopicOffsets[4] = BitConverter.ToInt32(data.Skip(0x14).Take(4).Reverse().ToArray());
-            Unknown18 = BitConverter.ToInt32(data.Skip(0x18).Take(4).Reverse().ToArray());
-            Unknown1C = BitConverter.ToInt32(data.Skip(0x1C).Take(4).Reverse().ToArray());
-            Unknown20 = BitConverter.ToInt32(data.Skip(0x20).Take(4).Reverse().ToArray());
-            Unknown24 = BitConverter.ToInt32(data.Skip(0x24).Take(4).Reverse().ToArray());
-            Unknown28 = BitConverter.ToInt32(data.Skip(0x28).Take(4).Reverse().ToArray());
-            Unknown2C = BitConverter.ToInt32(data.Skip(0x2C).Take(4).Reverse().ToArray());
-            Unknown30 = BitConverter.ToInt32(data.Skip(0x30).Take(4).Reverse().ToArray());
+            Index = IO.ReadInt(data, 0x00);
+            TopicOffsets[0] = IO.ReadInt(data, 0x04);
+            TopicOffsets[1] = IO.ReadInt(data, 0x08);
+            TopicOffsets[2] = IO.ReadInt(data, 0x0C);
+            TopicOffsets[3] = IO.ReadInt(data, 0x10);
+            TopicOffsets[4] = IO.ReadInt(data, 0x14);
+            Unknown18 = IO.ReadInt(data, 0x18);
+            Unknown1C = IO.ReadInt(data, 0x1C);
+            Unknown20 = IO.ReadInt(data, 0x20);
+            Unknown24 = IO.ReadInt(data, 0x24);
+            Unknown28 = IO.ReadInt(data, 0x28);
+            Unknown2C = IO.ReadInt(data, 0x2C);
+            Unknown30 = IO.ReadInt(data, 0x30);
         }
     }
 }

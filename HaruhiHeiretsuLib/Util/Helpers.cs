@@ -1,5 +1,6 @@
 ﻿using SkiaSharp;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,15 +12,15 @@ namespace HaruhiHeiretsuLib.Util
         private const ulong F2 = 0x4330000080000000L;
         private const ulong F0 = 0x3F50000000000000L;
 
-        public static short? ToShortOrDefault(IEnumerable<byte> bytes)
+        public static short? ToShortOrDefault(ReadOnlySpan<byte> bytes)
         {
-            if (bytes is null || bytes.Count() != 2)
+            if (bytes.Length != 2)
             {
                 return null;
             }
             else
             {
-                return BitConverter.ToInt16(bytes.Reverse().ToArray());
+                return IO.ReadShort(bytes, 0);
             }
         }
 
@@ -106,21 +107,19 @@ namespace HaruhiHeiretsuLib.Util
             return true;
         }
 
-        public static int GetIntFromByteArray(IEnumerable<byte> data, int position)
+        public static int GetIntFromByteArray(ReadOnlySpan<byte> data, int position)
         {
-            return BitConverter.ToInt32(data.Skip(position * 4).Take(4).Reverse().ToArray());
+            return IO.ReadInt(data, position * 4);
         }
 
         public static byte[] GetStringBytes(string str)
         {
-            List<byte> bytes = [];
-
             byte[] stringBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(str);
-            bytes.AddRange(BitConverter.GetBytes(stringBytes.Length + 1).Reverse());
-            bytes.AddRange(stringBytes);
-            bytes.Add(0);
+            byte[] bytes = new byte[stringBytes.Length + 5];
+            BinaryPrimitives.WriteInt32BigEndian(bytes, stringBytes.Length);
+            Array.Copy(stringBytes, 0, bytes, 4, stringBytes.Length);
 
-            return [.. bytes];
+            return bytes;
         }
 
         public static byte[] CompressData(byte[] decompressedData)

@@ -84,7 +84,7 @@ namespace HaruhiHeiretsuLib.Data
     /// </remarks>
     /// <param name="data">The clubroom Mikuru music file binary data</param>
     /// <param name="offset">The offset of this entry into that data</param>
-    public class ClubroomMusicPlayerEntry(IEnumerable<byte> data, int offset)
+    public class ClubroomMusicPlayerEntry(byte[] data, int offset)
     {
         /// <summary>
         /// The title of the music track

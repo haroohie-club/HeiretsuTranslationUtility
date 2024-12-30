@@ -117,7 +117,7 @@ namespace HaruhiHeiretsuLib.Graphics
         /// Constructs an SGE given binary SGE data
         /// </summary>
         /// <param name="data">The full, decompressed binary data from the SGE file in grp.bin</param>
-        public Sge(IEnumerable<byte> data)
+        public Sge(byte[] data)
         {
             _serializerOptions.Converters.Add(new SgeBoneAttchedVertexConverter());
             _serializerOptions.Converters.Add(new SKColorConverter());
@@ -126,8 +126,8 @@ namespace HaruhiHeiretsuLib.Graphics
 
             // SGEs are little-endian so no need for .Reverse() here
             SgeStartOffset = IO.ReadIntLE(data, 0x1C);
-            IEnumerable<byte> sgeData = data.Skip(SgeStartOffset);
-            SgeHeader = new(sgeData.Take(0x80));
+            byte[] sgeData = [.. data.Skip(SgeStartOffset)];
+            SgeHeader = new([.. sgeData.Take(0x80)]);
             for (int i = 0; i < 10; i++) // There's always ten meshes
             {
                 SgeMeshes.Add(new(sgeData, SgeHeader.MeshTableAddress + 0x44 * i));
@@ -147,15 +147,15 @@ namespace HaruhiHeiretsuLib.Graphics
             }
             for (int i = 0; i < SgeHeader.SgeGXLightingDataCount; i++)
             {
-                SgeGXLightingDataTable.Add(new(sgeData.Skip(SgeHeader.SgeGXLightingDataTableOffset + i * 0x48).Take(0x48), SgeHeader.SgeGXLightingDataTableOffset + i * 0x48));
+                SgeGXLightingDataTable.Add(new([.. sgeData.Skip(SgeHeader.SgeGXLightingDataTableOffset + i * 0x48).Take(0x48)], SgeHeader.SgeGXLightingDataTableOffset + i * 0x48));
             }
             for (int i = 0; i < SgeHeader.SubmeshBlendDataCount; i++)
             {
-                SubmeshBlendDataTable.Add(new(sgeData.Skip(SgeHeader.SubmeshBlendDataTableOffset + i * 0x14).Take(0x14), SgeHeader.SubmeshBlendDataTableOffset + i * 0x14));
+                SubmeshBlendDataTable.Add(new([.. sgeData.Skip(SgeHeader.SubmeshBlendDataTableOffset + i * 0x14).Take(0x14)], SgeHeader.SubmeshBlendDataTableOffset + i * 0x14));
             }
             for (int i = 0; i < SgeHeader.OutlineDataCount; i++)
             {
-                OutlineDataTable.Add(new(sgeData.Skip(SgeHeader.OutlineDataTableOffset + i * 0x18).Take(0x18), SgeHeader.OutlineDataTableOffset + i * 0x18));
+                OutlineDataTable.Add(new([.. sgeData.Skip(SgeHeader.OutlineDataTableOffset + i * 0x18).Take(0x18)], SgeHeader.OutlineDataTableOffset + i * 0x18));
             }
 
             foreach (SgeMesh meshTableEntry in SgeMeshes.Take(1)) // but only the first mesh ever seems to matter
@@ -190,7 +190,7 @@ namespace HaruhiHeiretsuLib.Graphics
                         int vertexStartAddress = IO.ReadIntLE(sgeData, vertexStartAddresses[j] + 0x04);
                         for (int i = 0; i < numVertices; i++)
                         {
-                            vertexLists.Last().Add(new(sgeData.Skip(vertexStartAddress + i * 0x38).Take(0x38)));
+                            vertexLists.Last().Add(new([.. sgeData.Skip(vertexStartAddress + i * 0x38).Take(0x38)]));
                         }
                     }
 
@@ -288,7 +288,7 @@ namespace HaruhiHeiretsuLib.Graphics
 
             for (int i = 0; i < SgeHeader.Unknown4CCount; i++)
             {
-                Unknown4CTable.Add(new(sgeData.Skip(SgeHeader.Unknown4CTableOffset + i * 0x18).Take(0x18)));
+                Unknown4CTable.Add(new([.. sgeData.Skip(SgeHeader.Unknown4CTableOffset + i * 0x18).Take(0x18)]));
             }
 
             for (int i = 0; i < SgeHeader.Unknown50Count; i++)
@@ -298,27 +298,27 @@ namespace HaruhiHeiretsuLib.Graphics
 
             for (int i = 0; i < SgeHeader.Unknown58Count; i++)
             {
-                Unknown58Table.Add(new(sgeData.Skip(SgeHeader.Unknown58TableOffset + i * 0x20).Take(0x20)));
+                Unknown58Table.Add(new([.. sgeData.Skip(SgeHeader.Unknown58TableOffset + i * 0x20).Take(0x20)]));
             }
 
             for (int i = 0; i < TranslateDataCount; i++)
             {
-                TranslateDataEntries.Add(new(sgeData.Skip(TranslateDataOffset + i * 0x0C).Take(0x0C)));
+                TranslateDataEntries.Add(new([.. sgeData.Skip(TranslateDataOffset + i * 0x0C).Take(0x0C)]));
             }
 
             for (int i = 0; i < RotateDataCount; i++)
             {
-                RotateDataEntries.Add(new(sgeData.Skip(RotateDataOffset + i * 0x10).Take(0x10)));
+                RotateDataEntries.Add(new([.. sgeData.Skip(RotateDataOffset + i * 0x10).Take(0x10)]));
             }
 
             for (int i = 0; i < ScaleDataCount; i++)
             {
-                ScaleDataEntries.Add(new(sgeData.Skip(ScaleDataOffset + i * 0x0C).Take(0x0C)));
+                ScaleDataEntries.Add(new([.. sgeData.Skip(ScaleDataOffset + i * 0x0C).Take(0x0C)]));
             }
 
             for (int i = 0; i < NumKeyframes; i++)
             {
-                KeyframeDefinitions.Add(new(sgeData.Skip(KeyframeDefinitionsOffset + i * 0x28).Take(0x28)));
+                KeyframeDefinitions.Add(new([.. sgeData.Skip(KeyframeDefinitionsOffset + i * 0x28).Take(0x28)]));
             }
         }
 
@@ -741,7 +741,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public SgeHeader(IEnumerable<byte> headerData)
+        public SgeHeader(byte[] headerData)
         {
             Version = IO.ReadShortLE(headerData, 0x00);
             ModelType = IO.ReadShortLE(headerData, 0x02);
@@ -846,7 +846,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public SgeAnimation(IEnumerable<byte> data, int baseOffset, int numBones, int defOffset)
+        public SgeAnimation(byte[] data, int baseOffset, int numBones, int defOffset)
         {
             TotalFrames = IO.ReadFloat(data, defOffset);
             Unknown04 = IO.ReadIntLE(data, defOffset + 0x04);
@@ -871,7 +871,7 @@ namespace HaruhiHeiretsuLib.Graphics
             for (int i = 1; i < numBones; i++)
             {
                 int offset = IO.ReadIntLE(data, baseOffset + BoneTableOffset + i * 4) + baseOffset;
-                BoneTable.Add(new(data.Skip(offset).Take(6 * NumKeyframes), offset, NumKeyframes));
+                BoneTable.Add(new([.. data.Skip(offset).Take(6 * NumKeyframes)], offset, NumKeyframes));
             }
         }
 
@@ -932,7 +932,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public BoneTableEntry(IEnumerable<byte> data, int offset, int numKeyframes)
+        public BoneTableEntry(byte[] data, int offset, int numKeyframes)
         {
             for (int i = 0; i < numKeyframes; i++)
             {
@@ -972,7 +972,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public TranslateDataEntry(IEnumerable<byte> data)
+        public TranslateDataEntry(byte[] data)
         {
             X = IO.ReadFloat(data, 0x00);
             Y = IO.ReadFloat(data, 0x04);
@@ -998,7 +998,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public RotateDataEntry(IEnumerable<byte> data)
+        public RotateDataEntry(byte[] data)
         {
             X = IO.ReadFloat(data, 0x00);
             Y = IO.ReadFloat(data, 0x04);
@@ -1024,7 +1024,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public ScaleDataEntry(IEnumerable<byte> data)
+        public ScaleDataEntry(byte[] data)
         {
             X = IO.ReadFloat(data, 0x00);
             Y = IO.ReadFloat(data, 0x04);
@@ -1057,7 +1057,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public KeyframeDefinition(IEnumerable<byte> data)
+        public KeyframeDefinition(byte[] data)
         {
             Unknown00 = IO.ReadFloat(data, 0x00);
             Unknown04 = IO.ReadFloat(data, 0x04);
@@ -1123,7 +1123,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public SgeGXLightingData(IEnumerable<byte> data, int offset)
+        public SgeGXLightingData(byte[] data, int offset)
         {
             Offset = offset;
             AmbientR = IO.ReadFloat(data, 0x00);
@@ -1223,7 +1223,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public SubmeshBlendData(IEnumerable<byte> data, int offset)
+        public SubmeshBlendData(byte[] data, int offset)
         {
             Offset = offset;
             UseCustomBlendMode = IO.ReadIntLE(data, 0x00) != 0;
@@ -1270,7 +1270,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public OutlineDataEntry(IEnumerable<byte> data, int offset)
+        public OutlineDataEntry(byte[] data, int offset)
         {
             Offset = offset;
             Unknown00 = IO.ReadIntLE(data, 0x00);
@@ -1312,7 +1312,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public Unknown4CEntry(IEnumerable<byte> data)
+        public Unknown4CEntry(byte[] data)
         {
             Unknown00 = IO.ReadShortLE(data, 0x00);
             Unknown02 = IO.ReadShortLE(data, 0x02);
@@ -1351,7 +1351,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public BoneAnimationGroup(IEnumerable<byte> data, int offset)
+        public BoneAnimationGroup(byte[] data, int offset)
         {
             int currentShortOffset = IO.ReadIntLE(data, offset);
             for (short unknownShort = IO.ReadShortLE(data, currentShortOffset); unknownShort > 0; unknownShort = IO.ReadShortLE(data, currentShortOffset))
@@ -1377,7 +1377,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public Unknown58Entry(IEnumerable<byte> data)
+        public Unknown58Entry(byte[] data)
         {
             Unknown00 = IO.ReadFloat(data, 0x00);
             Unknown04 = IO.ReadFloat(data, 0x04);
@@ -1430,7 +1430,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public SgeMesh(IEnumerable<byte> data, int offset)
+        public SgeMesh(byte[] data, int offset)
         {
             Unknown00 = IO.ReadIntLE(data, offset);
             Unknown04 = IO.ReadIntLE(data, offset + 0x04);
@@ -1563,7 +1563,7 @@ namespace HaruhiHeiretsuLib.Graphics
         /// </summary>
         /// <param name="data">The binary data of the bone</param>
         /// <param name="offset">The offset of the bone in the SGE file</param>
-        public SgeBone(IEnumerable<byte> data, int offset)
+        public SgeBone(byte[] data, int offset)
         {
             Address = offset;
             TailOffset = new Vector3(
@@ -1689,7 +1689,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public SgeSubmesh(IEnumerable<byte> data, int offset, List<SgeMaterial> materials, List<SgeBone> bones, List<SubmeshBlendData> blendData)
+        public SgeSubmesh(byte[] data, int offset, List<SgeMaterial> materials, List<SgeBone> bones, List<SubmeshBlendData> blendData)
         {
             Unknown00 = IO.ReadShortLE(data, offset);
             Unknown02 = IO.ReadShortLE(data, offset + 0x02);
@@ -1789,7 +1789,7 @@ namespace HaruhiHeiretsuLib.Graphics
         {
         }
 
-        public SgeVertex(IEnumerable<byte> data)
+        public SgeVertex(byte[] data)
         {
             Position = new Vector3(IO.ReadFloat(data, 0x00), IO.ReadFloat(data, 0x04), IO.ReadFloat(data, 0x08));
             float weight1 = IO.ReadFloat(data, 0x0C);

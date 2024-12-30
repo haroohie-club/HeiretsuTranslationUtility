@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using Topten.RichTextKit;
 
 namespace HaruhiHeiretsuLib.Graphics
 {
@@ -15,7 +13,7 @@ namespace HaruhiHeiretsuLib.Graphics
         public int NumCharacters { get; set; }
         public List<int> UnknownInts { get; set; } = [];
         public List<Character> Characters { get; set; } = [];
-        public bool Edited { get; set; } = false;
+        public bool Edited { get; set; }
 
         private Dictionary<ushort, int> _codepointsToIndexes = [];
 

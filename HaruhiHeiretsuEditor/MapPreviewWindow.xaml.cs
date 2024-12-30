@@ -1,9 +1,4 @@
-﻿using SkiaSharp;
-using System;
-using System.Windows;
-using System.Windows.Controls;
-
-namespace HaruhiHeiretsuEditor
+﻿namespace HaruhiHeiretsuEditor
 {
     /// <summary>
     /// Interaction logic for LanguageCodeDialogBox.xaml

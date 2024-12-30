@@ -20,7 +20,7 @@ namespace HaruhiHeiretsuLib.Data
         /// <summary>
         /// Unknown
         /// </summary>
-        public short StaticCameraIndex { get; set; } = new();
+        public short StaticCameraIndex { get; set; }
 
         /// <summary>
         /// Simple constructor

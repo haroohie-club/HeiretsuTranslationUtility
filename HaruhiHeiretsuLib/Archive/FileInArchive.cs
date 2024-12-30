@@ -54,7 +54,7 @@ namespace HaruhiHeiretsuLib.Archive
         /// A boolean representing whether the file has been edited or not
         /// </summary>
         [JsonIgnore]
-        public bool Edited { get; set; } = false;
+        public bool Edited { get; set; }
 
         /// <summary>
         /// Initializes this file with its binary data
