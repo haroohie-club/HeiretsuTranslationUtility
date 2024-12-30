@@ -67,5 +67,10 @@ namespace HaruhiHeiretsuLib.Util
         {
             return Encoding.ASCII.GetString(data.Skip(offset).TakeWhile(b => b != 0x00).ToArray());
         }
+
+        public static string ReadShiftJisStringOfLength(byte[] data, int offset, int length)
+        {
+            return Encoding.GetEncoding("Shift-JIS").GetString(data[offset..(offset + length)]);
+        }
     }
 }

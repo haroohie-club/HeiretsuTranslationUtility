@@ -116,7 +116,7 @@ namespace HaruhiHeiretsuLib.Util
         {
             byte[] stringBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(str);
             byte[] bytes = new byte[stringBytes.Length + 5];
-            BinaryPrimitives.WriteInt32BigEndian(bytes, stringBytes.Length);
+            BinaryPrimitives.WriteInt32BigEndian(bytes, stringBytes.Length + 1);
             Array.Copy(stringBytes, 0, bytes, 4, stringBytes.Length);
 
             return bytes;

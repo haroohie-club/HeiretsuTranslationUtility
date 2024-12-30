@@ -23,17 +23,15 @@
 
   <ItemGroup>
     <None Update="inputs\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
 	  <None Update="inputs\resx\*">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Update="inputs\resx\mapdef.en.resx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
+	  <EmbeddedResource Remove="inputs\resx\mapdef.en.resx" />
+	  <None Include="inputs\resx\mapdef.en.resx">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
   </ItemGroup>
 
 </Project>

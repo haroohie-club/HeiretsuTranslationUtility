@@ -6,7 +6,7 @@ namespace HaruhiHeiretsuTests
 {
     public class GraphicsTests
     {
-        private const string UiLayoutPath = @"inputs\layout_ui.bin";
+        private const string UiLayoutPath = @"inputs/layout_ui.bin";
 
         [SetUp]
         public void Setup()
@@ -31,8 +31,8 @@ namespace HaruhiHeiretsuTests
             importedLayoutFile.ImportLayoutJson(startLayoutCsv);
             importedLayoutFile.SetLayoutData();
 
-            File.WriteAllBytes(@$"output\{Path.GetFileNameWithoutExtension(path)}-start.bin", bytesOnDisk);
-            File.WriteAllBytes(@$"output\{Path.GetFileNameWithoutExtension(path)}-imported.bin", importedLayoutFile.GetBytes());
+            File.WriteAllBytes(@$"output/{Path.GetFileNameWithoutExtension(path)}-start.bin", bytesOnDisk);
+            File.WriteAllBytes(@$"output/{Path.GetFileNameWithoutExtension(path)}-imported.bin", importedLayoutFile.GetBytes());
 
             Assert.That(bytesOnDisk, Is.EquivalentTo(importedLayoutFile.GetBytes()));
         }

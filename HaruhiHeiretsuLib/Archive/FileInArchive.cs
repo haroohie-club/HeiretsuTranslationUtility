@@ -7,7 +7,7 @@ namespace HaruhiHeiretsuLib.Archive
     /// <summary>
     /// A representation of a file contained within an archive
     /// </summary>
-    public partial class FileInArchive
+    public class FileInArchive
     {
         /// <summary>
         /// The ID of the file in the MCB (if it is in the MCB)

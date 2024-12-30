@@ -401,6 +401,7 @@ namespace HaruhiHeiretsuLib.Data
             dataBytes.AddRange(BitConverter.GetBytes(Unknown2C).Reverse());
             dataBytes.AddRange(BitConverter.GetBytes(Unknown30).Reverse());
             dataBytes.AddRange(BitConverter.GetBytes(Unknown34).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown38).Reverse());
             dataBytes.AddRange(BitConverter.GetBytes(EventIndex).Reverse());
             dataBytes.AddRange(BitConverter.GetBytes(Unknown3C).Reverse());
             dataBytes.AddRange(BitConverter.GetBytes(Unknown40).Reverse());

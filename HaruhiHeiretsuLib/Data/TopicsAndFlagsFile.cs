@@ -81,7 +81,7 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     for (int j = 0; j < sectionItemCount; j++)
                     {
-                        TopicReferences.Add(new(decompressedData[(sectionPointer + j * 0x34)..(sectionPointer + j * 0x68)]));
+                        TopicReferences.Add(new(decompressedData[(sectionPointer + j * 0x34)..(sectionPointer + (j + 1) * 0x34)]));
                     }
                     int pointerArrayPointer = sectionPointer + sectionItemCount * 0x34;
                     foreach (TopicReference topicReference in TopicReferences)

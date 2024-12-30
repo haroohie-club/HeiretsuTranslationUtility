@@ -58,7 +58,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         private static string ReadString(byte[] data, int currentPosition, out int newPosition)
         {
             int stringLength = IO.ReadInt(data, currentPosition);
-            string result = IO.ReadShiftJisString(data, currentPosition + 4);
+            string result = IO.ReadShiftJisStringOfLength(data, currentPosition + 4, stringLength - 1);
             newPosition = currentPosition + stringLength + 4;
             return result;
         }
