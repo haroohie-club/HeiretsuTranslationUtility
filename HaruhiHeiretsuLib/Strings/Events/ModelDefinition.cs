@@ -76,7 +76,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public List<KeyframeDefinition> KeyframeDefinitions { get; set; } = [];
 
         // Truncated version of an SGE header
-        public ModelDefinitionDetails(IEnumerable<byte> data, int offset)
+        public ModelDefinitionDetails(byte[] data, int offset)
         {
             Version = BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
             Unknown38TableCount = BitConverter.ToInt32(data.Skip(offset + 0x04).Take(4).ToArray());
@@ -119,27 +119,27 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
             for (int i = 0; i < Unknown38TableCount; i++)
             {
-                GXLightingDataTable.Add(new(data.Skip(Unknown38TableOffset + i * 0x48).Take(0x48), Unknown38TableOffset + i * 0x48));
+                GXLightingDataTable.Add(new([.. data.Skip(Unknown38TableOffset + i * 0x48).Take(0x48)], Unknown38TableOffset + i * 0x48));
             }
 
             for (int i = 0; i < TranslateDataCount; i++)
             {
-                TranslateDataEntries.Add(new(data.Skip(TranslateDataOffset + i * 0x0C).Take(0x0C)));
+                TranslateDataEntries.Add(new([.. data.Skip(TranslateDataOffset + i * 0x0C).Take(0x0C)]));
             }
 
             for (int i = 0; i < RotateDataCount; i++)
             {
-                RotateDataEntries.Add(new(data.Skip(RotateDataOffset + i * 0x10).Take(0x10)));
+                RotateDataEntries.Add(new([.. data.Skip(RotateDataOffset + i * 0x10).Take(0x10)]));
             }
 
             for (int i = 0; i < ScaleDataCount; i++)
             {
-                ScaleDataEntries.Add(new(data.Skip(ScaleDataOffset + i * 0x0C).Take(0x0C)));
+                ScaleDataEntries.Add(new([.. data.Skip(ScaleDataOffset + i * 0x0C).Take(0x0C)]));
             }
 
             for (int i = 0; i < NumKeyframes; i++)
             {
-                KeyframeDefinitions.Add(new(data.Skip(KeyframeDefinitionsOffset + i * 0x28).Take(0x28)));
+                KeyframeDefinitions.Add(new([.. data.Skip(KeyframeDefinitionsOffset + i * 0x28).Take(0x28)]));
             }
         }
     }

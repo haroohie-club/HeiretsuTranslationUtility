@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Resources.NetStandard;
 using System.Text;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Events
 {
@@ -40,7 +41,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         {
             if (BitConverter.ToInt32(Data.Take(4).ToArray()) == 6)
             {
-                CutsceneData = new(Data);
+                CutsceneData = new(Data.ToArray());
 
                 ParseDialogue();
             }
@@ -136,9 +137,9 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public List<ModelDefinition> CharacterModelDefinitionTable { get; set; } = [];
         public List<ChapterDefinition> ChapterDefinitionTable { get; set; } = [];
 
-        public CutsceneData(IEnumerable<byte> data)
+        public CutsceneData(byte[] data)
         {
-            Header = new(data.Take(0x40));
+            Header = new( data[..0x40]);
             for (int i = 0; i < Header.NumActors; i++)
             {
                 CharacterModelDefinitionTable.Add(new(data.Skip(Header.ActorModelDefinitionOffset + i * 0x18).Take(0x18)));
@@ -184,23 +185,23 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public int Unknown38 { get; set; }
         public int Unknown3C { get; set; }
 
-        public EventFileHeader(IEnumerable<byte> data)
+        public EventFileHeader(byte[] data)
         {
             // Event files are little-endian, so no need to .Reverse
-            Version = BitConverter.ToInt32(data.Take(4).ToArray());
-            TotalRuntimeInFrames = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
-            CurrentFrame = BitConverter.ToSingle(data.Skip(0x08).Take(4).ToArray());
-            CurrentChapter = BitConverter.ToInt16(data.Skip(0x0C).Take(4).ToArray()); // With two bytes of padding
-            Unknown10 = BitConverter.ToSingle(data.Skip(0x10).Take(4).ToArray());
-            ChaptersCount = BitConverter.ToInt16(data.Skip(0x14).Take(2).ToArray());
-            Padding16 = BitConverter.ToInt16(data.Skip(0x16).Take(2).ToArray());
-            ChapterDefTableOffset = BitConverter.ToInt32(data.Skip(0x18).Take(4).ToArray());
-            NumActors = BitConverter.ToInt16(data.Skip(0x1C).Take(2).ToArray());
-            ActorModelDefinitionOffset = BitConverter.ToInt32(data.Skip(0x20).Take(4).ToArray());
-            Unknown24 = BitConverter.ToInt16(data.Skip(0x24).Take(2).ToArray());
-            Unknown26 = BitConverter.ToInt16(data.Skip(0x26).Take(2).ToArray());
-            Unknown28 = BitConverter.ToInt32(data.Skip(0x28).Take(4).ToArray());
-            Unknown2C = BitConverter.ToInt32(data.Skip(0x2C).Take(4).ToArray());
+            Version = IO.ReadIntLE(data, 0);
+            TotalRuntimeInFrames = IO.ReadFloatLE(data, 0x04);
+            CurrentFrame = IO.ReadFloatLE(data, 0x08);
+            CurrentChapter = IO.ReadShortLE(data, 0x0E); // With two bytes of padding
+            Unknown10 = IO.ReadFloatLE(data, 0x10);
+            ChaptersCount = IO.ReadShortLE(data, 0x14);
+            Padding16 = IO.ReadShortLE(data, 0x16);
+            ChapterDefTableOffset = IO.ReadIntLE(data, 0x18);
+            NumActors = IO.ReadShortLE(data, 0x1C);
+            ActorModelDefinitionOffset = IO.ReadIntLE(data, 0x20);
+            Unknown24 = IO.ReadShortLE(data, 0x24);
+            Unknown26 = IO.ReadShortLE(data, 0x26);
+            Unknown28 = IO.ReadIntLE(data, 0x28);
+            Unknown2C = IO.ReadIntLE(data, 0x2C);
         }
 
         public List<byte> GetBytes()

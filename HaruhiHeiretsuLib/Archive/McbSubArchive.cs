@@ -24,9 +24,9 @@ namespace HaruhiHeiretsuLib.Archive
 
             for (int i = Offset; i < Offset + Size;)
             {
-                int archiveIndex = BitConverter.ToInt32(data.Skip(i).Take(4).ToArray());
-                int archiveOffset = BitConverter.ToInt32(data.Skip(i + 4).Take(4).ToArray());
-                int compressedSize = BitConverter.ToInt32(data.Skip(i + 8).Take(4).ToArray());
+                int archiveIndex = IO.ReadIntLE(data, i);
+                int archiveOffset = IO.ReadIntLE(data, i + 4);
+                int compressedSize = IO.ReadIntLE(data, i + 8);
 
                 if (archiveIndex == 0x7FFF)
                 {

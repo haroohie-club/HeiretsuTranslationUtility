@@ -2,20 +2,19 @@
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace HaruhiHeiretsuTests
 {
     public class DataTests
     {
-        private const string MapDefinitionsFilePath = @"inputs\mapdef.bin";
-        private const string CameraDataFilePath = @"inputs\cameradata.bin";
-        private const string TopicsFlagsFilePath = @"inputs\topicsFlags.bin";
-        private const string NameplatesFilePath = @"inputs\nameplates.bin";
-        private const string TimelineFilePath = @"inputs\timeline.bin";
-        private const string ClubroomFilePath = @"inputs\clubroom.bin";
-        private const string ExtrasClfClaFilePath = @"inputs\extrasclfcla.bin";
-        private const string ExtrasCldFilePath = @"inputs\extrascld.bin";
+        private const string MapDefinitionsFilePath = @"inputs/mapdef.bin";
+        private const string CameraDataFilePath = @"inputs/cameradata.bin";
+        private const string TopicsFlagsFilePath = @"inputs/topicsFlags.bin";
+        private const string NameplatesFilePath = @"inputs/nameplates.bin";
+        private const string TimelineFilePath = @"inputs/timeline.bin";
+        private const string ClubroomFilePath = @"inputs/clubroom.bin";
+        private const string ExtrasClfClaFilePath = @"inputs/extrasclfcla.bin";
+        private const string ExtrasCldFilePath = @"inputs/extrascld.bin";
 
         [SetUp]
         public void Setup()
@@ -77,6 +76,8 @@ namespace HaruhiHeiretsuTests
             TopicsAndFlagsFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
 
+            File.WriteAllBytes("output/topicsFlags-gen.bin", generatedBytes);
+
             Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }
 
@@ -118,6 +119,8 @@ namespace HaruhiHeiretsuTests
             byte[] generatedBytes = clubroomCutsceneFile.GetBytes();
             ClubroomKoizumiCutscenesFile generatedFile = new();
             generatedFile.Initialize(generatedBytes, 0);
+            
+            File.WriteAllBytes("output/clubroom-gen.bin", generatedBytes);
 
             Assert.That(initialBytes, Is.EquivalentTo(generatedBytes));
         }

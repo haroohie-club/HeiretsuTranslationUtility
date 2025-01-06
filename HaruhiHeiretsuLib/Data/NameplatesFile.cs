@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HaruhiHeiretsuLib.Data
 {
@@ -17,23 +16,23 @@ namespace HaruhiHeiretsuLib.Data
             base.Initialize(decompressedData, offset);
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            int numNameplates = BitConverter.ToInt32(Data.Skip(0x10).Take(4).Reverse().ToArray());
+            int numNameplates = IO.ReadInt(decompressedData, 0x10);
 
             for (int i = 0; i < numNameplates; i++)
             {
-                int internalCharacterNamePointer = BitConverter.ToInt32(Data.Skip(0x14 + i * 0x14 + 0x00).Take(4).Reverse().ToArray());
+                int internalCharacterNamePointer = IO.ReadInt(decompressedData, 0x14 + i * 0x14 + 0x00);
                 int[] gameCharacterNamePointers = new int[4];
                 for (int j = 0; j < gameCharacterNamePointers.Length; j++)
                 {
-                    gameCharacterNamePointers[j] = BitConverter.ToInt32(Data.Skip(0x14 + i * 0x14 + (j + 1) * 0x04).Take(4).Reverse().ToArray());
+                    gameCharacterNamePointers[j] = IO.ReadInt(decompressedData, 0x14 + i * 0x14 + (j + 1) * 0x04);
                 }
-                string internalCharacterName = Encoding.ASCII.GetString(Data.Skip(internalCharacterNamePointer).TakeWhile(b => b != 0x00).ToArray());
+                string internalCharacterName = IO.ReadAsciiString(decompressedData, internalCharacterNamePointer);
                 string[] gameCharacterNames = new string[4];
                 for (int j = 0; j < gameCharacterNames.Length; j++)
                 {
                     if (gameCharacterNamePointers[j] > 0)
                     {
-                        gameCharacterNames[j] = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(gameCharacterNamePointers[j]).TakeWhile(b => b != 0x00).ToArray());
+                        gameCharacterNames[j] = IO.ReadShiftJisString(decompressedData, gameCharacterNamePointers[j]);
                     }
                 }
 

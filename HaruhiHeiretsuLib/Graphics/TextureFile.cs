@@ -76,6 +76,7 @@ namespace HaruhiHeiretsuLib.Graphics
         /// <returns>An SKBitmap of this texture</returns>
         public SKBitmap GetImage()
         {
+            byte[] quickData = Data.ToArray();
             if (FileType == GraphicsFileType.TEXTURE)
             {
                 SKBitmap bitmap = new(Width, Height);
@@ -157,7 +158,7 @@ namespace HaruhiHeiretsuLib.Graphics
                                             rgb5a3Index += 2;
                                             continue;
                                         }
-                                        ushort colorData = BitConverter.ToUInt16(Data.Skip(rgb5a3Index).Take(2).Reverse().ToArray());
+                                        ushort colorData = IO.ReadUShort(quickData, rgb5a3Index);
                                         rgb5a3Index += 2;
 
                                         SKColor color;
@@ -225,10 +226,10 @@ namespace HaruhiHeiretsuLib.Graphics
                                         }
                                         ushort[] paletteData =
                                         [
-                                            BitConverter.ToUInt16(Data.Skip(cmprIndex).Take(2).Reverse().ToArray()),
-                                            BitConverter.ToUInt16(Data.Skip(cmprIndex + 2).Take(2).Reverse().ToArray())
+                                            BitConverter.ToUInt16(quickData, cmprIndex),
+                                            BitConverter.ToUInt16(quickData, cmprIndex + 2),
                                         ];
-                                        SKColor[] palette = new SKColor[4];
+                                        var palette = new SKColor[4];
                                         for (int i = 0; i < paletteData.Length; i++)
                                         {
                                             palette[i] = new((byte)(((paletteData[i] >> 11) & 0x1F) * 0x08), (byte)(((paletteData[i] >> 5) & 0x3F) * 0x04), (byte)((paletteData[i] & 0x1F) * 0x08), 0xFF);

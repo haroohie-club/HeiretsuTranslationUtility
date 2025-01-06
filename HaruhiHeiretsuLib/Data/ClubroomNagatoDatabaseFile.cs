@@ -31,19 +31,19 @@ namespace HaruhiHeiretsuLib.Data
             base.Initialize(decompressedData, offset);
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            int startPointer = BitConverter.ToInt32(Data.Skip(0x0C).Take(4).Reverse().ToArray());
-            int numCldAbouts = BitConverter.ToInt32(Data.Skip(0x10).Take(4).Reverse().ToArray());
+            int startPointer = IO.ReadInt(decompressedData, 0x0C);
+            int numCldAbouts = IO.ReadInt(decompressedData, 0x10);
             for (int i = 0; i < numCldAbouts; i++)
             {
                 ClubroomDatabaseCard cldAbout = new();
-                int titleOffset = BitConverter.ToInt32(Data.Skip(startPointer + i * 0x10 + 0x00).Take(4).Reverse().ToArray());
-                cldAbout.Title = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(titleOffset).TakeWhile(b => b != 0x00).ToArray());
-                int voiceFileOffset = BitConverter.ToInt32(Data.Skip(startPointer + i * 0x10 + 0x04).Take(4).Reverse().ToArray());
-                cldAbout.VoiceFile = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(voiceFileOffset).TakeWhile(b => b != 0x00).ToArray());
-                int speakerOffset = BitConverter.ToInt32(Data.Skip(startPointer + i * 0x10 + 0x08).Take(4).Reverse().ToArray());
-                cldAbout.Speaker = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(speakerOffset).TakeWhile(b => b != 0x00).ToArray());
-                int lineOffset = BitConverter.ToInt32(Data.Skip(startPointer + i * 0x10 + 0x0C).Take(4).Reverse().ToArray());
-                cldAbout.Line = Encoding.GetEncoding("Shift-JIS").GetString(Data.Skip(lineOffset).TakeWhile(b => b != 0x00).ToArray());
+                int titleOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x00);
+                cldAbout.Title = IO.ReadShiftJisString(decompressedData, titleOffset);
+                int voiceFileOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x04);
+                cldAbout.VoiceFile = IO.ReadShiftJisString(decompressedData, voiceFileOffset);
+                int speakerOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x08);
+                cldAbout.Speaker = IO.ReadShiftJisString(decompressedData, speakerOffset);
+                int lineOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x0C);
+                cldAbout.Line = IO.ReadShiftJisString(decompressedData, lineOffset);
 
                 ClubroomDatabaseCards.Add(cldAbout);
             }

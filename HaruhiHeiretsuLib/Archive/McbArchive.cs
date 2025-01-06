@@ -9,26 +9,64 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Archive
 {
+    /// <summary>
+    /// Representation of the mcb0.bln and mcb1.bln files, which together make up the "MCB archive"
+    /// </summary>
     public class McbArchive
     {
+        /// <summary>
+        /// The MCB sub archives that comprise the archive
+        /// </summary>
         public List<McbSubArchive> McbSubArchives { get; set; } = [];
+        /// <summary>
+        /// The strings files that are contained in the archive
+        /// </summary>
         public List<(int parentLoc, int childLoc)> StringsFiles { get; set; } = [];
+        /// <summary>
+        /// The graphics files that are contained in the archive
+        /// </summary>
         public List<(int parentLoc, int childLoc)> GraphicsFiles { get; set; } = [];
+        /// <summary>
+        /// A set of dictionaries for the bin archives indicating the correspondence between the MCB indices and the offsets in its bin archive
+        /// </summary>
         Dictionary<ArchiveIndex, Dictionary<int, int>> OffsetIndexDictionaries { get; set; } = [];
+        /// <summary>
+        /// The font file stored in the MCB
+        /// </summary>
         public FontFile FontFile { get; set; }
 
+        /// <summary>
+        /// An enum describing the index assigned to each bin archive
+        /// </summary>
         public enum ArchiveIndex
         {
+            /// <summary>
+            /// grp.bin
+            /// </summary>
             GRP = 0,
+            /// <summary>
+            /// dat.bin
+            /// </summary>
             DAT = 1,
+            /// <summary>
+            /// scr.bin
+            /// </summary>
             SCR = 2,
+            /// <summary>
+            /// evt.bin
+            /// </summary>
             EVT = 3,
         }
 
+        /// <summary>
+        /// Constructs an MCB archive from its index and data file paths
+        /// </summary>
+        /// <param name="indexFile">The path to mcb0.bln</param>
+        /// <param name="dataFile">The path to mcb1.bln</param>
         public McbArchive(string indexFile, string dataFile)
         {
             byte[] indexFileBytes = File.ReadAllBytes(indexFile);
@@ -37,10 +75,10 @@ namespace HaruhiHeiretsuLib.Archive
             int parentLoc = 0;
             for (int i = 0; i < indexFileBytes.Length - 12; i += 12)
             {
-                ushort id = BitConverter.ToUInt16(indexFileBytes.Skip(i).Take(2).ToArray());
-                short padding = BitConverter.ToInt16(indexFileBytes.Skip(i + 2).Take(2).ToArray());
-                int offset = BitConverter.ToInt32(indexFileBytes.Skip(i + 4).Take(4).ToArray());
-                int size = BitConverter.ToInt32(indexFileBytes.Skip(i + 8).Take(4).ToArray());
+                ushort id = IO.ReadUShortLE(indexFileBytes, i);
+                short padding = IO.ReadShortLE(indexFileBytes, i + 2);
+                int offset = IO.ReadIntLE(indexFileBytes, i + 4);
+                int size = IO.ReadIntLE(indexFileBytes, i + 8);
 
                 if (id == 0)
                 {
@@ -51,6 +89,10 @@ namespace HaruhiHeiretsuLib.Archive
             }
         }
 
+        /// <summary>
+        /// Gets the bytes representing MCB's two file components
+        /// </summary>
+        /// <returns>A tuple containing binary representations of mcb0.bln and mcb1.bln</returns>
         public (byte[] mcb0Bytes, byte[] mcb1Bytes) GetBytes()
         {
             List<byte> mcb0 = [], mcb1 = [];
@@ -80,6 +122,10 @@ namespace HaruhiHeiretsuLib.Archive
             return (mcb0.ToArray(), mcb1.ToArray());
         }
 
+        /// <summary>
+        /// Adjusts the bin archive offsets stored in the mcb based on a change file produced by editing the bin archives
+        /// </summary>
+        /// <param name="binArchiveAdjustmentFile">The path to a bin archive adjustment file</param>
         public void AdjustOffsets(string binArchiveAdjustmentFile)
         {
             Dictionary<int, int> offsetAdjustments = [];
@@ -94,6 +140,11 @@ namespace HaruhiHeiretsuLib.Archive
             AdjustOffsets(archiveAdjustmentFileLines[0], offsetAdjustments);
         }
 
+        /// <summary>
+        /// Adjusts the bin archive offsets stored in the mcb based on a provided dictionary of offset adjustments
+        /// </summary>
+        /// <param name="archiveToAdjust">The name of the archive to adjust (grp.bin, dat.bin, scr.bin, or evt.bin)</param>
+        /// <param name="offsetAdjustments">A dictionary keyed with the old offsets and valued with the new offsets</param>
         public void AdjustOffsets(string archiveToAdjust, Dictionary<int, int> offsetAdjustments)
         {
             int archiveIndexToAdjust;
@@ -135,15 +186,18 @@ namespace HaruhiHeiretsuLib.Archive
             }
         }
 
+        /// <summary>
+        /// Resolves graphics file names in the mcb
+        /// </summary>
         public void ResolveGraphicsFileNames()
         {
             byte[] graphicsFileNameMap = McbSubArchives[0].Files[57].GetBytes();
-            int numGraphicsFiles = BitConverter.ToInt32(graphicsFileNameMap.Skip(0x10).Take(4).Reverse().ToArray());
+            int numGraphicsFiles = IO.ReadInt(graphicsFileNameMap, 0x10);
 
             Dictionary<int, string> indexToNameMap = [];
             for (int i = 0; i < numGraphicsFiles; i++)
             {
-                indexToNameMap.Add(BitConverter.ToInt32(graphicsFileNameMap.Skip(0x14 * (i + 1)).Take(4).Reverse().ToArray()), Encoding.ASCII.GetString(graphicsFileNameMap.Skip(0x14 * (i + 1) + 0x04).TakeWhile(b => b != 0x00).ToArray()));
+                indexToNameMap.Add(IO.ReadInt(graphicsFileNameMap, 0x14 * (i + 1)), IO.ReadAsciiString(graphicsFileNameMap, 0x14 * (i + 1) + 0x04));
             }
 
             foreach ((int parentLoc, int childLoc) in GraphicsFiles)
@@ -160,7 +214,10 @@ namespace HaruhiHeiretsuLib.Archive
             }
         }
 
-        public void ResolveScriptFileName()
+        /// <summary>
+        /// Resolves script file names in the MCB
+        /// </summary>
+        public void ResolveScriptFileNames()
         {
             byte[] scriptNameList = McbSubArchives[75].Files[1].GetBytes();
             List<string> scriptNames = ScriptFile.ParseScriptListFile(scriptNameList);
@@ -175,6 +232,10 @@ namespace HaruhiHeiretsuLib.Archive
             }
         }
 
+        /// <summary>
+        /// Constructs and stores an index/offset dictionary given a bin archive file
+        /// </summary>
+        /// <param name="binArchiveFile">The bin archive files whose offsets to use to construct the dictionary</param>
         public void LoadIndexOffsetDictionary(string binArchiveFile)
         {
             var archive = BinArchive<FileInArchive>.FromFile(binArchiveFile);
@@ -213,7 +274,7 @@ namespace HaruhiHeiretsuLib.Archive
                     {
                         OffsetIndexDictionaries[ArchiveIndex.SCR].Add(file.Offset, file.BinArchiveIndex);
                     }
-                    ResolveScriptFileName();
+                    ResolveScriptFileNames();
                     break;
                 case "evt.bin":
                     if (!OffsetIndexDictionaries.ContainsKey(ArchiveIndex.EVT))
@@ -230,6 +291,11 @@ namespace HaruhiHeiretsuLib.Archive
 
         }
 
+        /// <summary>
+        /// Gets a file map
+        /// </summary>
+        /// <param name="binArchiveFile"></param>
+        /// <returns></returns>
         public Dictionary<int, List<(int, int)>> GetFileMap(string binArchiveFile)
         {
             Dictionary<int, List<(int, int)>> fileMap = [];

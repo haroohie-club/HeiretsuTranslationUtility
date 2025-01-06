@@ -10,7 +10,7 @@ namespace HaruhiHeiretsuCLI
     {
         private string _mcb;
         private readonly List<byte> _hexString = [];
-        private bool _fourByteAligned = false;
+        private bool _fourByteAligned;
 
         public HexSearchCommand() : base("hex-search")
         {

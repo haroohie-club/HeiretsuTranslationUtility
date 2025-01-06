@@ -4,7 +4,6 @@ using HaruhiHeiretsuLib.Graphics;
 using Mono.Options;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 namespace HaruhiHeiretsuCLI
 {

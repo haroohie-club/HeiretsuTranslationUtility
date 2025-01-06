@@ -35,20 +35,20 @@ namespace HaruhiHeiretsuLib.Data
             base.Initialize(decompressedData, offset);
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            int clubroomThingsPointer = BitConverter.ToInt32(Data.Skip(0x0C).Take(4).Reverse().ToArray());
-            int clubroomThingsCount = BitConverter.ToInt32(Data.Skip(0x10).Take(4).Reverse().ToArray());
+            int clubroomThingsPointer = IO.ReadInt(decompressedData, 0x0C);
+            int clubroomThingsCount = IO.ReadInt(decompressedData, 0x10);
 
             for (int i = 0; i < clubroomThingsCount; i++)
             {
-                ClubroomCutscenes.Add(new(Data, clubroomThingsPointer + 0x60 * i));
+                ClubroomCutscenes.Add(new(decompressedData, clubroomThingsPointer + 0x60 * i));
             }
 
-            int clubroomThing2sPointer = BitConverter.ToInt32(Data.Skip(0x14).Take(4).Reverse().ToArray());
-            int clubroomThing2sCount = BitConverter.ToInt32(Data.Skip(0x18).Take(4).Reverse().ToArray());
+            int clubroomThing2sPointer = IO.ReadInt(decompressedData, 0x14);
+            int clubroomThing2sCount = IO.ReadInt(decompressedData, 0x18);
 
             for (int i = 0; i < clubroomThing2sCount; i++)
             {
-                ClubroomChapters.Add(new(Data, clubroomThing2sPointer + 0x24 * i));
+                ClubroomChapters.Add(new(decompressedData, clubroomThing2sPointer + 0x24 * i));
             }
         }
 
@@ -317,43 +317,43 @@ namespace HaruhiHeiretsuLib.Data
         /// </summary>
         /// <param name="data"></param>
         /// <param name="offset"></param>
-        public ClubroomCutscene(IEnumerable<byte> data, int offset)
+        public ClubroomCutscene(byte[] data, int offset)
         {
-            int titleOffset = BitConverter.ToInt32(data.Skip(offset + 0x00).Take(4).Reverse().ToArray());
-            Title = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(titleOffset).TakeWhile(b => b != 0x00).ToArray());
-            int chapterOffset = BitConverter.ToInt32(data.Skip(offset + 0x04).Take(4).Reverse().ToArray());
-            Chapter = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(chapterOffset).TakeWhile(b => b != 0x00).ToArray());
-            int flagOffset = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).Reverse().ToArray());
-            Flag = Encoding.ASCII.GetString(data.Skip(flagOffset).TakeWhile(b => b != 0x00).ToArray());
-            int hoverVoiceFileOffset = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).Reverse().ToArray());
-            HoverVoiceFile = Encoding.ASCII.GetString(data.Skip(hoverVoiceFileOffset).TakeWhile(b => b != 0x00).ToArray());
-            int hoverSpeakerOffset = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).Reverse().ToArray());
-            HoverSpeaker = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(hoverSpeakerOffset).TakeWhile(b => b != 0x00).ToArray());
-            int hoverLineOffset = BitConverter.ToInt32(data.Skip(offset + 0x14).Take(4).Reverse().ToArray());
-            HoverLine = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(hoverLineOffset).TakeWhile(b => b != 0x00).ToArray());
-            int selectedVoiceFileOffset = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).Reverse().ToArray());
-            SelectedVoiceFile = Encoding.ASCII.GetString(data.Skip(selectedVoiceFileOffset).TakeWhile(b => b != 0x00).ToArray());
-            int selectedSpeakerOffset = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).Reverse().ToArray());
-            SelectedSpeaker = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(selectedSpeakerOffset).TakeWhile(b => b != 0x00).ToArray());
-            int selecteLineOffset = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).Reverse().ToArray());
-            SelectedLine = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(selecteLineOffset).TakeWhile(b => b != 0x00).ToArray());
+            int titleOffset = IO.ReadInt(data, offset + 0x00);
+            Title = IO.ReadShiftJisString(data, titleOffset);
+            int chapterOffset = IO.ReadInt(data, offset + 0x04);
+            Chapter = IO.ReadShiftJisString(data, chapterOffset);
+            int flagOffset = IO.ReadInt(data, offset + 0x08);
+            Flag = IO.ReadAsciiString(data, flagOffset);
+            int hoverVoiceFileOffset = IO.ReadInt(data, offset + 0x0C);
+            HoverVoiceFile = IO.ReadAsciiString(data, hoverVoiceFileOffset);
+            int hoverSpeakerOffset = IO.ReadInt(data, offset + 0x10);
+            HoverSpeaker = IO.ReadShiftJisString(data, hoverSpeakerOffset);
+            int hoverLineOffset = IO.ReadInt(data, offset + 0x14);
+            HoverLine = IO.ReadShiftJisString(data, hoverLineOffset);
+            int selectedVoiceFileOffset = IO.ReadInt(data, offset + 0x18);
+            SelectedVoiceFile = IO.ReadAsciiString(data, selectedVoiceFileOffset);
+            int selectedSpeakerOffset = IO.ReadInt(data, offset + 0x1C);
+            SelectedSpeaker = IO.ReadShiftJisString(data, selectedSpeakerOffset);
+            int selecteLineOffset = IO.ReadInt(data, offset + 0x20);
+            SelectedLine = IO.ReadShiftJisString(data, selecteLineOffset);
 
-            MapCallerParent = BitConverter.ToInt32(data.Skip(offset + 0x24).Take(4).Reverse().ToArray());
-            MapCallerChild = BitConverter.ToInt32(data.Skip(offset + 0x28).Take(4).Reverse().ToArray());
-            Unknown2C = BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).Reverse().ToArray());
-            Unknown30 = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).Reverse().ToArray());
-            Unknown34 = BitConverter.ToInt32(data.Skip(offset + 0x34).Take(4).Reverse().ToArray());
-            Unknown38 = BitConverter.ToInt16(data.Skip(offset + 0x34).Take(2).Reverse().ToArray());
-            EventIndex = BitConverter.ToInt16(data.Skip(offset + 0x38).Take(2).Reverse().ToArray());
-            Unknown3C = BitConverter.ToInt32(data.Skip(offset + 0x3C).Take(4).Reverse().ToArray());
-            Unknown40 = BitConverter.ToInt32(data.Skip(offset + 0x40).Take(4).Reverse().ToArray());
-            Unknown44 = BitConverter.ToInt32(data.Skip(offset + 0x44).Take(4).Reverse().ToArray());
-            Unknown48 = BitConverter.ToInt32(data.Skip(offset + 0x48).Take(4).Reverse().ToArray());
-            Unknown4C = BitConverter.ToInt32(data.Skip(offset + 0x4C).Take(4).Reverse().ToArray());
-            Unknown50 = BitConverter.ToInt32(data.Skip(offset + 0x50).Take(4).Reverse().ToArray());
-            Unknown54 = BitConverter.ToInt32(data.Skip(offset + 0x54).Take(4).Reverse().ToArray());
-            Unknown58 = BitConverter.ToInt32(data.Skip(offset + 0x58).Take(4).Reverse().ToArray());
-            Unknown5C = BitConverter.ToInt32(data.Skip(offset + 0x5C).Take(4).Reverse().ToArray());
+            MapCallerParent = IO.ReadInt(data, offset + 0x24);
+            MapCallerChild = IO.ReadInt(data, offset + 0x28);
+            Unknown2C = IO.ReadInt(data, offset + 0x2C);
+            Unknown30 = IO.ReadInt(data, offset + 0x30);
+            Unknown34 = IO.ReadInt(data, offset + 0x34);
+            Unknown38 = IO.ReadShort(data, offset + 0x38);
+            EventIndex = IO.ReadShort(data, offset + 0x3A);
+            Unknown3C = IO.ReadInt(data, offset + 0x3C);
+            Unknown40 = IO.ReadInt(data, offset + 0x40);
+            Unknown44 = IO.ReadInt(data, offset + 0x44);
+            Unknown48 = IO.ReadInt(data, offset + 0x48);
+            Unknown4C = IO.ReadInt(data, offset + 0x4C);
+            Unknown50 = IO.ReadInt(data, offset + 0x50);
+            Unknown54 = IO.ReadInt(data, offset + 0x54);
+            Unknown58 = IO.ReadInt(data, offset + 0x58);
+            Unknown5C = IO.ReadInt(data, offset + 0x5C);
         }
 
         /// <summary>
@@ -401,6 +401,7 @@ namespace HaruhiHeiretsuLib.Data
             dataBytes.AddRange(BitConverter.GetBytes(Unknown2C).Reverse());
             dataBytes.AddRange(BitConverter.GetBytes(Unknown30).Reverse());
             dataBytes.AddRange(BitConverter.GetBytes(Unknown34).Reverse());
+            dataBytes.AddRange(BitConverter.GetBytes(Unknown38).Reverse());
             dataBytes.AddRange(BitConverter.GetBytes(EventIndex).Reverse());
             dataBytes.AddRange(BitConverter.GetBytes(Unknown3C).Reverse());
             dataBytes.AddRange(BitConverter.GetBytes(Unknown40).Reverse());
@@ -463,25 +464,25 @@ namespace HaruhiHeiretsuLib.Data
         /// </summary>
         /// <param name="data">The binary data representing the clubroom Koizumi cutscene file</param>
         /// <param name="offset">The offset of this chapter in that data</param>
-        public ClubroomChapter(IEnumerable<byte> data, int offset)
+        public ClubroomChapter(byte[] data, int offset)
         {
-            int titleOffset = BitConverter.ToInt32(data.Skip(offset + 0x00).Take(4).Reverse().ToArray());
-            Title = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(titleOffset).TakeWhile(b => b != 0x00).ToArray());
-            int flagOffset = BitConverter.ToInt32(data.Skip(offset + 0x04).Take(4).Reverse().ToArray());
-            Flag = Encoding.ASCII.GetString(data.Skip(flagOffset).TakeWhile(b => b != 0x00).ToArray());
-            int unselectedVoiceFileOffset = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).Reverse().ToArray());
-            HoverVoiceFile = Encoding.ASCII.GetString(data.Skip(unselectedVoiceFileOffset).TakeWhile(b => b != 0x00).ToArray());
-            int unselectedSpeakerOffset = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).Reverse().ToArray());
-            HoverSpeaker = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(unselectedSpeakerOffset).TakeWhile(b => b != 0x00).ToArray());
-            int unselectedLineOffset = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).Reverse().ToArray());
-            HoverLine = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(unselectedLineOffset).TakeWhile(b => b != 0x00).ToArray());
-            int selectedVoiceFileOffset = BitConverter.ToInt32(data.Skip(offset + 0x14).Take(4).Reverse().ToArray());
-            SelectedVoiceFile = Encoding.ASCII.GetString(data.Skip(selectedVoiceFileOffset).TakeWhile(b => b != 0x00).ToArray());
-            int selectedSpeakerOffset = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).Reverse().ToArray());
-            SelectedSpeaker = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(selectedSpeakerOffset).TakeWhile(b => b != 0x00).ToArray());
-            int selectedLineOffset = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).Reverse().ToArray());
-            SelectedLine = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(selectedLineOffset).TakeWhile(b => b != 0x00).ToArray());
-            Padding = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).Reverse().ToArray());
+            int titleOffset = IO.ReadInt(data, offset + 0x00);
+            Title = IO.ReadShiftJisString(data, titleOffset);
+            int flagOffset = IO.ReadInt(data, offset + 0x04);
+            Flag = IO.ReadAsciiString(data, flagOffset);
+            int unselectedVoiceFileOffset = IO.ReadInt(data, offset + 0x08);
+            HoverVoiceFile = IO.ReadAsciiString(data, unselectedVoiceFileOffset);
+            int unselectedSpeakerOffset = IO.ReadInt(data, offset + 0x0C);
+            HoverSpeaker = IO.ReadShiftJisString(data, unselectedSpeakerOffset);
+            int unselectedLineOffset = IO.ReadInt(data, offset + 0x10);
+            HoverLine = IO.ReadShiftJisString(data, unselectedLineOffset);
+            int selectedVoiceFileOffset = IO.ReadInt(data, offset + 0x14);
+            SelectedVoiceFile = IO.ReadAsciiString(data, selectedVoiceFileOffset);
+            int selectedSpeakerOffset = IO.ReadInt(data, offset + 0x18);
+            SelectedSpeaker = IO.ReadShiftJisString(data, selectedSpeakerOffset);
+            int selectedLineOffset = IO.ReadInt(data, offset + 0x1C);
+            SelectedLine = IO.ReadShiftJisString(data, selectedLineOffset);
+            Padding = IO.ReadInt(data, offset + 0x20);
         }
 
         /// <summary>

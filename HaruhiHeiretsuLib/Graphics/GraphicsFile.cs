@@ -1,6 +1,5 @@
 ﻿using HaruhiHeiretsuLib.Archive;
 using HaruhiHeiretsuLib.Util;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,17 +35,17 @@ namespace HaruhiHeiretsuLib.Graphics
             if (Encoding.ASCII.GetString(Data.Take(6).ToArray()) == "SGE008")
             {
                 FileType = GraphicsFileType.SGE;
-                Sge = new(Data);
+                Sge = new(decompressedData);
             }
             else if (Data.Take(4).SequenceEqual(new byte[] { 0x00, 0x20, 0xAF, 0x30 }))
             {
                 FileType = GraphicsFileType.TEXTURE;
-                PointerPointer = IO.ReadInt(Data, 0x08);
-                SizePointer = IO.ReadInt(Data, PointerPointer);
-                Height = IO.ReadUShort(Data, SizePointer);
-                Width = IO.ReadUShort(Data, SizePointer + 2);
-                Format = (ImageFormat)IO.ReadInt(Data, SizePointer + 4);
-                DataPointer = IO.ReadInt(Data, SizePointer + 8);
+                PointerPointer = IO.ReadInt(decompressedData, 0x08);
+                SizePointer = IO.ReadInt(decompressedData, PointerPointer);
+                Height = IO.ReadUShort(decompressedData, SizePointer);
+                Width = IO.ReadUShort(decompressedData, SizePointer + 2);
+                Format = (ImageFormat)IO.ReadInt(decompressedData, SizePointer + 4);
+                DataPointer = IO.ReadInt(decompressedData, SizePointer + 8);
             }
             else if (Data.Take(4).SequenceEqual(new byte[] { 0x80, 0x02, 0xE0, 0x01 }))
             {
@@ -59,22 +58,22 @@ namespace HaruhiHeiretsuLib.Graphics
                 {
                     LayoutComponents.Add(new LayoutComponent
                     {
-                        UnknownShort1 = IO.ReadShortLE(Data, i),
-                        Index = IO.ReadShortLE(Data, i + 0x02),
-                        UnknownShort2 = IO.ReadShortLE(Data, i + 0x04),
-                        ScreenX = IO.ReadShortLE(Data, i + 0x06),
-                        ScreenY = IO.ReadShortLE(Data, i + 0x08),
-                        ImageWidth = IO.ReadShortLE(Data, i + 0x0A),
-                        ImageHeight = IO.ReadShortLE(Data, i + 0x0C),
-                        ImageX = IO.ReadShortLE(Data, i + 0x0E),
-                        ImageY = IO.ReadShortLE(Data, i + 0x10),
-                        ScreenWidth = IO.ReadShortLE(Data, i + 0x12),
-                        ScreenHeight = IO.ReadShortLE(Data, i + 0x14),
-                        UnknownShort3 = IO.ReadShortLE(Data, i + 0x16),
-                        AlphaTint = Data[i + 0x1B],
-                        RedTint = Data[i + 0x1A],
-                        GreenTint = Data[i + 0x19],
-                        BlueTint = Data[i + 0x18],
+                        UnknownShort1 = IO.ReadShortLE(decompressedData, i),
+                        Index = IO.ReadShortLE(decompressedData, i + 0x02),
+                        UnknownShort2 = IO.ReadShortLE(decompressedData, i + 0x04),
+                        ScreenX = IO.ReadShortLE(decompressedData, i + 0x06),
+                        ScreenY = IO.ReadShortLE(decompressedData, i + 0x08),
+                        ImageWidth = IO.ReadShortLE(decompressedData, i + 0x0A),
+                        ImageHeight = IO.ReadShortLE(decompressedData, i + 0x0C),
+                        ImageX = IO.ReadShortLE(decompressedData, i + 0x0E),
+                        ImageY = IO.ReadShortLE(decompressedData, i + 0x10),
+                        ScreenWidth = IO.ReadShortLE(decompressedData, i + 0x12),
+                        ScreenHeight = IO.ReadShortLE(decompressedData, i + 0x14),
+                        UnknownShort3 = IO.ReadShortLE(decompressedData, i + 0x16),
+                        AlphaTint = decompressedData[i + 0x1B],
+                        RedTint = decompressedData[i + 0x1A],
+                        GreenTint = decompressedData[i + 0x19],
+                        BlueTint = decompressedData[i + 0x18],
                     });
                 }
             }
@@ -90,7 +89,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 }
                 for (int i = 0; i < 512; i++)
                 {
-                    int nameIndex = IO.ReadShortLE(Data, i * 0x2C + 0x110E);
+                    int nameIndex = IO.ReadShortLE(decompressedData, i * 0x2C + 0x110E);
                     if (nameIndex > 0)
                     {
                         string name = MapModelNames[nameIndex - 1];
@@ -120,7 +119,7 @@ namespace HaruhiHeiretsuLib.Graphics
         /// Attempts to resolve the name of this file (if in the MCB)
         /// </summary>
         /// <param name="offsetIndexDictionary">The MCB's offset-index dictionary</param>
-        /// <param name="textureNameDictionary">The texture name dictionary (grp.bin index to name) cosntructed from dat #0008</param>
+        /// <param name="textureNameDictionary">The texture name dictionary (grp.bin index to name) constructed from dat #0008</param>
         public void TryResolveName(Dictionary<int, int> offsetIndexDictionary, Dictionary<int, string> textureNameDictionary)
         {
             if (textureNameDictionary.TryGetValue(offsetIndexDictionary[McbEntryData.ArchiveOffset], out string name))

@@ -36,12 +36,6 @@ namespace HaruhiHeiretsuLib.Data
         }
 
         /// <inheritdoc/>
-        public override byte[] GetBytes()
-        {
-            return base.GetBytes();
-        }
-
-        /// <inheritdoc/>
         public List<DialogueLine> GetDialogueLines()
         {
             List<DialogueLine> lines = [];
@@ -71,7 +65,7 @@ namespace HaruhiHeiretsuLib.Data
             }
             else
             {
-                throw new Exception("Oh no! I couldn't find a line replacement!");
+                throw new("Oh no! I couldn't find a line replacement!");
             }
         }
     }
@@ -84,7 +78,7 @@ namespace HaruhiHeiretsuLib.Data
     /// </remarks>
     /// <param name="data">The clubroom Mikuru music file binary data</param>
     /// <param name="offset">The offset of this entry into that data</param>
-    public class ClubroomMusicPlayerEntry(IEnumerable<byte> data, int offset)
+    public class ClubroomMusicPlayerEntry(byte[] data, int offset)
     {
         /// <summary>
         /// The title of the music track

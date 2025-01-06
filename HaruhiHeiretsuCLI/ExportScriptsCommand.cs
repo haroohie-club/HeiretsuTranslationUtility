@@ -9,7 +9,7 @@ namespace HaruhiHeiretsuCLI
     internal class ExportScriptsCommand : Command
     {
         private string _scr, _outputDir;
-        private bool _includeIdx = false;
+        private bool _includeIdx;
         public ExportScriptsCommand() : base("export-scripts", "Export all scripts as SWS files")
         {
             Options = new()

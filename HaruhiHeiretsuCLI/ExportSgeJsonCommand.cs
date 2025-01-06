@@ -13,7 +13,7 @@ namespace HaruhiHeiretsuCLI
     public class ExportSgeJsonCommand : Command
     {
         private string _grp, _dat, _sgeName, _outputFile;
-        private int _grpIndex = 0;
+        private int _grpIndex;
         public ExportSgeJsonCommand() : base("export-sge-json")
         {
             Options = new()

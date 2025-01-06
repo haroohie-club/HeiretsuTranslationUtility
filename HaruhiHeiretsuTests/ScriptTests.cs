@@ -7,12 +7,12 @@ namespace HaruhiHeiretsuTests
 {
     public class ScriptTests
     {
-        private const string SCRCOMMAND_FILE = @"inputs\SCRCOMMAND.bin";
+        private const string SCRCOMMAND_FILE = @"inputs/SCRCOMMAND.bin";
 
-        private const string SCR001 = @"inputs\SCRSCR_0_01_A.bin";
-        private const string SCR101 = @"inputs\SCRSCR_1_01_A.bin";
-        private const string SCRKWMT = @"inputs\SCRTEST_KWMT.bin";
-        private const string SCRSAMPLE01 = @"inputs\SCRSAMPLE01.sws";
+        private const string SCR001 = @"inputs/SCRSCR_0_01_A.bin";
+        private const string SCR101 = @"inputs/SCRSCR_1_01_A.bin";
+        private const string SCRKWMT = @"inputs/SCRTEST_KWMT.bin";
+        private const string SCRSAMPLE01 = @"inputs/SCRSAMPLE01.sws";
 
         [SetUp]
         public void Setup()
@@ -40,9 +40,9 @@ namespace HaruhiHeiretsuTests
                 Directory.CreateDirectory("output");
             }
 
-            File.WriteAllBytes($"output\\{Path.GetFileNameWithoutExtension(file)}-compiled.bin", newScript.GetBytes());
-            File.WriteAllText($"output\\{Path.GetFileNameWithoutExtension(file)}-initial.sws", scriptCode);
-            File.WriteAllText($"output\\{Path.GetFileNameWithoutExtension(file)}-final.sws", newScript.Decompile());
+            File.WriteAllBytes($"output/{Path.GetFileNameWithoutExtension(file)}-compiled.bin", newScript.GetBytes());
+            File.WriteAllText($"output/{Path.GetFileNameWithoutExtension(file)}-initial.sws", scriptCode);
+            File.WriteAllText($"output/{Path.GetFileNameWithoutExtension(file)}-final.sws", newScript.Decompile());
             Assert.That(dataOnDisk, Is.EquivalentTo(newScript.GetBytes()));
         }
 

@@ -3,6 +3,8 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
+using HaruhiHeiretsuLib.Graphics;
+
 namespace HaruhiHeiretsuEditor
 {
     public class SgeWindow : GameWindow
