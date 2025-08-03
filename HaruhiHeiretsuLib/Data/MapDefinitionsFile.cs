@@ -7,15 +7,25 @@ using System.Text;
 
 namespace HaruhiHeiretsuLib.Data
 {
+    /// <summary>
+    /// File which defines map loading information
+    /// </summary>
     public class MapDefinitionsFile : DataFile, IDataStringsFile
     {
+        /// <summary>
+        /// The map definition sections
+        /// </summary>
         public List<MapDefinitionSection> Sections { get; set; } = [];
 
+        /// <summary>
+        /// Empty constructor
+        /// </summary>
         public MapDefinitionsFile()
         {
             Name = "Map Definitions";
         }
 
+        /// <inheritdoc />
         public override void Initialize(byte[] decompressedData, int offset)
         {
             base.Initialize(decompressedData, offset);
@@ -32,6 +42,7 @@ namespace HaruhiHeiretsuLib.Data
             }
         }
 
+        /// <inheritdoc />
         public MapDefinitionsFile(string[] csvLines, int index, int offset)
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -40,6 +51,7 @@ namespace HaruhiHeiretsuLib.Data
             Sections = csvGroups.Select(g => new MapDefinitionSection([.. g], int.Parse(g.Key))).ToList();
         }
 
+        /// <inheritdoc />
         public override byte[] GetBytes()
         {
             List<byte> bytes = [];
@@ -74,6 +86,10 @@ namespace HaruhiHeiretsuLib.Data
             return [.. bytes];
         }
 
+        /// <summary>
+        /// Gets the map definitions file as an editable CSV
+        /// </summary>
+        /// <returns></returns>
         public string GetCsv()
         {
             string csv = $"Caller,{nameof(MapDefinition.TimeDay)},{nameof(MapDefinition.TimeHour)},{nameof(MapDefinition.TimeMinute)},{nameof(MapDefinition.PaddingByte)},{nameof(MapDefinition.Unknown04)},{nameof(MapDefinition.ZeroMapSgeIndex)}," +
@@ -84,6 +100,7 @@ namespace HaruhiHeiretsuLib.Data
             return $"{csv}\n{string.Join('\n', Sections.Select(s => s.GetCsv()))}";
         }
 
+        /// <inheritdoc />
         public List<DialogueLine> GetDialogueLines()
         {
             List<DialogueLine> lines = [];
@@ -106,6 +123,7 @@ namespace HaruhiHeiretsuLib.Data
             return lines;
         }
 
+        /// <inheritdoc />
         public void ReplaceDialogueLine(DialogueLine line)
         {
             int parentIndex = int.Parse(line.Metadata[0]);
@@ -125,11 +143,27 @@ namespace HaruhiHeiretsuLib.Data
         }
     }
 
+    /// <summary>
+    /// Section containing map definitions
+    /// </summary>
     public class MapDefinitionSection
     {
+        /// <summary>
+        /// The section index
+        /// </summary>
         public int Index { get; set; }
+        /// <summary>
+        /// The set of map definitions in this section
+        /// </summary>
         public List<MapDefinition> MapDefinitions { get; set; } = [];
 
+        /// <summary>
+        /// Constructs a map definition section given file data, an index, and an item count
+        /// </summary>
+        /// <param name="data">The map definition file data</param>
+        /// <param name="index">The index of the current section being parsed</param>
+        /// <param name="offset">The offset to the current section in the file data</param>
+        /// <param name="itemCount">The number of map definitions in the section</param>
         public MapDefinitionSection(byte[] data, int index, int offset, int itemCount)
         {
             Index = index;
@@ -139,6 +173,11 @@ namespace HaruhiHeiretsuLib.Data
             }
         }
 
+        /// <summary>
+        /// Constructs a map definition section from CSV lines
+        /// </summary>
+        /// <param name="csvLines">The CSV lines from the map definitions CSV file</param>
+        /// <param name="index">The index of the section to construct</param>
         public MapDefinitionSection(string[] csvLines, int index)
         {
             Index = index;
@@ -149,6 +188,13 @@ namespace HaruhiHeiretsuLib.Data
             }
         }
 
+        /// <summary>
+        /// Gets a binary representation of the map definition section and appends any end pointers to the provided
+        /// end pointers list
+        /// </summary>
+        /// <param name="mapDefinitionOffset">The offset of the map definitions section</param>
+        /// <param name="endPointers">The list of end pointers</param>
+        /// <returns>A binary representation of this section</returns>
         public List<byte> GetBytes(int mapDefinitionOffset, List<int> endPointers)
         {
             List<byte> bytes = [];
@@ -265,46 +311,150 @@ namespace HaruhiHeiretsuLib.Data
             return bytes;
         }
 
+        /// <summary>
+        /// Gets CSV lines representing this section
+        /// </summary>
+        /// <returns>CSV lines representing this section</returns>
         public string GetCsv()
         {
             return string.Join('\n', MapDefinitions.Select(m => m.GetCsvLine()));
         }
     }
 
+    /// <summary>
+    /// A map definition
+    /// </summary>
     public class MapDefinition
     {
+        /// <summary>
+        /// A constant shift value that shifts evt indices in some cases
+        /// </summary>
         public const short EVT_SHIFT = 0x2710;
 
+        /// <summary>
+        /// The index of the map definition section
+        /// </summary>
         public int ParentIndex { get; set; }
+        /// <summary>
+        /// The index of this definition
+        /// </summary>
         public int Index { get; set; }
+        /// <summary>
+        /// The day component of the time in which the map should be loaded
+        /// </summary>
         public byte TimeDay { get; set; }
+        /// <summary>
+        /// The hour component of the time in which the map should be loaded
+        /// </summary>
         public byte TimeHour { get; set; }
+        /// <summary>
+        /// The minute component of the time in which the map should be loaded
+        /// </summary>
         public byte TimeMinute { get; set; }
+        /// <summary>
+        /// Padding
+        /// </summary>
         public byte PaddingByte { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public short Unknown04 { get; set; }
+        /// <summary>
+        /// The SGE index of the zero map
+        /// </summary>
         public short ZeroMapSgeIndex { get; set; }
+        /// <summary>
+        /// A string describing the location to load
+        /// </summary>
         public string LocString { get; set; }
+        /// <summary>
+        /// The description of the script as seen in-game
+        /// </summary>
         public string ScriptDescription { get; set; }
+        /// <summary>
+        /// The MCB child location
+        /// </summary>
         public short McbChildLoc { get; set; }
+        /// <summary>
+        /// The index into MCB(FFFF, 56) that's referenced here
+        /// </summary>
         public short Ffff56EntryIndex { get; set; }
+        /// <summary>
+        /// Index of map data
+        /// </summary>
         public short MapDataIndex { get; set; }
+        /// <summary>
+        /// Index of background data
+        /// </summary>
         public short BgDataIndex { get; set; }
+        /// <summary>
+        /// Index of camera data
+        /// </summary>
         public short CameraDataEntryIndex { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public short Unknown1A { get; set; }
+        /// <summary>
+        /// Value describing the camera's rotation
+        /// </summary>
         public float CameraRotation { get; set; }
+        /// <summary>
+        /// The default starting BGM to play when loading the map
+        /// </summary>
         public short DefaultBgmIndex { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public short Unknown22 { get; set; }
+        /// <summary>
+        /// The sound group to load
+        /// </summary>
         public string SoundGroupName { get; set; }
+        /// <summary>
+        /// Name of the script
+        /// </summary>
         public string ScriptName { get; set; }
+        /// <summary>
+        /// Display flags
+        /// </summary>
         public string[] DispFlags { get; set; }
+        /// <summary>
+        /// The list of BG model indices
+        /// </summary>
         public short[] BgModels1 { get; set; }
+        /// <summary>
+        /// A second list of BG model indices
+        /// </summary>
         public short[] BgModels2 { get; set; }
+        /// <summary>
+        /// Event file cutscenes to load
+        /// </summary>
         public short[] Evts { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public int Unknown5C { get; set; }
+        /// <summary>
+        /// Pointer to map flag
+        /// </summary>
         public int MapFlagPointer { get; set; }
+        /// <summary>
+        /// Map flag
+        /// </summary>
         public string MapFlag { get; set; }
+        /// <summary>
+        /// Unknown
+        /// </summary>
         public int Unknown64 { get; set; }
 
+        /// <summary>
+        /// Constructs map definition from data
+        /// </summary>
+        /// <param name="data">The binary data of the map file</param>
+        /// <param name="parentIndex">Parent index</param>
+        /// <param name="index">Index</param>
+        /// <param name="definitionOffset">The offset of the current definition in the file</param>
         public MapDefinition(byte[] data, int parentIndex, int index, int definitionOffset)
         {
             ParentIndex = parentIndex;
@@ -368,6 +518,12 @@ namespace HaruhiHeiretsuLib.Data
             Unknown64 = IO.ReadInt(data, definitionOffset + 0x64);
         }
 
+        /// <summary>
+        /// Constructs map data from a CSV line
+        /// </summary>
+        /// <param name="csvLine">The CSV line</param>
+        /// <param name="parentIndex">The parent index</param>
+        /// <param name="index">The index</param>
         public MapDefinition(string csvLine, int parentIndex, int index)
         {
             ParentIndex = parentIndex;
@@ -418,6 +574,10 @@ namespace HaruhiHeiretsuLib.Data
             Unknown64 = int.Parse(components[42]);
         }
 
+        /// <summary>
+        /// Gets the map data as a CSV line
+        /// </summary>
+        /// <returns>This map definition as a CSV line</returns>
         public string GetCsvLine()
         {
             return $"{ParentIndex}-{Index},{TimeDay},{TimeHour},{TimeMinute},{PaddingByte},{Unknown04},{ZeroMapSgeIndex},{LocString},{ScriptDescription},{McbChildLoc},{Ffff56EntryIndex},{MapDataIndex},{BgDataIndex},{CameraDataEntryIndex}," +

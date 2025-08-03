@@ -132,7 +132,7 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     Speaker = Animations[i].Speaker,
                     Line = Animations[i].Line,
-                    Metadata = [.. (new string[] { Animations[i].VoiceFile, "0", $"{i}", "0" })],
+                    Metadata = [Animations[i].VoiceFile, "0", $"{i}", "0"],
                 });
             }
             for (int i = 0; i < Outfits.Count; i++)
@@ -141,19 +141,19 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     Speaker = $"{Outfits[i].OutfitOwner}'s {Outfits[i].OutfitType} Description",
                     Line = Outfits[i].OutfitDescription,
-                    Metadata = [.. (new string[] { Outfits[i].OutfitFlag, "1", $"{i}", "0" })],
+                    Metadata = [Outfits[i].OutfitFlag, "1", $"{i}", "0"],
                 });
                 lines.Add(new()
                 {
                     Speaker = $"{Outfits[i].Speaker1} (Describing {Outfits[i].OutfitOwner}'s {Outfits[i].OutfitType})",
                     Line = Outfits[i].Line1,
-                    Metadata = [.. (new string[] { Outfits[i].OutfitFlag, Outfits[i].VoiceFile1, "1", $"{i}", "1" })],
+                    Metadata = [Outfits[i].OutfitFlag, Outfits[i].VoiceFile1, "1", $"{i}", "1"],
                 });
                 lines.Add(new()
                 {
                     Speaker = $"{Outfits[i].Speaker2} (Describing {Outfits[i].OutfitOwner}'s {Outfits[i].OutfitType})",
                     Line = Outfits[i].Line2,
-                    Metadata = [.. (new string[] { Outfits[i].OutfitFlag, Outfits[i].VoiceFile2, "1", $"{i}", "2" })],
+                    Metadata = [Outfits[i].OutfitFlag, Outfits[i].VoiceFile2, "1", $"{i}", "2"],
                 });
             }
             for (int i = 0; i < Characters.Count; i++)
@@ -162,19 +162,19 @@ namespace HaruhiHeiretsuLib.Data
                 {
                     Speaker = $"{Characters[i].Character} Name",
                     Line = Characters[i].CharacterName,
-                    Metadata = [.. (new string[] { Characters[i].CharacterUnlockFlag, "2", $"{i}", "0" })],
+                    Metadata = [Characters[i].CharacterUnlockFlag, "2", $"{i}", "0"],
                 });
                 lines.Add(new()
                 {
                     Speaker = $"{Characters[i].HoverSpeaker} (Describing {Characters[i].Character})",
                     Line = Characters[i].HoverLine,
-                    Metadata = [.. (new string[] { Characters[i].CharacterUnlockFlag, Characters[i].HoverVoiceFile, "2", $"{i}", "1" })],
+                    Metadata = [Characters[i].CharacterUnlockFlag, Characters[i].HoverVoiceFile, "2", $"{i}", "1"],
                 });
                 lines.Add(new()
                 {
                     Speaker = $"{Characters[i].SelectSpeaker} (Describing {Characters[i].Character})",
                     Line = Characters[i].SelectLine,
-                    Metadata = [.. (new string[] { Characters[i].CharacterUnlockFlag, Characters[i].SelectVoiceFile, "2", $"{i}", "1" })],
+                    Metadata = [Characters[i].CharacterUnlockFlag, Characters[i].SelectVoiceFile, "2", $"{i}", "1"],
                 });
             }
 

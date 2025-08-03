@@ -95,20 +95,20 @@ namespace HaruhiHeiretsuLib.Data
                         {
                             Speaker = $"{identifier} Title",
                             Line = entry.EntryTitle,
-                            Metadata = [.. (new string[3] { $"{i}", $"{j}", "0" })],
+                            Metadata = [$"{i}", $"{j}", "0"],
                         });
                     }
                     lines.Add(new()
                     {
                         Speaker = $"{identifier} Description (1)",
                         Line = entry.EntryDescription,
-                        Metadata = [.. (new string[3] { $"{i}", $"{j}", "1" })],
+                        Metadata = [$"{i}", $"{j}", "1"],
                     });
                     lines.Add(new()
                     {
                         Speaker = $"{identifier} Description (2)",
                         Line = entry.EntryDescription2,
-                        Metadata = [.. (new string[3] { $"{i}", $"{j}", "2" })],
+                        Metadata = [$"{i}", $"{j}", "2"],
                     });
                     if (!string.IsNullOrEmpty(entry.EntryDescriptionCompleted))
                     {
@@ -116,7 +116,7 @@ namespace HaruhiHeiretsuLib.Data
                         {
                             Speaker = $"{identifier} Description Completed (1)",
                             Line = entry.EntryDescriptionCompleted,
-                            Metadata = [.. (new string[3] { $"{i}", $"{j}", "3" })],
+                            Metadata = [$"{i}", $"{j}", "3"],
                         });
                     }
                     if (!string.IsNullOrEmpty(entry.EntryDescriptionCompleted2))
@@ -125,7 +125,7 @@ namespace HaruhiHeiretsuLib.Data
                         {
                             Speaker = $"{identifier} Description Completed (2)",
                             Line = entry.EntryDescriptionCompleted2,
-                            Metadata = [.. (new string[3] { $"{i}", $"{j}", "4" })],
+                            Metadata = [$"{i}", $"{j}", "4"],
                         });
                     }
                     j++;

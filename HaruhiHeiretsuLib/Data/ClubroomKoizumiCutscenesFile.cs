@@ -129,14 +129,14 @@ namespace HaruhiHeiretsuLib.Data
                     Speaker = $"{ClubroomCutscenes[i].HoverSpeaker} (EVT {ClubroomCutscenes[i].EventIndex}, {ClubroomCutscenes[i].Flag} Hover Description)",
                     Line = ClubroomCutscenes[i].HoverLine,
                     Offset = i,
-                    Metadata = [.. (new string[] { ClubroomCutscenes[i].HoverVoiceFile })],
+                    Metadata = [ClubroomCutscenes[i].HoverVoiceFile],
                 });
                 dialogueLines.Add(new()
                 {
                     Speaker = $"{ClubroomCutscenes[i].SelectedSpeaker} (EVT {ClubroomCutscenes[i].EventIndex}, {ClubroomCutscenes[i].Flag} Selected Description)",
                     Line = ClubroomCutscenes[i].SelectedLine,
                     Offset = i,
-                    Metadata = [.. (new string[] { ClubroomCutscenes[i].SelectedVoiceFile })],
+                    Metadata = [ClubroomCutscenes[i].SelectedVoiceFile],
                 });
             }
             for (int i = 0; i < ClubroomChapters.Count; i++)
@@ -152,14 +152,14 @@ namespace HaruhiHeiretsuLib.Data
                     Speaker = $"{ClubroomChapters[i].HoverSpeaker} ({ClubroomChapters[i].Flag} Hover Description)",
                     Line = ClubroomChapters[i].HoverLine,
                     Offset = ClubroomCutscenes.Count + i,
-                    Metadata = [.. (new string[] { ClubroomChapters[i].HoverVoiceFile })],
+                    Metadata = [ClubroomChapters[i].HoverVoiceFile],
                 });
                 dialogueLines.Add(new()
                 {
                     Speaker = $"{ClubroomChapters[i].SelectedSpeaker} ({ClubroomChapters[i].Flag} Selected Description)",
                     Line = ClubroomChapters[i].SelectedLine,
                     Offset = ClubroomCutscenes.Count + i,
-                    Metadata = [.. (new string[] { ClubroomChapters[i].SelectedVoiceFile })],
+                    Metadata = [ClubroomChapters[i].SelectedVoiceFile],
                 });
             }
 

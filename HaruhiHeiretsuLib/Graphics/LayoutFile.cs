@@ -148,8 +148,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 .. BitConverter.GetBytes(ImageY),
                 .. BitConverter.GetBytes(ScreenWidth),
                 .. BitConverter.GetBytes(ScreenHeight),
-                .. BitConverter.GetBytes(UnknownShort3),
-                .. new byte[] { BlueTint, GreenTint, RedTint, AlphaTint },
+                .. BitConverter.GetBytes(UnknownShort3), BlueTint, GreenTint, RedTint, AlphaTint,
             ];
 
             return bytes;

@@ -56,7 +56,7 @@ namespace HaruhiHeiretsuCLI
                 (_decimal ? $"{x.BinArchiveIndex:D3}" : $"{x.BinArchiveIndex:X3}") + ".bin"),
                 _compressed ? x.CompressedData : [.. x.Data]));
 
-            CommandSet.Out.WriteLine($"Successfully unpacked {archive.Files.Count} from archive {archive.FileName}.");
+            CommandSet.Out.WriteLine($"Successfully unpacked {archive.Files.Count} files from archive {archive.FileName}.");
 
             return 0;
         }

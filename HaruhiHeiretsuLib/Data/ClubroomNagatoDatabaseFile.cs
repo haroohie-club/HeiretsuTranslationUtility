@@ -117,7 +117,7 @@ namespace HaruhiHeiretsuLib.Data
                         Offset = i,
                         Speaker = "Title",
                         Line = ClubroomDatabaseCards[i].Title,
-                        Metadata = [.. (new string[] { "0" })],
+                        Metadata = ["0"],
                     });
                 }
                 lines.Add(new()
@@ -125,7 +125,7 @@ namespace HaruhiHeiretsuLib.Data
                     Offset = i,
                     Speaker = ClubroomDatabaseCards[i].Speaker,
                     Line = ClubroomDatabaseCards[i].Line,
-                    Metadata = [.. (new string[] { ClubroomDatabaseCards[i].VoiceFile, $"Title: {ClubroomDatabaseCards[i].Title}", "1" })],
+                    Metadata = [ClubroomDatabaseCards[i].VoiceFile, $"Title: {ClubroomDatabaseCards[i].Title}", "1"],
                 });
             }
 
