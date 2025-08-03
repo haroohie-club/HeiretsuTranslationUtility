@@ -43,10 +43,10 @@ namespace HaruhiHeiretsuCLI
 
             CommandSet.Out.WriteLine("Loading archives...");
             McbArchive mcb = Program.GetMcbFile(_mcb);
-            BinArchive<FileInArchive> dat = BinArchive<FileInArchive>.FromFile(_dat);
-            BinArchive<EventFile> evt = BinArchive<EventFile>.FromFile(_evt);
-            BinArchive<GraphicsFile> grp = BinArchive<GraphicsFile>.FromFile(_grp);
-            BinArchive<ScriptFile> scr = BinArchive<ScriptFile>.FromFile(_scr);
+            var dat = BinArchive<FileInArchive>.FromFile(_dat);
+            var evt = BinArchive<EventFile>.FromFile(_evt);
+            var grp = BinArchive<GraphicsFile>.FromFile(_grp);
+            var scr = BinArchive<ScriptFile>.FromFile(_scr);
             Dictionary<McbArchive.ArchiveIndex, bool> archivesEdited = new() { { McbArchive.ArchiveIndex.DAT, false }, { McbArchive.ArchiveIndex.EVT, false }, { McbArchive.ArchiveIndex.GRP, false }, { McbArchive.ArchiveIndex.SCR, false } };
             
             FontReplacementMap fontReplacementMap = null;
@@ -310,31 +310,31 @@ namespace HaruhiHeiretsuCLI
                                         break;
 
                                     case DataStringsFileLocations.MAP_DEFINITION_MCB_INDEX:
-                                        DataStringsFile<MapDefinitionsFile> mapDefinitionsFile = mcbFile.CastTo<DataStringsFile<MapDefinitionsFile>>();
+                                        var mapDefinitionsFile = mcbFile.CastTo<DataStringsFile<MapDefinitionsFile>>();
                                         mapDefinitionsFile.ImportResxFile(file, fontReplacementMap);
                                         mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = mapDefinitionsFile.DataFile;
                                         break;
 
                                     case DataStringsFileLocations.TOPICS_FLAG_MCB_INDEX:
-                                        DataStringsFile<TopicsAndFlagsFile> topicsAndFlagsFile = mcbFile.CastTo<DataStringsFile<TopicsAndFlagsFile>>();
+                                        var topicsAndFlagsFile = mcbFile.CastTo<DataStringsFile<TopicsAndFlagsFile>>();
                                         topicsAndFlagsFile.ImportResxFile(file, fontReplacementMap);
                                         mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = topicsAndFlagsFile.DataFile;
                                         break;
 
                                     case DataStringsFileLocations.NAMEPLATES_MCB_INDEX:
-                                        DataStringsFile<NameplatesFile> nameplatesFile = mcbFile.CastTo<DataStringsFile<NameplatesFile>>();
+                                        var nameplatesFile = mcbFile.CastTo<DataStringsFile<NameplatesFile>>();
                                         nameplatesFile.ImportResxFile(file, fontReplacementMap);
                                         mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = nameplatesFile.DataFile;
                                         break;
 
                                     case DataStringsFileLocations.TIMELINE_MCB_INDEX:
-                                        DataStringsFile<TimelineFile> timelineFile = mcbFile.CastTo<DataStringsFile<TimelineFile>>();
+                                        var timelineFile = mcbFile.CastTo<DataStringsFile<TimelineFile>>();
                                         timelineFile.ImportResxFile(file, fontReplacementMap);
                                         mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = timelineFile.DataFile;
                                         break;
 
                                     case DataStringsFileLocations.CLUBROOM_MCB_INDEX:
-                                        DataStringsFile<ClubroomKoizumiCutscenesFile> clubroomFile = mcbFile.CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>();
+                                        var clubroomFile = mcbFile.CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>();
                                         clubroomFile.ImportResxFile(file, fontReplacementMap);
                                         mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = clubroomFile.DataFile;
                                         break;
@@ -342,13 +342,13 @@ namespace HaruhiHeiretsuCLI
                                 break;
 
                             case McbArchive.ArchiveIndex.EVT:
-                                EventFile mcbEventFile = mcbFile.CastTo<EventFile>();
+                                var mcbEventFile = mcbFile.CastTo<EventFile>();
                                 mcbEventFile.ImportResxFile(file, fontReplacementMap);
                                 mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = mcbEventFile;
                                 break;
 
                             case McbArchive.ArchiveIndex.SCR:
-                                ScriptFile mcbScriptFile = mcbFile.CastTo<ScriptFile>();
+                                var mcbScriptFile = mcbFile.CastTo<ScriptFile>();
                                 mcbScriptFile.AvailableCommands = ScriptCommand.ParseScriptCommandFile([.. scr.Files[1].Data]);
                                 mcbScriptFile.PopulateCommandBlocks();
                                 mcbScriptFile.ImportResxFile(file, fontReplacementMap);
