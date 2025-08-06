@@ -101,7 +101,7 @@ namespace HaruhiHeiretsuCLI
                         int mapSection, mapIndex;
                         if (char.IsNumber(name[0]))
                         {
-                            int mcbId = mcb.McbSubArchives[int.Parse(name[0..3])].Id;
+                            int mcbId = mcb.McbSubArchives[int.Parse(name[..3])].Id;
                             mapSection = ((mcbId >> 8) ^ 0x40);
                             mapIndex = mcbId & 0xFF;
                         }

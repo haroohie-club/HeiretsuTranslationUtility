@@ -19,7 +19,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         public ScriptCommand(byte[] data)
         {
-            Index = IO.ReadShort(data, 2);
+            Index = IO.ReadShort(data, 0x00);
             ushort numParams = IO.ReadUShort(data, 0x02);
             int nameLength = IO.ReadInt(data, 0x04);
             Name = Encoding.ASCII.GetString(data.Skip(8).Take(nameLength - 1).ToArray()); // minus one bc of the terminal character \x00 that we want to avoid

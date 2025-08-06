@@ -135,7 +135,7 @@ namespace HaruhiHeiretsuLib.Strings
 
                 if (dialogueText[i] != ' ' && lineLength > maxLineLength)
                 {
-                    int indexOfMostRecentSpace = dialogueText[0..i].LastIndexOf(' ');
+                    int indexOfMostRecentSpace = dialogueText[..i].LastIndexOf(' ');
                     dialogueText = dialogueText.Remove(indexOfMostRecentSpace, 1);
                     dialogueText = dialogueText.Insert(indexOfMostRecentSpace, "\n");
                     lineLength = dialogueText[(indexOfMostRecentSpace + 1)..(i + 1)].Sum(c => fontReplacementMap.GetReplacementCharacterWidth($"{dialogueText[i]}"));

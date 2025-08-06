@@ -55,7 +55,7 @@ namespace HaruhiHeiretsuLib.Strings.Data
             using ResXResourceReader resxReader = new(textReader);
             foreach (DictionaryEntry d in resxReader)
             {
-                int dialogueIndex = int.Parse(((string)d.Key)[0..4]);
+                int dialogueIndex = int.Parse(((string)d.Key)[..4]);
                 string dialogueText = (string)d.Value;
 
                 dialogueText = NormalizeDialogueLine(dialogueText);

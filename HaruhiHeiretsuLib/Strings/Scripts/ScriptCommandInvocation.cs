@@ -505,7 +505,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     }
 
                     // It has to be some sort of int; try to see if it's an unknown kind
-                    if (int.TryParse(trimmedParameters[0..2], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int type))
+                    if (int.TryParse(trimmedParameters[..2], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int type))
                     {
                         string[] parameter = trimmedParameters[2..].Split(',')[0].Split(' ');
 
@@ -673,6 +673,13 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     return $"memm {valueCode}";
                 case 0x304:
                     return $"var {ScriptObjects[valueCode]}";
+                case 0x1000:
+                case 0x1001:
+                case 0x1002:
+                case 0x1003:
+                case 0x1004:
+                case 0x1005:
+                    return $"memm {controlCode}";
                 default:
                     return "-1";
             }
@@ -876,7 +883,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         private string ParseIndexedAddress(byte[] type07Parameter)
         {
-            string lineNumber = ParseAddress(type07Parameter[0..4]);
+            string lineNumber = ParseAddress(type07Parameter[..4]);
             string alwaysUse = Helpers.GetIntFromByteArray(type07Parameter, 1) != 0 ? "TRUE" : "FALSE";
             string index = CalculateIntParameter(Helpers.GetIntFromByteArray(type07Parameter, 2), Helpers.GetIntFromByteArray(type07Parameter, 3));
 
@@ -898,7 +905,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         {
             string[] coords = new string[]
             {
-                ParseFloat(type14Parameter[0..8]),
+                ParseFloat(type14Parameter[..8]),
                 ParseFloat(type14Parameter[8..16]),
                 ParseFloat(type14Parameter[16..24]),
             };

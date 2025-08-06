@@ -47,7 +47,7 @@ namespace HaruhiHeiretsuLib.Data
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            IEnumerable<IGrouping<string, string>> csvGroups = csvLines.Skip(1).GroupBy(l => l[0..l.IndexOf('-')]);
+            IEnumerable<IGrouping<string, string>> csvGroups = csvLines.Skip(1).GroupBy(l => l[..l.IndexOf('-')]);
             Sections = csvGroups.Select(g => new MapDefinitionSection([.. g], int.Parse(g.Key))).ToList();
         }
 
