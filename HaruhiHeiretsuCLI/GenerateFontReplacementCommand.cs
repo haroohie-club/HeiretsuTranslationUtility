@@ -14,8 +14,8 @@ namespace HaruhiHeiretsuCLI
         private string _fontFile, _extendedCharacters, _outputJson, _outputHack;
         private float _fontSize;
 
-        private const string CHARACTERS = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}";
-        private const double GAME_SCALE_FACTOR = 17;
+        private const string CHARACTERS = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+        private const double GAME_SCALE_FACTOR = 19;
 
         public GenerateFontReplacementCommand() : base("generate-font-replacement", "Generate a font replacement map from a font file")
         {
