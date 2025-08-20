@@ -149,7 +149,7 @@ def construct_mesh(sge, submesh, materials, group_num, submesh_num):
 
     mesh.from_pydata(vertices, [], faces) # Edges are autocalculated by blender so we can pass a blank array
     # mesh.normals_split_custom_set([(0, 0, 0) for l in mesh.loops])
-    mesh.normals_split_custom_set_from_vertices(normals)
+#     mesh.normals_split_custom_set_from_vertices(normals)
     mesh.flip_normals()
 
     uvlayer = mesh.uv_layers.new()

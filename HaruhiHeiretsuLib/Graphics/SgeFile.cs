@@ -1276,7 +1276,7 @@ namespace HaruhiHeiretsuLib.Graphics
             Unknown00 = IO.ReadIntLE(data, 0x00);
             Unknown04 = IO.ReadFloatLE(data, 0x04);
             Weight = IO.ReadFloatLE(data, 0x08);
-            Color = new SKColor(data.ElementAt(0x0C), data.ElementAt(0x0D), data.ElementAt(0x0E), 0xFF);
+            Color = new(data.ElementAt(0x0C), data.ElementAt(0x0D), data.ElementAt(0x0E), 0xFF);
             Unknown10 = IO.ReadFloatLE(data, 0x10);
             Unknown14 = IO.ReadIntLE(data, 0x14);
         }
@@ -1566,11 +1566,11 @@ namespace HaruhiHeiretsuLib.Graphics
         public SgeBone(byte[] data, int offset)
         {
             Address = offset;
-            TailOffset = new Vector3(
+            TailOffset = new(
                 IO.ReadFloatLE(data, offset + 0x00),
                 IO.ReadFloatLE(data, offset + 0x04),
                 IO.ReadFloatLE(data, offset + 0x08));
-            HeadPosition = new Vector3(
+            HeadPosition = new(
                 IO.ReadFloatLE(data, offset + 0x0C),
                 IO.ReadFloatLE(data, offset + 0x10),
                 IO.ReadFloatLE(data, offset + 0x14));
@@ -1791,16 +1791,16 @@ namespace HaruhiHeiretsuLib.Graphics
 
         public SgeVertex(byte[] data)
         {
-            Position = new Vector3(IO.ReadFloatLE(data, 0x00), IO.ReadFloatLE(data, 0x04), IO.ReadFloatLE(data, 0x08));
+            Position = new(IO.ReadFloatLE(data, 0x00), IO.ReadFloatLE(data, 0x04), IO.ReadFloatLE(data, 0x08));
             float weight1 = IO.ReadFloatLE(data, 0x0C);
             float weight2 = IO.ReadFloatLE(data, 0x10);
             float weight3 = IO.ReadFloatLE(data, 0x14);
             Weight = [weight1, weight2, weight3, 1 - (weight1 + weight2 + weight3)];
             BoneIds = data.Skip(0x18).Take(4).ToArray();
-            Normal = new Vector3(IO.ReadFloatLE(data, 0x1C), IO.ReadFloatLE(data, 0x20), IO.ReadFloatLE(data, 0x24));
+            Normal = new(IO.ReadFloatLE(data, 0x1C), IO.ReadFloatLE(data, 0x20), IO.ReadFloatLE(data, 0x24));
             int color = IO.ReadIntLE(data, 0x28);
-            Color = new VertexColor(((color & 0x00FF0000) >> 16) / 255.0f, ((color & 0x0000FF00) >> 8) / 255.0f, (color & 0x000000FF) / 255.0f, ((color & 0xFF000000) >> 24) / 255.0f);
-            UVCoords = new Vector2(IO.ReadFloatLE(data, 0x2C), IO.ReadFloatLE(data, 0x30));
+            Color = new(((color & 0x00FF0000) >> 16) / 255.0f, ((color & 0x0000FF00) >> 8) / 255.0f, (color & 0x000000FF) / 255.0f, ((color & 0xFF000000) >> 24) / 255.0f);
+            UVCoords = new(IO.ReadFloatLE(data, 0x2C), IO.ReadFloatLE(data, 0x30));
             Unknown2 = IO.ReadIntLE(data, 0x34);
         }
 
