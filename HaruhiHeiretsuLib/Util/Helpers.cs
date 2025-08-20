@@ -181,7 +181,7 @@ namespace HaruhiHeiretsuLib.Util
                     }
                     byte firstByte = (byte)(encodedLookbackIndex / 0x100 | encodedLength << 5 | 0x80);
                     byte secondByte = (byte)(encodedLookbackIndex & 0xFF);
-                    compressedData.AddRange(new byte[] { firstByte, secondByte });
+                    compressedData.AddRange([firstByte, secondByte]);
                     if (remainingEncodedLength > 0)
                     {
                         while (remainingEncodedLength > 0)
@@ -215,7 +215,7 @@ namespace HaruhiHeiretsuLib.Util
                         int msb = numToEncode & 0xF00;
                         byte firstByte = (byte)(0x50 | msb / 0x100);
                         byte secondByte = (byte)(numToEncode - msb); // 0x50 -- repeated byte, 12-bit length
-                        compressedData.AddRange(new byte[] { firstByte, secondByte });
+                        compressedData.AddRange([firstByte, secondByte]);
                     }
                     compressedData.Add(repeatedBytes[0]);
                     i += numRepeatedBytes;
@@ -294,7 +294,7 @@ namespace HaruhiHeiretsuLib.Util
                 int msb = 0x1F00 & numBytesToWrite;
                 byte firstByte = (byte)(0x20 | msb / 0x100);
                 byte secondByte = (byte)(numBytesToWrite - msb);
-                writeTo.AddRange(new byte[] { firstByte, secondByte });
+                writeTo.AddRange([firstByte, secondByte]);
             }
             writeTo.AddRange(writeFrom.Skip(position - numBytesToWrite).Take(numBytesToWrite));
         }

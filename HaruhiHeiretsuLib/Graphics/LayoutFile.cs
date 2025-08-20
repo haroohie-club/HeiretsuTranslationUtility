@@ -157,8 +157,8 @@ namespace HaruhiHeiretsuLib.Graphics
 
     public static class KnownLayoutGraphicsSets
     {
-        public static LayoutGraphic[] TitleScreenGraphics = new LayoutGraphic[]
-        {
+        public static LayoutGraphic[] TitleScreenGraphics =
+        [
             new(0x6B, (58, 0)),
             new(0x1E, (58, 1)),
             new(0x1C, (58, 2)),
@@ -168,11 +168,11 @@ namespace HaruhiHeiretsuLib.Graphics
             new(0x10, (58, 6)),
             new(0x11, (58, 7)),
             new(0x12, (58, 8)),
-            new(0x1B, (58, 9))
-        };
+            new(0x1B, (58, 9)),
+        ];
 
-        public static LayoutGraphic[] SpecialVersionGraphics = new LayoutGraphic[]
-        {
+        public static LayoutGraphic[] SpecialVersionGraphics =
+        [
             new(0x6B, (69, 0)),
             new(0x1E, (69, 1)),
             new(0xCE, (69, 2)),
@@ -183,9 +183,9 @@ namespace HaruhiHeiretsuLib.Graphics
             new(0x10, (69, 7)),
             new(0x11, (69, 8)),
             new(0x12, (69, 9)),
-        };
-        public static LayoutGraphic[] OptionsBgAndOtherGraphics = new LayoutGraphic[]
-        {
+        ];
+        public static LayoutGraphic[] OptionsBgAndOtherGraphics =
+        [
             new(0x33, (0, 53)),
             new(0x34, (0, 96)),
             new(0x71, (0, 12)),
@@ -227,9 +227,9 @@ namespace HaruhiHeiretsuLib.Graphics
             new(0x6E, (0, 0)),
             new(0x6F, (0, 0)),
             new(0x70, (0, 94)),
-        };
-        public static LayoutGraphic[] MainInterfaceGraphics = new LayoutGraphic[]
-        {
+        ];
+        public static LayoutGraphic[] MainInterfaceGraphics =
+        [
             new(0x4C, (0, 0)),
             new(0x4D, (0, 0)),
             new(0x4E, (0, 0)),
@@ -257,29 +257,29 @@ namespace HaruhiHeiretsuLib.Graphics
             new(0x5C, (0, 0)),
             new(0x5D, (0, 0)),
             new(0x5E, (0, 0)),
-        };
-        public static LayoutGraphic[] PauseMenuGraphics = new LayoutGraphic[]
-        {
+        ];
+        public static LayoutGraphic[] PauseMenuGraphics =
+        [
             new(0x47, (0, 95)),
             new(0x45, (0, 0)),
             new(0x33, (0, 53)),
             new(0x48, (0, 99)),
-        };
-        public static LayoutGraphic[] Unknown801BAB1C = new LayoutGraphic[]
-        {
+        ];
+        public static LayoutGraphic[] Unknown801BAB1C =
+        [
             new(0x45, (0, 0)),
             new(0x60, (0, 0)),
             new(0x33, (0, 53)),
             new(0x48, (0, 99)),
-        };
-        public static LayoutGraphic[] Unknown801BAB28 = new LayoutGraphic[]
-        {
+        ];
+        public static LayoutGraphic[] Unknown801BAB28 =
+        [
             new(0x47, (0, 95)),
             new(0x65, (0, 0)),
             new(0x33, (0, 53)),
             new(0x48, (0, 99)),
             new(0x5C, (0, 0)),
-        };
+        ];
     }
 
     public struct LayoutGraphic

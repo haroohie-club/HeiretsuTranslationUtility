@@ -159,7 +159,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
                         if (int.TryParse(parameter, out int varLineNumber))
                         {
-                            List<byte> bytes = new(new byte[] { 0 });
+                            List<byte> bytes = new([0]);
                             bytes.AddRange(BitConverter.GetBytes(varLineNumber).Reverse().Skip(1)); // skip the first byte to keep us at four bytes; this makes us a 24-bit integer :D
                             Parameters.Add(new() { Type = ScriptCommand.ParameterType.ADDRESS, Value = [.. bytes], LineNumber = LineNumber });
                             i += parameter.Length + 2;
@@ -168,7 +168,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     }
                     else if (labelMatch.Success)
                     {
-                        List<byte> bytes = new(new byte[] { 1 });
+                        List<byte> bytes = new([1]);
                         if (!labels.Any(l => l.label == labelMatch.Groups["label"].Value))
                         {
                             labels.Add((labelMatch.Groups["label"].Value, 0));
@@ -222,7 +222,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                         }
                         else
                         {
-                            bytes.AddRange(new byte[] { 0x89, 0x82 });
+                            bytes.AddRange([0x89, 0x82]);
                             bytes.AddRange(firstOperand);
                             bytes.AddRange(CalculateControlStructure("lit", "1", objects));
                         }
@@ -537,13 +537,13 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     int lineNumber;
                     if (Parameters[i].Value[0] == 0x00)
                     {
-                        List<byte> tempBytes = new(new byte[] { 0 });
+                        List<byte> tempBytes = new([0]);
                         tempBytes.AddRange(Parameters[i].Value[1..]);
                         lineNumber = BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray()); // why dear god did you do this? bc roslyn won't let me do it w/ List.Reverse() existing
                     }
                     else
                     {
-                        List<byte> tempBytes = new(new byte[] { 0 });
+                        List<byte> tempBytes = new([0]);
                         tempBytes.AddRange(Parameters[i].Value[1..4]);
                         lineNumber = labels[BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray())].lineNumber;
                     }
@@ -561,13 +561,13 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     int lineNumber;
                     if (Parameters[i].Value[0] == 0x00)
                     {
-                        List<byte> tempBytes = new(new byte[] { 0 });
+                        List<byte> tempBytes = new([0]);
                         tempBytes.AddRange(Parameters[i].Value[1..4]);
                         lineNumber = BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray());
                     }
                     else
                     {
-                        List<byte> tempBytes = new(new byte[] { 0 });
+                        List<byte> tempBytes = new([0]);
                         tempBytes.AddRange(Parameters[i].Value[1..4]);
                         lineNumber = labels[BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray())].lineNumber;
                     }
@@ -892,23 +892,23 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
 
         private string ParseVector2(byte[] type04Parameter)
         {
-            string[] coords = new string[]
-            {
+            string[] coords =
+            [
                 CalculateIntParameter(Helpers.GetIntFromByteArray(type04Parameter, 0), Helpers.GetIntFromByteArray(type04Parameter, 1)),
                 CalculateIntParameter(Helpers.GetIntFromByteArray(type04Parameter, 2), Helpers.GetIntFromByteArray(type04Parameter, 3)),
-            };
+            ];
 
             return $"Vector2({coords[0]}, {coords[1]})";
         }
 
         private string ParseVector3(byte[] type14Parameter)
         {
-            string[] coords = new string[]
-            {
+            string[] coords =
+            [
                 ParseFloat(type14Parameter[..8]),
                 ParseFloat(type14Parameter[8..16]),
                 ParseFloat(type14Parameter[16..24]),
-            };
+            ];
 
             return $"Vector3({coords[0]}, {coords[1]}, {coords[2]})";
         }

@@ -30,7 +30,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
         public int ScriptCommandBlockDefinitionsEndOffset { get; set; }
         public int ScriptCommandBlockDefinitionsEnd { get; set; }
 
-        public static int[] DIALOGUE_LINE_LENGTHS = new int[] { 9368, 9368, 9000, 9000 };
+        public static int[] DIALOGUE_LINE_LENGTHS = [9368, 9368, 9000, 9000];
 
         public ScriptFile()
         {

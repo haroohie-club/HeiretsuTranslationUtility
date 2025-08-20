@@ -18,7 +18,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
         {
         }
 
-        public static int[] DIALOGUE_LINE_LENGTH = new int[] { 7038, 7038 };
+        public static int[] DIALOGUE_LINE_LENGTH = [7038, 7038];
 
         public override void Initialize(byte[] decompressedData, int offset)
         {
