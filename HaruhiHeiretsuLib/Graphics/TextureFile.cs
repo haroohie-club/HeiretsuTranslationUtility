@@ -226,8 +226,8 @@ namespace HaruhiHeiretsuLib.Graphics
                                         }
                                         ushort[] paletteData =
                                         [
-                                            BitConverter.ToUInt16(quickData, cmprIndex),
-                                            BitConverter.ToUInt16(quickData, cmprIndex + 2),
+                                            IO.ReadUShort(quickData, cmprIndex),
+                                            IO.ReadUShort(quickData, cmprIndex + 2),
                                         ];
                                         var palette = new SKColor[4];
                                         for (int i = 0; i < paletteData.Length; i++)
