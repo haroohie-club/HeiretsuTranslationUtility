@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace HaruhiHeiretsuCLI
@@ -148,6 +149,33 @@ namespace HaruhiHeiretsuCLI
                         archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
 
                         CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
+                    }
+                    else if (file.EndsWith(".evt.json", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (archive != "evt")
+                        {
+                            CommandSet.Out.WriteLine($"WARNING: Event JSON file {file} targets {archive}.bin rather than evt.bin, skipping...");
+                            continue;
+                        }
+                        
+                        string json = File.ReadAllText(file);
+
+                        evt.Files.First(f => f.BinArchiveIndex == archiveIndex).CutsceneData =
+                            JsonSerializer.Deserialize<CutsceneData>(json);
+                        grp.Files.First(f => f.BinArchiveIndex == archiveIndex).SetLayoutData();
+
+                        int i = mcb.GraphicsFiles.Count;
+                        mcb.LoadGraphicsFiles(file.Split('_'));
+                        for (; i < mcb.GraphicsFiles.Count; i++)
+                        {
+                            mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Data = grp.Files.First(f => f.BinArchiveIndex == archiveIndex).Data;
+                            mcb.McbSubArchives[mcb.GraphicsFiles[i].parentLoc].Files[mcb.GraphicsFiles[i].childLoc].Edited = true;
+                        }
+
+                        archivesEdited[McbArchive.ArchiveIndex.GRP] = true;
+
+                        CommandSet.Out.WriteLine($"Finished replacing file {Path.GetFileName(file)} in MCB & GRP");
+
                     }
                     else if (file.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
                     {

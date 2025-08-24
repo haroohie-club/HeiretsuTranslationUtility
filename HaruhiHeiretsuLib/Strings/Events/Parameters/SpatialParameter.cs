@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Events.Parameters
 {
@@ -28,20 +28,20 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
         public Vector2[] Spline2DVertices { get; set; }
         public int Unknown3C { get; set; }
 
-        public SpatialParameter(IEnumerable<byte> data, int offset, ushort opCode) : base(data, offset, opCode)
+        public SpatialParameter(byte[] data, int offset, ushort opCode) : base(data, offset, opCode)
         {
-            Unknown0C = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).ToArray());
-            SplinePointer = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).ToArray());
-            Unknown14 = BitConverter.ToInt16(data.Skip(offset + 0x14).Take(2).ToArray());
-            Unknown16 = BitConverter.ToInt16(data.Skip(offset + 0x16).Take(2).ToArray());
-            Unknown18 = BitConverter.ToInt16(data.Skip(offset + 0x18).Take(4).ToArray());
-            NumSplineVerts = data.ElementAt(offset + 0x1C);
-            SplineMode = data.ElementAt(offset + 0x1D);
-            Unknown1E = data.ElementAt(offset + 0x1E);
-            Unknown1F = data.ElementAt(offset + 0x1F);
-            int coords1Ptr = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).ToArray());
-            int coords2Ptr = BitConverter.ToInt32(data.Skip(offset + 0x24).Take(4).ToArray());
-            int coords3Ptr = BitConverter.ToInt32(data.Skip(offset + 0x28).Take(4).ToArray());
+            Unknown0C = IO.ReadIntLE(data, offset + 0x0C);
+            SplinePointer = IO.ReadIntLE(data, offset + 0x10);
+            Unknown14 = IO.ReadShortLE(data, offset + 0x14);
+            Unknown16 = IO.ReadShortLE(data, offset + 0x16);
+            Unknown18 = IO.ReadIntLE(data, offset + 0x18);
+            NumSplineVerts = data[offset + 0x1C];
+            SplineMode = data[offset + 0x1D];
+            Unknown1E = data[offset + 0x1E];
+            Unknown1F = data[offset + 0x1F];
+            int coords1Ptr = IO.ReadIntLE(data, offset + 0x20);
+            int coords2Ptr = IO.ReadIntLE(data, offset + 0x24);
+            int coords3Ptr = IO.ReadIntLE(data, offset + 0x28);
             if (coords1Ptr > 0)
             {
                 SplineVertices1 = new Vector3[NumSplineVerts];
@@ -54,8 +54,8 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
             {
                 SplineVertices3 = new Vector3[NumSplineVerts];
             }
-            int coords4Ptr = BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).ToArray());
-            int coords5Ptr = BitConverter.ToInt32(data.Skip(offset + 0x30).Take(4).ToArray());
+            int coords4Ptr = IO.ReadIntLE(data, offset + 0x2C);
+            int coords5Ptr = IO.ReadIntLE(data, offset + 0x30);
             if (coords4Ptr > 0)
             {
                 Coords4 = new Vector2[NumSplineVerts];
@@ -105,11 +105,11 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
                         );
                 }
             }
-            NumSpline2DVerts = data.ElementAt(offset + 0x34);
-            Unknown35 = data.ElementAt(offset + 0x35);
-            Unknown36 = data.ElementAt(offset + 0x36);
-            Unknown37 = data.ElementAt(offset + 0x37);
-            int secondaryCoordsPtr = BitConverter.ToInt32(data.Skip(offset + 0x38).Take(4).ToArray());
+            NumSpline2DVerts = data[offset + 0x34];
+            Unknown35 = data[offset + 0x35];
+            Unknown36 = data[offset + 0x36];
+            Unknown37 = data[offset + 0x37];
+            int secondaryCoordsPtr = IO.ReadIntLE(data, offset + 0x38);
             if (secondaryCoordsPtr > 0)
             {
                 Spline2DVertices = new Vector2[NumSpline2DVerts];
@@ -124,7 +124,7 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
                         );
                 }
             }
-            Unknown3C = BitConverter.ToInt32(data.Skip(offset + 0x3C).Take(4).ToArray());
+            Unknown3C = IO.ReadIntLE(data, offset + 0x3C);
         }
     }
 }

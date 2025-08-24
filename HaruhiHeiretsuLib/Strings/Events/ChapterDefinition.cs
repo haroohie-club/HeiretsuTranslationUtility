@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Events
 {
@@ -14,13 +15,13 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public int ActorDefTableOffset { get; set; }
         public List<ActorDefinition> ActorDefinitionTable { get; set; } = [];
 
-        public ChapterDefinition(IEnumerable<byte> data, int offset)
+        public ChapterDefinition(byte[] data, int offset)
         {
-            StartTime = BitConverter.ToSingle(data.Skip(offset).Take(4).ToArray());
-            EndTime = BitConverter.ToSingle(data.Skip(offset + 0x04).Take(4).ToArray());
-            CurrentTime = BitConverter.ToInt32(data.Skip(offset + 0x08).Take(4).ToArray());
-            ActorDefTableEntryCount = BitConverter.ToUInt16(data.Skip(offset + 0x0C).Take(2).ToArray());
-            ActorDefTableOffset = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).ToArray());
+            StartTime = IO.ReadFloatLE(data,offset);
+            EndTime = IO.ReadFloatLE(data, offset + 0x04);
+            CurrentTime = IO.ReadIntLE(data, offset + 0x08);
+            ActorDefTableEntryCount = IO.ReadUShortLE(data, offset + 0x0C);
+            ActorDefTableOffset = IO.ReadIntLE(data, offset + 0x10);
 
             for (int i = 0; i < ActorDefTableEntryCount; i++)
             {

@@ -9,6 +9,8 @@ namespace HaruhiHeiretsuLib.Strings.Events
     // 0x18 bytes
     public class ModelDefinition
     {
+        private List<byte> _data;
+        
         public string CharacterModelName { get; set; }
         public short Unknown10 { get; set; }
         public short Unknown12 { get; set; }
@@ -17,6 +19,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
 
         public ModelDefinition(IEnumerable<byte> data)
         {
+            _data = data.ToList();
             byte[] stringData = data.TakeWhile(b => b != 0x00).ToArray();
             if (stringData.Length > 0x10)
             {
@@ -29,6 +32,11 @@ namespace HaruhiHeiretsuLib.Strings.Events
             Unknown10 = BitConverter.ToInt16(data.Skip(0x10).Take(2).ToArray());
             Unknown12 = BitConverter.ToInt16(data.Skip(0x12).Take(2).ToArray());
             CharacterModelDataEntryOffset = BitConverter.ToInt32(data.Skip(0x14).Take(4).ToArray());
+        }
+
+        public List<byte> GetBytes()
+        {
+            return _data;
         }
     }
 

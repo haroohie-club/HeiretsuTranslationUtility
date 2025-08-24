@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Events.Parameters
 {
@@ -23,22 +24,22 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
         public string VoiceFile { get; set; }
         public string Dialogue { get; set; }
         public string LipSyncData { get; set; } = string.Empty;
-        public DialogueParameter(IEnumerable<byte> data, int offset, ushort opCode) : base(data, offset, opCode)
+        public DialogueParameter(byte[] data, int offset, ushort opCode) : base(data, offset, opCode)
         {
-            Unknown0C = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).ToArray());
-            Unknown10 = BitConverter.ToInt32(data.Skip(offset + 0x10).Take(4).ToArray());
-            Unknown14 = BitConverter.ToUInt16(data.Skip(offset + 0x14).Take(2).ToArray());
-            Unknown16 = BitConverter.ToUInt16(data.Skip(offset + 0x16).Take(2).ToArray());
-            Unknown18 = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).ToArray());
-            Unknown1C = BitConverter.ToInt32(data.Skip(offset + 0x1C).Take(4).ToArray());
-            Unknown20 = BitConverter.ToInt32(data.Skip(offset + 0x20).Take(4).ToArray());
-            Unknown24 = BitConverter.ToUInt16(data.Skip(offset + 0x24).Take(2).ToArray());
-            Unknown26 = BitConverter.ToUInt16(data.Skip(offset + 0x26).Take(2).ToArray());
-            Unknown28 = BitConverter.ToUInt16(data.Skip(offset + 0x28).Take(2).ToArray());
-            Unknown2A = BitConverter.ToUInt16(data.Skip(offset + 0x2A).Take(2).ToArray());
-            SpeakingCharacter = (EventFileSpeaker)BitConverter.ToInt32(data.Skip(offset + 0x2C).Take(4).ToArray());
-            VoiceFile = Encoding.ASCII.GetString(data.Skip(offset + 0x30).TakeWhile(b => b != 0x00).ToArray());
-            Dialogue = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(offset + 0x50).TakeWhile(b => b != 0x00).ToArray());
+            Unknown0C = IO.ReadIntLE(data, offset + 0x0C);
+            Unknown10 = IO.ReadIntLE(data, offset + 0x10);
+            Unknown14 = IO.ReadUShortLE(data, offset + 0x14);
+            Unknown16 = IO.ReadUShortLE(data, offset + 0x16);
+            Unknown18 = IO.ReadIntLE(data, offset + 0x18);
+            Unknown1C = IO.ReadIntLE(data, offset + 0x1C);
+            Unknown20 = IO.ReadIntLE(data, offset + 0x20);
+            Unknown24 = IO.ReadUShortLE(data, offset + 0x24);
+            Unknown26 = IO.ReadUShortLE(data, offset + 0x26);
+            Unknown28 = IO.ReadUShortLE(data, offset + 0x28);
+            Unknown2A = IO.ReadUShortLE(data, offset + 0x2A);
+            SpeakingCharacter = (EventFileSpeaker)IO.ReadIntLE(data, offset + 0x2C);
+            VoiceFile = IO.ReadAsciiString(data, offset + 0x30);
+            Dialogue = IO.ReadShiftJisString(data, offset + 0x50);
             byte[] lipSyncData = data.Skip(offset + 0xD0).TakeWhile(b => b != 0x00).ToArray();
             for (int i = 0; i < lipSyncData.Length; i += 2)
             {
@@ -46,6 +47,7 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters
             }
         }
 
+        /// <inheritdoc />
         public override List<byte> GetBytes()
         {
             List<byte> bytes =

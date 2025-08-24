@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Events
 {
@@ -19,21 +20,21 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public short SgeDatIndex { get; set; }
         public List<ActionDefinition> ActionsTable { get; set; } = [];
 
-        public ActorDefinition(IEnumerable<byte> data, int offset)
+        public ActorDefinition(byte[] data, int offset)
         {
-            ChapterDefinitionOffset = BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
-            Type = (ActorType)BitConverter.ToInt16(data.Skip(offset + 0x04).Take(2).ToArray());
-            IEnumerable<byte> nameBytes = data.Skip(offset + 0x06).TakeWhile(b => b != 0x00);
+            ChapterDefinitionOffset = IO.ReadIntLE(data, offset + 0x00);
+            Type = (ActorType)IO.ReadShortLE(data, offset + 0x04);
+            byte[] nameBytes = data.Skip(offset + 0x06).TakeWhile(b => b != 0x00).ToArray();
             if (nameBytes.Count() > 0x10)
             {
-                ModelName = Encoding.ASCII.GetString(nameBytes.Take(offset + 0x10).ToArray());
+                ModelName = IO.ReadAsciiString(nameBytes, offset + 0x10);
             }
             else
             {
-                ModelName = Encoding.ASCII.GetString(nameBytes.ToArray());
+                ModelName = IO.ReadAsciiString(nameBytes, 0x00);
             }
-            ActionsCount = BitConverter.ToInt16(data.Skip(offset + 0x16).Take(2).ToArray());
-            ActionsTableAddress = BitConverter.ToInt32(data.Skip(offset + 0x18).Take(4).ToArray());
+            ActionsCount = IO.ReadShortLE(data, offset + 0x16);
+            ActionsTableAddress = IO.ReadIntLE(data, offset + 0x18);
 
             for (int i = 0; i < ActionsCount; i++)
             {
@@ -41,6 +42,10 @@ namespace HaruhiHeiretsuLib.Strings.Events
             }
         }
 
+        /// <summary>
+        /// Return binary representation of the actor definition
+        /// </summary>
+        /// <returns>Byte array representing the actor definition</returns>
         public List<byte> GetBytes()
         {
             List<byte> bytes = [.. BitConverter.GetBytes(ChapterDefinitionOffset), .. BitConverter.GetBytes((short)Type)];

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
+using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Events
 {
@@ -45,14 +46,14 @@ namespace HaruhiHeiretsuLib.Strings.Events
         public int ParametersAddress { get; set; }
         public List<ActionParameter> Parameters { get; set; } = [];
 
-        public ActionDefinition(IEnumerable<byte> data, int offset)
+        public ActionDefinition(byte[] data, int offset)
         {
-            ActorDefinitionAddress = BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
-            OpCode = BitConverter.ToUInt16(data.Skip(offset + 0x04).Take(2).ToArray());
-            Unknown06 = BitConverter.ToUInt16(data.Skip(offset + 0x06).Take(2).ToArray());
-            ParametersCount = BitConverter.ToUInt16(data.Skip(offset + 0x08).Take(2).ToArray());
-            Unknown0A = BitConverter.ToUInt16(data.Skip(offset + 0x0A).Take(2).ToArray());
-            ParametersAddress = BitConverter.ToInt32(data.Skip(offset + 0x0C).Take(4).ToArray());
+            ActorDefinitionAddress = IO.ReadIntLE(data, offset + 0x00);
+            OpCode = IO.ReadUShortLE(data, offset + 0x04);
+            Unknown06 = IO.ReadUShortLE(data, offset + 0x06);
+            ParametersCount = IO.ReadUShortLE(data, offset + 0x08);
+            Unknown0A = IO.ReadUShortLE(data, offset + 0x0A);
+            ParametersAddress = IO.ReadIntLE(data, offset + 0x0C);
 
             int currentPosition = ParametersAddress;
             for (int i = 0; i < ParametersCount; i++)
@@ -130,6 +131,14 @@ namespace HaruhiHeiretsuLib.Strings.Events
         }
     }
 
+    /// <summary>
+    /// Enum representing the mnemonics for action parameters
+    /// </summary>
+    public enum ActionParameterMnemonic
+    {
+        
+    }
+
     [JsonDerivedType(typeof(DialogueParameter))]
     [JsonDerivedType(typeof(FadeParameter))]
     [JsonDerivedType(typeof(ModelAnimationParameter))]
@@ -166,7 +175,7 @@ namespace HaruhiHeiretsuLib.Strings.Events
             }
         }
 
-        public ActionParameter(IEnumerable<byte> data, int offset, ushort opCode)
+        public ActionParameter(byte[] data, int offset, ushort opCode)
         {
             Address = offset;
             _opCode = opCode;
