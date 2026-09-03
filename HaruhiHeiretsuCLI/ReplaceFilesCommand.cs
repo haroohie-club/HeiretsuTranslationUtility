@@ -238,7 +238,7 @@ namespace HaruhiHeiretsuCLI
                             }
 
                             FileInArchive currentFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex);
-                            List<byte> data = [];
+                            List<byte> data;
                             
                             if (archiveIndex == 36)
                             {

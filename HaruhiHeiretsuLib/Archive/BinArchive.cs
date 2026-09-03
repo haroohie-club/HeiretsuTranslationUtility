@@ -48,7 +48,7 @@ namespace HaruhiHeiretsuLib.Archive
         public static BinArchive<T> FromFile(string fileName)
         {
             byte[] archiveBytes = File.ReadAllBytes(fileName);
-            return new BinArchive<T>(archiveBytes) { FileName = Path.GetFileName(fileName) };
+            return new(archiveBytes) { FileName = Path.GetFileName(fileName) };
         }
 
         internal BinArchive(byte[] archiveBytes)

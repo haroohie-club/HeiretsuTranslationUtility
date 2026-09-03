@@ -16,7 +16,7 @@ namespace HaruhiHeiretsuLib.Archive
     /// <summary>
     /// Representation of the mcb0.bln and mcb1.bln files, which together make up the "MCB archive"
     /// </summary>
-    public class McbArchive
+    public partial class McbArchive
     {
         /// <summary>
         /// The MCB sub archives that comprise the archive
@@ -97,7 +97,7 @@ namespace HaruhiHeiretsuLib.Archive
         {
             List<byte> mcb0 = [], mcb1 = [];
 
-            if (FontFile is not null && FontFile.Edited == true)
+            if (FontFile is not null && FontFile.Edited)
             {
                 SaveFontFile();
             }
@@ -177,9 +177,9 @@ namespace HaruhiHeiretsuLib.Archive
                 {
                     if (file.McbEntryData.ArchiveIndex == archiveIndexToAdjust)
                     {
-                        if (offsetAdjustments.ContainsKey(file.McbEntryData.ArchiveOffset))
+                        if (offsetAdjustments.TryGetValue(file.McbEntryData.ArchiveOffset, out int adjustment))
                         {
-                            file.McbEntryData = (file.McbEntryData.ArchiveIndex, offsetAdjustments[file.McbEntryData.ArchiveOffset]);
+                            file.McbEntryData = (file.McbEntryData.ArchiveIndex, adjustment);
                         }
                     }
                 }
@@ -292,10 +292,10 @@ namespace HaruhiHeiretsuLib.Archive
         }
 
         /// <summary>
-        /// Gets a file map
+        /// Gets a map of all files in the MCB as they correspond to a particular bin archive
         /// </summary>
-        /// <param name="binArchiveFile"></param>
-        /// <returns></returns>
+        /// <param name="binArchiveFile">The bin archive to compare against</param>
+        /// <returns>A dictionary of bin index to a list of MCB indices</returns>
         public Dictionary<int, List<(int, int)>> GetFileMap(string binArchiveFile)
         {
             Dictionary<int, List<(int, int)>> fileMap = [];
@@ -347,12 +347,17 @@ namespace HaruhiHeiretsuLib.Archive
             return fileMap;
         }
 
+        /// <summary>
+        /// Loads a set of strings files from the MCB
+        /// </summary>
+        /// <param name="stringsFilesLocations">A set of parseable string file locations with `{mcbParent}-{mcbChild}` as the descriptor</param>
+        /// <param name="scriptCommands">(Optional) The list of script commands from scr.bin</param>
         public void LoadStringsFiles(string[] stringsFilesLocations, List<ScriptCommand> scriptCommands = null)
         {
-            LoadStringsFiles(string.Join('\n', stringsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))), scriptCommands);
+            LoadStringsFiles(string.Join('\n', stringsFilesLocations.Where(l => McbFileRegex().IsMatch(l)).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))), scriptCommands);
         }
-
-        public void LoadStringsFiles(string stringFileLocations, List<ScriptCommand> scriptCommands = null)
+        
+        private void LoadStringsFiles(string stringFileLocations, List<ScriptCommand> scriptCommands = null)
         {
             foreach (string line in stringFileLocations.Replace("\r\n", "\n").Split("\n"))
             {
@@ -365,15 +370,7 @@ namespace HaruhiHeiretsuLib.Archive
                 int childLoc = int.Parse(lineSplit[1]);
 
                 MapDefinitionsFile mapDefinitionsFile = McbSubArchives[0].Files[79].CastTo<MapDefinitionsFile>();
-                MapDefinition mapDef;
-                if (parentLoc != 0)
-                {
-                    mapDef = mapDefinitionsFile.Sections[((McbSubArchives[parentLoc].Id >> 8) ^ 0x40) - 2].MapDefinitions[McbSubArchives[parentLoc].Id & 0xFF];
-                }
-                else
-                {
-                    mapDef = null;
-                }
+                MapDefinition mapDef = parentLoc != 0 ? mapDefinitionsFile.Sections[((McbSubArchives[parentLoc].Id >> 8) ^ 0x40) - 2].MapDefinitions[McbSubArchives[parentLoc].Id & 0xFF] : null;
 
                 switch ((ArchiveIndex)McbSubArchives[parentLoc].Files[childLoc].McbEntryData.ArchiveIndex)
                 {
@@ -420,10 +417,15 @@ namespace HaruhiHeiretsuLib.Archive
             }
         }
 
+        /// <summary>
+        /// Gets a list of graphics files to load given their MCB locations
+        /// </summary>
+        /// <param name="graphicsFilesLocations">The locations of the graphics files in the MCB</param>
+        /// <returns>A list of locations to load</returns>
         public static List<(int, int)> GetFilesToLoad(string[] graphicsFilesLocations)
         {
             List<(int, int)> locations = [];
-            string[] recombined = graphicsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ',')).ToArray();
+            string[] recombined = graphicsFilesLocations.Where(l => McbFileRegex().IsMatch(l)).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ',')).ToArray();
 
             foreach (string line in recombined)
             {
@@ -439,12 +441,16 @@ namespace HaruhiHeiretsuLib.Archive
             return locations;
         }
 
+        /// <summary>
+        /// Load graphics files from a list of MCB locations
+        /// </summary>
+        /// <param name="graphicsFilesLocations">Graphics files to load (MCB locations)</param>
         public void LoadGraphicsFiles(string[] graphicsFilesLocations)
         {
-            LoadGraphicsFiles(string.Join('\n', graphicsFilesLocations.Where(l => Regex.IsMatch(l, @"\d{3}-\d{3}")).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
+            LoadGraphicsFiles(string.Join('\n', graphicsFilesLocations.Where(l => McbFileRegex().IsMatch(l)).Select(l => Path.GetFileNameWithoutExtension(l).Replace('-', ','))));
         }
 
-        public void LoadGraphicsFiles(string graphicsFilesLocations)
+        private void LoadGraphicsFiles(string graphicsFilesLocations)
         {
             foreach (string line in graphicsFilesLocations.Replace("\r\n", "\n").Split("\n"))
             {
@@ -460,41 +466,25 @@ namespace HaruhiHeiretsuLib.Archive
             }
         }
 
-        public void LoadGraphicsFiles()
-        {
-            for (int parent = 0; parent < McbSubArchives.Count; parent++)
-            {
-                for (int child = 0; child < McbSubArchives[parent].Files.Count; child++)
-                {
-                    if (McbSubArchives[parent].Files[child].McbEntryData.ArchiveIndex == (int)ArchiveIndex.GRP)
-                    {
-                        GraphicsFile graphicsFile = new()
-                        {
-                            Location = (parent, child), McbEntryData = (McbSubArchives[parent].Files[child].McbEntryData.ArchiveIndex,
-                            McbSubArchives[parent].Files[child].McbEntryData.ArchiveOffset),
-                            McbId = McbSubArchives[parent].Id,
-                            CompressedData = McbSubArchives[parent].Files[child].CompressedData
-                        };
-                        graphicsFile.Initialize([.. McbSubArchives[parent].Files[child].Data], 0);
-                        graphicsFile.Offset = McbSubArchives[parent].Files[child].Offset;
-                        GraphicsFiles.Add((parent, child));
-                        McbSubArchives[parent].Files[child] = graphicsFile;
-                    }
-                }
-            }
-        }
-
+        /// <summary>
+        /// Loads the font file
+        /// </summary>
         public void LoadFontFile()
         {
-            FontFile = new FontFile([.. McbSubArchives[0].Files[5].Data]);
+            FontFile = new([.. McbSubArchives[0].Files[5].Data]);
         }
 
-        public void SaveFontFile()
+        private void SaveFontFile()
         {
             McbSubArchives[0].Files[5].Edited = true;
             McbSubArchives[0].Files[5].Data = [.. FontFile.GetBytes()];
         }
 
+        /// <summary>
+        /// Searches all files in the MCB for a particular Shift-JIS string
+        /// </summary>
+        /// <param name="search">The string to search for</param>
+        /// <returns>A list of MCB file locations for files that contain that string</returns>
         public List<(int, int)> FindStringInFiles(string search)
         {
             List<(int, int)> fileLocations = [];
@@ -519,6 +509,12 @@ namespace HaruhiHeiretsuLib.Archive
             return fileLocations;
         }
 
+        /// <summary>
+        /// Search for a hex string in the MCB
+        /// </summary>
+        /// <param name="search">The hexadecimal string to search for</param>
+        /// <param name="fourByteAligned">If true, only checks hex strings starting on an offset of multiple 4</param>
+        /// <returns>A list of MCB file locations for files containing the specified hex</returns>
         public List<(int, int)> CheckHexInFile(byte[] search, bool fourByteAligned)
         {
             List<(int, int)> fileLocations = [];
@@ -547,5 +543,8 @@ namespace HaruhiHeiretsuLib.Archive
 
             return fileLocations;
         }
+
+        [GeneratedRegex(@"\d{3}-\d{3}")]
+        private static partial Regex McbFileRegex();
     }
 }

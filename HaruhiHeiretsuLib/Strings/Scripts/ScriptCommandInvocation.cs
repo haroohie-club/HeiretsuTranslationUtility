@@ -552,7 +552,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     {
                         throw new ArgumentException($"ERROR: Line {LineNumber} (command {Command.Name}) attempting to resolve address to line {lineNumber} when no such line exists.");
                     }
-                    Parameters[i] = new Parameter { Type = Parameters[i].Type, Value = BitConverter.GetBytes(address).Reverse().ToArray(), LineNumber = LineNumber };
+                    Parameters[i] = new() { Type = Parameters[i].Type, Value = BitConverter.GetBytes(address).Reverse().ToArray(), LineNumber = LineNumber };
                     resolvedAddress = true;
                 }
                 else if (Parameters[i].Type == ScriptCommand.ParameterType.INDEXEDADDRESS)
@@ -578,7 +578,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     }
                     parameterBytes.RemoveRange(0, 4);
                     parameterBytes.InsertRange(0, BitConverter.GetBytes(address).Reverse());
-                    Parameters[i] = new Parameter { Type = Parameters[i].Type, Value = [.. parameterBytes], LineNumber = LineNumber };
+                    Parameters[i] = new() { Type = Parameters[i].Type, Value = [.. parameterBytes], LineNumber = LineNumber };
                     resolvedAddress = true;
                 }
             }

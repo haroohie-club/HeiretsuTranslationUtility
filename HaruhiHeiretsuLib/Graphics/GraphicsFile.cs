@@ -56,7 +56,7 @@ namespace HaruhiHeiretsuLib.Graphics
                 LayoutComponents = [];
                 for (int i = 8; i <= Data.Count - 0x1C; i += 0x1C)
                 {
-                    LayoutComponents.Add(new LayoutComponent
+                    LayoutComponents.Add(new()
                     {
                         UnknownShort1 = IO.ReadShortLE(decompressedData, i),
                         Index = IO.ReadShortLE(decompressedData, i + 0x02),

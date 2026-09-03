@@ -41,7 +41,7 @@ namespace HaruhiHeiretsuLib.Strings
             {
                 if (!string.IsNullOrWhiteSpace(DialogueLines[i].Line) && DialogueLines[i].Length > 1)
                 {
-                    resxWriter.AddResource(new ResXDataNode($"{i:D4} ({Path.GetFileNameWithoutExtension(fileName)}) {DialogueLines[i].Speaker}{(DialogueLines[i].Metadata.Count > 0 ? $" - {string.Join(", ", DialogueLines[i].Metadata)}" : "")}",
+                    resxWriter.AddResource(new($"{i:D4} ({Path.GetFileNameWithoutExtension(fileName)}) {DialogueLines[i].Speaker}{(DialogueLines[i].Metadata.Count > 0 ? $" - {string.Join(", ", DialogueLines[i].Metadata)}" : "")}",
                         DialogueLines[i].Line));
                 }
             }

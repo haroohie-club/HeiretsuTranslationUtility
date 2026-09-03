@@ -60,10 +60,10 @@ namespace HaruhiHeiretsuLib.Data
         /// <param name="csvLines">A list of CSV lines (as with File.ReadAllLines)</param>
         public CameraDataFile(string[] csvLines)
         {
-            Section1 = csvLines[1].Split(',').Where(f => f.Length > 0).Select(f => float.Parse(f)).ToList();
+            Section1 = csvLines[1].Split(',').Where(f => f.Length > 0).Select(float.Parse).ToList();
             IEnumerable<string> cameraDefinitionEntries = csvLines.Skip(3).TakeWhile(l => !l.StartsWith("Section3Ints"));
             CameraDataEntries = cameraDefinitionEntries.Select(e => new CameraDataEntry(e)).ToList();
-            StaticCameraIndex = csvLines.Skip(3 + CameraDataEntries.Count).ElementAt(1).Split(',').Where(f => f.Length > 0).Select(f => short.Parse(f)).First();
+            StaticCameraIndex = csvLines.Skip(3 + CameraDataEntries.Count).ElementAt(1).Split(',').Where(f => f.Length > 0).Select(short.Parse).First();
         }
 
         /// <summary>

@@ -72,7 +72,7 @@ namespace HaruhiHeiretsuLib.Strings.Data
             for (int i = 0; i < EndPointerPointers.Count; i++)
             {
                 byte[] lineData = Data.Skip(EndPointerPointers[i]).TakeWhile(b => b != 0x00).ToArray();
-                DialogueLines.Add(new DialogueLine
+                DialogueLines.Add(new()
                 {
                     Line = Encoding.GetEncoding("Shift-JIS").GetString(lineData),
                     Offset = EndPointerPointers[i],

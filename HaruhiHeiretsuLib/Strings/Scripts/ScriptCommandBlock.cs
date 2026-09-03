@@ -92,7 +92,7 @@ namespace HaruhiHeiretsuLib.Strings.Scripts
                     continue;
                 }
 
-                Invocations.Add(new ScriptCommandInvocation(lines[i], (short)(i + lineNumber), allCommands, objects, labels, fontReplacementMap));
+                Invocations.Add(new(lines[i], (short)(i + lineNumber), allCommands, objects, labels, fontReplacementMap));
             }
 
             NumInvocations = (ushort)Invocations.Count;

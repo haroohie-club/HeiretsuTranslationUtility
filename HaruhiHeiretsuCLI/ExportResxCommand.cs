@@ -15,7 +15,7 @@ namespace HaruhiHeiretsuCLI
     public class ExportResxCommand : Command
     {
         private string _stringFileMap, _mcb, _dat, _evt, _scr, _outputDirectory;
-        private Regex _binRegex = new Regex(@"(?<bin>dat|evt|scr)-(?<index>\-?\d{4})");
+        private Regex _binRegex = new(@"(?<bin>dat|evt|scr)-(?<index>\-?\d{4})");
         public ExportResxCommand() : base("export-resx", "Exports RESX files from string files")
         {
             Options = new()

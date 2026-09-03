@@ -47,7 +47,7 @@ namespace HaruhiHeiretsuCLI
                 dataFile = mcbPath;
             }
 
-            return new McbArchive(indexFile, dataFile);
+            return new(indexFile, dataFile);
         }
     }
 }
