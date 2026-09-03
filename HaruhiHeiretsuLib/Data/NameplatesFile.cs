@@ -7,10 +7,17 @@ using System.Text;
 
 namespace HaruhiHeiretsuLib.Data;
 
+/// <summary>
+/// Representation of the nameplates file
+/// </summary>
 public class NameplatesFile : DataFile, IDataStringsFile
 {
+    /// <summary>
+    /// List of nameplates
+    /// </summary>
     public List<Nameplate> Nameplates { get; set; } = [];
 
+    /// <inheritdoc/>
     public override void Initialize(byte[] decompressedData, int offset)
     {
         base.Initialize(decompressedData, offset);
@@ -45,6 +52,7 @@ public class NameplatesFile : DataFile, IDataStringsFile
         }
     }
 
+    /// <inheritdoc/>
     public override byte[] GetBytes()
     {
         List<byte> bytes = [];
@@ -94,6 +102,7 @@ public class NameplatesFile : DataFile, IDataStringsFile
         return [.. bytes];
     }
 
+    /// <inheritdoc/>
     public List<DialogueLine> GetDialogueLines()
     {
         List<DialogueLine> dialogueLines = [];
@@ -117,6 +126,7 @@ public class NameplatesFile : DataFile, IDataStringsFile
         return dialogueLines;
     }
 
+    /// <inheritdoc/>
     public void ReplaceDialogueLine(DialogueLine line)
     {
         for (int i = 0; i < Nameplates.Count; i++)
@@ -135,12 +145,25 @@ public class NameplatesFile : DataFile, IDataStringsFile
     }
 }
 
+/// <summary>
+/// Representation of a nameplate
+/// </summary>
 public class Nameplate
 {
+    /// <summary>
+    /// The nameplate index
+    /// </summary>
     public int Index { get; set; }
+    /// <summary>
+    /// The internal character name (used in scripts)
+    /// </summary>
     public string CharacterNameInternal { get; set; }
+    /// <summary>
+    /// The name of the character as seen in game
+    /// </summary>
     public string[] CharacterNamesGame { get; set; } = new string[4];
-
+    
+    /// <inheritdoc/>
     public override string ToString()
     {
         return $"{CharacterNameInternal}: {CharacterNamesGame}";

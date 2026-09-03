@@ -7,10 +7,17 @@ using System.Text;
 
 namespace HaruhiHeiretsuLib.Data;
 
+/// <summary>
+/// Representation of the timeline file
+/// </summary>
 public class TimelineFile : DataFile, IDataStringsFile
 {
+    /// <summary>
+    /// List of timeline sections
+    /// </summary>
     public List<List<TimelineEntry>> TimelineSections { get; set; } = [];
-
+    
+    /// <inheritdoc/>
     public override void Initialize(byte[] decompressedData, int offset)
     {
         base.Initialize(decompressedData, offset);
@@ -33,6 +40,7 @@ public class TimelineFile : DataFile, IDataStringsFile
         }
     }
 
+    /// <inheritdoc/>
     public override byte[] GetBytes()
     {
         List<byte> bytes = [];
@@ -77,6 +85,7 @@ public class TimelineFile : DataFile, IDataStringsFile
         return [.. bytes];
     }
 
+    /// <inheritdoc/>
     public List<DialogueLine> GetDialogueLines()
     {
         List<DialogueLine> lines = [];
@@ -136,6 +145,7 @@ public class TimelineFile : DataFile, IDataStringsFile
         return lines;
     }
 
+    /// <inheritdoc/>
     public void ReplaceDialogueLine(DialogueLine line)
     {
         int locFirst = int.Parse(line.Metadata[0]);
@@ -174,32 +184,109 @@ public class TimelineFile : DataFile, IDataStringsFile
     }
 }
 
+/// <summary>
+/// An entry in a particular timeline
+/// </summary>
 public class TimelineEntry
 {
+    /// <summary>
+    /// Entry index
+    /// </summary>
     public int Index { get; set; }
+    /// <summary>
+    /// Title of the entry
+    /// </summary>
     public string EntryTitle { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown08 { get; set; }
+    /// <summary>
+    /// First description of the entry
+    /// </summary>
     public string EntryDescription { get; set; }
+    /// <summary>
+    /// Second description of the entry
+    /// </summary>
     public string EntryDescription2 { get; set; }
+    /// <summary>
+    /// First flag
+    /// </summary>
     public string EntryFlag0 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown18 { get; set; }
+    /// <summary>
+    /// Completed description 1
+    /// </summary>
     public string EntryDescriptionCompleted { get; set; }
+    /// <summary>
+    /// Completed description 2
+    /// </summary>
     public string EntryDescriptionCompleted2 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown24 { get; set; }
+    /// <summary>
+    /// Second flag
+    /// </summary>
     public string EntryFlag1 { get; set; }
+    /// <summary>
+    /// Third flag
+    /// </summary>
     public string EntryFlag2 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown30 { get; set; }
+    /// <summary>
+    /// Fourth flag
+    /// </summary>
     public string EntryFlag3 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown38 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown3A { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown3C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown3E { get; set; }
+    /// <summary>
+    /// ID of entry (for scripts)
+    /// </summary>
     public string EntryId { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown44 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown48 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown4C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown50 { get; set; }
 
+    /// <summary>
+    /// Constructs a timeline entry from raw data
+    /// </summary>
+    /// <param name="data">The timeline file data</param>
+    /// <param name="offset">The offset of this entry in the file</param>
     public TimelineEntry(byte[] data, int offset)
     {
         Index = IO.ReadInt(data, offset + 0x00);
@@ -237,6 +324,13 @@ public class TimelineEntry
         Unknown50 = IO.ReadInt(data, offset + 0x50);
     }
 
+    /// <summary>
+    /// Gets binary representation of this entry
+    /// </summary>
+    /// <param name="currentOffset">The current offset of the main data</param>
+    /// <param name="currentStringsOffset">The current offset into the strings</param>
+    /// <param name="endPointers">The list of end pointers to append to</param>
+    /// <returns>A tuple with lists of data and string binary</returns>
     public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int currentOffset, int currentStringsOffset, List<int> endPointers)
     {
         List<byte> dataBytes = [];

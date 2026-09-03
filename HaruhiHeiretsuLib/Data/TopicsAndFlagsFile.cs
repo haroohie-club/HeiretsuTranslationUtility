@@ -7,28 +7,43 @@ using System.Text;
 
 namespace HaruhiHeiretsuLib.Data;
 
-/* This file is going to have some hardcoding bc it's easier that way, sue me
- * There are 9 sections, they are numbered as follows:
- * 1. Topics
- * 2. Flags
- * 3. Club flags
- * 4. Timeline flags
- * 5. Local flags
- * 6. Mpad (map) flags
- * 7. Inherit flags
- * 8. PVL flags
- * 9. Topics again, but only the character topics
- */
+// This file is going to have some hardcoding bc it's easier that way, sue me
+/// <summary>
+/// The topics and flags definition file, which has nine sections:
+/// 1. Topics
+/// 2. Flags
+/// 3. Club flags
+/// 4. Timeline flags
+/// 5. Local flags
+/// 6. Mpad (map) flags
+/// 7. Inherit flags
+/// 8. PVL flags
+/// 9. Topics again, but only character topics
+/// </summary>
 public class TopicsAndFlagsFile : DataFile, IDataStringsFile
 {
+    /// <summary>
+    /// Topics
+    /// </summary>
     public List<Topic> Topics { get; set; } = [];
+    /// <summary>
+    /// Flags
+    /// </summary>
     public Dictionary<FlagType, List<Flag>> Flags { get; set; } = [];
+    /// <summary>
+    /// References to topics
+    /// </summary>
     public List<TopicReference> TopicReferences { get; set; } = [];
 
+    /// <summary>
+    /// Creates the topics and flags file
+    /// </summary>
     public TopicsAndFlagsFile()
     {
         Name = "Topics and Flags File";
     }
+    
+    /// <inheritdoc/>
     public override void Initialize(byte[] decompressedData, int offset)
     {
         base.Initialize(decompressedData, offset);
@@ -98,6 +113,7 @@ public class TopicsAndFlagsFile : DataFile, IDataStringsFile
         }
     }
 
+    /// <inheritdoc/>
     public override byte[] GetBytes()
     {
         List<byte> bytes = [];
@@ -203,6 +219,7 @@ public class TopicsAndFlagsFile : DataFile, IDataStringsFile
         return [.. bytes];
     }
 
+    /// <inheritdoc/>
     public List<DialogueLine> GetDialogueLines()
     {
         List<DialogueLine> lines = [];
@@ -224,6 +241,7 @@ public class TopicsAndFlagsFile : DataFile, IDataStringsFile
         return lines;
     }
 
+    /// <inheritdoc/>
     public void ReplaceDialogueLine(DialogueLine line)
     {
         string[] topicSplit = line.Speaker.Split(' ');
@@ -247,14 +265,38 @@ public class TopicsAndFlagsFile : DataFile, IDataStringsFile
     }
 }
 
+/// <summary>
+/// A topic
+/// </summary>
 public class Topic
 {
+    /// <summary>
+    /// Index
+    /// </summary>
     public int Index { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown04 { get; set; }
+    /// <summary>
+    /// ID
+    /// </summary>
     public string Id { get; set; }
+    /// <summary>
+    /// Name
+    /// </summary>
     public string Name { get; set; }
+    /// <summary>
+    /// Description
+    /// </summary>
     public string Description { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown14 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown16 { get; set; }
 }
 
@@ -267,29 +309,87 @@ public class Flag
 
 public enum FlagType
 {
+    /// <summary>
+    /// Basic flag
+    /// </summary>
     FLAG = 1,
+    /// <summary>
+    /// PVL flag
+    /// </summary>
     PVL = 2,
+    /// <summary>
+    /// Clubroom flag
+    /// </summary>
     CLUB = 3,
+    /// <summary>
+    /// Timeline flag
+    /// </summary>
     TIMELINE = 4,
+    /// <summary>
+    /// Map (Mpad) flag
+    /// </summary>
     MAP = 5,
+    /// <summary>
+    /// Local flag
+    /// </summary>
     LOCAL = 6,
+    /// <summary>
+    /// Inherit flag
+    /// </summary>
     INHERIT = 7,
 }
 
+/// <summary>
+/// Topic reference
+/// </summary>
 public class TopicReference
 {
+    /// <summary>
+    /// List of topics referenced
+    /// </summary>
     public string[] Topics { get; set; } = new string[5];
 
+    /// <summary>
+    /// Index
+    /// </summary>
     public int Index { get; set; }
+    /// <summary>
+    /// Topic offsets
+    /// </summary>
     public int[] TopicOffsets { get; set; } = new int[5];
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown18 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown1C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown20 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown24 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown28 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown2C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown30 { get; set; }
 
+    /// <summary>
+    /// Constructs a topic reference from binary data
+    /// </summary>
+    /// <param name="data">The binary data representing the reference</param>
     public TopicReference(byte[] data)
     {
         Index = IO.ReadInt(data, 0x00);

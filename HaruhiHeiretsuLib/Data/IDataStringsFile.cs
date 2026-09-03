@@ -16,6 +16,6 @@ public interface IDataStringsFile
     /// <summary>
     /// Replaces a particular DialogueLine object with the provided string
     /// </summary>
-    /// <param name="line">A DialogueLine object that should be repleaced</param>
+    /// <param name="line">A DialogueLine object that should be replaced</param>
     public void ReplaceDialogueLine(DialogueLine line);
 }

@@ -4,17 +4,33 @@ using HaruhiHeiretsuLib.Util;
 namespace HaruhiHeiretsuLib.Data;
 
 // dat 004
+/// <summary>
+/// The index file for all models in the game
+/// </summary>
 public class SgeIndexFile : DataFile
 {
+    /// <summary>
+    /// Unknown entries
+    /// </summary>
     public List<SgeIndexFileEntry> Section1Entries { get; set; } = [];
+    /// <summary>
+    /// Unknown entries
+    /// </summary>
     public List<SgeIndexFileSection2Entry> Section2Entries { get; set; } = [];
+    /// <summary>
+    /// Unknown entries
+    /// </summary>
     public List<short> Section3Entries { get; set; } = [];
 
+    /// <summary>
+    /// Creates SGE index file
+    /// </summary>
     public SgeIndexFile()
     {
         Name = "SGE Indices";
     }
 
+    /// <inheritdoc/>
     public override void Initialize(byte[] decompressedData, int offset)
     {
         base.Initialize(decompressedData, offset);
@@ -42,21 +58,64 @@ public class SgeIndexFile : DataFile
     }
 }
 
+/// <summary>
+/// The SGE index file entry
+/// </summary>
 public class SgeIndexFileEntry
 {
+    /// <summary>
+    /// Index of the model
+    /// </summary>
     public short Index { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown02 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown04 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown08 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown0C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown10 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown12 { get; set; }
+    /// <summary>
+    /// Model GRP index
+    /// </summary>
     public short ModelGrpIndex { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown18 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown1A { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown1C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown20 { get; set; }
 
+    /// <summary>
+    /// Creates an SGE index file entry from binary data
+    /// </summary>
+    /// <param name="data">The binary data representing the SGE index file</param>
     public SgeIndexFileEntry(byte[] data)
     {
         Index = IO.ReadShort(data, 0x00);
@@ -73,11 +132,25 @@ public class SgeIndexFileEntry
         Unknown20 = IO.ReadShort(data, 0x20);
     }
 }
+
+/// <summary>
+/// Unknown section 2 entry
+/// </summary>
 public class SgeIndexFileSection2Entry
 {
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown00 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown04 { get; set; }
 
+    /// <summary>
+    /// Initializes section 2 entries
+    /// </summary>
+    /// <param name="data">Binary data</param>
     public SgeIndexFileSection2Entry(byte[] data)
     {
         Unknown00 = IO.ReadInt(data, 0x00);

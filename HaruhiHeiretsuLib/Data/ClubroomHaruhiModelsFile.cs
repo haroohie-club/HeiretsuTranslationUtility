@@ -59,7 +59,7 @@ public class ClubroomHaruhiModelsFile : DataFile, IDataStringsFile
         List<int> endPointers = [];
 
         bytes.AddRange(BitConverter.GetBytes(3).Reverse());
-        bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced later
+        bytes.AddRange(new byte[4]); // end pointers pointer, will be replaced later
 
         int startPointer = 12 + 8 * 3;
         bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
@@ -228,20 +228,57 @@ public class ClubroomHaruhiModelsFile : DataFile, IDataStringsFile
 }
 
 // 0x24 bytes
+/// <summary>
+/// An animation that plays when selected in the character model viewer in the extras mode
+/// </summary>
 public class ModelViewerCharacterAnimation
 {
-    ///
+    /// <summary>
+    /// The speaker of the dialogue line
+    /// </summary>
     public string Speaker { get; set; }
+    /// <summary>
+    /// The dialogue line
+    /// </summary>
     public string Line { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown08 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown0C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown10 { get; set; }
+    /// <summary>
+    /// The voice file to play when selecting the animation
+    /// </summary>
     public string VoiceFile { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown18 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown1C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown1E { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown20 { get; set; }
 
+    /// <summary>
+    /// Constructs a model viewer character animation from raw data
+    /// </summary>
+    /// <param name="data">The binary data of the overall file</param>
+    /// <param name="offset">The offset in the file where the animation data starts</param>
     public ModelViewerCharacterAnimation(byte[] data, int offset)
     {
         int speakerPointer = IO.ReadInt(data, offset + 0x00);
@@ -259,6 +296,13 @@ public class ModelViewerCharacterAnimation
         Unknown20 = IO.ReadInt(data, offset + 0x20);
     }
 
+    /// <summary>
+    /// Gets a binary representation of the animation
+    /// </summary>
+    /// <param name="offset">The main data offset</param>
+    /// <param name="stringsOffset">The strings offset</param>
+    /// <param name="endPointers">The list of end pointers to append to</param>
+    /// <returns>A list of binary data and string data</returns>
     public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int offset, int stringsOffset, List<int> endPointers)
     {
         List<byte> dataBytes = [];
@@ -286,21 +330,65 @@ public class ModelViewerCharacterAnimation
 }
 
 // 0x2C bytes
+/// <summary>
+/// A representation of a particular outfit for a character in the model viewer
+/// </summary>
 public class ModelViewerCharacterOutfit
 {
+    /// <summary>
+    /// The owner of the outfit (name)
+    /// </summary>
     public string OutfitOwner { get; set; }
+    /// <summary>
+    /// The description of the outfit
+    /// </summary>
     public string OutfitDescription { get; set; }
+    /// <summary>
+    /// The first voice file that plays
+    /// </summary>
     public string VoiceFile1 { get; set; }
+    /// <summary>
+    /// The speaker of this line
+    /// </summary>
     public string Speaker1 { get; set; }
+    /// <summary>
+    /// The first line that plays
+    /// </summary>
     public string Line1 { get; set; }
+    /// <summary>
+    /// The second voice file that plays
+    /// </summary>
     public string VoiceFile2 { get; set; }
+    /// <summary>
+    /// The speaker of the second voice file
+    /// </summary>
     public string Speaker2 { get; set; }
+    /// <summary>
+    /// The second line
+    /// </summary>
     public string Line2 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown20 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown22 { get; set; }
+    /// <summary>
+    /// Flag indicating the outfit has been unlocked
+    /// </summary>
     public string OutfitFlag { get; set; }
+    /// <summary>
+    /// The type of outfit
+    /// </summary>
     public string OutfitType { get; set; }
-
+    
+    /// <summary>
+    /// Creates an outfit from raw data
+    /// </summary>
+    /// <param name="data">Binary data representing the file</param>
+    /// <param name="offset">The offset of the binary data in the file</param>
     public ModelViewerCharacterOutfit(byte[] data, int offset)
     {
         int outfitOwnerOffset = IO.ReadInt(data, offset + 0x00);
@@ -327,6 +415,13 @@ public class ModelViewerCharacterOutfit
         OutfitType = Encoding.GetEncoding("Shift-JIS").GetString(data.Skip(outfitTypeOffset).TakeWhile(b => b != 0x00).ToArray());
     }
 
+    /// <summary>
+    /// Returns binary data representing this outfit
+    /// </summary>
+    /// <param name="offset">The offset of the data</param>
+    /// <param name="stringsOffset">The offset of the strings</param>
+    /// <param name="endPointers">The list of end pointers to append</param>
+    /// <returns>A tuple containing the main data and the strings data</returns>
     public (List<byte> dataBytes, List<byte> stringBytes) GetBytes(int offset, int stringsOffset, List<int> endPointers)
     {
         List<byte> dataBytes = [];
@@ -448,13 +543,28 @@ public class ModelViewerCharacter
     /// </summary>
     public string CharacterUnlockFlag { get; set; }
     /// <summary>
-    /// 
+    /// The voice file that plays when you hover over the character
     /// </summary>
     public string HoverVoiceFile { get; set; }
+    /// <summary>
+    /// The speaker that reads the hover line
+    /// </summary>
     public string HoverSpeaker { get; set; }
+    /// <summary>
+    /// The hover line
+    /// </summary>
     public string HoverLine { get; set; }
+    /// <summary>
+    /// The voice file that plays when you select the character
+    /// </summary>
     public string SelectVoiceFile { get; set; }
+    /// <summary>
+    /// The speaker of the select line
+    /// </summary>
     public string SelectSpeaker { get; set; }
+    /// <summary>
+    /// The select line
+    /// </summary>
     public string SelectLine { get; set; }
     /// <summary>
     /// The name of the character as will be referenced by other classes
@@ -477,6 +587,11 @@ public class ModelViewerCharacter
     /// </summary>
     public int Unknown30 { get; set; }
 
+    /// <summary>
+    /// Constructs a character from raw data
+    /// </summary>
+    /// <param name="data">The binary data of the models file</param>
+    /// <param name="offset">The offset into the file where this character begins</param>
     public ModelViewerCharacter(byte[] data, int offset)
     {
         int characterNameOffset = IO.ReadInt(data, offset + 0x00);
@@ -504,6 +619,14 @@ public class ModelViewerCharacter
         Unknown30 = IO.ReadInt(data, offset + 0x30);
     }
 
+    /// <summary>
+    /// Gets a binary representation of this file
+    /// </summary>
+    /// <param name="offset">The primary data offset</param>
+    /// <param name="stringsOffset">The offset of the strings section</param>
+    /// <param name="floatOffset">The offset of the floats section</param>
+    /// <param name="endPointers">The end pointers to append to</param>
+    /// <returns>A tuple of primary binary data, string binary data, and float struct binary data</returns>
     public (List<byte> dataBytes, List<byte> stringBytes, List<byte> floatStructBytes) GetBytes(int offset, int stringsOffset, int floatOffset, List<int> endPointers)
     {
         List<byte> dataBytes = [];

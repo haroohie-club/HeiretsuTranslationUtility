@@ -57,7 +57,7 @@ public class ClubroomNagatoDatabaseFile : DataFile, IDataStringsFile
         List<int> endPointers = [];
 
         bytes.AddRange(BitConverter.GetBytes(1).Reverse());
-        bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced
+        bytes.AddRange(new byte[4]); // end pointers pointer, will be replaced
 
         int startPointer = 0x14;
         bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());

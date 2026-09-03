@@ -62,13 +62,22 @@ public class Sge
     /// List of blend data (assigned at the submesh level)
     /// </summary>
     public List<SubmeshBlendData> SubmeshBlendDataTable { get; set; } = [];
-    public List<OutlineDataEntry> OutlineDataTable { get; set; } = [];
-    public List<Unknown4CEntry> Unknown4CTable { get; set; } = [];
+    /// <summary>
+    /// List of outline data
+    /// </summary>
+    public List<OutlineData> OutlineDataTable { get; set; } = [];
+    /// <summary>
+    /// List of textrue animations
+    /// </summary>
+    public List<TextureAnimation> TexAnimsTable { get; set; } = [];
     /// <summary>
     /// List of bone animation groups (i.e. facial animation, mouth animation, various body part groups)
     /// </summary>
     public List<BoneAnimationGroup> BoneAnimationGroups { get; set; } = [];
-    public List<Unknown58Entry> Unknown58Table { get; set; } = [];
+    /// <summary>
+    /// List of vertex modulation animations
+    /// </summary>
+    public List<VertexModulation> VertexModulationTable { get; set; } = [];
     /// <summary>
     /// List of mesh objects -- technically these contain submeshes, but we store those separately
     /// </summary>
@@ -286,19 +295,19 @@ public class Sge
             SgeAnimations.Add(new(sgeData, 0, SgeHeader.BonesCount, SgeHeader.AnimationDataTableAddress + i * 0x38));
         }
 
-        for (int i = 0; i < SgeHeader.Unknown4CCount; i++)
+        for (int i = 0; i < SgeHeader.TexAnimsCount; i++)
         {
-            Unknown4CTable.Add(new([.. sgeData.Skip(SgeHeader.Unknown4CTableOffset + i * 0x18).Take(0x18)]));
+            TexAnimsTable.Add(new([.. sgeData.Skip(SgeHeader.TexAnimTableOffset + i * 0x18).Take(0x18)]));
         }
 
-        for (int i = 0; i < SgeHeader.Unknown50Count; i++)
+        for (int i = 0; i < SgeHeader.BoneAnimGroupsCount; i++)
         {
-            BoneAnimationGroups.Add(new(sgeData, SgeHeader.Unknown50TableOffset + i * 0x08));
+            BoneAnimationGroups.Add(new(sgeData, SgeHeader.BoneAnimationGroupsOffset + i * 0x08));
         }
 
-        for (int i = 0; i < SgeHeader.Unknown58Count; i++)
+        for (int i = 0; i < SgeHeader.VertexModulationCount; i++)
         {
-            Unknown58Table.Add(new([.. sgeData.Skip(SgeHeader.Unknown58TableOffset + i * 0x20).Take(0x20)]));
+            VertexModulationTable.Add(new([.. sgeData.Skip(SgeHeader.VertexModulationTableOffset + i * 0x20).Take(0x20)]));
         }
 
         for (int i = 0; i < TranslateDataCount; i++)
@@ -433,9 +442,9 @@ public class Sge
         SgeHeader.SgeGXLightingDataCount = SgeGXLightingDataTable.Count;
         SgeHeader.SubmeshBlendDataCount = SubmeshBlendDataTable.Count;
         SgeHeader.OutlineDataCount = OutlineDataTable.Count;
-        SgeHeader.Unknown4CCount = Unknown4CTable.Count;
-        SgeHeader.Unknown50Count = BoneAnimationGroups.Count;
-        SgeHeader.Unknown58Count = Unknown58Table.Count;
+        SgeHeader.TexAnimsCount = TexAnimsTable.Count;
+        SgeHeader.BoneAnimGroupsCount = BoneAnimationGroups.Count;
+        SgeHeader.VertexModulationCount = VertexModulationTable.Count;
         SgeHeader.BonesCount = SgeBones.Count;
         SgeHeader.TexturesCount = SgeMaterials.Count;
         SgeHeader.NumAnimations = SgeAnimations.Count;
@@ -457,22 +466,22 @@ public class Sge
             SgeHeader.OutlineDataTableOffset = offset;
             offset += Helpers.RoundToNearest16(OutlineDataTable.Count * 0x18);
         }
-        if (SgeHeader.Unknown4CCount > 0)
+        if (SgeHeader.TexAnimsCount > 0)
         {
-            SgeHeader.Unknown4CTableOffset = offset;
-            offset += Helpers.RoundToNearest16(Unknown4CTable.Count * 0x18);
+            SgeHeader.TexAnimTableOffset = offset;
+            offset += Helpers.RoundToNearest16(TexAnimsTable.Count * 0x18);
         }
         SgeHeader.BonesTableAddress = offset;
         offset += Helpers.RoundToNearest16(SgeBones.Count * 0x28);
-        if (SgeHeader.Unknown50Count > 0)
+        if (SgeHeader.BoneAnimGroupsCount > 0)
         {
-            SgeHeader.Unknown50TableOffset = offset;
+            SgeHeader.BoneAnimationGroupsOffset = offset;
             offset += Helpers.RoundToNearest16(BoneAnimationGroups.Count * 0x08 + BoneAnimationGroups.Sum(u => Helpers.RoundToNearest16(u.BoneIndices.Count * 0x02 + 2)));
         }
-        if (SgeHeader.Unknown58Count > 0)
+        if (SgeHeader.VertexModulationCount > 0)
         {
-            SgeHeader.Unknown58TableOffset = offset;
-            offset += Helpers.RoundToNearest16(Unknown58Table.Count * 0x20);
+            SgeHeader.VertexModulationTableOffset = offset;
+            offset += Helpers.RoundToNearest16(VertexModulationTable.Count * 0x20);
         }
         SgeHeader.Unknown34Offset = offset;
         offset += 0x40;
@@ -526,7 +535,7 @@ public class Sge
 
         Dictionary<int, int> outlineAddresses = [];
         int currentOutlineAddress = bytes.Count;
-        foreach (OutlineDataEntry outline in OutlineDataTable)
+        foreach (OutlineData outline in OutlineDataTable)
         {
             int oldAddress = outline.Offset;
             outline.Offset = currentOutlineAddress;
@@ -536,7 +545,7 @@ public class Sge
         }
         bytes.PadToNearest16();
 
-        bytes.AddRange(Unknown4CTable.SelectMany(u => u.GetBytes()));
+        bytes.AddRange(TexAnimsTable.SelectMany(u => u.GetBytes()));
         bytes.PadToNearest16();
 
         int boneAddress = bytes.Count;
@@ -562,7 +571,7 @@ public class Sge
         }
         bytes.AddRange(animGroupsBytes);
         bytes.PadToNearest16();
-        bytes.AddRange(Unknown58Table.SelectMany(u => u.GetBytes()));
+        bytes.AddRange(VertexModulationTable.SelectMany(u => u.GetBytes()));
         bytes.PadToNearest16();
         bytes.AddRange(new byte[] { 1 }.Concat(new byte[0x3F]));
 
@@ -701,46 +710,140 @@ public class SgeHeader
     /// </summary>
     [JsonIgnore]
     public int SubmeshBlendDataCount { get; set; }      // 0x08
+    /// <summary>
+    /// Count of outline data objects
+    /// </summary>
     public int OutlineDataCount { get; set; }   // 0x0C
+    /// <summary>
+    /// Count of bones
+    /// </summary>
     [JsonIgnore]
     public int BonesCount { get; set; }     // 0x10
+    /// <summary>
+    /// Count of textures
+    /// </summary>
     [JsonIgnore]
     public int TexturesCount { get; set; }  // 0x14
+    /// <summary>
+    /// Count of texture animations
+    /// </summary>
     [JsonIgnore]
-    public int Unknown4CCount { get; set; }      // 0x18
+    public int TexAnimsCount { get; set; }      // 0x18
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown1C { get; set; }      // 0x1C
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown20 { get; set; }      // 0x20
-    public int Unknown58Count { get; set; }      // 0x24
+    /// <summary>
+    /// Count of vertex modulation animations
+    /// </summary>
+    public int VertexModulationCount { get; set; }      // 0x24
+    /// <summary>
+    /// Count of bone animation groups
+    /// </summary>
     [JsonIgnore]
-    public int Unknown50Count { get; set; }      // 0x28
+    public int BoneAnimGroupsCount { get; set; }      // 0x28
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown2C { get; set; }      // 0x2C
+    /// <summary>
+    /// Mesh table address
+    /// </summary>
     public int MeshTableAddress { get; set; } // 0x30
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown34Offset { get; set; }      // 0x34
+    /// <summary>
+    /// GX Lighting data table offset
+    /// </summary>
     public int SgeGXLightingDataTableOffset { get; set; }      // 0x38
+    /// <summary>
+    /// Submesh blend data table offset
+    /// </summary>
     public int SubmeshBlendDataTableOffset { get; set; }      // 0x3C
+    /// <summary>
+    /// Outline data table offset
+    /// </summary>
     public int OutlineDataTableOffset { get; set; }      // 0x40
+    /// <summary>
+    /// Bones table address
+    /// </summary>
     public int BonesTableAddress { get; set; }  // 0x44
+    /// <summary>
+    /// Texture table address
+    /// </summary>
     public int TextureTableAddress { get; set; }    // 0x48
-    public int Unknown4CTableOffset { get; set; }      // 0x4C
-    public int Unknown50TableOffset { get; set; }      // 0x50
+    /// <summary>
+    /// Texanim table offset
+    /// </summary>
+    public int TexAnimTableOffset { get; set; }      // 0x4C
+    /// <summary>
+    /// Bone animation groups offset
+    /// </summary>
+    public int BoneAnimationGroupsOffset { get; set; }      // 0x50
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown54 { get; set; }      // 0x54
-    public int Unknown58TableOffset { get; set; }      // 0x58
+    /// <summary>
+    /// Vertex modulation table offset
+    /// </summary>
+    public int VertexModulationTableOffset { get; set; }      // 0x58
+    /// <summary>
+    /// Number of animations
+    /// </summary>
     [JsonIgnore]
     public int NumAnimations { get; set; }      // 0x5C
+    /// <summary>
+    /// Animation data table address
+    /// </summary>
     public int AnimationDataTableAddress { get; set; }      // 0x60
+    /// <summary>
+    /// Animation transform table address
+    /// </summary>
     public int AnimationTransformTableAddress { get; set; }      // 0x64
+    /// <summary>
+    /// Number of event-specified animations
+    /// </summary>
     [JsonIgnore]
     public int NumEventAnimations { get; set; }      // 0x68
+    /// <summary>
+    /// Event-specified animation data table address
+    /// </summary>
     public int EventAnimationDataTableAddress { get; set; }      // 0x6C
+    /// <summary>
+    /// Event-specified animation transform table address
+    /// </summary>
     public int EventAnimationTransformTableAddress { get; set; }      // 0x70
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown74 { get; set; }      // 0x74
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown78 { get; set; }      // 0x78
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown7C { get; set; }      // 0x7C
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public SgeHeader()
     {
     }
 
+    /// <summary>
+    /// Constructs an SGE header from binary data
+    /// </summary>
+    /// <param name="headerData">SGE header binary data</param>
     public SgeHeader(byte[] headerData)
     {
         Version = IO.ReadShortLE(headerData, 0x00);
@@ -750,11 +853,11 @@ public class SgeHeader
         OutlineDataCount = IO.ReadIntLE(headerData, 0x0C);
         BonesCount = IO.ReadIntLE(headerData, 0x10);
         TexturesCount = IO.ReadIntLE(headerData, 0x14);
-        Unknown4CCount = IO.ReadIntLE(headerData, 0x18);
+        TexAnimsCount = IO.ReadIntLE(headerData, 0x18);
         Unknown1C = IO.ReadIntLE(headerData, 0x1C);
         Unknown20 = IO.ReadIntLE(headerData, 0x20);
-        Unknown58Count = IO.ReadIntLE(headerData, 0x24);
-        Unknown50Count = IO.ReadIntLE(headerData, 0x28);
+        VertexModulationCount = IO.ReadIntLE(headerData, 0x24);
+        BoneAnimGroupsCount = IO.ReadIntLE(headerData, 0x28);
         Unknown2C = IO.ReadIntLE(headerData, 0x2C);
         MeshTableAddress = IO.ReadIntLE(headerData, 0x30);
         Unknown34Offset = IO.ReadIntLE(headerData, 0x34);
@@ -763,10 +866,10 @@ public class SgeHeader
         OutlineDataTableOffset = IO.ReadIntLE(headerData, 0x40);
         BonesTableAddress = IO.ReadIntLE(headerData, 0x44);
         TextureTableAddress = IO.ReadIntLE(headerData, 0x48);
-        Unknown4CTableOffset = IO.ReadIntLE(headerData, 0x4C);
-        Unknown50TableOffset = IO.ReadIntLE(headerData, 0x50);
+        TexAnimTableOffset = IO.ReadIntLE(headerData, 0x4C);
+        BoneAnimationGroupsOffset = IO.ReadIntLE(headerData, 0x50);
         Unknown54 = IO.ReadIntLE(headerData, 0x54);
-        Unknown58TableOffset = IO.ReadIntLE(headerData, 0x58);
+        VertexModulationTableOffset = IO.ReadIntLE(headerData, 0x58);
         NumAnimations = IO.ReadIntLE(headerData, 0x5C);
         AnimationDataTableAddress = IO.ReadIntLE(headerData, 0x60);
         AnimationTransformTableAddress = IO.ReadIntLE(headerData, 0x64);
@@ -778,6 +881,10 @@ public class SgeHeader
         Unknown7C = IO.ReadIntLE(headerData, 0x7C);
     }
 
+    /// <summary>
+    /// Get binary data representation of SGE header
+    /// </summary>
+    /// <returns>SGE header bytes</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
@@ -789,11 +896,11 @@ public class SgeHeader
         bytes.AddRange(BitConverter.GetBytes(OutlineDataCount));
         bytes.AddRange(BitConverter.GetBytes(BonesCount));
         bytes.AddRange(BitConverter.GetBytes(TexturesCount));
-        bytes.AddRange(BitConverter.GetBytes(Unknown4CCount));
+        bytes.AddRange(BitConverter.GetBytes(TexAnimsCount));
         bytes.AddRange(BitConverter.GetBytes(Unknown1C));
         bytes.AddRange(BitConverter.GetBytes(Unknown20));
-        bytes.AddRange(BitConverter.GetBytes(Unknown58Count));
-        bytes.AddRange(BitConverter.GetBytes(Unknown50Count));
+        bytes.AddRange(BitConverter.GetBytes(VertexModulationCount));
+        bytes.AddRange(BitConverter.GetBytes(BoneAnimGroupsCount));
         bytes.AddRange(BitConverter.GetBytes(Unknown2C));
         bytes.AddRange(BitConverter.GetBytes(MeshTableAddress));
         bytes.AddRange(BitConverter.GetBytes(Unknown34Offset));
@@ -802,10 +909,10 @@ public class SgeHeader
         bytes.AddRange(BitConverter.GetBytes(OutlineDataTableOffset));
         bytes.AddRange(BitConverter.GetBytes(BonesTableAddress));
         bytes.AddRange(BitConverter.GetBytes(TextureTableAddress));
-        bytes.AddRange(BitConverter.GetBytes(Unknown4CTableOffset));
-        bytes.AddRange(BitConverter.GetBytes(Unknown50TableOffset));
+        bytes.AddRange(BitConverter.GetBytes(TexAnimTableOffset));
+        bytes.AddRange(BitConverter.GetBytes(BoneAnimationGroupsOffset));
         bytes.AddRange(BitConverter.GetBytes(Unknown54));
-        bytes.AddRange(BitConverter.GetBytes(Unknown58TableOffset));
+        bytes.AddRange(BitConverter.GetBytes(VertexModulationTableOffset));
         bytes.AddRange(BitConverter.GetBytes(NumAnimations));
         bytes.AddRange(BitConverter.GetBytes(AnimationDataTableAddress));
         bytes.AddRange(BitConverter.GetBytes(AnimationTransformTableAddress));
@@ -822,30 +929,88 @@ public class SgeHeader
 
 public class SgeAnimation
 {
+    /// <summary>
+    /// Frame count (total, not keyframes)
+    /// </summary>
     public float TotalFrames { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown04 { get; set; }
+    /// <summary>
+    /// Bone table offset (animation transformation data)
+    /// </summary>
     [JsonIgnore]
     public int BoneTableOffset { get; set; }
+    /// <summary>
+    /// Number of keyframes
+    /// </summary>
     [JsonIgnore]
     public int NumKeyframes { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown10 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown14 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown18 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown1C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown20 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown24 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown28 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown2C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown30 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown34 { get; set; }
 
+    /// <summary>
+    /// List of keyframe indices used
+    /// </summary>
     public List<short> UsedKeyframes { get; set; } = [];
+    /// <summary>
+    /// The list of bone animation data
+    /// </summary>
     public List<BoneTableEntry> BoneTable { get; set; } = [];
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public SgeAnimation()
     {
     }
 
+    /// <summary>
+    /// Construct an SGE animation from binary data
+    /// </summary>
+    /// <param name="data">The SGE animation data file</param>
+    /// <param name="baseOffset">The offset of the SGE data</param>
+    /// <param name="numBones">The number of bones in the bone table</param>
+    /// <param name="defOffset">The offset of the SGE animation</param>
     public SgeAnimation(byte[] data, int baseOffset, int numBones, int defOffset)
     {
         TotalFrames = IO.ReadFloatLE(data, defOffset);
@@ -875,6 +1040,11 @@ public class SgeAnimation
         }
     }
 
+    /// <summary>
+    /// Gets binary data for this animation
+    /// </summary>
+    /// <param name="boneTableOffset">The offset of the bone table</param>
+    /// <returns>Binary data represneting the animation entry</returns>
     public List<byte> GetEntryBytes(int boneTableOffset)
     {
         List<byte> entryBytes = [];
@@ -898,6 +1068,11 @@ public class SgeAnimation
         return entryBytes;
     }
 
+    /// <summary>
+    /// Gets bytes representing the bone table data
+    /// </summary>
+    /// <param name="overallOffset">The SGE data offset</param>
+    /// <returns>Binary data of the bone table</returns>
     public List<byte> GetBoneTableBytes(int overallOffset)
     {
         List<byte> tableBytes = [];
@@ -922,6 +1097,9 @@ public class SgeAnimation
     }
 }
 
+/// <summary>
+/// Entry in the animation bone table
+/// </summary>
 public class BoneTableEntry
 {
     [JsonIgnore]
@@ -1217,7 +1395,10 @@ public class SubmeshBlendData
     /// Unknown
     /// </summary>
     public float Unknown0C { get; set; }
-    public int AlphaCompareAndZMode { get; set; }
+    /// <summary>
+    /// Alpha compare & Z mode flags
+    /// </summary>
+    public int Flags { get; set; }
 
     public SubmeshBlendData()
     {
@@ -1230,7 +1411,7 @@ public class SubmeshBlendData
         CustomBlendSrcFactor = IO.ReadIntLE(data, 0x04);
         CustomBlendDstFactor = IO.ReadIntLE(data, 0x08);
         Unknown0C = IO.ReadFloatLE(data, 0x0C);
-        AlphaCompareAndZMode = IO.ReadIntLE(data, 0x10);
+        Flags = IO.ReadIntLE(data, 0x10);
     }
 
     public List<byte> GetBytes()
@@ -1241,19 +1422,28 @@ public class SubmeshBlendData
         bytes.AddRange(BitConverter.GetBytes(CustomBlendSrcFactor));
         bytes.AddRange(BitConverter.GetBytes(CustomBlendDstFactor));
         bytes.AddRange(BitConverter.GetBytes(Unknown0C));
-        bytes.AddRange(BitConverter.GetBytes(AlphaCompareAndZMode));
+        bytes.AddRange(BitConverter.GetBytes(Flags));
 
         return bytes;
     }
 }
 
-public class OutlineDataEntry
+/// <summary>
+/// Model outlining data
+/// </summary>
+public class OutlineData
 {
     /// <summary>
     /// The offset this outline data is located at (used for submesh lookup)
     /// </summary>
     public int Offset { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown00 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown04 { get; set; }
     /// <summary>
     /// The weight of the outline
@@ -1263,14 +1453,20 @@ public class OutlineDataEntry
     /// The color of the outline (note that alpha is always 255)
     /// </summary>
     public SKColor Color { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown10 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown14 { get; set; }
 
-    public OutlineDataEntry()
+    public OutlineData()
     {
     }
 
-    public OutlineDataEntry(byte[] data, int offset)
+    public OutlineData(byte[] data, int offset)
     {
         Offset = offset;
         Unknown00 = IO.ReadIntLE(data, 0x00);
@@ -1296,61 +1492,116 @@ public class OutlineDataEntry
     }
 }
 
-public class Unknown4CEntry
+/// <summary>
+/// A UV-scroll texture animation
+/// </summary>
+public class TextureAnimation
 {
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown00 { get; set; }
-    public short Unknown02 { get; set; }
-    public int Unknown04 { get; set; }
-    public float Unknown08 { get; set; }
-    public short Unknown0C { get; set; }
-    public short Unknown0E { get; set; }
-    public short Unknown10 { get; set; }
-    public short Unknown12 { get; set; }
-    public int Unknown14 { get; set; }
+    /// <summary>
+    /// Number of keyframes
+    /// </summary>
+    public short KeyframeCount { get; set; }
+    /// <summary>
+    /// Address of keyframe table 
+    /// </summary>
+    public int KeyframesAddress { get; set; }
+    /// <summary>
+    /// Scroll speed (texels/frame)
+    /// </summary>
+    public float ScrollSpeed { get; set; }
+    /// <summary>
+    /// Wrap period in texels (0 = wrap after completion)
+    /// </summary>
+    public short WrapPeriod { get; set; }
+    /// <summary>
+    /// Direction to scroll in degrees
+    /// </summary>
+    public short ScrollDirection { get; set; }
+    /// <summary>
+    /// Texture width
+    /// </summary>
+    public short TexWidth { get; set; }
+    /// <summary>
+    /// Texture height
+    /// </summary>
+    public short TexHeight { get; set; }
+    /// <summary>
+    /// 1 = scroll continuously; 0 = only scroll when actively referenced
+    /// </summary>
+    public int ContinuousScroll { get; set; }
 
-    public Unknown4CEntry()
+    /// <summary>
+    /// Empty constructor for JSON
+    /// </summary>
+    public TextureAnimation()
     {
     }
 
-    public Unknown4CEntry(byte[] data)
+    /// <summary>
+    /// Construct Texture animation from data
+    /// </summary>
+    /// <param name="data"></param>
+    public TextureAnimation(byte[] data)
     {
         Unknown00 = IO.ReadShortLE(data, 0x00);
-        Unknown02 = IO.ReadShortLE(data, 0x02);
-        Unknown04 = IO.ReadIntLE(data, 0x04);
-        Unknown08 = IO.ReadFloatLE(data, 0x08);
-        Unknown0C = IO.ReadShortLE(data, 0x0C);
-        Unknown0E = IO.ReadShortLE(data, 0x0E);
-        Unknown10 = IO.ReadShortLE(data, 0x10);
-        Unknown12 = IO.ReadShortLE(data, 0x12);
-        Unknown14 = IO.ReadIntLE(data, 0x14);
+        KeyframeCount = IO.ReadShortLE(data, 0x02);
+        KeyframesAddress = IO.ReadIntLE(data, 0x04);
+        ScrollSpeed = IO.ReadFloatLE(data, 0x08);
+        WrapPeriod = IO.ReadShortLE(data, 0x0C);
+        ScrollDirection = IO.ReadShortLE(data, 0x0E);
+        TexWidth = IO.ReadShortLE(data, 0x10);
+        TexHeight = IO.ReadShortLE(data, 0x12);
+        ContinuousScroll = IO.ReadIntLE(data, 0x14);
     }
 
+    /// <summary>
+    /// Get binary representation of texture animation
+    /// </summary>
+    /// <returns>A binary representation of texture animation</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
 
         bytes.AddRange(BitConverter.GetBytes(Unknown00));
-        bytes.AddRange(BitConverter.GetBytes(Unknown02));
-        bytes.AddRange(BitConverter.GetBytes(Unknown04));
-        bytes.AddRange(BitConverter.GetBytes(Unknown08));
-        bytes.AddRange(BitConverter.GetBytes(Unknown0C));
-        bytes.AddRange(BitConverter.GetBytes(Unknown0E));
-        bytes.AddRange(BitConverter.GetBytes(Unknown10));
-        bytes.AddRange(BitConverter.GetBytes(Unknown12));
-        bytes.AddRange(BitConverter.GetBytes(Unknown14));
+        bytes.AddRange(BitConverter.GetBytes(KeyframeCount));
+        bytes.AddRange(BitConverter.GetBytes(KeyframesAddress));
+        bytes.AddRange(BitConverter.GetBytes(ScrollSpeed));
+        bytes.AddRange(BitConverter.GetBytes(WrapPeriod));
+        bytes.AddRange(BitConverter.GetBytes(ScrollDirection));
+        bytes.AddRange(BitConverter.GetBytes(TexWidth));
+        bytes.AddRange(BitConverter.GetBytes(TexHeight));
+        bytes.AddRange(BitConverter.GetBytes(ContinuousScroll));
 
         return bytes;
     }
 }
 
+/// <summary>
+/// Groups of bones used for specific animation types
+/// </summary>
 public class BoneAnimationGroup
 {
+    /// <summary>
+    /// Indices of bones in the group
+    /// </summary>
     public List<short> BoneIndices { get; set; } = [];
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public BoneAnimationGroup()
     {
     }
 
+    /// <summary>
+    /// Construct bone animation group from data
+    /// </summary>
+    /// <param name="data">SGE binary data</param>
+    /// <param name="offset">Offset into the data</param>
     public BoneAnimationGroup(byte[] data, int offset)
     {
         int currentShortOffset = IO.ReadIntLE(data, offset);
@@ -1362,45 +1613,57 @@ public class BoneAnimationGroup
     }
 }
 
-public class Unknown58Entry
+/// <summary>
+/// Vertex modulation animation
+/// </summary>
+public class VertexModulation
 {
-    public float Unknown00 { get; set; }
-    public float Unknown04 { get; set; }
-    public float Unknown08 { get; set; }
-    public float Unknown0C { get; set; }
-    public float Unknown10 { get; set; }
-    public float Unknown14 { get; set; }
-    public int Unknown18 { get; set; }
-    public int Unknown1C { get; set; }
+    public float PeriodX { get; set; }
+    public float PeriodY { get; set; }
+    public float PeriodZ { get; set; }
+    public float AmplitudeX { get; set; }
+    public float AmplitudeY { get; set; }
+    public float AmplitudeZ { get; set; }
+    public byte XWaveform { get; set; }
+    public byte YWaveform { get; set; }
+    public byte ZWaveform { get; set; }
+    public byte Padding { get; set; }
+    public int Flags { get; set; }
 
-    public Unknown58Entry()
+    public VertexModulation()
     {
     }
 
-    public Unknown58Entry(byte[] data)
+    public VertexModulation(byte[] data)
     {
-        Unknown00 = IO.ReadFloatLE(data, 0x00);
-        Unknown04 = IO.ReadFloatLE(data, 0x04);
-        Unknown08 = IO.ReadFloatLE(data, 0x08);
-        Unknown0C = IO.ReadFloatLE(data, 0x0C);
-        Unknown10 = IO.ReadFloatLE(data, 0x10);
-        Unknown14 = IO.ReadFloatLE(data, 0x14);
-        Unknown18 = IO.ReadIntLE(data, 0x18);
-        Unknown1C = IO.ReadIntLE(data, 0x1C);
+        PeriodX = IO.ReadFloatLE(data, 0x00);
+        PeriodY = IO.ReadFloatLE(data, 0x04);
+        PeriodZ = IO.ReadFloatLE(data, 0x08);
+        AmplitudeX = IO.ReadFloatLE(data, 0x0C);
+        AmplitudeY = IO.ReadFloatLE(data, 0x10);
+        AmplitudeZ = IO.ReadFloatLE(data, 0x14);
+        XWaveform = data[0x18];
+        YWaveform = data[0x19];
+        ZWaveform = data[0x1A];
+        Padding = data[0x1B];
+        Flags = IO.ReadIntLE(data, 0x1C);
     }
 
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
 
-        bytes.AddRange(BitConverter.GetBytes(Unknown00));
-        bytes.AddRange(BitConverter.GetBytes(Unknown04));
-        bytes.AddRange(BitConverter.GetBytes(Unknown08));
-        bytes.AddRange(BitConverter.GetBytes(Unknown0C));
-        bytes.AddRange(BitConverter.GetBytes(Unknown10));
-        bytes.AddRange(BitConverter.GetBytes(Unknown14));
-        bytes.AddRange(BitConverter.GetBytes(Unknown18));
-        bytes.AddRange(BitConverter.GetBytes(Unknown1C));
+        bytes.AddRange(BitConverter.GetBytes(PeriodX));
+        bytes.AddRange(BitConverter.GetBytes(PeriodY));
+        bytes.AddRange(BitConverter.GetBytes(PeriodZ));
+        bytes.AddRange(BitConverter.GetBytes(AmplitudeX));
+        bytes.AddRange(BitConverter.GetBytes(AmplitudeY));
+        bytes.AddRange(BitConverter.GetBytes(AmplitudeZ));
+        bytes.Add(XWaveform);
+        bytes.Add(YWaveform);
+        bytes.Add(ZWaveform);
+        bytes.Add(Padding);
+        bytes.AddRange(BitConverter.GetBytes(Flags));
 
         return bytes;
     }

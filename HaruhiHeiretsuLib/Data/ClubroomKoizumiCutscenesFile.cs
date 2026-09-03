@@ -8,7 +8,7 @@ using System.Text;
 namespace HaruhiHeiretsuLib.Data;
 
 /// <summary>
-/// A representation of the Koizumi clubroom cutscene file file (dat.bin 71/72)
+/// A representation of the Koizumi clubroom cutscene file (dat.bin 71/72)
 /// </summary>
 public class ClubroomKoizumiCutscenesFile : DataFile, IDataStringsFile
 {
@@ -60,7 +60,7 @@ public class ClubroomKoizumiCutscenesFile : DataFile, IDataStringsFile
         List<int> endPointers = [];
 
         bytes.AddRange(BitConverter.GetBytes(2).Reverse());
-        bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced later
+        bytes.AddRange(new byte[4]); // end pointers pointer, will be replaced later
 
         int startPointer = 12 + 8 * 2;
         bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
@@ -69,9 +69,9 @@ public class ClubroomKoizumiCutscenesFile : DataFile, IDataStringsFile
 
         List<byte> clubroomThingStringBytes = [];
         int clubroomStringsStartPointer = startPointer + ClubroomCutscenes.Count * 0x60;
-        for (int i = 0; i < ClubroomCutscenes.Count; i++)
+        foreach (ClubroomCutscene cutscene in ClubroomCutscenes)
         {
-            (List<byte> thingDataBytes, List<byte> thingStringBytes) = ClubroomCutscenes[i].GetBytes(startPointer + dataBytes.Count, clubroomStringsStartPointer + clubroomThingStringBytes.Count, endPointers);
+            (List<byte> thingDataBytes, List<byte> thingStringBytes) = cutscene.GetBytes(startPointer + dataBytes.Count, clubroomStringsStartPointer + clubroomThingStringBytes.Count, endPointers);
             dataBytes.AddRange(thingDataBytes);
             clubroomThingStringBytes.AddRange(thingStringBytes);
         }
@@ -83,9 +83,9 @@ public class ClubroomKoizumiCutscenesFile : DataFile, IDataStringsFile
 
         List<byte> clubroomThing2StringBytes = [];
         int clubroom2StringsStartPointer = clubroomThings2StartPointer + ClubroomChapters.Count * 0x24;
-        for (int i = 0; i < ClubroomChapters.Count; i++)
+        foreach (ClubroomChapter chapter in ClubroomChapters)
         {
-            (List<byte> thing2DataBytes, List<byte> thing2StringBytes) = ClubroomChapters[i].GetBytes(startPointer + dataBytes.Count, clubroom2StringsStartPointer + clubroomThing2StringBytes.Count, endPointers);
+            (List<byte> thing2DataBytes, List<byte> thing2StringBytes) = chapter.GetBytes(startPointer + dataBytes.Count, clubroom2StringsStartPointer + clubroomThing2StringBytes.Count, endPointers);
             dataBytes.AddRange(thing2DataBytes);
             clubroomThing2StringBytes.AddRange(thing2StringBytes);
         }
@@ -252,7 +252,7 @@ public class ClubroomCutscene
     /// </summary>
     public int MapCallerParent { get; set; }
     /// <summary>
-    /// The caller child of the cutscene's map as defined in the map defintions file
+    /// The caller child of the cutscene's map as defined in the map definitions file
     /// </summary>
     public int MapCallerChild { get; set; }
     /// <summary>
@@ -335,8 +335,8 @@ public class ClubroomCutscene
         SelectedVoiceFile = IO.ReadAsciiString(data, selectedVoiceFileOffset);
         int selectedSpeakerOffset = IO.ReadInt(data, offset + 0x1C);
         SelectedSpeaker = IO.ReadShiftJisString(data, selectedSpeakerOffset);
-        int selecteLineOffset = IO.ReadInt(data, offset + 0x20);
-        SelectedLine = IO.ReadShiftJisString(data, selecteLineOffset);
+        int selectedLineOffset = IO.ReadInt(data, offset + 0x20);
+        SelectedLine = IO.ReadShiftJisString(data, selectedLineOffset);
 
         MapCallerParent = IO.ReadInt(data, offset + 0x24);
         MapCallerChild = IO.ReadInt(data, offset + 0x28);

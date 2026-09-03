@@ -5,15 +5,42 @@ using System.Linq;
 
 namespace HaruhiHeiretsuLib.Archive;
 
+/// <summary>
+/// Representation of an MCB child archive
+/// </summary>
 public class McbSubArchive
 {
+    /// <summary>
+    /// The ID of the archive
+    /// </summary>
     public ushort Id { get; set; }
+    /// <summary>
+    /// Unused
+    /// </summary>
     public short Padding { get; set; }
+    /// <summary>
+    /// The offset of the child archive in the MCB parent archive
+    /// </summary>
     public int Offset { get; set; }
+    /// <summary>
+    /// The size of the subarchive
+    /// </summary>
     public int Size { get; set; }
 
+    /// <summary>
+    /// A list of files contained in this sub archive
+    /// </summary>
     public List<FileInArchive> Files { get; set; } = [];
 
+    /// <summary>
+    /// Manually creates an MCB child archive
+    /// </summary>
+    /// <param name="parentLoc">The location of the parent archive</param>
+    /// <param name="id">The ID of the child archive</param>
+    /// <param name="padding">Unused</param>
+    /// <param name="offset">The offset of the archive</param>
+    /// <param name="size">The size of the archive</param>
+    /// <param name="data">The binary representation of the archive</param>
     public McbSubArchive(int parentLoc, ushort id, short padding, int offset, int size, byte[] data)
     {
         Id = id;
@@ -41,6 +68,10 @@ public class McbSubArchive
         }
     }
 
+    /// <summary>
+    /// Gets the binary representation of the MCB child archive
+    /// </summary>
+    /// <returns>A binary representation of the MCB child archive with all its containing files</returns>
     public byte[] GetBytes()
     {
         List<byte> bytes = [];

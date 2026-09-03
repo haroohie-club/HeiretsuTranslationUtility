@@ -566,15 +566,15 @@ public partial class GraphicsFile
 
     public void SetFontCharacterImage(string character, SKFont font, float fontSize, int verticalOffset = 0)
     {
-        SKBitmap bitmap = new(Character.SCALED_WIDTH, Character.SCALED_HEIGHT);
+        SKBitmap bitmap = new(Glyph.SCALED_WIDTH, Glyph.SCALED_HEIGHT);
         using SKCanvas canvas = new(bitmap);
         SKPaint shadowPaint = new(font) { IsAntialias = true, Color = SKColors.Black, FilterQuality = SKFilterQuality.High };
         SKPaint mainPaint = new(font) { IsAntialias = true, Color = SKColors.White, FilterQuality = SKFilterQuality.High };
         font.Edging = SKFontEdging.SubpixelAntialias;
 
         canvas.Clear();
-        canvas.DrawText(character, 0, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, font, shadowPaint);
-        canvas.DrawText(character, 1, Character.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, font, mainPaint);
+        canvas.DrawText(character, 0, Glyph.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, font, shadowPaint);
+        canvas.DrawText(character, 1, Glyph.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, font, mainPaint);
         canvas.Flush();
 
         Data = Data.Select(b => (byte)0).ToList();
