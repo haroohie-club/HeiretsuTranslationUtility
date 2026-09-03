@@ -4,81 +4,80 @@ using System.Linq;
 using System.Text;
 using HaruhiHeiretsuLib.Util;
 
-namespace HaruhiHeiretsuLib.Strings.Events
+namespace HaruhiHeiretsuLib.Strings.Events;
+
+// 0x3C bytes (0x20 bytes of padding)
+public class ActorDefinition
 {
-    // 0x3C bytes (0x20 bytes of padding)
-    public class ActorDefinition
+    public int ChapterDefinitionOffset { get; set; }
+    public ActorType Type{ get; set; }
+    public string ModelName { get; set; }
+    public short ActionsCount { get; set; }
+    public int ActionsTableAddress { get; set; }
+    public int Unknown1C { get; set; }
+    public byte Unknown20 { get; set; }
+    public byte Unknown21 { get; set; }
+    public short SgeDatIndex { get; set; }
+    public List<ActionDefinition> ActionsTable { get; set; } = [];
+
+    public ActorDefinition(byte[] data, int offset)
     {
-        public int ChapterDefinitionOffset { get; set; }
-        public ActorType Type{ get; set; }
-        public string ModelName { get; set; }
-        public short ActionsCount { get; set; }
-        public int ActionsTableAddress { get; set; }
-        public int Unknown1C { get; set; }
-        public byte Unknown20 { get; set; }
-        public byte Unknown21 { get; set; }
-        public short SgeDatIndex { get; set; }
-        public List<ActionDefinition> ActionsTable { get; set; } = [];
-
-        public ActorDefinition(byte[] data, int offset)
+        ChapterDefinitionOffset = IO.ReadIntLE(data, offset + 0x00);
+        Type = (ActorType)IO.ReadShortLE(data, offset + 0x04);
+        byte[] nameBytes = data.Skip(offset + 0x06).TakeWhile(b => b != 0x00).ToArray();
+        if (nameBytes.Count() > 0x10)
         {
-            ChapterDefinitionOffset = IO.ReadIntLE(data, offset + 0x00);
-            Type = (ActorType)IO.ReadShortLE(data, offset + 0x04);
-            byte[] nameBytes = data.Skip(offset + 0x06).TakeWhile(b => b != 0x00).ToArray();
-            if (nameBytes.Count() > 0x10)
-            {
-                ModelName = IO.ReadAsciiString(nameBytes, offset + 0x10);
-            }
-            else
-            {
-                ModelName = IO.ReadAsciiString(nameBytes, 0x00);
-            }
-            ActionsCount = IO.ReadShortLE(data, offset + 0x16);
-            ActionsTableAddress = IO.ReadIntLE(data, offset + 0x18);
-
-            for (int i = 0; i < ActionsCount; i++)
-            {
-                ActionsTable.Add(new(data, ActionsTableAddress + 0x38 * i));
-            }
+            ModelName = IO.ReadAsciiString(nameBytes, offset + 0x10);
         }
-
-        /// <summary>
-        /// Return binary representation of the actor definition
-        /// </summary>
-        /// <returns>Byte array representing the actor definition</returns>
-        public List<byte> GetBytes()
+        else
         {
-            List<byte> bytes = [.. BitConverter.GetBytes(ChapterDefinitionOffset), .. BitConverter.GetBytes((short)Type)];
-            byte[] modelNameBytes = Encoding.ASCII.GetBytes(ModelName);
-            bytes.AddRange(modelNameBytes);
-            bytes.AddRange(new byte[0x10 - modelNameBytes.Length]);
-            bytes.AddRange(BitConverter.GetBytes(ActionsCount));
-            bytes.AddRange(BitConverter.GetBytes(ActionsTableAddress));
-            bytes.AddRange(BitConverter.GetBytes(Unknown1C));
-            bytes.Add(Unknown20);
-            bytes.Add(Unknown21);
-            bytes.AddRange(BitConverter.GetBytes(SgeDatIndex));
-            bytes.AddRange(new byte[0x18]);
+            ModelName = IO.ReadAsciiString(nameBytes, 0x00);
+        }
+        ActionsCount = IO.ReadShortLE(data, offset + 0x16);
+        ActionsTableAddress = IO.ReadIntLE(data, offset + 0x18);
 
-            return bytes;
+        for (int i = 0; i < ActionsCount; i++)
+        {
+            ActionsTable.Add(new(data, ActionsTableAddress + 0x38 * i));
         }
     }
 
-    public enum ActorType : short
+    /// <summary>
+    /// Return binary representation of the actor definition
+    /// </summary>
+    /// <returns>Byte array representing the actor definition</returns>
+    public List<byte> GetBytes()
     {
-        NONE = 0,
-        CAMERA = 1,
-        MODEL = 2,
-        UNKNOWN03 = 3,
-        FADE = 4,
-        UNKNOWN06 = 6,
-        UNKNOWN07 = 7,
-        UNKNOWN08 = 8,
-        UNKNOWN09 = 9,
-        UNKNOWN10 = 10,
-        UNKNOWN11 = 11,
-        UNKNOWN12 = 12,
-        DIALOGUE = 13,
-        UNKNOWN14 = 14,
+        List<byte> bytes = [.. BitConverter.GetBytes(ChapterDefinitionOffset), .. BitConverter.GetBytes((short)Type)];
+        byte[] modelNameBytes = Encoding.ASCII.GetBytes(ModelName);
+        bytes.AddRange(modelNameBytes);
+        bytes.AddRange(new byte[0x10 - modelNameBytes.Length]);
+        bytes.AddRange(BitConverter.GetBytes(ActionsCount));
+        bytes.AddRange(BitConverter.GetBytes(ActionsTableAddress));
+        bytes.AddRange(BitConverter.GetBytes(Unknown1C));
+        bytes.Add(Unknown20);
+        bytes.Add(Unknown21);
+        bytes.AddRange(BitConverter.GetBytes(SgeDatIndex));
+        bytes.AddRange(new byte[0x18]);
+
+        return bytes;
     }
+}
+
+public enum ActorType : short
+{
+    NONE = 0,
+    CAMERA = 1,
+    MODEL = 2,
+    UNKNOWN03 = 3,
+    FADE = 4,
+    UNKNOWN06 = 6,
+    UNKNOWN07 = 7,
+    UNKNOWN08 = 8,
+    UNKNOWN09 = 9,
+    UNKNOWN10 = 10,
+    UNKNOWN11 = 11,
+    UNKNOWN12 = 12,
+    DIALOGUE = 13,
+    UNKNOWN14 = 14,
 }

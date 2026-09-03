@@ -5,170 +5,169 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace HaruhiHeiretsuLib.Data
+namespace HaruhiHeiretsuLib.Data;
+
+/// <summary>
+/// A representation of the Database menus in the clubroom when talking to Nagato
+/// </summary>
+public class ClubroomNagatoDatabaseFile : DataFile, IDataStringsFile
 {
     /// <summary>
-    /// A representation of the Database menus in the clubroom when talking to Nagato
+    /// List of clubroom database cards
     /// </summary>
-    public class ClubroomNagatoDatabaseFile : DataFile, IDataStringsFile
+    public List<ClubroomDatabaseCard> ClubroomDatabaseCards = [];
+
+    /// <summary>
+    /// Simple constructor
+    /// </summary>
+    public ClubroomNagatoDatabaseFile()
     {
-        /// <summary>
-        /// List of clubroom database cards
-        /// </summary>
-        public List<ClubroomDatabaseCard> ClubroomDatabaseCards = [];
+        Name = "Clubroom Nagato Database File";
+    }
 
-        /// <summary>
-        /// Simple constructor
-        /// </summary>
-        public ClubroomNagatoDatabaseFile()
+    /// <inheritdoc/>
+    public override void Initialize(byte[] decompressedData, int offset)
+    {
+        base.Initialize(decompressedData, offset);
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        int startPointer = IO.ReadInt(decompressedData, 0x0C);
+        int numCldAbouts = IO.ReadInt(decompressedData, 0x10);
+        for (int i = 0; i < numCldAbouts; i++)
         {
-            Name = "Clubroom Nagato Database File";
+            ClubroomDatabaseCard cldAbout = new();
+            int titleOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x00);
+            cldAbout.Title = IO.ReadShiftJisString(decompressedData, titleOffset);
+            int voiceFileOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x04);
+            cldAbout.VoiceFile = IO.ReadShiftJisString(decompressedData, voiceFileOffset);
+            int speakerOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x08);
+            cldAbout.Speaker = IO.ReadShiftJisString(decompressedData, speakerOffset);
+            int lineOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x0C);
+            cldAbout.Line = IO.ReadShiftJisString(decompressedData, lineOffset);
+
+            ClubroomDatabaseCards.Add(cldAbout);
         }
+    }
 
-        /// <inheritdoc/>
-        public override void Initialize(byte[] decompressedData, int offset)
+    /// <inheritdoc/>
+    public override byte[] GetBytes()
+    {
+        List<byte> bytes = [];
+        List<byte> stringBytes = [];
+        List<int> endPointers = [];
+
+        bytes.AddRange(BitConverter.GetBytes(1).Reverse());
+        bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced
+
+        int startPointer = 0x14;
+        bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
+        bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
+        bytes.AddRange(BitConverter.GetBytes(ClubroomDatabaseCards.Count).Reverse());
+
+        int stringsPointer = startPointer + ClubroomDatabaseCards.Count * 0x10;
+        for (int i = 0; i < ClubroomDatabaseCards.Count; i++)
         {
-            base.Initialize(decompressedData, offset);
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            int startPointer = IO.ReadInt(decompressedData, 0x0C);
-            int numCldAbouts = IO.ReadInt(decompressedData, 0x10);
-            for (int i = 0; i < numCldAbouts; i++)
+            if (!string.IsNullOrEmpty(ClubroomDatabaseCards[i].Title))
             {
-                ClubroomDatabaseCard cldAbout = new();
-                int titleOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x00);
-                cldAbout.Title = IO.ReadShiftJisString(decompressedData, titleOffset);
-                int voiceFileOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x04);
-                cldAbout.VoiceFile = IO.ReadShiftJisString(decompressedData, voiceFileOffset);
-                int speakerOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x08);
-                cldAbout.Speaker = IO.ReadShiftJisString(decompressedData, speakerOffset);
-                int lineOffset = IO.ReadInt(decompressedData, startPointer + i * 0x10 + 0x0C);
-                cldAbout.Line = IO.ReadShiftJisString(decompressedData, lineOffset);
-
-                ClubroomDatabaseCards.Add(cldAbout);
-            }
-        }
-
-        /// <inheritdoc/>
-        public override byte[] GetBytes()
-        {
-            List<byte> bytes = [];
-            List<byte> stringBytes = [];
-            List<int> endPointers = [];
-
-            bytes.AddRange(BitConverter.GetBytes(1).Reverse());
-            bytes.AddRange(new byte[4]); // end pointer pointer, will be replaced
-
-            int startPointer = 0x14;
-            bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(startPointer).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(ClubroomDatabaseCards.Count).Reverse());
-
-            int stringsPointer = startPointer + ClubroomDatabaseCards.Count * 0x10;
-            for (int i = 0; i < ClubroomDatabaseCards.Count; i++)
-            {
-                if (!string.IsNullOrEmpty(ClubroomDatabaseCards[i].Title))
-                {
-                    endPointers.Add(bytes.Count);
-                    bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
-                    stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].Title));
-                }
-                else
-                {
-                    bytes.AddRange(new byte[4]);
-                }
                 endPointers.Add(bytes.Count);
                 bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
-                stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].VoiceFile));
-                endPointers.Add(bytes.Count);
-                bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
-                stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].Speaker));
-                endPointers.Add(bytes.Count);
-                bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
-                stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].Line));
+                stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].Title));
             }
-            bytes.AddRange(stringBytes);
-
-            bytes.RemoveRange(4, 4);
-            bytes.InsertRange(4, BitConverter.GetBytes(bytes.Count + 4).Reverse());
-            bytes.AddRange(BitConverter.GetBytes(endPointers.Count).Reverse());
-
-            foreach (int endPointer in endPointers)
+            else
             {
-                bytes.AddRange(BitConverter.GetBytes(endPointer).Reverse());
+                bytes.AddRange(new byte[4]);
             }
+            endPointers.Add(bytes.Count);
+            bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].VoiceFile));
+            endPointers.Add(bytes.Count);
+            bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].Speaker));
+            endPointers.Add(bytes.Count);
+            bytes.AddRange(BitConverter.GetBytes(stringsPointer + stringBytes.Count).Reverse());
+            stringBytes.AddRange(Helpers.GetPaddedByteArrayFromString(ClubroomDatabaseCards[i].Line));
+        }
+        bytes.AddRange(stringBytes);
 
-            bytes.AddRange(new byte[bytes.Count % 16 == 0 ? 0 : 16 - bytes.Count % 16]);
+        bytes.RemoveRange(4, 4);
+        bytes.InsertRange(4, BitConverter.GetBytes(bytes.Count + 4).Reverse());
+        bytes.AddRange(BitConverter.GetBytes(endPointers.Count).Reverse());
 
-            return [.. bytes];
+        foreach (int endPointer in endPointers)
+        {
+            bytes.AddRange(BitConverter.GetBytes(endPointer).Reverse());
         }
 
-        /// <inheritdoc/>
-        public List<DialogueLine> GetDialogueLines()
-        {
-            List<DialogueLine> lines = [];
+        bytes.AddRange(new byte[bytes.Count % 16 == 0 ? 0 : 16 - bytes.Count % 16]);
 
-            for (int i = 0; i < ClubroomDatabaseCards.Count; i++)
+        return [.. bytes];
+    }
+
+    /// <inheritdoc/>
+    public List<DialogueLine> GetDialogueLines()
+    {
+        List<DialogueLine> lines = [];
+
+        for (int i = 0; i < ClubroomDatabaseCards.Count; i++)
+        {
+            if (!string.IsNullOrEmpty(ClubroomDatabaseCards[i].Title))
             {
-                if (!string.IsNullOrEmpty(ClubroomDatabaseCards[i].Title))
-                {
-                    lines.Add(new()
-                    {
-                        Offset = i,
-                        Speaker = "Title",
-                        Line = ClubroomDatabaseCards[i].Title,
-                        Metadata = ["0"],
-                    });
-                }
                 lines.Add(new()
                 {
                     Offset = i,
-                    Speaker = ClubroomDatabaseCards[i].Speaker,
-                    Line = ClubroomDatabaseCards[i].Line,
-                    Metadata = [ClubroomDatabaseCards[i].VoiceFile, $"Title: {ClubroomDatabaseCards[i].Title}", "1"],
+                    Speaker = "Title",
+                    Line = ClubroomDatabaseCards[i].Title,
+                    Metadata = ["0"],
                 });
             }
-
-            return lines;
-        }
-
-        /// <inheritdoc/>
-        public void ReplaceDialogueLine(DialogueLine line)
-        {
-            switch (line.Metadata[^1])
+            lines.Add(new()
             {
-                case "0":
-                    ClubroomDatabaseCards[line.Offset].Title = line.Line;
-                    break;
+                Offset = i,
+                Speaker = ClubroomDatabaseCards[i].Speaker,
+                Line = ClubroomDatabaseCards[i].Line,
+                Metadata = [ClubroomDatabaseCards[i].VoiceFile, $"Title: {ClubroomDatabaseCards[i].Title}", "1"],
+            });
+        }
 
-                case "1":
-                    ClubroomDatabaseCards[line.Offset].Line = line.Line;
-                    break;
-            }
+        return lines;
+    }
+
+    /// <inheritdoc/>
+    public void ReplaceDialogueLine(DialogueLine line)
+    {
+        switch (line.Metadata[^1])
+        {
+            case "0":
+                ClubroomDatabaseCards[line.Offset].Title = line.Line;
+                break;
+
+            case "1":
+                ClubroomDatabaseCards[line.Offset].Line = line.Line;
+                break;
         }
     }
+}
 
-    // 0x10 bytes
+// 0x10 bytes
+/// <summary>
+/// Representation of a menu card in the clubroom database when talking to Nagato
+/// </summary>
+public class ClubroomDatabaseCard
+{
     /// <summary>
-    /// Representation of a menu card in the clubroom database when talking to Nagato
+    /// The title of the menu card
     /// </summary>
-    public class ClubroomDatabaseCard
-    {
-        /// <summary>
-        /// The title of the menu card
-        /// </summary>
-        public string Title { get; set; }
-        /// <summary>
-        /// The voice file that plays when hovering over the card
-        /// </summary>
-        public string VoiceFile { get; set; }
-        /// <summary>
-        /// The speaker of the line that is displayed when hovering over the card
-        /// </summary>
-        public string Speaker { get; set; }
-        /// <summary>
-        /// The line that is displayed when hovering over the card
-        /// </summary>
-        public string Line { get; set; }
-    }
+    public string Title { get; set; }
+    /// <summary>
+    /// The voice file that plays when hovering over the card
+    /// </summary>
+    public string VoiceFile { get; set; }
+    /// <summary>
+    /// The speaker of the line that is displayed when hovering over the card
+    /// </summary>
+    public string Speaker { get; set; }
+    /// <summary>
+    /// The line that is displayed when hovering over the card
+    /// </summary>
+    public string Line { get; set; }
 }
