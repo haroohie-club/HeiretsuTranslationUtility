@@ -289,7 +289,7 @@ public class MapDefinitionSection
                 }
                 else
                 {
-                    evt = (short)(mapDefinition.Evts[i] + MapDefinition.EVT_SHIFT);
+                    evt = (short)(mapDefinition.Evts[i] + MapDefinition.EvtShift);
                 }
                 bytes.AddRange(BitConverter.GetBytes(evt).Reverse());
             }
@@ -329,7 +329,7 @@ public class MapDefinition
     /// <summary>
     /// A constant shift value that shifts evt indices in some cases
     /// </summary>
-    public const short EVT_SHIFT = 0x2710;
+    public const short EvtShift = 0x2710;
 
     /// <summary>
     /// The index of the map definition section
@@ -509,7 +509,7 @@ public class MapDefinition
             }
             else
             {
-                Evts[i] = (short)(evtId - EVT_SHIFT);
+                Evts[i] = (short)(evtId - EvtShift);
             }
         }
         Unknown5C = IO.ReadInt(data, definitionOffset + 0x5C);

@@ -8,48 +8,55 @@ using HaruhiHeiretsuLib.Util;
 namespace HaruhiHeiretsuLib.Strings.Events;
 
 // 0x38 bytes
-/*
- * Op Code Table:
- * 0x01 - Camera Position
- * 0x02 - Camera Look-To
- * 0x03 - Play Model Animation
- * 0x04 - Animation Path
- * 0x05 -
- * 0x06 -
- * 0x07 -
- * 0x08 -
- * 0x09 -
- * 0x0A -
- * 0x0B -
- * 0x0C -
- * 0x0D -
- * 0x0E -
- * 0x0F -
- * 0x10 -
- * 0x11 -
- * 0x12 -
- * 0x13 -
- * 0x14 - Dialogue
- * 0x15 -
- * 0x16 -
- * 0x17 -
- * 0x18 -
- * 0x19 -
- */
+/// <summary>
+/// An action that an actor can take in a cutscene
+/// </summary>
 public class ActionDefinition
 {
+    /// <summary>
+    /// The address of the actor definition associated with this action
+    /// </summary>
     public int ActorDefinitionAddress { get; set; }
-    public ushort OpCode { get; set; }
+
+    /// <summary>
+    /// The op code for this action)
+    /// </summary>
+    public ActionOpCode OpCode { get; set; }
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public ushort Unknown06 { get; set; }
+
+    /// <summary>
+    /// The number of parameters
+    /// </summary>
     public ushort ParametersCount { get; set; }
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public ushort Unknown0A { get; set; }
+
+    /// <summary>
+    /// The address of the parameters table
+    /// </summary>
     public int ParametersAddress { get; set; }
+
+    /// <summary>
+    /// The actual list of parameters for the action
+    /// </summary>
     public List<ActionParameter> Parameters { get; set; } = [];
 
+    /// <summary>
+    /// Constructs an action from binary data
+    /// </summary>
+    /// <param name="data">The binary event file data</param>
+    /// <param name="offset">The offset of the action data into the event data</param>
     public ActionDefinition(byte[] data, int offset)
     {
         ActorDefinitionAddress = IO.ReadIntLE(data, offset + 0x00);
-        OpCode = IO.ReadUShortLE(data, offset + 0x04);
+        OpCode = (ActionOpCode)IO.ReadUShortLE(data, offset + 0x04);
         Unknown06 = IO.ReadUShortLE(data, offset + 0x06);
         ParametersCount = IO.ReadUShortLE(data, offset + 0x08);
         Unknown0A = IO.ReadUShortLE(data, offset + 0x0A);
@@ -60,67 +67,72 @@ public class ActionDefinition
         {
             switch (OpCode)
             {
-                case 1:
-                case 2:
-                case 4:
-                case 9:
-                case 22:
-                case 25:
+                case ActionOpCode.CAMERA_POSITION:
+                case ActionOpCode.CAMERA_LOOK_TO:
+                case ActionOpCode.ANIMATION_PATH:
+                case ActionOpCode.UNKNOWN09:
+                case ActionOpCode.UNKNOWN16:
+                case ActionOpCode.UNKNOWN19:
                     Parameters.Add(new SpatialParameter(data, currentPosition, OpCode));
                     break;
-                case 3:
-                case 24:
+                case ActionOpCode.PLAY_MODEL_ANIMATION:
+                case ActionOpCode.UNKNOWN18:
                     Parameters.Add(new ModelAnimationParameter(data, currentPosition, OpCode));
                     break;
-                case 7:
+                case ActionOpCode.UNKNOWN07:
                     Parameters.Add(new FadeParameter(data, currentPosition, OpCode));
                     break;
-                case 20:
+                case ActionOpCode.DIALOGUE:
                     Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
                     break;
-                case 5:
+                case ActionOpCode.UNKNOWN05:
                 // break
-                case 6:
+                case ActionOpCode.UNKNOWN06:
                 //break
-                case 8:
+                case ActionOpCode.UNKNOWN08:
                 //break
-                case 10:
+                case ActionOpCode.UNKNOWN0A:
                 //break
-                case 11:
+                case ActionOpCode.UNKNOWN0B:
                 //break
-                case 12:
+                case ActionOpCode.UNKNOWN0C:
                 //break
-                case 13:
+                case ActionOpCode.UNKNOWN0D:
                 //break
-                case 14:
+                case ActionOpCode.UNKNOWN0E:
                 //break
-                case 15:
+                case ActionOpCode.UNKNOWN0F:
                 //break
-                case 16:
+                case ActionOpCode.UNKNOWN10:
                 //break
-                case 17:
+                case ActionOpCode.UNKNOWN11:
                 //break
-                case 18:
-                case 23:
+                case ActionOpCode.UNKNOWN12:
+                case ActionOpCode.UNKNOWN17:
                 //break
-                case 19:
+                case ActionOpCode.UNKNOWN13:
                 //break
-                case 21:
+                case ActionOpCode.UNKNOWN15:
                 //break
                 default:
                     Parameters.Add(new(data, currentPosition, OpCode));
                     break;
             }
+
             currentPosition += Parameters.Last().Length;
         }
     }
 
+    /// <summary>
+    /// Gets the binary data of the action
+    /// </summary>
+    /// <returns>A list of bytes representing the binary data</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes =
         [
             .. BitConverter.GetBytes(ActorDefinitionAddress),
-            .. BitConverter.GetBytes(OpCode),
+            .. BitConverter.GetBytes((ushort)OpCode),
             .. BitConverter.GetBytes(Unknown06),
             .. BitConverter.GetBytes(ParametersCount),
             .. BitConverter.GetBytes(Unknown0A),
@@ -132,13 +144,151 @@ public class ActionDefinition
 }
 
 /// <summary>
+/// Enum representing action op codes
+/// </summary>
+public enum ActionOpCode : ushort
+{
+    /// <summary>
+    /// No action
+    /// </summary>
+    NONE,
+
+    /// <summary>
+    /// Position the camera in space
+    /// </summary>
+    CAMERA_POSITION,
+
+    /// <summary>
+    /// Set the position the camera is looking toward
+    /// </summary>
+    CAMERA_LOOK_TO,
+
+    /// <summary>
+    /// Play an animation on a model
+    /// </summary>
+    PLAY_MODEL_ANIMATION,
+
+    /// <summary>
+    /// Move an actor along a path
+    /// </summary>
+    ANIMATION_PATH,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN05,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN06,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN07,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN08,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN09,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN0A,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN0B,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN0C,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN0D,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN0E,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN0F,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN10,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN11,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN12,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN13,
+
+    /// <summary>
+    /// Display dialogue on the screen
+    /// </summary>
+    DIALOGUE,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN15,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN16,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN17,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN18,
+
+    /// <summary>
+    /// Unknown
+    /// </summary>
+    UNKNOWN19,
+}
+
+/// <summary>
 /// Enum representing the mnemonics for action parameters
 /// </summary>
 public enum ActionParameterMnemonic
 {
-        
 }
 
+/// <summary>
+/// A generic action parameter
+/// </summary>
 [JsonDerivedType(typeof(DialogueParameter))]
 [JsonDerivedType(typeof(FadeParameter))]
 [JsonDerivedType(typeof(ModelAnimationParameter))]
@@ -146,36 +296,61 @@ public enum ActionParameterMnemonic
 // Variable length
 public class ActionParameter
 {
-    private readonly ushort _opCode;
+    private readonly ActionOpCode _opCode;
+    /// <summary>
+    /// The action associated with this parameter
+    /// </summary>
     public int ActionsTableEntryAddress { get; set; }
+    /// <summary>
+    /// The address of this parameter
+    /// </summary>
     public int Address { get; set; }
+    /// <summary>
+    /// The frame at which this action starts
+    /// </summary>
     public float StartFrame { get; set; }
+    /// <summary>
+    /// The frame at which this action ends
+    /// </summary>
     public float EndFrame { get; set; }
     [JsonIgnore]
-    public List<byte> Data { get; set; }
+    private List<byte> Data { get; set; }
+
+    /// <summary>
+    /// The length of the action data in bytes
+    /// </summary>
     public int Length
     {
         get
         {
             return _opCode switch
             {
-                1 or 2 or 4 or 9 or 22 or 25 or 6 => 0x40,
-                3 or 24 => 0x48,
-                5 or 8 or 19 or 18 or 23 => 0x2C,
-                7 => 0x28,
-                10 or 17 => 0x24,
-                11 => 0x4C,
-                12 => 0x38,
-                13 or 14 => 0x50,
-                15 => 0x58,
-                16 or 21 => 0x20,
-                20 => 0x250,
+                ActionOpCode.CAMERA_POSITION or ActionOpCode.CAMERA_LOOK_TO or ActionOpCode.ANIMATION_PATH
+                    or ActionOpCode.UNKNOWN09 or ActionOpCode.UNKNOWN16 or ActionOpCode.UNKNOWN19
+                    or ActionOpCode.UNKNOWN06 => 0x40,
+                ActionOpCode.PLAY_MODEL_ANIMATION or ActionOpCode.UNKNOWN18 => 0x48,
+                ActionOpCode.UNKNOWN05 or ActionOpCode.UNKNOWN08 or ActionOpCode.UNKNOWN13 or ActionOpCode.UNKNOWN12
+                    or ActionOpCode.UNKNOWN17 => 0x2C,
+                ActionOpCode.UNKNOWN07 => 0x28,
+                ActionOpCode.UNKNOWN0A or ActionOpCode.UNKNOWN11 => 0x24,
+                ActionOpCode.UNKNOWN0B => 0x4C,
+                ActionOpCode.UNKNOWN0C => 0x38,
+                ActionOpCode.UNKNOWN0D or ActionOpCode.UNKNOWN0E => 0x50,
+                ActionOpCode.UNKNOWN0F => 0x58,
+                ActionOpCode.UNKNOWN10 or ActionOpCode.UNKNOWN15 => 0x20,
+                ActionOpCode.DIALOGUE => 0x250,
                 _ => 0,
             };
         }
     }
-
-    public ActionParameter(byte[] data, int offset, ushort opCode)
+    
+    /// <summary>
+    /// Constructs an action parameter from binary data
+    /// </summary>
+    /// <param name="data">The event file binary data</param>
+    /// <param name="offset">The offset into the event file binary data at which the action parameter starts</param>
+    /// <param name="opCode">The op code for the action associated with this parameter</param>
+    public ActionParameter(byte[] data, int offset, ActionOpCode opCode)
     {
         Address = offset;
         _opCode = opCode;
@@ -185,6 +360,10 @@ public class ActionParameter
         Data = data.Skip(offset + 0x0C).Take(Length - 12).ToList();
     }
 
+    /// <summary>
+    /// Gets the binary data for the header of this action
+    /// </summary>
+    /// <returns>Binary data for this action parameter's header</returns>
     protected List<byte> GetHeaderBytes()
     {
         List<byte> bytes =
@@ -196,6 +375,10 @@ public class ActionParameter
         return bytes;
     }
 
+    /// <summary>
+    /// Gets the binary data of this action parameter
+    /// </summary>
+    /// <returns></returns>
     public virtual List<byte> GetBytes()
     {
         List<byte> bytes = [.. GetHeaderBytes(), .. Data];

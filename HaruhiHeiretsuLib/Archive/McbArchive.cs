@@ -378,23 +378,23 @@ public partial class McbArchive
                     StringsFiles.Add((parentLoc, childLoc));
                     switch ((parentLoc, childLoc))
                     {
-                        case (0, DataStringsFileLocations.MAP_DEFINITION_MCB_INDEX):
+                        case (0, DataStringsFileLocations.MapDefinitionMcbIndex):
                             McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<MapDefinitionsFile>>();
                             break;
 
-                        case (0, DataStringsFileLocations.TOPICS_FLAG_MCB_INDEX):
+                        case (0, DataStringsFileLocations.TopicsFlagsMcbIndex):
                             McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<TopicsAndFlagsFile>>();
                             break;
 
-                        case (0, DataStringsFileLocations.NAMEPLATES_MCB_INDEX):
+                        case (0, DataStringsFileLocations.NameplatesMcbIndex):
                             McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<NameplatesFile>>();
                             break;
 
-                        case (0, DataStringsFileLocations.TIMELINE_MCB_INDEX):
+                        case (0, DataStringsFileLocations.TimelineMcbIndex):
                             McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<TimelineFile>>();
                             break;
 
-                        case (0, DataStringsFileLocations.CLUBROOM_MCB_INDEX):
+                        case (0, DataStringsFileLocations.ClubroomMcbIndex):
                             McbSubArchives[parentLoc].Files[childLoc] = McbSubArchives[parentLoc].Files[childLoc].CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>();
                             break;
 

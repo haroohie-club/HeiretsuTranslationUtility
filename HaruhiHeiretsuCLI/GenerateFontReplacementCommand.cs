@@ -14,8 +14,8 @@ public class GenerateFontReplacementCommand : Command
     private string _fontFile, _extendedCharacters, _outputJson, _outputHack;
     private float _fontSize;
 
-    private const string CHARACTERS = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-    private const double GAME_SCALE_FACTOR = 19;
+    private const string Characters = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+    private const double GameScaleFactor = 19;
 
     public GenerateFontReplacementCommand() : base("generate-font-replacement", "Generate a font replacement map from a font file")
     {
@@ -39,14 +39,14 @@ public class GenerateFontReplacementCommand : Command
 
         CommandSet.Out.Write("Generating font replacement map... ");
 
-        SKPaint paint = new(new(SKTypeface.FromFile(_fontFile), size: _fontSize));
-        int[] widths = paint.GetGlyphWidths(CHARACTERS).Select(w => (int)Math.Round(w * GAME_SCALE_FACTOR)).ToArray();
-        int[] extendedWidths = paint.GetGlyphWidths(_extendedCharacters).Select(w => (int)Math.Round(w * GAME_SCALE_FACTOR)).ToArray();
+        SKFont font = new(SKTypeface.FromFile(_fontFile), size: _fontSize);
+        int[] widths = font.GetGlyphWidths(Characters).Select(w => (int)Math.Round(w * GameScaleFactor)).ToArray();
+        int[] extendedWidths = font.GetGlyphWidths(_extendedCharacters).Select(w => (int)Math.Round(w * GameScaleFactor)).ToArray();
 
         Dictionary<string, FontReplacementCharacter> fontReplacementMap = [];
-        for (int i = 0; i < CHARACTERS.Length; i++)
+        for (int i = 0; i < Characters.Length; i++)
         {
-            fontReplacementMap.Add($"{CHARACTERS[i]}", new() { Character = $"{CHARACTERS[i]}", Spacing = widths[i] });
+            fontReplacementMap.Add($"{Characters[i]}", new() { Character = $"{Characters[i]}", Spacing = widths[i] });
         }
         ushort codePoint = 0x8140;
         for (int i = 0; i <  _extendedCharacters.Length; i++)

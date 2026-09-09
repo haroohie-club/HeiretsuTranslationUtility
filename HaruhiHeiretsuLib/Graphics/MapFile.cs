@@ -7,13 +7,35 @@ namespace HaruhiHeiretsuLib.Graphics;
 
 public partial class GraphicsFile
 {
+    /// <summary>
+    /// Map header binary
+    /// </summary>
     public byte[] MapHeader { get; set; }
+    /// <summary>
+    /// The model used by the map
+    /// </summary>
     public string MapModel { get; set; }
+    /// <summary>
+    /// The background model (i.e. skybox)
+    /// </summary>
     public string MapBackgroundModel { get; set; }
+    /// <summary>
+    /// The list of map model names
+    /// </summary>
     public List<string> MapModelNames { get; set; } = [];
+    /// <summary>
+    /// The list of map entries
+    /// </summary>
     public List<MapEntry> MapEntries { get; set; } = [];
+    /// <summary>
+    /// The binary data of the map footer
+    /// </summary>
     public List<byte[]> MapFooterEntries { get; set; } = [];
 
+    /// <summary>
+    /// Sets map data from map entries
+    /// </summary>
+    /// <param name="newMapEntries">List of map entries</param>
     public void SetMapData(List<MapEntry> newMapEntries)
     {
         Edited = true;
@@ -62,41 +84,113 @@ public partial class GraphicsFile
     }
 }
 
+/// <summary>
+/// An entry in the map definition file
+/// </summary>
 public class MapEntry
 {
+    /// <summary>
+    /// X location of the entry
+    /// </summary>
     public float X { get; set; }
+    /// <summary>
+    /// Y location of the entry
+    /// </summary>
     public float Y { get; set; }
+    /// <summary>
+    /// Z location of the entry
+    /// </summary>
     public float Z { get; set; }
-    public short ShouldProcess { get; set; } // values of zero or one indicate this entry should be processed
+    /// <summary>
+    /// Values of zero or one indicate this entry should be processed
+    /// </summary>
+    public short ShouldProcess { get; set; }
+    /// <summary>
+    /// Index of the name of the map component
+    /// </summary>
     public short NameIndex { get; set; }
+    /// <summary>
+    /// The name of the map component
+    /// </summary>
     public string Name { get; set; }
+    /// <summary>
+    /// Rotation of the component
+    /// </summary>
     public short Rotation { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown12 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown14 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown16 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown18 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown1A { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown1C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown1E { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown20 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown22 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown24 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown26 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown28 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown2A { get; set; }
 
+    /// <summary>
+    /// Creates a new map entry from binary data
+    /// </summary>
+    /// <param name="data">The binary data of the map entry</param>
+    /// <param name="name">A name for the map entry</param>
     public MapEntry(IEnumerable<byte> data, string name)
     {
         Name = name;
-        Initialize(data);
+        Initialize([.. data]);
     }
 
+    /// <summary>
+    /// Creates a new map entry from binary data
+    /// </summary>
+    /// <param name="data">The binary data of the map entry</param>
     public MapEntry(IEnumerable<byte> data)
     {
-        Initialize(data);
+        Initialize([.. data]);
     }
 
-    private void Initialize(IEnumerable<byte> data)
+    private void Initialize(byte[] data)
     {
         X = BitConverter.ToSingle(data.Skip(0x00).Take(4).ToArray());
         Y = BitConverter.ToSingle(data.Skip(0x04).Take(4).ToArray());
@@ -119,6 +213,10 @@ public class MapEntry
         Unknown2A = BitConverter.ToInt16(data.Skip(0x2A).Take(2).ToArray());
     }
 
+    /// <summary>
+    /// Constructs a map entry from a CSV entry
+    /// </summary>
+    /// <param name="csvLine">The CSV line containing the map entry data</param>
     public MapEntry(string csvLine)
     {
         string[] components = csvLine.Split(',');
@@ -144,6 +242,11 @@ public class MapEntry
         Unknown2A = short.Parse(components[18]);
     }
 
+    /// <summary>
+    /// Gets the binary data associated with the map entry
+    /// </summary>
+    /// <param name="modelNames">The list of model names to use</param>
+    /// <returns>The binary representation of the map entry</returns>
     public byte[] GetBytes(List<string> modelNames)
     {
         List<byte> bytes = [];
@@ -188,12 +291,20 @@ public class MapEntry
         return [.. bytes];
     }
 
+    /// <summary>
+    /// Gets a CSV line representing the map entry
+    /// </summary>
+    /// <returns>A CSV line of the map entry</returns>
     public string GetCsvLine()
     {
         return $"{Name},{X},{Y},{Z},{ShouldProcess},{Rotation},{Unknown12},{Unknown14},{Unknown16},{Unknown18},{Unknown1A},{Unknown1C},{Unknown1E}," +
                $"{Unknown20},{Unknown22},{Unknown24},{Unknown26},{Unknown28},{Unknown2A}";
     }
 
+    /// <summary>
+    /// Gets the CSV header for all map entries
+    /// </summary>
+    /// <returns>A CSV line containing all the names of the properties returned by <see cref="GetCsvLine"/></returns>
     public static string GetCsvHeader()
     {
         return $"{nameof(Name)},{nameof(X)},{nameof(Y)},{nameof(Z)},{nameof(ShouldProcess)},{nameof(Rotation)},{nameof(Unknown12)},{nameof(Unknown14)},{nameof(Unknown16)},{nameof(Unknown18)},{nameof(Unknown1A)},{nameof(Unknown1C)}," +

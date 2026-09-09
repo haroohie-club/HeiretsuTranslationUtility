@@ -5,30 +5,94 @@ using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Events.Parameters;
 
+/// <summary>
+/// A spatial parameter, used to describe movement through 3D space
+/// </summary>
 public class SpatialParameter : ActionParameter
 {
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown0C { get; set; }
+    /// <summary>
+    /// Pointer to a spline (dynamically allocated)
+    /// </summary>
     public int SplinePointer { get; set; } // dynamically allocated
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown14 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown16 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown18 { get; set; }
+    /// <summary>
+    /// Number of vertices on the spline
+    /// </summary>
     public byte NumSplineVerts { get; set; }
+    /// <summary>
+    /// Mode for the spline
+    /// </summary>
     public byte SplineMode { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte Unknown1E { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte Unknown1F { get; set; }
+    /// <summary>
+    /// First set of spline verts
+    /// </summary>
     public Vector3[] SplineVertices1 { get; set; }
+    /// <summary>
+    /// Second set of spline verts
+    /// </summary>
     public Vector3[] SplineVertices2 { get; set; }
+    /// <summary>
+    /// Third set of spline verts
+    /// </summary>
     public Vector3[] SplineVertices3 { get; set; }
+    /// <summary>
+    /// Coords
+    /// </summary>
     public Vector2[] Coords4 { get; set; }
+    /// <summary>
+    /// Coords
+    /// </summary>
     public Vector2[] Coords5 { get; set; }
+    /// <summary>
+    /// Number of 2D spline vertices
+    /// </summary>
     public byte NumSpline2DVerts { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte Unknown35 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte Unknown36 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte Unknown37 { get; set; }
+    /// <summary>
+    /// 2D spline vert set
+    /// </summary>
     public Vector2[] Spline2DVertices { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown3C { get; set; }
 
-    public SpatialParameter(byte[] data, int offset, ushort opCode) : base(data, offset, opCode)
+    /// <inheritdoc/>
+    public SpatialParameter(byte[] data, int offset, ActionOpCode opCode) : base(data, offset, opCode)
     {
         Unknown0C = IO.ReadIntLE(data, offset + 0x0C);
         SplinePointer = IO.ReadIntLE(data, offset + 0x10);

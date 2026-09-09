@@ -7,24 +7,74 @@ using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Events.Parameters;
 
+/// <summary>
+/// A parameter that contains a dialogue line
+/// </summary>
 public class DialogueParameter : ActionParameter
 {
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown0C { get; set; }
+    /// <summary>
+    /// Unknown pointer
+    /// </summary>
     public int Unknown10 { get; set; } // pointer
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public ushort Unknown14 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public ushort Unknown16 { get; set; } // guess
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown18 { get; set; } // guess
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown1C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown20 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public ushort Unknown24 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public ushort Unknown26 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public ushort Unknown28 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public ushort Unknown2A { get; set; }
+    /// <summary>
+    /// The character speaking the dialogue line
+    /// </summary>
     public EventFileSpeaker SpeakingCharacter { get; set; }
+    /// <summary>
+    /// The voice file to play with this line
+    /// </summary>
     public string VoiceFile { get; set; }
+    /// <summary>
+    /// The dialogue to display on the screen (subtitle)
+    /// </summary>
     public string Dialogue { get; set; }
+    /// <summary>
+    /// The lip sync data to play on the character model
+    /// </summary>
     public string LipSyncData { get; set; } = string.Empty;
-    public DialogueParameter(byte[] data, int offset, ushort opCode) : base(data, offset, opCode)
+    
+    /// <inheritdoc/>
+    public DialogueParameter(byte[] data, int offset, ActionOpCode opCode) : base(data, offset, opCode)
     {
         Unknown0C = IO.ReadIntLE(data, offset + 0x0C);
         Unknown10 = IO.ReadIntLE(data, offset + 0x10);

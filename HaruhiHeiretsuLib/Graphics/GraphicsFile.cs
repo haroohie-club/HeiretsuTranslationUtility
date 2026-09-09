@@ -40,8 +40,8 @@ public partial class GraphicsFile : FileInArchive
         else if (Data.Take(4).SequenceEqual(new byte[] { 0x00, 0x20, 0xAF, 0x30 }))
         {
             FileType = GraphicsFileType.TEXTURE;
-            PointerPointer = IO.ReadInt(decompressedData, 0x08);
-            SizePointer = IO.ReadInt(decompressedData, PointerPointer);
+            HeaderPointer = IO.ReadInt(decompressedData, 0x08);
+            SizePointer = IO.ReadInt(decompressedData, HeaderPointer);
             Height = IO.ReadUShort(decompressedData, SizePointer);
             Width = IO.ReadUShort(decompressedData, SizePointer + 2);
             Format = (ImageFormat)IO.ReadInt(decompressedData, SizePointer + 4);

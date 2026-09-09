@@ -7,19 +7,57 @@ using HaruhiHeiretsuLib.Util;
 namespace HaruhiHeiretsuLib.Strings.Events;
 
 // 0x3C bytes (0x20 bytes of padding)
+/// <summary>
+/// Definition of an actor in a cutscene
+/// </summary>
 public class ActorDefinition
 {
+    /// <summary>
+    /// The offset of the associated chapter definition
+    /// </summary>
     public int ChapterDefinitionOffset { get; set; }
+    /// <summary>
+    /// The type of actor
+    /// </summary>
     public ActorType Type{ get; set; }
+    /// <summary>
+    /// The name of the model to use
+    /// </summary>
     public string ModelName { get; set; }
+    /// <summary>
+    /// The number of actions
+    /// </summary>
     public short ActionsCount { get; set; }
+    /// <summary>
+    /// The table of actions
+    /// </summary>
     public int ActionsTableAddress { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown1C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte Unknown20 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte Unknown21 { get; set; }
+    /// <summary>
+    /// The dat.bin index of the SGE data
+    /// </summary>
     public short SgeDatIndex { get; set; }
+    /// <summary>
+    /// The action definitions table
+    /// </summary>
     public List<ActionDefinition> ActionsTable { get; set; } = [];
 
+    /// <summary>
+    /// Constructs an actor definition from raw binary
+    /// </summary>
+    /// <param name="data">The cutscene file binary data</param>
+    /// <param name="offset">The offset into the cutscene data of the actor definition</param>
     public ActorDefinition(byte[] data, int offset)
     {
         ChapterDefinitionOffset = IO.ReadIntLE(data, offset + 0x00);
@@ -64,20 +102,65 @@ public class ActorDefinition
     }
 }
 
+/// <summary>
+/// The different types of actor in a scene
+/// </summary>
 public enum ActorType : short
 {
+    /// <summary>
+    /// None
+    /// </summary>
     NONE = 0,
+    /// <summary>
+    /// Scene camera
+    /// </summary>
     CAMERA = 1,
+    /// <summary>
+    /// A modeled actor
+    /// </summary>
     MODEL = 2,
+    /// <summary>
+    /// Unknown
+    /// </summary>
     UNKNOWN03 = 3,
-    FADE = 4,
+    /// <summary>
+    /// Screen (used for fade in/out)
+    /// </summary>
+    SCREEN = 4,
+    /// <summary>
+    /// Unknown
+    /// </summary>
     UNKNOWN06 = 6,
+    /// <summary>
+    /// Unknown
+    /// </summary>
     UNKNOWN07 = 7,
+    /// <summary>
+    /// Unknown
+    /// </summary>
     UNKNOWN08 = 8,
+    /// <summary>
+    /// Unknown
+    /// </summary>
     UNKNOWN09 = 9,
+    /// <summary>
+    /// Unknown
+    /// </summary>
     UNKNOWN10 = 10,
+    /// <summary>
+    /// Unknown
+    /// </summary>
     UNKNOWN11 = 11,
+    /// <summary>
+    /// Unknown
+    /// </summary>
     UNKNOWN12 = 12,
+    /// <summary>
+    /// Dialogue actor (used for displaying dialogue)
+    /// </summary>
     DIALOGUE = 13,
+    /// <summary>
+    /// Unknown
+    /// </summary>
     UNKNOWN14 = 14,
 }

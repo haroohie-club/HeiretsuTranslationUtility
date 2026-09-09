@@ -8,11 +8,25 @@ namespace HaruhiHeiretsuLib.Graphics;
 
 public partial class GraphicsFile
 {
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte[] UnknownLayoutHeaderInt1 { get; set; }
+    /// <summary>
+    /// The entries in the layout
+    /// </summary>
     public List<LayoutComponent> LayoutComponents { get; set; }
 
+    /// <summary>
+    /// Asynchronous layout preview getter
+    /// </summary>
     public delegate SKBitmap GetLayoutAsync(List<GraphicsFile> archiveGraphicsFiles);
 
+    /// <summary>
+    /// Gets a layout preview given a list of graphics files the layout contains
+    /// </summary>
+    /// <param name="archiveGraphicsFiles">The list of graphics files the layout contains</param>
+    /// <returns>A bitmap preview of the layout</returns>
     public SKBitmap GetLayout(List<GraphicsFile> archiveGraphicsFiles)
     {
         if (FileType == GraphicsFileType.LAYOUT)
@@ -68,9 +82,7 @@ public partial class GraphicsFile
                 }
 
                 canvas.DrawBitmap(tile, destination);
-
-                SKPaint paint = new(new(SKTypeface.FromFamilyName("Arial"), 14)) { FakeBoldText = true };
-                canvas.DrawText($"{i} ({layout.Index})", layout.ScreenX, layout.ScreenY, paint);
+                canvas.DrawText($"{i} ({layout.Index})", new SKPoint(layout.ScreenX, layout.ScreenY), new(SKTypeface.FromFamilyName("Arial"), 14f) { Embolden = true}, new());
 
                 i++;
             }
@@ -83,6 +95,9 @@ public partial class GraphicsFile
         }
     }
 
+    /// <summary>
+    /// Sets layout binary data in the ROM
+    /// </summary>
     public void SetLayoutData()
     {
         Edited = true;
@@ -97,11 +112,19 @@ public partial class GraphicsFile
         Data = bytes;
     }
 
+    /// <summary>
+    /// Gets the serialized JSON representation of the layout
+    /// </summary>
+    /// <returns></returns>
     public string GetLayoutJson()
     {
         return JsonSerializer.Serialize(this);
     }
 
+    /// <summary>
+    /// Imports layout JSON into the layout for setting it
+    /// </summary>
+    /// <param name="json">JSON string content</param>
     public void ImportLayoutJson(string json)
     {
         GraphicsFile file = JsonSerializer.Deserialize<GraphicsFile>(json);
@@ -110,29 +133,87 @@ public partial class GraphicsFile
     }
 }
 
+/// <summary>
+/// A layout component
+/// </summary>
 public class LayoutComponent
 {
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short UnknownShort1 { get; set; }
+    /// <summary>
+    /// Index of the graphic this component uses
+    /// </summary>
     public short Index { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short UnknownShort2 { get; set; }
+    /// <summary>
+    /// Screen X-position of the layout component
+    /// </summary>
     public short ScreenX { get; set; }
+    /// <summary>
+    /// Screen Y-position of the layout component
+    /// </summary>
     public short ScreenY { get; set; }
+    /// <summary>
+    /// Texture width of the crop
+    /// </summary>
     public short ImageWidth { get; set; }
+    /// <summary>
+    /// Texture height of the crop
+    /// </summary>
     public short ImageHeight { get; set; }
+    /// <summary>
+    /// Texture X-position
+    /// </summary>
     public short ImageX { get; set; }
+    /// <summary>
+    /// Texture Y-position
+    /// </summary>
     public short ImageY { get; set; }
+    /// <summary>
+    /// Width of the component on the screen
+    /// </summary>
     public short ScreenWidth { get; set; }
+    /// <summary>
+    /// Height of the component on the screen
+    /// </summary>
     public short ScreenHeight { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short UnknownShort3 { get; set; }
+    /// <summary>
+    /// Alpha component of tint
+    /// </summary>
     public byte AlphaTint { get; set; }
+    /// <summary>
+    /// Red component of tint
+    /// </summary>
     public byte RedTint { get; set; }
+    /// <summary>
+    /// Green component of tint
+    /// </summary>
     public byte GreenTint { get; set; }
+    /// <summary>
+    /// Blue component of tint
+    /// </summary>
     public byte BlueTint { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public LayoutComponent()
     {
     }
 
+    /// <summary>
+    /// Gets binary representation of the layout component
+    /// </summary>
+    /// <returns>List of bytes for the layout</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes =
@@ -155,8 +236,14 @@ public class LayoutComponent
     }
 }
 
+/// <summary>
+/// Set of known hardcoded layout graphic sets
+/// </summary>
 public static class KnownLayoutGraphicsSets
 {
+    /// <summary>
+    /// Used by the title screen layout
+    /// </summary>
     public static LayoutGraphic[] TitleScreenGraphics =
     [
         new(0x6B, (58, 0)),
@@ -171,6 +258,9 @@ public static class KnownLayoutGraphicsSets
         new(0x1B, (58, 9)),
     ];
 
+    /// <summary>
+    /// Used by the special version title screen graphics
+    /// </summary>
     public static LayoutGraphic[] SpecialVersionGraphics =
     [
         new(0x6B, (69, 0)),
@@ -184,6 +274,10 @@ public static class KnownLayoutGraphicsSets
         new(0x11, (69, 8)),
         new(0x12, (69, 9)),
     ];
+    
+    /// <summary>
+    /// Used by the options menu (and others ig)
+    /// </summary>
     public static LayoutGraphic[] OptionsBgAndOtherGraphics =
     [
         new(0x33, (0, 53)),
@@ -228,6 +322,10 @@ public static class KnownLayoutGraphicsSets
         new(0x6F, (0, 0)),
         new(0x70, (0, 94)),
     ];
+    
+    /// <summary>
+    /// Used for the main script interface
+    /// </summary>
     public static LayoutGraphic[] MainInterfaceGraphics =
     [
         new(0x4C, (0, 0)),
@@ -258,6 +356,10 @@ public static class KnownLayoutGraphicsSets
         new(0x5D, (0, 0)),
         new(0x5E, (0, 0)),
     ];
+    
+    /// <summary>
+    /// Used by the pause menu layout
+    /// </summary>
     public static LayoutGraphic[] PauseMenuGraphics =
     [
         new(0x47, (0, 95)),
@@ -265,6 +367,10 @@ public static class KnownLayoutGraphicsSets
         new(0x33, (0, 53)),
         new(0x48, (0, 99)),
     ];
+    
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public static LayoutGraphic[] Unknown801BAB1C =
     [
         new(0x45, (0, 0)),
@@ -272,6 +378,10 @@ public static class KnownLayoutGraphicsSets
         new(0x33, (0, 53)),
         new(0x48, (0, 99)),
     ];
+    
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public static LayoutGraphic[] Unknown801BAB28 =
     [
         new(0x47, (0, 95)),
@@ -282,11 +392,25 @@ public static class KnownLayoutGraphicsSets
     ];
 }
 
+/// <summary>
+/// A graphic used by a layout
+/// </summary>
 public struct LayoutGraphic
 {
+    /// <summary>
+    /// Index of the graphic in grp.bin
+    /// </summary>
     public int GrpIndex { get; }
+    /// <summary>
+    /// Location of the graphic in the MCB
+    /// </summary>
     public (int parent, int child) McbLocation { get; }
 
+    /// <summary>
+    /// Constructs a layout graphic
+    /// </summary>
+    /// <param name="grpIndex">Index of the graphic in grp.bin</param>
+    /// <param name="mcbLoc">Location of the graphic in the MCB</param>
     public LayoutGraphic(int grpIndex, (int, int) mcbLoc)
     {
         GrpIndex = grpIndex;

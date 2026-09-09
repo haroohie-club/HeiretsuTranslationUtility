@@ -300,13 +300,28 @@ public class Topic
     public short Unknown16 { get; set; }
 }
 
+/// <summary>
+/// Game flag
+/// </summary>
 public class Flag
 {
+    /// <summary>
+    /// Flag index
+    /// </summary>
     public int Index { get; set; }
+    /// <summary>
+    /// Flag name as used in scripts
+    /// </summary>
     public string Name { get; set; }
+    /// <summary>
+    /// The type of flag
+    /// </summary>
     public FlagType Type { get; set; }
 }
 
+/// <summary>
+/// Flag types
+/// </summary>
 public enum FlagType
 {
     /// <summary>

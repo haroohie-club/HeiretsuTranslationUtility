@@ -9,33 +9,94 @@ using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Scripts;
 
+/// <summary>
+/// Represents a script file in scr.bin
+/// </summary>
 public class ScriptFile : StringsFile
 {
+    /// <summary>
+    /// Name of the script file
+    /// </summary>
     public string Name { get; set; }
+    /// <summary>
+    /// Internal name (i.e. within the file) of the script file
+    /// </summary>
     public string InternalName { get; set; }
+    /// <summary>
+    /// "Room" (map) that the script uses
+    /// </summary>
     public string Room { get; set; }
+    /// <summary>
+    /// Time of day in which the script takes place
+    /// </summary>
     public string Time { get; set; }
 
+    /// <summary>
+    /// List of all available commands
+    /// </summary>
     public List<ScriptCommand> AvailableCommands { get; set; }
+    /// <summary>
+    /// List of script command blocks within the script
+    /// </summary>
     public List<ScriptCommandBlock> ScriptCommandBlocks { get; set; } = [];
 
+    /// <summary>
+    /// List of objects in the script
+    /// </summary>
     public List<string> Objects { get; set; } = [];
 
-    public int NumObjectssOffset { get; set; }
+    /// <summary>
+    /// Offset where the number of objects is stored
+    /// </summary>
+    public int NumObjectsOffset { get; set; }
+    /// <summary>
+    /// Number of objects
+    /// </summary>
     public short NumObjects { get; set; }
+    /// <summary>
+    /// Offset to the number of script command blocks
+    /// </summary>
     public int NumScriptCommandBlocksOffset { get; set; }
+    /// <summary>
+    /// Number of script command blocks
+    /// </summary>
     public short NumScriptCommandBlocks { get; set; }
-    public int ObjectssEndOffset { get; set; }
+    /// <summary>
+    /// End offset of the objects
+    /// </summary>
+    public int ObjectsEndOffset { get; set; }
+    /// <summary>
+    /// End of objects
+    /// </summary>
     public int ObjectsEnd { get; set; }
+    /// <summary>
+    /// Script command block definitions end offset
+    /// </summary>
     public int ScriptCommandBlockDefinitionsEndOffset { get; set; }
+    /// <summary>
+    /// End of the script command block definitions
+    /// </summary>
     public int ScriptCommandBlockDefinitionsEnd { get; set; }
 
-    public static int[] DIALOGUE_LINE_LENGTHS = [9368, 9368, 9000, 9000];
+    /// <summary>
+    /// Length of dialogue lines
+    /// </summary>
+    public static readonly int[] DialogueLineLengths = [9368, 9368, 9000, 9000];
 
+    /// <summary>
+    /// Empty constructor for serialization (?)
+    /// </summary>
     public ScriptFile()
     {
     }
 
+    /// <summary>
+    /// Constructs and parses a script file from MCB and data
+    /// </summary>
+    /// <param name="parent">MCB parent archive</param>
+    /// <param name="child">MCB child archive</param>
+    /// <param name="data">Binary script file data</param>
+    /// <param name="mcbId">The ID of the MCB archive</param>
     public ScriptFile(int parent, int child, byte[] data, ushort mcbId = 0)
     {
         Location = (parent, child);
@@ -45,6 +106,7 @@ public class ScriptFile : StringsFile
         ParseScript();
     }
 
+    /// <inheritdoc/>
     public override void Initialize(byte[] decompressedData, int offset)
     {
         Offset = offset;
@@ -53,6 +115,7 @@ public class ScriptFile : StringsFile
         ParseScript();
     }
 
+    /// <inheritdoc/>
     public override byte[] GetBytes() => Data.ToArray();
 
     private static string ReadString(byte[] data, int currentPosition, out int newPosition)
@@ -63,7 +126,7 @@ public class ScriptFile : StringsFile
         return result;
     }
 
-    public void ParseScript()
+    private void ParseScript()
     {
         byte[] quickData = Data.ToArray();
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -81,7 +144,7 @@ public class ScriptFile : StringsFile
         Time = ReadString(quickData, pos, out pos);
 
         NumObjects = IO.ReadShort(quickData, pos);
-        NumObjectssOffset = pos;
+        NumObjectsOffset = pos;
         pos += 2;
 
         NumScriptCommandBlocks = IO.ReadShort(quickData, pos);
@@ -89,7 +152,7 @@ public class ScriptFile : StringsFile
         pos += 2;
 
         ObjectsEnd = IO.ReadInt(quickData, pos);
-        ObjectssEndOffset = pos;
+        ObjectsEndOffset = pos;
         pos += 4;
 
         ScriptCommandBlockDefinitionsEnd = IO.ReadInt(quickData, pos);
@@ -134,10 +197,17 @@ public class ScriptFile : StringsFile
 
                 for (int j = 0; j < dialogueLines[i].dialogue.Length; j++)
                 {
-                    string voiceFile = Objects.ElementAtOrDefault(Helpers.ToShortOrDefault(ScriptCommandBlocks
-                        .SelectMany(b => (b.Invocations
-                                .FirstOrDefault(inv => (inv?.Address ?? -1) == dialogueLines[i].dialogue[j].Offset)?.Parameters ?? [])
-                            .FirstOrDefault(p => p.Type == ScriptCommand.ParameterType.VARINDEX)?.Value ?? []).ToArray()) ?? -1);
+                    int idx = i;
+                    int jdx = j;
+                    string voiceFile = Objects.ElementAtOrDefault(Helpers.ToShortOrDefault([
+                        .. ScriptCommandBlocks
+                            .SelectMany(b => (b.Invocations
+                                                  .FirstOrDefault(inv =>
+                                                      (inv?.Address ?? -1) == dialogueLines[idx].dialogue[jdx].Offset)
+                                                  ?.Parameters ??
+                                              [])
+                                .FirstOrDefault(p => p.Type == ScriptCommand.ParameterType.VAR_INDEX)?.Value ?? [])
+                    ]) ?? -1);
                     if (!string.IsNullOrEmpty(voiceFile))
                     {
                         dialogueLines[i].dialogue[j].Metadata.Add(voiceFile);
@@ -146,7 +216,7 @@ public class ScriptFile : StringsFile
             }
         }
 
-        DialogueLines = dialogueLines.SelectMany(k => k.dialogue).ToList();
+        Strings = dialogueLines.SelectMany(k => k.dialogue).ToList();
     }
 
     private Parameter[] GetDialogueParameters()
@@ -155,10 +225,11 @@ public class ScriptFile : StringsFile
             .SelectMany(i => i.Parameters.Where(p => p.Type == ScriptCommand.ParameterType.DIALOGUE))).ToArray();
     }
 
-    public override void EditDialogue(int index, string newLine)
+    /// <inheritdoc/>
+    public override void EditString(int index, string newString)
     {
-        DialogueLines[index].Line = newLine;
-        Objects.Add(newLine); // add new line to the script objects collection; when recompiling, the old line will be removed if it is not referenced elsewhere in the script
+        Strings[index].Line = newString;
+        Objects.Add(newString); // add new line to the script objects collection; when recompiling, the old line will be removed if it is not referenced elsewhere in the script
 
         Parameter[] dialogueParams = GetDialogueParameters();
         dialogueParams[index].Value = BitConverter.GetBytes((short)(Objects.Count - 1)).Reverse().ToArray(); // change the dialogue pointer to the new script object
@@ -166,6 +237,7 @@ public class ScriptFile : StringsFile
         Recompile();
     }
 
+    /// <inheritdoc/>
     public override void ImportResxFile(string fileName, FontReplacementMap fontReplacementMap)
     {
         base.ImportResxFile(fileName, fontReplacementMap);
@@ -176,22 +248,27 @@ public class ScriptFile : StringsFile
         foreach (DictionaryEntry d in resxReader)
         {
             int dialogueIndex = int.Parse(((string)d.Key)[..4]);
-            string dialogueText = ProcessDialogueLineWithFontReplacement(NormalizeDialogueLine((string)d.Value), fontReplacementMap, DIALOGUE_LINE_LENGTHS);
+            string dialogueText = ProcessDialogueLineWithFontReplacement(NormalizeDialogueLine((string)d.Value), fontReplacementMap, DialogueLineLengths);
 
             if (dialogueText.Count(c => c == '\n') > 3 && BinArchiveIndex > 0)
             {
                 Console.WriteLine($"Warning: file scr-{BinArchiveIndex:D4} has line too long: {dialogueIndex} (starts with '{dialogueText[..30]}')");
             }
 
-            EditDialogue(dialogueIndex, dialogueText);
+            EditString(dialogueIndex, dialogueText);
         }
     }
 
-    public void Recompile()
+    private void Recompile()
     {
         Compile(Decompile());
     }
 
+    /// <summary>
+    /// Decompiles a script binary file to an approximation of its original format
+    /// </summary>
+    /// <param name="fontReplacementMap">Font replacement map (used for converting lines)</param>
+    /// <returns></returns>
     public string Decompile(FontReplacementMap fontReplacementMap = null)
     {
         string script = "";
@@ -220,6 +297,11 @@ public class ScriptFile : StringsFile
         return script;
     }
 
+    /// <summary>
+    /// Compiles a script from its decompiled form into binary
+    /// </summary>
+    /// <param name="code">The decompiled script code</param>
+    /// <param name="fontReplacementMap">The font replacement map for strings</param>
     public void Compile(string code, FontReplacementMap fontReplacementMap = null)
     {
         List<byte> bytes = [];
@@ -254,11 +336,11 @@ public class ScriptFile : StringsFile
         NumObjects = (short)Objects.Count;
         NumScriptCommandBlocks = (short)ScriptCommandBlocks.Count;
 
-        NumObjectssOffset = bytes.Count;
+        NumObjectsOffset = bytes.Count;
         bytes.AddRange(BitConverter.GetBytes(NumObjects).Reverse());
         NumScriptCommandBlocksOffset = bytes.Count;
         bytes.AddRange(BitConverter.GetBytes(NumScriptCommandBlocks).Reverse());
-        ObjectssEndOffset = bytes.Count;
+        ObjectsEndOffset = bytes.Count;
         bytes.AddRange(BitConverter.GetBytes(0));
         ScriptCommandBlockDefinitionsEndOffset = bytes.Count;
         bytes.AddRange(BitConverter.GetBytes(0));
@@ -269,8 +351,8 @@ public class ScriptFile : StringsFile
         }
 
         ObjectsEnd = bytes.Count;
-        bytes.RemoveRange(ObjectssEndOffset, 4);
-        bytes.InsertRange(ObjectssEndOffset, BitConverter.GetBytes(ObjectsEnd).Reverse());
+        bytes.RemoveRange(ObjectsEndOffset, 4);
+        bytes.InsertRange(ObjectsEndOffset, BitConverter.GetBytes(ObjectsEnd).Reverse());
 
         foreach (ScriptCommandBlock scriptCommandBlock in ScriptCommandBlocks)
         {
@@ -314,6 +396,10 @@ public class ScriptFile : StringsFile
         Data = bytes;
     }
 
+    /// <summary>
+    /// Populates command blocks with external data
+    /// </summary>
+    /// <param name="eventFileIndices">The indices of the event files</param>
     public void PopulateCommandBlocks(short[] eventFileIndices = null)
     {
         List<ScriptCommandInvocation> allInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToList();
@@ -327,7 +413,7 @@ public class ScriptFile : StringsFile
                 List<Parameter> addressParams =
                 [
                     .. ScriptCommandBlocks[i].Invocations[j].Parameters.Where(p => p.Type == ScriptCommand.ParameterType.ADDRESS),
-                    .. ScriptCommandBlocks[i].Invocations[j].Parameters.Where(p => p.Type == ScriptCommand.ParameterType.INDEXEDADDRESS),
+                    .. ScriptCommandBlocks[i].Invocations[j].Parameters.Where(p => p.Type == ScriptCommand.ParameterType.INDEXED_ADDRESS),
                 ];
 
                 foreach (Parameter param in addressParams)
@@ -341,7 +427,7 @@ public class ScriptFile : StringsFile
                 }
             }
         }
-        if (DialogueLines.Count > 0)
+        if (Strings.Count > 0)
         {
             TagDialogueWithVjumpMetadata();
             if (eventFileIndices is not null)
@@ -356,31 +442,31 @@ public class ScriptFile : StringsFile
     {
         Parameter[] dialogueParams = GetDialogueParameters();
         ScriptCommandInvocation[] allInvocations = ScriptCommandBlocks.SelectMany(b => b.Invocations).ToArray();
-        Dictionary<int, int> NumChoicesPerInvocationIndex = [];
+        Dictionary<int, int> numChoicesPerInvocationIndex = [];
 
-        for (int i = 0; i < DialogueLines.Count; i++)
+        for (int i = 0; i < Strings.Count; i++)
         {
-            if (DialogueLines[i].Speaker == ScriptFileSpeaker.CHOICE.ToString())
+            if (Strings[i].Speaker == ScriptFileSpeaker.CHOICE.ToString())
             {
                 int selectIndex = Array.IndexOf(allInvocations, allInvocations.First(v => v.LineNumber == dialogueParams[i].LineNumber));
-                if (NumChoicesPerInvocationIndex.ContainsKey(selectIndex))
+                if (numChoicesPerInvocationIndex.ContainsKey(selectIndex))
                 {
-                    NumChoicesPerInvocationIndex[selectIndex]++;
+                    numChoicesPerInvocationIndex[selectIndex]++;
                 }
                 else
                 {
 
                     if (!allInvocations[selectIndex].Command.Name.Contains('2'))
                     {
-                        NumChoicesPerInvocationIndex.Add(selectIndex, 0);
+                        numChoicesPerInvocationIndex.Add(selectIndex, 0);
                     }
                     else
                     {
-                        NumChoicesPerInvocationIndex.Add(selectIndex, 1);
+                        numChoicesPerInvocationIndex.Add(selectIndex, 1);
                     }
                 }
 
-                if (NumChoicesPerInvocationIndex[selectIndex] == 0)
+                if (numChoicesPerInvocationIndex[selectIndex] == 0)
                 {
                     continue;
                 }
@@ -403,14 +489,14 @@ public class ScriptFile : StringsFile
                 int currentAddressParameter = 0;
                 foreach (Parameter parameter in allInvocations[nextVjumpIndex].Parameters)
                 {
-                    if (parameter.Type == ScriptCommand.ParameterType.INDEXEDADDRESS)
+                    if (parameter.Type == ScriptCommand.ParameterType.INDEXED_ADDRESS)
                     {
                         currentAddressParameter++;
-                        if (currentAddressParameter < NumChoicesPerInvocationIndex[selectIndex])
+                        if (currentAddressParameter < numChoicesPerInvocationIndex[selectIndex])
                         {
                             continue;
                         }
-                        else if (currentAddressParameter > NumChoicesPerInvocationIndex[selectIndex])
+                        else if (currentAddressParameter > numChoicesPerInvocationIndex[selectIndex])
                         {
                             break;
                         }
@@ -420,7 +506,7 @@ public class ScriptFile : StringsFile
                         {
                             if (dialogueParams[j].LineNumber >= targetLineNumber)
                             {
-                                DialogueLines[i].Metadata.Add($"VJUMPs to {j:D4}");
+                                Strings[i].Metadata.Add($"VJUMPs to {j:D4}");
                                 break;
                             }
                         }
@@ -441,7 +527,7 @@ public class ScriptFile : StringsFile
                 int eventId = scriptEventFiles[int.Parse(allInvocations[i].CalculateIntParameter(Helpers.GetIntFromByteArray(allInvocations[i].Parameters.First(p => p.Type == ScriptCommand.ParameterType.INT).Value, 0),
                     Helpers.GetIntFromByteArray(allInvocations[i].Parameters.First(p => p.Type == ScriptCommand.ParameterType.INT).Value, 1))[4..])];
                 List<int> chapters = [];
-                byte[] chaptersParam = allInvocations[i].Parameters.FirstOrDefault(p => p.Type == ScriptCommand.ParameterType.INTARRAY)?.Value;
+                byte[] chaptersParam = allInvocations[i].Parameters.FirstOrDefault(p => p.Type == ScriptCommand.ParameterType.INT_ARRAY)?.Value;
                 if (chaptersParam is not null)
                 {
                     int numValues = Helpers.GetIntFromByteArray(chaptersParam, 0);
@@ -453,9 +539,9 @@ public class ScriptFile : StringsFile
 
                 int minDistance = int.MaxValue;
                 int minDistanceLine = 0;
-                for (int j = 0; j < DialogueLines.Count; j++)
+                for (int j = 0; j < Strings.Count; j++)
                 {
-                    int distanceBetweenDialogueLineAndEventStart = allInvocations.Where(inv => inv.Address == DialogueLines[j].Offset)
+                    int distanceBetweenDialogueLineAndEventStart = allInvocations.Where(inv => inv.Address == Strings[j].Offset)
                         .Select(inv => Math.Abs(inv.LineNumber - allInvocations[i].LineNumber)).FirstOrDefault();
                     if (distanceBetweenDialogueLineAndEventStart < minDistance)
                     {
@@ -464,9 +550,9 @@ public class ScriptFile : StringsFile
                     }
                 }
 
-                string beforeAfter = DialogueLines[minDistanceLine].Offset > allInvocations[i].Address ? "before" : "after";
+                string beforeAfter = Strings[minDistanceLine].Offset > allInvocations[i].Address ? "before" : "after";
                 string chaptersString = chapters.Count > 0 ? $" (ch {string.Join(", ", chapters)})" : "";
-                DialogueLines[minDistanceLine].Metadata.Add($"Event evt-{eventId:D4}{chaptersString} starts {beforeAfter}");
+                Strings[minDistanceLine].Metadata.Add($"Event evt-{eventId:D4}{chaptersString} starts {beforeAfter}");
             }
         }
     }
@@ -485,9 +571,9 @@ public class ScriptFile : StringsFile
 
                 int minDistance = int.MaxValue;
                 int minDistanceLine = 0;
-                for (int j = 0; j < DialogueLines.Count; j++)
+                for (int j = 0; j < Strings.Count; j++)
                 {
-                    int distanceBetweenDialogueLineAndEventStart = allInvocations.Where(inv => inv.Address == DialogueLines[j].Offset)
+                    int distanceBetweenDialogueLineAndEventStart = allInvocations.Where(inv => inv.Address == Strings[j].Offset)
                         .Select(inv => Math.Abs(inv.LineNumber - allInvocations[i].LineNumber)).FirstOrDefault();
                     if (distanceBetweenDialogueLineAndEventStart < minDistance)
                     {
@@ -496,12 +582,17 @@ public class ScriptFile : StringsFile
                     }
                 }
 
-                string beforeAfter = DialogueLines[minDistanceLine].Offset > allInvocations[i].Address ? "before" : "after";
-                DialogueLines[minDistanceLine].Metadata.Add($"{allInvocations[i].Command.Name}({topicName}) {beforeAfter} this line");
+                string beforeAfter = Strings[minDistanceLine].Offset > allInvocations[i].Address ? "before" : "after";
+                Strings[minDistanceLine].Metadata.Add($"{allInvocations[i].Command.Name}({topicName}) {beforeAfter} this line");
             }
         }
     }
 
+    /// <summary>
+    /// Parses the list of script files
+    /// </summary>
+    /// <param name="scriptListFileData">Script file list data</param>
+    /// <returns></returns>
     public static List<string> ParseScriptListFile(byte[] scriptListFileData)
     {
         List<string> scriptList = [];
@@ -516,6 +607,7 @@ public class ScriptFile : StringsFile
         return scriptList;
     }
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         if (Location != (-1, -1))

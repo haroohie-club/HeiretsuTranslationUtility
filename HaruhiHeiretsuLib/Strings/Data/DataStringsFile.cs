@@ -5,11 +5,19 @@ using System.Resources.NetStandard;
 
 namespace HaruhiHeiretsuLib.Strings.Data;
 
+/// <summary>
+/// A wrapper of a data file to enable replacing strings
+/// </summary>
+/// <typeparam name="T">The data file type</typeparam>
 public class DataStringsFile<T> : ShadeStringsFile
     where T : DataFile, IDataStringsFile, new()
 {
+    /// <summary>
+    /// The data file
+    /// </summary>
     public T DataFile { get; set; }
 
+    /// <inheritdoc/>
     public override void Initialize(byte[] decompressedData, int offset = 0)
     {
         DataFile = new();
@@ -22,30 +30,33 @@ public class DataStringsFile<T> : ShadeStringsFile
         DataFile.Offset = Offset;
         DataFile.Length = Length;
         DataFile.CompressedData = CompressedData;
-        DialogueLines = DataFile.GetDialogueLines();
+        Strings = DataFile.GetDialogueLines();
     }
 
+    /// <inheritdoc/>
     public override byte[] GetBytes()
     {
         return DataFile.GetBytes();
     }
-
-    public override void EditDialogue(int index, string newLine)
+    
+    /// <inheritdoc/>
+    public override void EditString(int index, string newString)
     {
         DataFile.Edited = true;
         DialogueLine newDialogueLine = new()
         {
-            Line = newLine,
-            Speaker = DialogueLines[index].Speaker,
-            NumPaddingZeroes = DialogueLines[index].NumPaddingZeroes,
-            Offset = DialogueLines[index].Offset,
-            Metadata = DialogueLines[index].Metadata,
+            Line = newString,
+            Speaker = Strings[index].Speaker,
+            NumPaddingZeroes = Strings[index].NumPaddingZeroes,
+            Offset = Strings[index].Offset,
+            Metadata = Strings[index].Metadata,
         };
 
         DataFile.ReplaceDialogueLine(newDialogueLine);
-        DialogueLines = DataFile.GetDialogueLines();
+        Strings = DataFile.GetDialogueLines();
     }
 
+    /// <inheritdoc/>
     public override void ImportResxFile(string fileName, FontReplacementMap fontReplacementMap)
     {
         DataFile.Edited = true;
@@ -77,26 +88,52 @@ public class DataStringsFile<T> : ShadeStringsFile
                 }
             }
 
-            EditDialogue(dialogueIndex, dialogueText);
+            EditString(dialogueIndex, dialogueText);
         }
     }
 }
 
+/// <summary>
+/// Hardcoded indices of the data file locations
+/// </summary>
 public static class DataStringsFileLocations
 {
-    public const int SYSTEM_TEXT_MCB_INDEX = 58;
-    public const int SYSTEM_TEXT_INDEX = 10;
+    /// <summary>
+    /// MCB index of system text file
+    /// </summary>
+    public const int SystemTextMcbIndex = 58;
+    /// <summary>
+    /// dat.bin index of system text file
+    /// </summary>
+    public const int SystemTextIndex = 10;
 
-    public const int MESSAGE_BOX_TEXT_MCB_INDEX = 60;
-    public const int MESSAGE_BOX_TEXT_INDEX = 14;
+    /// <summary>
+    /// MCB index of message box text file
+    /// </summary>
+    public const int MessageBoxTextMcbIndex = 60;
+    /// <summary>
+    /// dat.bin index of message box text file
+    /// </summary>
+    public const int MessageBoxTextIndex = 14;
 
     // mcb 63 dat 20
+    /// <summary>
+    /// MCB index of timeline text file
+    /// </summary>
+    public const int TimelineTextMcbIndex = 68;
+    /// <summary>
+    /// dat.bin index of timeline text file
+    /// </summary>
+    public const int TimelineTextIndex = 30;
 
-    public const int TIMELINE_TEXT_MCB_INDEX = 68;
-    public const int TIMELINE_TEXT_INDEX = 30;
-
-    public const int MENU_TEXT_MCB_INDEX = 70;
-    public const int MENU_TEXT_INDEX = 34;
+    /// <summary>
+    /// MCB index of menu text file
+    /// </summary>
+    public const int MenuTextMcbIndex = 70;
+    /// <summary>
+    /// dat.bin index of menu text file
+    /// </summary>
+    public const int MenuTextIndex = 34;
 
     // mcb 73 dat 40
 
@@ -104,27 +141,72 @@ public static class DataStringsFileLocations
 
     // dat 44
 
-    public const int CLUBROOM_TEXT_INDEX = 46;
+    /// <summary>
+    /// dat.bin index of clubroom text file
+    /// </summary>
+    public const int ClubroomTextIndex = 46;
 
-    public const int TOPICS_FLAG_MCB_INDEX = 78;
-    public const int TOPICS_FLAGS_INDEX = 56;
+    /// <summary>
+    /// MCB index of topics flags file
+    /// </summary>
+    public const int TopicsFlagsMcbIndex = 78;
+    /// <summary>
+    /// dat.bin index of topics flags file
+    /// </summary>
+    public const int TopicsFlagsIndex = 56;
 
-    public const int MAP_DEFINITION_MCB_INDEX = 79;
-    public const int MAP_DEFINITION_INDEX = 58;
+    /// <summary>
+    /// MCB index of map definitions file
+    /// </summary>
+    public const int MapDefinitionMcbIndex = 79;
+    /// <summary>
+    /// dat.bin index of map definitions file
+    /// </summary>
+    public const int MapDefinitionIndex = 58;
 
-    public const int LOCATIONS_MCB_INDEX = 80;
-    public const int LOCATIONS_INDEX = 60;
+    /// <summary>
+    /// MCB index of locations file
+    /// </summary>
+    public const int LocationsMcbIndex = 80;
+    /// <summary>
+    /// dat.bin index of locations file
+    /// </summary>
+    public const int LocationsIndex = 60;
 
-    public const int NAMEPLATES_MCB_INDEX = 82;
-    public const int NAMEPLATES_INDEX = 64;
+    /// <summary>
+    /// MCB index of nameplates file
+    /// </summary>
+    public const int NameplatesMcbIndex = 82;
+    /// <summary>
+    /// dat.bin index of nameplates file
+    /// </summary>
+    public const int NameplatesIndex = 64;
 
-    public const int TIMELINE_MCB_INDEX = 83;
-    public const int TIMELINE_INDEX = 66;
+    /// <summary>
+    /// MCB index of timeline file
+    /// </summary>
+    public const int TimelineMcbIndex = 83;
+    /// <summary>
+    /// dat.bin index of timeline file
+    /// </summary>
+    public const int TimelineIndex = 66;
 
-    public const int CLUBROOM_MCB_INDEX = 86;
-    public const int CLUBROOM_INDEX = 72;
+    /// <summary>
+    /// MCB index of clubroom file
+    /// </summary>
+    public const int ClubroomMcbIndex = 86;
+    /// <summary>
+    /// dat.bin index of clubroom file
+    /// </summary>
+    public const int ClubroomIndex = 72;
 
-    public const int EXTRAS_CLF_CLA_INDEX = 76;
+    /// <summary>
+    /// dat.bin index of extras clf/cla file
+    /// </summary>
+    public const int ExtrasClfClaIndex = 76;
 
-    public const int EXTRAS_CLD_INDEX = 78;
+    /// <summary>
+    /// dat.bin index of extras cld file
+    /// </summary>
+    public const int ExtrasCldIndex = 78;
 }

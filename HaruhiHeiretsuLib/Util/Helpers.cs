@@ -7,12 +7,15 @@ using System.Text;
 
 namespace HaruhiHeiretsuLib.Util;
 
+/// <summary>
+/// Static helpers
+/// </summary>
 public static class Helpers
 {
     private const ulong F2 = 0x4330000080000000L;
     private const ulong F0 = 0x3F50000000000000L;
 
-    public static short? ToShortOrDefault(ReadOnlySpan<byte> bytes)
+    internal static short? ToShortOrDefault(ReadOnlySpan<byte> bytes)
     {
         if (bytes.Length != 2)
         {
@@ -24,12 +27,12 @@ public static class Helpers
         }
     }
 
-    public static int RoundToNearest16(int i)
+    internal static int RoundToNearest16(int i)
     {
         return (int)((i + 0xF) & 0xFFFFFFF0);
     }
 
-    public static void PadToNearest16(this List<byte> bytes)
+    internal static void PadToNearest16(this List<byte> bytes)
     {
         int padding = 16 - (bytes.Count % 16);
         if (padding != 16)
@@ -38,6 +41,11 @@ public static class Helpers
         }
     }
 
+    /// <summary>
+    /// Converts a float to an engine stored integer
+    /// </summary>
+    /// <param name="value">The initial float</param>
+    /// <returns>The engine implementation of the integer</returns>
     public static int FloatToInt(float value)
     {
         double d1 = value / BitConverter.UInt64BitsToDouble(F0);
@@ -46,6 +54,11 @@ public static class Helpers
         return (int)(adjustedInt ^ 0x80000000);
     }
 
+    /// <summary>
+    /// Converts the special engine-stored integer to a regular float
+    /// </summary>
+    /// <param name="startingInt">The engine-stored integer</param>
+    /// <returns>The floating point value</returns>
     public static float IntToFloat(int startingInt)
     {
         uint adjustedInt = (uint)startingInt ^ 0x80000000;
@@ -56,7 +69,7 @@ public static class Helpers
         return (float)d31;
     }
 
-    public static SKBitmap FlipBitmap(this SKBitmap bitmap)
+    internal static SKBitmap FlipBitmap(this SKBitmap bitmap)
     {
         SKBitmap flippedBitmap = new(bitmap.Width, bitmap.Height);
         using SKCanvas canvas = new(flippedBitmap);
@@ -65,7 +78,7 @@ public static class Helpers
         return flippedBitmap;
     }
 
-    public static List<byte> GetPaddedByteArrayFromString(string text)
+    internal static List<byte> GetPaddedByteArrayFromString(string text)
     {
         List<byte> stringBytes = [.. Encoding.GetEncoding("Shift-JIS").GetBytes(text)];
         stringBytes.AddRange(new byte[stringBytes.Count % 4 == 0 ? 4 : 4 - stringBytes.Count % 4]);
@@ -73,7 +86,7 @@ public static class Helpers
     }
 
     // redmean color distance formula with alpha term
-    public static double ColorDistance(SKColor color1, SKColor color2)
+    internal static double ColorDistance(SKColor color1, SKColor color2)
     {
         double redmean = (color1.Red + color2.Red) / 2.0;
 
@@ -83,23 +96,24 @@ public static class Helpers
                          + Math.Pow(color1.Alpha - color2.Alpha, 2));
     }
 
-    public static int ClosestColorIndex(List<SKColor> colors, SKColor color)
+    internal static int ClosestColorIndex(List<SKColor> colors, SKColor color)
     {
         var colorDistances = colors.Select(c => ColorDistance(c, color)).ToList();
 
         return colorDistances.IndexOf(colorDistances.Min());
     }
 
-    public static bool AddWillCauseCarry(int x, int y)
+    internal static bool AddWillCauseCarry(int x, int y)
     {
         return ((x & 0xFFFFFFFFfL) + (y & 0xFFFFFFFFL) & 0x1000000000) > 0;
     }
 
-    public static bool BytesInARowLessThan(this IEnumerable<byte> sequence, int numBytesInARowLessThan, byte targetByte)
+    internal static bool BytesInARowLessThan(this IEnumerable<byte> sequence, int numBytesInARowLessThan, byte targetByte)
     {
-        for (int i = 0; i < sequence.Count() - numBytesInARowLessThan; i++)
+        byte[] array = sequence as byte[] ?? [.. sequence];
+        for (int i = 0; i < array.Length - numBytesInARowLessThan; i++)
         {
-            if (sequence.Skip(i).TakeWhile(b => b == targetByte).Count() > numBytesInARowLessThan)
+            if (array.Skip(i).TakeWhile(b => b == targetByte).Count() > numBytesInARowLessThan)
             {
                 return false;
             }
@@ -107,12 +121,12 @@ public static class Helpers
         return true;
     }
 
-    public static int GetIntFromByteArray(ReadOnlySpan<byte> data, int position)
+    internal static int GetIntFromByteArray(ReadOnlySpan<byte> data, int position)
     {
         return IO.ReadInt(data, position * 4);
     }
 
-    public static byte[] GetStringBytes(string str)
+    internal static byte[] GetStringBytes(string str)
     {
         byte[] stringBytes = Encoding.GetEncoding("Shift-JIS").GetBytes(str);
         byte[] bytes = new byte[stringBytes.Length + 5];
@@ -122,11 +136,20 @@ public static class Helpers
         return bytes;
     }
 
+    /// <summary>
+    /// Implementation of the Shade compression algorithm
+    /// Not a terrible implementation, but slightly less efficient than the one used by the developers
+    /// </summary>
+    /// <param name="decompressedData">Decompressed data to compress</param>
+    /// <returns>Compressed data using the Shade compression algorithm</returns>
     public static byte[] CompressData(byte[] decompressedData)
     {
         // nonsense hack to deal with a rare edge case where the last byte of a file could get dropped
-        List<byte> temp = [.. decompressedData];
-        temp.Add(0x00);
+        List<byte> temp =
+        [
+            .. decompressedData,
+            0x00
+        ];
         decompressedData = [.. temp];
 
         List<byte> compressedData = [];
@@ -250,7 +273,7 @@ public static class Helpers
 
     private class LookbackEntry
     {
-        public byte[] Bytes { get; set; }
+        private byte[] Bytes { get; set; }
 
         public LookbackEntry(List<byte> bytes, int index)
         {
@@ -299,6 +322,11 @@ public static class Helpers
         writeTo.AddRange(writeFrom.Skip(position - numBytesToWrite).Take(numBytesToWrite));
     }
 
+    /// <summary>
+    /// Implementation of the Shade decompression algorithm
+    /// </summary>
+    /// <param name="compressedData">Compressed file data to decompress</param>
+    /// <returns>The decompressed file data</returns>
     public static byte[] DecompressData(byte[] compressedData)
     {
         List<byte> decompressedData = [];

@@ -334,34 +334,34 @@ public class ReplaceFilesCommand : Command
                         case McbArchive.ArchiveIndex.DAT:
                             switch (mcb.StringsFiles[i].childLoc)
                             {
-                                case DataStringsFileLocations.SYSTEM_TEXT_MCB_INDEX:
+                                case DataStringsFileLocations.SystemTextMcbIndex:
                                     break;
 
-                                case DataStringsFileLocations.MAP_DEFINITION_MCB_INDEX:
+                                case DataStringsFileLocations.MapDefinitionMcbIndex:
                                     var mapDefinitionsFile = mcbFile.CastTo<DataStringsFile<MapDefinitionsFile>>();
                                     mapDefinitionsFile.ImportResxFile(file, fontReplacementMap);
                                     mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = mapDefinitionsFile.DataFile;
                                     break;
 
-                                case DataStringsFileLocations.TOPICS_FLAG_MCB_INDEX:
+                                case DataStringsFileLocations.TopicsFlagsMcbIndex:
                                     var topicsAndFlagsFile = mcbFile.CastTo<DataStringsFile<TopicsAndFlagsFile>>();
                                     topicsAndFlagsFile.ImportResxFile(file, fontReplacementMap);
                                     mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = topicsAndFlagsFile.DataFile;
                                     break;
 
-                                case DataStringsFileLocations.NAMEPLATES_MCB_INDEX:
+                                case DataStringsFileLocations.NameplatesMcbIndex:
                                     var nameplatesFile = mcbFile.CastTo<DataStringsFile<NameplatesFile>>();
                                     nameplatesFile.ImportResxFile(file, fontReplacementMap);
                                     mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = nameplatesFile.DataFile;
                                     break;
 
-                                case DataStringsFileLocations.TIMELINE_MCB_INDEX:
+                                case DataStringsFileLocations.TimelineMcbIndex:
                                     var timelineFile = mcbFile.CastTo<DataStringsFile<TimelineFile>>();
                                     timelineFile.ImportResxFile(file, fontReplacementMap);
                                     mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = timelineFile.DataFile;
                                     break;
 
-                                case DataStringsFileLocations.CLUBROOM_MCB_INDEX:
+                                case DataStringsFileLocations.ClubroomMcbIndex:
                                     var clubroomFile = mcbFile.CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>();
                                     clubroomFile.ImportResxFile(file, fontReplacementMap);
                                     mcb.McbSubArchives[mcb.StringsFiles[i].parentLoc].Files[mcb.StringsFiles[i].childLoc] = clubroomFile.DataFile;
@@ -391,43 +391,43 @@ public class ReplaceFilesCommand : Command
                         archivesEdited[McbArchive.ArchiveIndex.DAT] = true;
                         switch (archiveIndex)
                         {
-                            case DataStringsFileLocations.MAP_DEFINITION_INDEX:
+                            case DataStringsFileLocations.MapDefinitionIndex:
                                 DataStringsFile<MapDefinitionsFile> mapDefinitionsFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<MapDefinitionsFile>>();
                                 mapDefinitionsFile.ImportResxFile(file, fontReplacementMap);
                                 dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = mapDefinitionsFile.DataFile;
                                 break;
 
-                            case DataStringsFileLocations.TOPICS_FLAGS_INDEX:
+                            case DataStringsFileLocations.TopicsFlagsIndex:
                                 DataStringsFile<TopicsAndFlagsFile> topicsAndFlagsFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<TopicsAndFlagsFile>>();
                                 topicsAndFlagsFile.ImportResxFile(file, fontReplacementMap);
                                 dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = topicsAndFlagsFile.DataFile;
                                 break;
 
-                            case DataStringsFileLocations.NAMEPLATES_INDEX:
+                            case DataStringsFileLocations.NameplatesIndex:
                                 DataStringsFile<NameplatesFile> nameplatesFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<NameplatesFile>>();
                                 nameplatesFile.ImportResxFile(file, fontReplacementMap);
                                 dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = nameplatesFile.DataFile;
                                 break;
 
-                            case DataStringsFileLocations.TIMELINE_INDEX:
+                            case DataStringsFileLocations.TimelineIndex:
                                 DataStringsFile<TimelineFile> timelineFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<TimelineFile>>();
                                 timelineFile.ImportResxFile(file, fontReplacementMap);
                                 dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = timelineFile.DataFile;
                                 break;
 
-                            case DataStringsFileLocations.CLUBROOM_INDEX:
+                            case DataStringsFileLocations.ClubroomIndex:
                                 DataStringsFile<ClubroomKoizumiCutscenesFile> clubroomFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>();
                                 clubroomFile.ImportResxFile(file, fontReplacementMap);
                                 dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = clubroomFile.DataFile;
                                 break;
 
-                            case DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX:
+                            case DataStringsFileLocations.ExtrasClfClaIndex:
                                 DataStringsFile<ClubroomHaruhiModelsFile> extrasClfClaFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ClubroomHaruhiModelsFile>>();
                                 extrasClfClaFile.ImportResxFile(file, fontReplacementMap);
                                 dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = extrasClfClaFile.DataFile;
                                 break;
 
-                            case DataStringsFileLocations.EXTRAS_CLD_INDEX:
+                            case DataStringsFileLocations.ExtrasCldIndex:
                                 DataStringsFile<ClubroomNagatoDatabaseFile> extrasCldFile = dat.Files.First(f => f.BinArchiveIndex == archiveIndex).CastTo<DataStringsFile<ClubroomNagatoDatabaseFile>>();
                                 extrasCldFile.ImportResxFile(file, fontReplacementMap);
                                 dat.Files[dat.Files.IndexOf(dat.Files.First(f => f.BinArchiveIndex == archiveIndex))] = extrasCldFile.DataFile;

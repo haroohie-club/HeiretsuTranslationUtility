@@ -927,6 +927,9 @@ public class SgeHeader
     }
 }
 
+/// <summary>
+/// An animation entry
+/// </summary>
 public class SgeAnimation
 {
     /// <summary>
@@ -1102,14 +1105,29 @@ public class SgeAnimation
 /// </summary>
 public class BoneTableEntry
 {
+    /// <summary>
+    /// The offset of the bone table entry
+    /// </summary>
     [JsonIgnore]
     public int Offset { get; set; }
+    /// <summary>
+    /// List of keyframes in the bone table entry
+    /// </summary>
     public List<BoneTableKeyframe> Keyframes { get; set; } = [];
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public BoneTableEntry()
     {
     }
 
+    /// <summary>
+    /// Constructs a bone table entry given binary data
+    /// </summary>
+    /// <param name="data">The binary data associated with the bone table</param>
+    /// <param name="offset">The offset into the bone table data that this entry begins at</param>
+    /// <param name="numKeyframes">The number of keyframes in the bone table data</param>
     public BoneTableEntry(byte[] data, int offset, int numKeyframes)
     {
         for (int i = 0; i < numKeyframes; i++)
@@ -1124,12 +1142,30 @@ public class BoneTableEntry
     }
 }
 
+/// <summary>
+/// A keyframe associated with the bone table
+/// </summary>
 public struct BoneTableKeyframe
 {
+    /// <summary>
+    /// The index into the translation data table for the translation of this keyframe
+    /// </summary>
     public short TranslateIndex { get; set; }
+    /// <summary>
+    /// The index into the rotation data table for the rotation of this keyframe
+    /// </summary>
     public short RotateIndex { get; set; }
+    /// <summary>
+    /// The index into the scale data table for the scale of this keyframe
+    /// </summary>
     public short ScaleIndex { get; set; }
 
+    /// <summary>
+    /// Constructs a bone table keyframe from a translation, rotation, and scale index
+    /// </summary>
+    /// <param name="translate">The translation index</param>
+    /// <param name="rotate">The rotation index</param>
+    /// <param name="scale">The scale index</param>
     public BoneTableKeyframe(short translate, short rotate, short scale)
     {
         TranslateIndex = translate;
@@ -1140,16 +1176,35 @@ public struct BoneTableKeyframe
 
 // 0x0C bytes
 // vector
+/// <summary>
+/// A translation data table entry
+/// </summary>
 public class TranslateDataEntry
 {
+    /// <summary>
+    /// The X-component of the translation vector
+    /// </summary>
     public float X { get; set; }
+    /// <summary>
+    /// The Y-component of the translation vector
+    /// </summary>
     public float Y { get; set; }
+    /// <summary>
+    /// The Z-component of the translation vector
+    /// </summary>
     public float Z { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public TranslateDataEntry()
     {
     }
 
+    /// <summary>
+    /// Constructs a translation data entry from raw binary
+    /// </summary>
+    /// <param name="data">Raw binary data representing the translation vector</param>
     public TranslateDataEntry(byte[] data)
     {
         X = IO.ReadFloatLE(data, 0x00);
@@ -1157,6 +1212,10 @@ public class TranslateDataEntry
         Z = IO.ReadFloatLE(data, 0x08);
     }
 
+    /// <summary>
+    /// Gets the raw binary of the translation data vector
+    /// </summary>
+    /// <returns>A list of translation data bytes</returns>
     public List<byte> GetBytes()
     {
         return [.. BitConverter.GetBytes(X), .. BitConverter.GetBytes(Y), .. BitConverter.GetBytes(Z)];
@@ -1165,17 +1224,39 @@ public class TranslateDataEntry
 
 // 0x10 bytes
 // quaternion
+/// <summary>
+/// A rotation data table entry
+/// </summary>
 public class RotateDataEntry
 {
+    /// <summary>
+    /// The X-component of the rotation quaternion
+    /// </summary>
     public float X { get; set; }
+    /// <summary>
+    /// The Y-component of the rotation quaternion
+    /// </summary>
     public float Y { get; set; }
+    /// <summary>
+    /// The Z-component of the rotation quaternion
+    /// </summary>
     public float Z { get; set; }
+    /// <summary>
+    /// The W-component of the rotation quaternion
+    /// </summary>
     public float W { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public RotateDataEntry()
     {
     }
 
+    /// <summary>
+    /// Constructs a rotation data quaternion from raw binary
+    /// </summary>
+    /// <param name="data">The raw binary data associated with the rotation data entry</param>
     public RotateDataEntry(byte[] data)
     {
         X = IO.ReadFloatLE(data, 0x00);
@@ -1184,6 +1265,10 @@ public class RotateDataEntry
         W = IO.ReadFloatLE(data, 0x0C);
     }
 
+    /// <summary>
+    /// Gets a the raw binary of a rotation data entry
+    /// </summary>
+    /// <returns>A list of bytes representing the rotation quaternion</returns>
     public List<byte> GetBytes()
     {
         return [.. BitConverter.GetBytes(X), .. BitConverter.GetBytes(Y), .. BitConverter.GetBytes(Z), .. BitConverter.GetBytes(W)];
@@ -1192,16 +1277,35 @@ public class RotateDataEntry
 
 // 0x0C bytes
 // vector
+/// <summary>
+/// A scale data table entry
+/// </summary>
 public class ScaleDataEntry
 {
+    /// <summary>
+    /// The X-component of the scale vector
+    /// </summary>
     public float X { get; set; }
+    /// <summary>
+    /// The Y-component of the scale vector
+    /// </summary>
     public float Y { get; set; }
+    /// <summary>
+    /// The Z-component of the scale vector
+    /// </summary>
     public float Z { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public ScaleDataEntry()
     {
     }
 
+    /// <summary>
+    /// Constructs a scale vector from raw binary
+    /// </summary>
+    /// <param name="data">The raw binary of the scale data entry</param>
     public ScaleDataEntry(byte[] data)
     {
         X = IO.ReadFloatLE(data, 0x00);
@@ -1209,6 +1313,10 @@ public class ScaleDataEntry
         Z = IO.ReadFloatLE(data, 0x08);
     }
 
+    /// <summary>
+    /// Gets the raw binary for the scale data entry
+    /// </summary>
+    /// <returns>The raw list of bytes for the scale data entry</returns>
     public List<byte> GetBytes()
     {
         return [.. BitConverter.GetBytes(X), .. BitConverter.GetBytes(Y), .. BitConverter.GetBytes(Z)];
@@ -1216,25 +1324,71 @@ public class ScaleDataEntry
 }
 
 // 0x28 bytes
+/// <summary>
+/// A definition of an animation keyframe
+/// </summary>
 public class KeyframeDefinition
 {
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown00 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown04 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public ushort Unknown08 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public ushort Unknown0A { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown0C { get; set; }
+    /// <summary>
+    /// Number of frames
+    /// </summary>
     public ushort NumFrames { get; set; }
+    /// <summary>
+    /// End frame
+    /// </summary>
     public ushort EndFrame { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown14 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown18 { get; set; }
+    /// <summary>
+    /// Unknown pointer
+    /// </summary>
     public int Unknown1C { get; set; } // Pointer
+    /// <summary>
+    /// Unknown pointer
+    /// </summary>
     public int Unknown20 { get; set; } // Pointer
+    /// <summary>
+    /// Unknown pointer
+    /// </summary>
     public int Unknown24 { get; set; } // Pointer
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public KeyframeDefinition()
     {
     }
 
+    /// <summary>
+    /// Constructs a keyframe definition from binary data
+    /// </summary>
+    /// <param name="data">The binary data associated with the keyframe definition</param>
     public KeyframeDefinition(byte[] data)
     {
         Unknown00 = IO.ReadFloatLE(data, 0x00);
@@ -1251,6 +1405,10 @@ public class KeyframeDefinition
         Unknown24 = IO.ReadIntLE(data, 0x24);
     }
 
+    /// <summary>
+    /// Gets the raw binary associated with the keyframe definition
+    /// </summary>
+    /// <returns>A list of bytes for the raw binary</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
@@ -1272,35 +1430,100 @@ public class KeyframeDefinition
     }
 }
 
+/// <summary>
+/// Lighting data for the model
+/// </summary>
 public class SgeGXLightingData
 {
     /// <summary>
-    /// The offset this blend data is located at (used for submesh lookup)
+    /// The offset this lighting data is located at (used for submesh lookup)
     /// </summary>
     public int Offset { get; set; }
+    /// <summary>
+    /// Ambient red component
+    /// </summary>
     public float AmbientR { get; set; }
+    /// <summary>
+    /// Ambient green component
+    /// </summary>
     public float AmbientG { get; set; }
+    /// <summary>
+    /// Ambient blue component
+    /// </summary>
     public float AmbientB { get; set; }
+    /// <summary>
+    /// Ambient alpha component
+    /// </summary>
     public float AmbientA { get; set; }
+    /// <summary>
+    /// Material red component
+    /// </summary>
     public float MaterialR { get; set; }
+    /// <summary>
+    /// Material green component
+    /// </summary>
     public float MaterialG { get; set; }
+    /// <summary>
+    /// Material blue component
+    /// </summary>
     public float MaterialB { get; set; }
+    /// <summary>
+    /// Material alpha component
+    /// </summary>
     public float MaterialA { get; set; }
+    /// <summary>
+    /// Combined red component
+    /// </summary>
     public float CombinedR { get; set; }
+    /// <summary>
+    /// Combined green component
+    /// </summary>
     public float CombinedG { get; set; }
+    /// <summary>
+    /// Combined blue component
+    /// </summary>
     public float CombinedB { get; set; }
+    /// <summary>
+    /// Combined alpha component
+    /// </summary>
     public float CombinedA { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown30 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown34 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown38 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown3C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown40 { get; set; }
+    /// <summary>
+    /// Flags (default lighting enabled)
+    /// </summary>
     public bool DefaultLightingEnabled { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public SgeGXLightingData()
     {
     }
 
+    /// <summary>
+    /// Constructs GX lighting data from binary
+    /// </summary>
+    /// <param name="data">The binary SGE data</param>
+    /// <param name="offset">The offset of the lighting data into that SGE data</param>
     public SgeGXLightingData(byte[] data, int offset)
     {
         Offset = offset;
@@ -1324,6 +1547,10 @@ public class SgeGXLightingData
         DefaultLightingEnabled = (IO.ReadIntLE(data, 0x44) & 1) != 0;
     }
 
+    /// <summary>
+    /// Gets the binary data associated with the lighting data
+    /// </summary>
+    /// <returns>A list of bytes for the binary data</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
@@ -1396,14 +1623,22 @@ public class SubmeshBlendData
     /// </summary>
     public float Unknown0C { get; set; }
     /// <summary>
-    /// Alpha compare & Z mode flags
+    /// Alpha compare and Z mode flags
     /// </summary>
     public int Flags { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public SubmeshBlendData()
     {
     }
 
+    /// <summary>
+    /// Constructs the blend data from binary
+    /// </summary>
+    /// <param name="data">Binary SGE data</param>
+    /// <param name="offset">Offset into the SGE data where the blend data begins</param>
     public SubmeshBlendData(byte[] data, int offset)
     {
         Offset = offset;
@@ -1414,6 +1649,10 @@ public class SubmeshBlendData
         Flags = IO.ReadIntLE(data, 0x10);
     }
 
+    /// <summary>
+    /// Gets the binary data associated with the blend data
+    /// </summary>
+    /// <returns>A list of bytes of binary data</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
@@ -1462,10 +1701,18 @@ public class OutlineData
     /// </summary>
     public int Unknown14 { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public OutlineData()
     {
     }
 
+    /// <summary>
+    /// Constructs outline data from binary
+    /// </summary>
+    /// <param name="data">Binary SGE data</param>
+    /// <param name="offset">Offset of the outline data into that SGE data</param>
     public OutlineData(byte[] data, int offset)
     {
         Offset = offset;
@@ -1477,6 +1724,10 @@ public class OutlineData
         Unknown14 = IO.ReadIntLE(data, 0x14);
     }
 
+    /// <summary>
+    /// Gets the outline data as binary
+    /// </summary>
+    /// <returns>List of bytes as binary</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
@@ -1618,22 +1869,62 @@ public class BoneAnimationGroup
 /// </summary>
 public class VertexModulation
 {
+    /// <summary>
+    /// The X-component of the period vector
+    /// </summary>
     public float PeriodX { get; set; }
+    /// <summary>
+    /// The Y-component of the period vector
+    /// </summary>
     public float PeriodY { get; set; }
+    /// <summary>
+    /// The Z-component of the period vector
+    /// </summary>
     public float PeriodZ { get; set; }
+    /// <summary>
+    /// The X-component of the amplitude vector
+    /// </summary>
     public float AmplitudeX { get; set; }
+    /// <summary>
+    /// The Y-component of the amplitude vector
+    /// </summary>
     public float AmplitudeY { get; set; }
+    /// <summary>
+    /// The Z-component of the amplitude vector
+    /// </summary>
     public float AmplitudeZ { get; set; }
+    /// <summary>
+    /// The X-component of the waveform vector
+    /// </summary>
     public byte XWaveform { get; set; }
+    /// <summary>
+    /// The Y-component of the waveform vector
+    /// </summary>
     public byte YWaveform { get; set; }
+    /// <summary>
+    /// The Z-component of the waveform vector
+    /// </summary>
     public byte ZWaveform { get; set; }
+    /// <summary>
+    /// Padding
+    /// </summary>
     public byte Padding { get; set; }
+    /// <summary>
+    /// Flags
+    /// </summary>
     public int Flags { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public VertexModulation()
     {
     }
 
+    /// <summary>
+    /// Constructs vertex modulation from binary data
+    /// </summary>
+    /// <param name="data">The binary data associated with the vertex modulation</param>
     public VertexModulation(byte[] data)
     {
         PeriodX = IO.ReadFloatLE(data, 0x00);
@@ -1649,6 +1940,10 @@ public class VertexModulation
         Flags = IO.ReadIntLE(data, 0x1C);
     }
 
+    /// <summary>
+    /// Gets binary data for the vertex modulation
+    /// </summary>
+    /// <returns>The vertex modulation binary data (list of bytes)</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
@@ -1669,30 +1964,92 @@ public class VertexModulation
     }
 }
 
+/// <summary>
+/// Data for a mesh
+/// </summary>
 public class SgeMesh
 {
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown00 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown04 { get; set; }
+    /// <summary>
+    /// Address of the start of the submesh array
+    /// </summary>
     public int SubmeshAddress { get; set; }
+    /// <summary>
+    /// Number of submeshes in the mesh
+    /// </summary>
     public int SubmeshCount { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown10 { get; set; }
+    /// <summary>
+    /// Vertex table address
+    /// </summary>
     public int VertexAddress { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown18 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown1C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown20 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown24 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown28 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown2C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown30 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown34 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown38 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown3C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown40 { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public SgeMesh()
     {
     }
 
+    /// <summary>
+    /// Constructs a mesh from binary
+    /// </summary>
+    /// <param name="data">Binary SGE data</param>
+    /// <param name="offset">Offset of the mesh into that data</param>
     public SgeMesh(byte[] data, int offset)
     {
         Unknown00 = IO.ReadIntLE(data, offset);
@@ -1714,6 +2071,10 @@ public class SgeMesh
         Unknown40 = IO.ReadFloatLE(data, offset + 0x40);
     }
 
+    /// <summary>
+    /// Gets mesh bytes
+    /// </summary>
+    /// <returns>Mesh binary data</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
@@ -1740,6 +2101,9 @@ public class SgeMesh
     }
 }
 
+/// <summary>
+/// A bone
+/// </summary>
 public class SgeBone
 {
     /// <summary>
@@ -1919,39 +2283,119 @@ public struct SgeBoneAttachedVertex(int submeshGroup, int submesh, int vertexInd
     }
 }
 
+/// <summary>
+/// A submesh
+/// </summary>
 public class SgeSubmesh
 {
+    /// <summary>
+    /// The vertex array in the submesh
+    /// </summary>
     public List<SgeVertex> SubmeshVertices { get; set; } = [];
+    /// <summary>
+    /// The face array in the submesh
+    /// </summary>
     public List<SgeFace> SubmeshFaces { get; set; } = [];
 
+    /// <summary>
+    /// The submesh material (only one!)
+    /// </summary>
     public SgeMaterial Material { get; set; }
 
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown00 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown02 { get; set; }
+    /// <summary>
+    /// Associated bone table address
+    /// </summary>
     [JsonIgnore]
     public int BoneTableAddress { get; set; }
+    /// <summary>
+    /// The address of the material's string name
+    /// </summary>
     [JsonIgnore]
     public int MaterialStringAddress { get; set; }
+    /// <summary>
+    /// Blend data address
+    /// </summary>
     public int BlendDataAddress { get; set; }
+    /// <summary>
+    /// GX lighting address
+    /// </summary>
     public int GXLightingAddress { get; set; }
+    /// <summary>
+    /// Outline data address
+    /// </summary>
     public int OutlineAddress { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown18 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown1C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown20 { get; set; }
+    /// <summary>
+    /// Start vertex in the vertex table
+    /// </summary>
     public int StartVertex { get; set; }
+    /// <summary>
+    /// End vertex in the vertex table
+    /// </summary>
     public int EndVertex { get; set; }
+    /// <summary>
+    /// Start face in the face table
+    /// </summary>
     public int StartFace { get; set; }
+    /// <summary>
+    /// Number of faces in the submesh
+    /// </summary>
     public int FaceCount { get; set; }
+    /// <summary>
+    /// Bone palette that is used
+    /// </summary>
     public List<short> BonePalette { get; set; } = [];
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown54 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown58 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown5C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public float Unknown60 { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public SgeSubmesh()
     {
     }
 
+    /// <summary>
+    /// Constructs a submesh from binary data
+    /// </summary>
+    /// <param name="data">SGE binary data</param>
+    /// <param name="offset">The offset of the submesh in the data</param>
+    /// <param name="materials">The list of materials</param>
+    /// <param name="bones">The list of bones</param>
+    /// <param name="blendData">The list of blend dataa</param>
     public SgeSubmesh(byte[] data, int offset, List<SgeMaterial> materials, List<SgeBone> bones, List<SubmeshBlendData> blendData)
     {
         Unknown00 = IO.ReadShortLE(data, offset);
@@ -1980,6 +2424,15 @@ public class SgeSubmesh
         Unknown60 = IO.ReadFloatLE(data, offset + 0x60);
     }
 
+    /// <summary>
+    /// Gets the binary data associated
+    /// </summary>
+    /// <param name="materialAddresses">Material addresses</param>
+    /// <param name="blendAddresses">Blend addresses</param>
+    /// <param name="gxLightingAddresses">GX lighting addresses</param>
+    /// <param name="outlineAddresses">Outline addresses</param>
+    /// <param name="boneTableAddress">Bone table addresses</param>
+    /// <returns>The binary data</returns>
     public List<byte> GetBytes(Dictionary<string, int> materialAddresses, Dictionary<int, int> blendAddresses, Dictionary<int, int> gxLightingAddresses, Dictionary<int, int> outlineAddresses, int boneTableAddress)
     {
         List<byte> bytes = [];
@@ -2036,22 +2489,56 @@ public class SgeSubmesh
     }
 }
 
+/// <summary>
+/// Vertex data
+/// </summary>
 public class SgeVertex
 {
+    /// <summary>
+    /// Vector position of the vertex
+    /// </summary>
     public Vector3 Position { get; set; }
+    /// <summary>
+    /// Bone weights of the vertex (relative to the bone IDs)
+    /// </summary>
     public float[] Weight { get; set; }
+    /// <summary>
+    /// Bone IDs
+    /// </summary>
     [JsonIgnore]
     public byte[] BoneIds { get; set; }
+    /// <summary>
+    /// The bone indices associated with the palette
+    /// </summary>
     public int[] BoneIndices { get => BoneIds.Select(i => (int)i).ToArray(); set => BoneIds = value.Select(i => (byte)i).ToArray(); }
+    /// <summary>
+    /// The vertex normal
+    /// </summary>
     public Vector3 Normal { get; set; }
+    /// <summary>
+    /// The vertex color
+    /// </summary>
     public VertexColor Color { get; set; }
+    /// <summary>
+    /// The UV coordinates for the texture
+    /// </summary>
     public Vector2 UVCoords { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown2 { get; set; }
 
+    /// <summary>
+    /// Empty constructor
+    /// </summary>
     public SgeVertex()
     {
     }
 
+    /// <summary>
+    /// Constructs the vertex from binary data
+    /// </summary>
+    /// <param name="data">Binary data associated with the vertex</param>
     public SgeVertex(byte[] data)
     {
         Position = new(IO.ReadFloatLE(data, 0x00), IO.ReadFloatLE(data, 0x04), IO.ReadFloatLE(data, 0x08));
@@ -2067,6 +2554,10 @@ public class SgeVertex
         Unknown2 = IO.ReadIntLE(data, 0x34);
     }
 
+    /// <summary>
+    /// Gets binary data associated with the vertex
+    /// </summary>
+    /// <returns>The list of bytes for binary data</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
@@ -2090,20 +2581,37 @@ public class SgeVertex
         return bytes;
     }
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         return $"{Position}";
     }
 }
 
+/// <summary>
+/// A face
+/// </summary>
 public class SgeFace
 {
+    /// <summary>
+    /// The indices of the vertices that make up the face
+    /// </summary>
     public List<int> Polygon { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
     public SgeFace()
     {
     }
 
+    /// <summary>
+    /// Constructs a face from the list of polygon indices
+    /// </summary>
+    /// <param name="first">The first index</param>
+    /// <param name="second">The second index</param>
+    /// <param name="third">The third index</param>
+    /// <param name="evenOdd">Whether to adjust the ordering of the vertex (0 = no, 1 = yes)</param>
     public SgeFace(int first, int second, int third, int evenOdd = 0)
     {
         if (evenOdd == 0)
@@ -2116,30 +2624,59 @@ public class SgeFace
         }
     }
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         return $"{Polygon[0]}, {Polygon[1]}, {Polygon[2]}";
     }
 }
 
+/// <summary>
+/// A material
+/// </summary>
 public class SgeMaterial
 {
+    /// <summary>
+    /// The index of the material
+    /// </summary>
     public int Index { get; set; }
+    /// <summary>
+    /// The name of the texture
+    /// </summary>
     public string Name { get; set; }
+    /// <summary>
+    /// The actual graphics file from grp.bin
+    /// </summary>
     [JsonIgnore]
     public GraphicsFile Texture { get; set; }
+    /// <summary>
+    /// The path to the texture (extracted)
+    /// This will eventually be obsoleted in favor of packing textures within the model
+    /// </summary>
     public string TexturePath { get; set; }
 
+    /// <summary>
+    /// Empty constructor for serialization
+    /// </summary>
+    public SgeMaterial()
+    {
+    }
+    
+    /// <summary>
+    /// Constructs a material from index and name
+    /// </summary>
+    /// <param name="index">Material index</param>
+    /// <param name="name">Texture name</param>
     public SgeMaterial(int index, string name)
     {
         Index = index;
         Name = name;
     }
-
-    public SgeMaterial()
-    {
-    }
-
+    
+    /// <summary>
+    /// Exports a texture to a specified file
+    /// </summary>
+    /// <param name="fileName"></param>
     public void ExportTexture(string fileName)
     {
         SKBitmap bitmap = Texture.GetImage().FlipBitmap();
@@ -2147,6 +2684,10 @@ public class SgeMaterial
         bitmap.Encode(fs, SKEncodedImageFormat.Png, 300);
     }
 
+    /// <summary>
+    /// Gets binary data associated with the texture entry (not the image itself)
+    /// </summary>
+    /// <returns>The binary data associated with the texture entry</returns>
     public List<byte> GetBytes()
     {
         List<byte> bytes = [];
@@ -2157,19 +2698,42 @@ public class SgeMaterial
         return bytes;
     }
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         return Name;
     }
 }
 
+/// <summary>
+/// Vertex color
+/// </summary>
 public struct VertexColor
 {
+    /// <summary>
+    /// Red component
+    /// </summary>
     public float R { get; set; }
+    /// <summary>
+    /// Green component
+    /// </summary>
     public float G { get; set; }
+    /// <summary>
+    /// Blue component
+    /// </summary>
     public float B { get; set; }
+    /// <summary>
+    /// Alpha component
+    /// </summary>
     public float A { get; set; }
 
+    /// <summary>
+    /// Constructs a vertex color from associated components (0.0 - 1.0)
+    /// </summary>
+    /// <param name="r">Red</param>
+    /// <param name="g">Green</param>
+    /// <param name="b">Blue</param>
+    /// <param name="a">Alpha</param>
     public VertexColor(float r, float g, float b, float a)
     {
         R = r;
@@ -2178,6 +2742,7 @@ public struct VertexColor
         A = a;
     }
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         return $"{R} {G} {B} {A}";

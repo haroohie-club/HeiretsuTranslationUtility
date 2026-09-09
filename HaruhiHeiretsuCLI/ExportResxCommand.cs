@@ -62,25 +62,25 @@ public class ExportResxCommand : Command
                 case "dat":
                     switch (index)
                     {
-                        case DataStringsFileLocations.MAP_DEFINITION_INDEX:
+                        case DataStringsFileLocations.MapDefinitionIndex:
                             dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<MapDefinitionsFile>>().WriteResxFile(fileName);
                             break;
-                        case DataStringsFileLocations.TOPICS_FLAGS_INDEX:
+                        case DataStringsFileLocations.TopicsFlagsIndex:
                             dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<TopicsAndFlagsFile>>().WriteResxFile(fileName);
                             break;
-                        case DataStringsFileLocations.NAMEPLATES_INDEX:
+                        case DataStringsFileLocations.NameplatesIndex:
                             dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<NameplatesFile>>().WriteResxFile(fileName);
                             break;
-                        case DataStringsFileLocations.TIMELINE_INDEX:
+                        case DataStringsFileLocations.TimelineIndex:
                             dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<TimelineFile>>().WriteResxFile(fileName);
                             break;
-                        case DataStringsFileLocations.CLUBROOM_INDEX:
+                        case DataStringsFileLocations.ClubroomIndex:
                             dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ClubroomKoizumiCutscenesFile>>().WriteResxFile(fileName);
                             break;
-                        case DataStringsFileLocations.EXTRAS_CLF_CLA_INDEX:
+                        case DataStringsFileLocations.ExtrasClfClaIndex:
                             dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ClubroomHaruhiModelsFile>>().WriteResxFile(fileName);
                             break;
-                        case DataStringsFileLocations.EXTRAS_CLD_INDEX:
+                        case DataStringsFileLocations.ExtrasCldIndex:
                             dat.Files.Last(f => f.BinArchiveIndex == index).CastTo<DataStringsFile<ClubroomNagatoDatabaseFile>>().WriteResxFile(fileName);
                             break;
                         default:

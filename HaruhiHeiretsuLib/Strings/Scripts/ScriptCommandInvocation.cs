@@ -8,39 +8,98 @@ using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Scripts;
 
+/// <summary>
+/// A script command parameter
+/// </summary>
 public class Parameter
 {
+    /// <summary>
+    /// The parameter type
+    /// </summary>
     public ScriptCommand.ParameterType Type { get; set; }
+    /// <summary>
+    /// The binary value
+    /// </summary>
     public byte[] Value { get; set; }
+    /// <summary>
+    /// The line number of the command
+    /// </summary>
     public int LineNumber { get; set; }
 }
 
+/// <summary>
+/// A particular invocation of a script command
+/// </summary>
 public class ScriptCommandInvocation
 {
-
+    /// <summary>
+    /// The address of the invocation in the file
+    /// </summary>
     public int Address { get; set; }
+    /// <summary>
+    /// The line number of the invocation
+    /// </summary>
     public short LineNumber { get; set; }
+    /// <summary>
+    /// If it needs it, a label associated with it
+    /// </summary>
     public string Label { get; set; }
+    /// <summary>
+    /// The character assigned to this invocation
+    /// </summary>
     public short CharacterEntity { get; set; }
+    /// <summary>
+    /// The command code
+    /// </summary>
     public short CommandCode { get; set; }
+    /// <summary>
+    /// The actual script command
+    /// </summary>
     public ScriptCommand Command { get; set; }
+    /// <summary>
+    /// The objects in the script file
+    /// </summary>
     public List<string> ScriptObjects { get; set; }
+    /// <summary>
+    /// List of invocation parameters
+    /// </summary>
     public List<Parameter> Parameters { get; set; } = [];
+    /// <summary>
+    /// The length of the command in bytes
+    /// </summary>
     public int Length => 12 + Parameters.Sum(p => 2 + p.Value.Length);
 
+    /// <summary>
+    /// All other script invocations in the file
+    /// </summary>
     public List<ScriptCommandInvocation> AllOtherInvocations { get; set; }
 
+    /// <summary>
+    /// Constructs a script invocation
+    /// </summary>
+    /// <param name="scriptObjects">The list of objects</param>
+    /// <param name="address">The address of the invocation</param>
     public ScriptCommandInvocation(List<string> scriptObjects, int address)
     {
         ScriptObjects = scriptObjects;
         Address = address;
     }
 
+    /// <summary>
+    /// Constructs a script invocation by parsing it
+    /// </summary>
+    /// <param name="invocation">The invocation line</param>
+    /// <param name="lineNumber">The line number the invocation came from</param>
+    /// <param name="allCommands">All available script commands</param>
+    /// <param name="objects">The list of objects in the script file</param>
+    /// <param name="labels">Any labels in the script file</param>
+    /// <param name="fontReplacementMap">The font replacement map</param>
     public ScriptCommandInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, List<(string, int)> labels, FontReplacementMap fontReplacementMap = null)
     {
         ParseInvocation(invocation, lineNumber, allCommands, objects, labels, fontReplacementMap);
     }
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         if (Command is not null)
@@ -53,6 +112,10 @@ public class ScriptCommandInvocation
         }
     }
 
+    /// <summary>
+    /// Gets binary representation of the script invocation
+    /// </summary>
+    /// <returns>The bytes representing the invocation</returns>
     public byte[] GetBytes()
     {
         List<byte> bytes =
@@ -62,17 +125,21 @@ public class ScriptCommandInvocation
             .. BitConverter.GetBytes(CommandCode).Reverse(),
             .. BitConverter.GetBytes((short)Parameters.Count).Reverse(),
             .. BitConverter.GetBytes(0),
+            .. Parameters.SelectMany(p =>
+            {
+                List<byte> bytes = [.. BitConverter.GetBytes((short)p.Type).Reverse(), .. p.Value];
+                return bytes;
+            })
         ];
-
-        bytes.AddRange(Parameters.SelectMany(p =>
-        {
-            List<byte> bytes = [.. BitConverter.GetBytes((short)p.Type).Reverse(), .. p.Value];
-            return bytes;
-        }));
 
         return [.. bytes];
     }
 
+    /// <summary>
+    /// Gets a string representation of the invocation
+    /// </summary>
+    /// <param name="fontReplacementMap">The font replacement map to use for dialogue replacement</param>
+    /// <returns>The string representation of the invocation</returns>
     public string GetInvocation(FontReplacementMap fontReplacementMap = null)
     {
         string invocation = string.Empty;
@@ -97,6 +164,16 @@ public class ScriptCommandInvocation
         return $"{invocation})";
     }
 
+    /// <summary>
+    /// Parses an invocation
+    /// </summary>
+    /// <param name="invocation"></param>
+    /// <param name="lineNumber"></param>
+    /// <param name="allCommands"></param>
+    /// <param name="objects"></param>
+    /// <param name="labels"></param>
+    /// <param name="fontReplacementMap"></param>
+    /// <exception cref="ArgumentException"></exception>
     public void ParseInvocation(string invocation, short lineNumber, List<ScriptCommand> allCommands, List<string> objects, List<(string label, int lineNumber)> labels, FontReplacementMap fontReplacementMap = null)
     {
         Regex labelRegex = new(@"^{(?<label>[\w\d]+)}");
@@ -190,7 +267,7 @@ public class ScriptCommandInvocation
 
                     if (fontReplacementMap is not null)
                     {
-                        line = StringsFile.ProcessDialogueLineWithFontReplacement(line, fontReplacementMap, ScriptFile.DIALOGUE_LINE_LENGTHS);
+                        line = StringsFile.ProcessDialogueLineWithFontReplacement(line, fontReplacementMap, ScriptFile.DialogueLineLengths);
                     }
 
                     objects.Add(line);
@@ -317,7 +394,7 @@ public class ScriptCommandInvocation
                     string[] controlCodeComponents = components[2].Trim().Split(' ');
                     bytes.AddRange(CalculateControlStructure(controlCodeComponents[0], controlCodeComponents[1], objects));
 
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.INDEXEDADDRESS, Value = [.. bytes], LineNumber = LineNumber });
+                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.INDEXED_ADDRESS, Value = [.. bytes], LineNumber = LineNumber });
                     i += trimmedParameters.Split(')')[0].Length + 2;
                     continue;
                 }
@@ -338,7 +415,7 @@ public class ScriptCommandInvocation
                 {
                     string[] expressionComponents = trimmedParameters.Split(',')[0][11..^1].Split(' ');
 
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.FACIALEXPRESSION, Value = CalculateControlStructure(expressionComponents[0], expressionComponents[1], objects), LineNumber = LineNumber });
+                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.FACIAL_EXPRESSION, Value = CalculateControlStructure(expressionComponents[0], expressionComponents[1], objects), LineNumber = LineNumber });
                     i += expressionComponents.Sum(v => v.Length) + 14;
                     continue;
                 }
@@ -446,7 +523,7 @@ public class ScriptCommandInvocation
                     {
                         objects.Add(scriptObject);
                     }
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.VARINDEX, Value = BitConverter.GetBytes((short)objects.IndexOf(scriptObject)).Reverse().ToArray(), LineNumber = LineNumber });
+                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.VAR_INDEX, Value = BitConverter.GetBytes((short)objects.IndexOf(scriptObject)).Reverse().ToArray(), LineNumber = LineNumber });
                     i += scriptObject.Length + 2;
                     continue;
                 }
@@ -465,7 +542,7 @@ public class ScriptCommandInvocation
                     }
 
                     i += arrayStrings.Sum(a => a.Length) + arrayStrings.Length + 3;
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.INTARRAY, Value = [.. bytes], LineNumber = LineNumber });
+                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.INT_ARRAY, Value = [.. bytes], LineNumber = LineNumber });
                     continue;
                 }
 
@@ -482,7 +559,7 @@ public class ScriptCommandInvocation
                     bytes.InsertRange(0, BitConverter.GetBytes(bytes.Count + 4).Reverse());
 
                     i += lipSyncString.Length + 11;
-                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.LIPSYNCDATA, Value = [.. bytes], LineNumber = LineNumber });
+                    Parameters.Add(new() { Type = ScriptCommand.ParameterType.LIP_SYNC_DATA, Value = [.. bytes], LineNumber = LineNumber });
                     continue;
                 }
 
@@ -526,8 +603,8 @@ public class ScriptCommandInvocation
             }
         }
     }
-
-    public bool ResolveAddresses(List<(string label, int lineNumber)> labels)
+    
+    internal bool ResolveAddresses(List<(string label, int lineNumber)> labels)
     {
         bool resolvedAddress = false;
         for (int i = 0; i < Parameters.Count; i++)
@@ -539,13 +616,13 @@ public class ScriptCommandInvocation
                 {
                     List<byte> tempBytes = new([0]);
                     tempBytes.AddRange(Parameters[i].Value[1..]);
-                    lineNumber = BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray()); // why dear god did you do this? bc roslyn won't let me do it w/ List.Reverse() existing
+                    lineNumber = BitConverter.ToInt32([.. tempBytes.ToArray().Reverse()]); // why dear god did you do this? bc roslyn won't let me do it w/ List.Reverse() existing
                 }
                 else
                 {
                     List<byte> tempBytes = new([0]);
                     tempBytes.AddRange(Parameters[i].Value[1..4]);
-                    lineNumber = labels[BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray())].lineNumber;
+                    lineNumber = labels[BitConverter.ToInt32([.. tempBytes.ToArray().Reverse()])].lineNumber;
                 }
                 int address = AllOtherInvocations.FirstOrDefault(i => i.LineNumber == lineNumber)?.Address ?? -1;
                 if (address < 0)
@@ -555,7 +632,7 @@ public class ScriptCommandInvocation
                 Parameters[i] = new() { Type = Parameters[i].Type, Value = BitConverter.GetBytes(address).Reverse().ToArray(), LineNumber = LineNumber };
                 resolvedAddress = true;
             }
-            else if (Parameters[i].Type == ScriptCommand.ParameterType.INDEXEDADDRESS)
+            else if (Parameters[i].Type == ScriptCommand.ParameterType.INDEXED_ADDRESS)
             {
                 List<byte> parameterBytes = new(Parameters[i].Value);
                 int lineNumber;
@@ -567,11 +644,14 @@ public class ScriptCommandInvocation
                 }
                 else
                 {
-                    List<byte> tempBytes = new([0]);
-                    tempBytes.AddRange(Parameters[i].Value[1..4]);
+                    List<byte> tempBytes =
+                    [
+                        0,
+                        .. Parameters[i].Value[1..4]
+                    ];
                     lineNumber = labels[BitConverter.ToInt32(tempBytes.ToArray().Reverse().ToArray())].lineNumber;
                 }
-                int address = AllOtherInvocations.FirstOrDefault(i => i.LineNumber == lineNumber)?.Address ?? -1;
+                int address = AllOtherInvocations.FirstOrDefault(inv => inv.LineNumber == lineNumber)?.Address ?? -1;
                 if (address < 0)
                 {
                     throw new ArgumentException($"ERROR: Line {LineNumber} (command {Command.Name}) attempting to resolve address to line {lineNumber} when no such line exists.");
@@ -585,7 +665,7 @@ public class ScriptCommandInvocation
         return resolvedAddress;
     }
 
-    public string ParseParameter(Parameter parameter, FontReplacementMap fontReplacementMap = null)
+    internal string ParseParameter(Parameter parameter, FontReplacementMap fontReplacementMap = null)
     {
         switch (parameter.Type)
         {
@@ -616,11 +696,11 @@ public class ScriptCommandInvocation
                 return CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1));
             case ScriptCommand.ParameterType.TRANSITION:
                 return ParseTransition(parameter.Value);
-            case ScriptCommand.ParameterType.INDEXEDADDRESS:
+            case ScriptCommand.ParameterType.INDEXED_ADDRESS:
                 return ParseIndexedAddress(parameter.Value);
             case ScriptCommand.ParameterType.ANGLE:
                 return $"degrees {CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}";
-            case ScriptCommand.ParameterType.FACIALEXPRESSION:
+            case ScriptCommand.ParameterType.FACIAL_EXPRESSION:
                 return $"EXPRESSION[{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}]";
             case ScriptCommand.ParameterType.BOOL:
                 return ParseBoolean(parameter.Value);
@@ -638,9 +718,9 @@ public class ScriptCommandInvocation
                 return ParseFloat(parameter.Value);
             case ScriptCommand.ParameterType.VECTOR3:
                 return ParseVector3(parameter.Value);
-            case ScriptCommand.ParameterType.VARINDEX:
+            case ScriptCommand.ParameterType.VAR_INDEX:
                 return $"${ScriptObjects[BitConverter.ToInt16(parameter.Value.Reverse().ToArray())]}";
-            case ScriptCommand.ParameterType.INTARRAY:
+            case ScriptCommand.ParameterType.INT_ARRAY:
                 List<string> values = [];
                 int numValues = Helpers.GetIntFromByteArray(parameter.Value, 0);
                 for (int i = 1; i <= numValues; i++)
@@ -650,14 +730,14 @@ public class ScriptCommandInvocation
                 return $"[{string.Join(", ", values)}]";
             case ScriptCommand.ParameterType.INT19:
                 return $"19{CalculateIntParameter(Helpers.GetIntFromByteArray(parameter.Value, 0), Helpers.GetIntFromByteArray(parameter.Value, 1))}";
-            case ScriptCommand.ParameterType.LIPSYNCDATA:
+            case ScriptCommand.ParameterType.LIP_SYNC_DATA:
                 return ParseLipSyncData(parameter.Value);
             default:
                 return $"{parameter.Type} {string.Join(" ", parameter.Value.Select(b => $"{b:X2}"))}";
         }
     }
 
-    public string CalculateIntParameter(int controlCode, int valueCode)
+    internal string CalculateIntParameter(int controlCode, int valueCode)
     {
         switch (controlCode)
         {
@@ -685,7 +765,7 @@ public class ScriptCommandInvocation
         }
     }
 
-    public static byte[] CalculateControlStructure(string controlCode, string value, List<string> objects)
+    private static byte[] CalculateControlStructure(string controlCode, string value, List<string> objects)
     {
         List<byte> bytes = [];
 
@@ -716,7 +796,7 @@ public class ScriptCommandInvocation
         return [.. bytes];
     }
 
-    public static string GetCharacter(string characterInt)
+    private static string GetCharacter(string characterInt)
     {
         if (characterInt.StartsWith("lit "))
         {
@@ -746,7 +826,7 @@ public class ScriptCommandInvocation
         }
     }
 
-    public static string ParseColor(string colorCode)
+    private static string ParseColor(string colorCode)
     {
         if (colorCode.StartsWith("lit"))
         {
@@ -913,7 +993,7 @@ public class ScriptCommandInvocation
         return $"Vector3({coords[0]}, {coords[1]}, {coords[2]})";
     }
 
-    public static List<byte> EncodeLipSyncData(string lipSyncString)
+    internal static List<byte> EncodeLipSyncData(string lipSyncString)
     {
         List<byte> bytes = [];
         Regex lipSyncRegex = new(@"(?<lipFlap>[saiueonN])(?<length>\d+)");

@@ -122,8 +122,8 @@ public class Glyph : GraphicsFile
     /// </summary>
     public ushort[] Codepoints { get; set; }
 
-    internal const int SCALED_WIDTH = 25;
-    internal const int SCALED_HEIGHT = 24;
+    internal const int ScaledWidth = 25;
+    internal const int ScaledHeight = 24;
 
     /// <summary>
     /// Constructs a glyph from data

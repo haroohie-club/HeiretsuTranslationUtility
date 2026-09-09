@@ -1,35 +1,101 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Events.Parameters;
 
+/// <summary>
+/// Parameter describing animation for a model
+/// </summary>
 public class ModelAnimationParameter : ActionParameter
 {
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown0C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown10 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown14 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown18 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown1C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown20 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown24 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown28 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown2C { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown30 { get; set; }
+    /// <summary>
+    /// Flag indicating the alternate animation (i.e. event-file specified animation) should be used
+    /// </summary>
     public bool UseAltAnimation { get; set; }
+    /// <summary>
+    /// Index of the animation to play
+    /// </summary>
     public short AnimationIndex { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown36 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown38 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public int Unknown3C { get; set; }
+    /// <summary>
+    /// Speed to play the animation
+    /// </summary>
     public byte AnimationSpeed { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte Unknown41 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte Unknown42 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public byte Unknown43 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown44 { get; set; }
+    /// <summary>
+    /// Unknown
+    /// </summary>
     public short Unknown46 { get; set; }
 
-    public ModelAnimationParameter(byte[] data, int offset, ushort opCode) : base(data, offset, opCode)
+    /// <inheritdoc/>
+    public ModelAnimationParameter(byte[] data, int offset, ActionOpCode opCode) : base(data, offset, opCode)
     {
         Unknown0C = IO.ReadIntLE(data, offset + 0x0C);
         Unknown10 = IO.ReadIntLE(data, offset + 0x10);

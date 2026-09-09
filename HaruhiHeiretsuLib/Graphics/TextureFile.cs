@@ -8,11 +8,29 @@ namespace HaruhiHeiretsuLib.Graphics;
 
 public partial class GraphicsFile
 {
+    /// <summary>
+    /// Width of the texture
+    /// </summary>
     public int Width { get; set; }
+    /// <summary>
+    /// Height of the texture
+    /// </summary>
     public int Height { get; set; }
+    /// <summary>
+    /// Pixel format of the texture
+    /// </summary>
     public ImageFormat Format { get; set; }
-    public int PointerPointer { get; set; }
+    /// <summary>
+    /// Pointer to the header
+    /// </summary>
+    public int HeaderPointer { get; set; }
+    /// <summary>
+    /// Pointer to the image size
+    /// </summary>
     public int SizePointer { get; set; }
+    /// <summary>
+    /// Pointer to the image data
+    /// </summary>
     public int DataPointer { get; set; }
 
     /// <summary>
@@ -514,8 +532,8 @@ public partial class GraphicsFile
         Format = format;
         Name = name;
         Data = [0x00, 0x20, 0xAF, 0x30, 0x00, 0x00, 0x00, 0x00];
-        PointerPointer = Data.Count + 4;
-        Data.AddRange(BitConverter.GetBytes(PointerPointer).Reverse());
+        HeaderPointer = Data.Count + 4;
+        Data.AddRange(BitConverter.GetBytes(HeaderPointer).Reverse());
         SizePointer = Data.Count + 4;
         Data.AddRange(BitConverter.GetBytes(SizePointer).Reverse());
         Width = (ushort)bitmap.Width;
@@ -564,17 +582,24 @@ public partial class GraphicsFile
         SetTextureImage(bitmap);
     }
 
+    /// <summary>
+    /// Sets a font character image
+    /// </summary>
+    /// <param name="character">The character to set as texture data</param>
+    /// <param name="font">The font to use</param>
+    /// <param name="fontSize">The font size to use</param>
+    /// <param name="verticalOffset">The vertical offset within the file in pixels</param>
     public void SetFontCharacterImage(string character, SKFont font, float fontSize, int verticalOffset = 0)
     {
-        SKBitmap bitmap = new(Glyph.SCALED_WIDTH, Glyph.SCALED_HEIGHT);
+        SKBitmap bitmap = new(Glyph.ScaledWidth, Glyph.ScaledHeight);
         using SKCanvas canvas = new(bitmap);
-        SKPaint shadowPaint = new(font) { IsAntialias = true, Color = SKColors.Black, FilterQuality = SKFilterQuality.High };
-        SKPaint mainPaint = new(font) { IsAntialias = true, Color = SKColors.White, FilterQuality = SKFilterQuality.High };
+        SKPaint shadowPaint = new() { IsAntialias = true, Color = SKColors.Black };
+        SKPaint mainPaint = new() { IsAntialias = true, Color = SKColors.White };
         font.Edging = SKFontEdging.SubpixelAntialias;
 
         canvas.Clear();
-        canvas.DrawText(character, 0, Glyph.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, font, shadowPaint);
-        canvas.DrawText(character, 1, Glyph.SCALED_HEIGHT - fontSize / 5 + verticalOffset - 3, font, mainPaint);
+        canvas.DrawText(character, 0, Glyph.ScaledHeight - fontSize / 5 + verticalOffset - 3, font, shadowPaint);
+        canvas.DrawText(character, 1, Glyph.ScaledHeight - fontSize / 5 + verticalOffset - 3, font, mainPaint);
         canvas.Flush();
 
         Data = Data.Select(b => (byte)0).ToList();

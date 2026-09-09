@@ -5,10 +5,20 @@ using System.Linq;
 
 namespace HaruhiHeiretsuLib;
 
+/// <summary>
+/// Representation of the dol executable file
+/// </summary>
 public class DolFile
 {
+    /// <summary>
+    /// List of graphics files contained in the dol
+    /// </summary>
     public List<GraphicsFile> GraphicsFiles { get; set; } = [];
 
+    /// <summary>
+    /// Constructs the dol file from haruhi.dol
+    /// </summary>
+    /// <param name="dolBytes"></param>
     public DolFile(byte[] dolBytes)
     {
         for (int i = 0; i < dolBytes.Length - 4; i++)

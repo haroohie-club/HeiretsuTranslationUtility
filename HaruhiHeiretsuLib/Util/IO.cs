@@ -6,6 +6,7 @@ using System.Text;
 
 namespace HaruhiHeiretsuLib.Util;
 
+// ReSharper disable once InconsistentNaming
 internal static class IO
 {
     public static int ReadInt(ReadOnlySpan<byte> data, int offset)
