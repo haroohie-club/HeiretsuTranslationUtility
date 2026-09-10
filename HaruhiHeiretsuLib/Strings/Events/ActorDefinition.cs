@@ -134,7 +134,7 @@ public enum ActorType : short
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN07 = 7,
+    ENVIRONMENT = 7,
     /// <summary>
     /// Screen effect
     /// </summary>

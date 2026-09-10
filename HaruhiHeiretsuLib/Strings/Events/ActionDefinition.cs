@@ -82,6 +82,9 @@ public class ActionDefinition
                 case ActionOpCode.FADE:
                     Parameters.Add(new FadeParameter(data, currentPosition, OpCode));
                     break;
+                case ActionOpCode.FOG:
+                    Parameters.Add(new FogParam(data, currentPosition, OpCode));
+                    break;
                 case ActionOpCode.CAMERA_RANGE:
                     Parameters.Add(new CameraRangeParameter(data, currentPosition, OpCode));
                     break;
@@ -98,8 +101,6 @@ public class ActionDefinition
                 case ActionOpCode.UNKNOWN08:
                 //break
                 case ActionOpCode.UNKNOWN0A:
-                //break
-                case ActionOpCode.UNKNOWN0B:
                 //break
                 case ActionOpCode.UNKNOWN0D:
                 //break
@@ -208,7 +209,7 @@ public enum ActionOpCode : ushort
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN0B,
+    FOG,
 
     /// <summary>
     /// Unknown
@@ -294,6 +295,7 @@ public enum ActionParameterMnemonic
 [JsonDerivedType(typeof(CameraRangeParameter))]
 [JsonDerivedType(typeof(DialogueParameter))]
 [JsonDerivedType(typeof(FadeParameter))]
+[JsonDerivedType(typeof(FogParam))]
 [JsonDerivedType(typeof(ModelAnimationParameter))]
 [JsonDerivedType(typeof(ScreenFeedbackParameter))]
 [JsonDerivedType(typeof(SpatialParameter))]
@@ -337,7 +339,7 @@ public class ActionParameter
                     or ActionOpCode.UNKNOWN17 => 0x2C,
                 ActionOpCode.FADE => 0x28,
                 ActionOpCode.UNKNOWN0A or ActionOpCode.UNKNOWN11 => 0x24,
-                ActionOpCode.UNKNOWN0B => 0x4C,
+                ActionOpCode.FOG => 0x4C,
                 ActionOpCode.CAMERA_RANGE => 0x38,
                 ActionOpCode.UNKNOWN0D or ActionOpCode.UNKNOWN0E => 0x50,
                 ActionOpCode.SCREEN_FEEDBACK => 0x58,

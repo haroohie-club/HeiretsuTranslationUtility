@@ -5,7 +5,7 @@ using HaruhiHeiretsuLib.Util;
 namespace HaruhiHeiretsuLib.Strings.Events.Parameters;
 
 /// <summary>
-/// Unknown
+/// Parameter for setting the far clipping plane and billboard distance
 /// </summary>
 public class CameraRangeParameter : ActionParameter
 {
