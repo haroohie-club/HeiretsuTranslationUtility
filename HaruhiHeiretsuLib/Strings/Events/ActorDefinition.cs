@@ -136,9 +136,9 @@ public enum ActorType : short
     /// </summary>
     UNKNOWN07 = 7,
     /// <summary>
-    /// Unknown
+    /// Screen effect
     /// </summary>
-    UNKNOWN08 = 8,
+    SCREEN_EFFECT = 8,
     /// <summary>
     /// Unknown
     /// </summary>
@@ -162,5 +162,5 @@ public enum ActorType : short
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN14 = 14,
+    ZERO_MAP = 14,
 }

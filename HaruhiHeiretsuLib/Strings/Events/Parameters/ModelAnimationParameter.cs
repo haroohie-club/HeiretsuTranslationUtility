@@ -18,9 +18,9 @@ public class ModelAnimationParameter : ActionParameter
     /// </summary>
     public int Unknown10 { get; set; }
     /// <summary>
-    /// Unknown
+    /// Used to set the current model/map/etc. active/inactive
     /// </summary>
-    public int Unknown14 { get; set; }
+    public int IsActive { get; set; }
     /// <summary>
     /// Unknown
     /// </summary>
@@ -78,9 +78,9 @@ public class ModelAnimationParameter : ActionParameter
     /// </summary>
     public byte Unknown41 { get; set; }
     /// <summary>
-    /// Unknown
+    /// The mesh slot of the zero map (assuming this is actor type ZERO_MAP)
     /// </summary>
-    public byte Unknown42 { get; set; }
+    public byte ZeroMapMeshSlot { get; set; }
     /// <summary>
     /// Unknown
     /// </summary>
@@ -99,7 +99,7 @@ public class ModelAnimationParameter : ActionParameter
     {
         Unknown0C = IO.ReadIntLE(data, offset + 0x0C);
         Unknown10 = IO.ReadIntLE(data, offset + 0x10);
-        Unknown14 = IO.ReadIntLE(data, offset + 0x14);
+        IsActive = IO.ReadIntLE(data, offset + 0x14);
         Unknown18 = IO.ReadIntLE(data, offset + 0x18);
         Unknown1C = IO.ReadIntLE(data, offset + 0x1C);
         Unknown20 = IO.ReadIntLE(data, offset + 0x20);
@@ -115,7 +115,7 @@ public class ModelAnimationParameter : ActionParameter
         Unknown3C = IO.ReadIntLE(data, offset + 0x3C);
         AnimationSpeed = data[offset + 0x40];
         Unknown41 = data[offset + 0x41];
-        Unknown42 = data[offset + 0x42];
+        ZeroMapMeshSlot = data[offset + 0x42];
         Unknown43 = data[offset + 0x43];
         Unknown44 = IO.ReadShortLE(data, offset + 0x44);
         Unknown46 = IO.ReadShortLE(data, offset + 0x46);
@@ -129,7 +129,7 @@ public class ModelAnimationParameter : ActionParameter
             ..GetHeaderBytes(),
             ..BitConverter.GetBytes(Unknown0C),
             ..BitConverter.GetBytes(Unknown10),
-            ..BitConverter.GetBytes(Unknown14),
+            ..BitConverter.GetBytes(IsActive),
             ..BitConverter.GetBytes(Unknown18),
             ..BitConverter.GetBytes(Unknown1C),
             ..BitConverter.GetBytes(Unknown20),
@@ -143,7 +143,7 @@ public class ModelAnimationParameter : ActionParameter
             ..BitConverter.GetBytes(Unknown3C),
             AnimationSpeed,
             Unknown41,
-            Unknown42,
+            ZeroMapMeshSlot,
             Unknown43,
             ..BitConverter.GetBytes(Unknown44),
             ..BitConverter.GetBytes(Unknown46),

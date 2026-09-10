@@ -61,7 +61,7 @@ public class ActionDefinition
         ParametersCount = IO.ReadUShortLE(data, offset + 0x08);
         Unknown0A = IO.ReadUShortLE(data, offset + 0x0A);
         ParametersAddress = IO.ReadIntLE(data, offset + 0x0C);
-
+        
         int currentPosition = ParametersAddress;
         for (int i = 0; i < ParametersCount; i++)
         {
@@ -72,18 +72,21 @@ public class ActionDefinition
                 case ActionOpCode.ANIMATION_PATH:
                 case ActionOpCode.UNKNOWN09:
                 case ActionOpCode.UNKNOWN16:
-                case ActionOpCode.UNKNOWN19:
+                case ActionOpCode.ZERO_MAP_TRANSFORM:
                     Parameters.Add(new SpatialParameter(data, currentPosition, OpCode));
                     break;
                 case ActionOpCode.PLAY_MODEL_ANIMATION:
-                case ActionOpCode.UNKNOWN18:
+                case ActionOpCode.ZERO_MAP_MESH:
                     Parameters.Add(new ModelAnimationParameter(data, currentPosition, OpCode));
                     break;
-                case ActionOpCode.UNKNOWN07:
+                case ActionOpCode.FADE:
                     Parameters.Add(new FadeParameter(data, currentPosition, OpCode));
                     break;
                 case ActionOpCode.DIALOGUE:
                     Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
+                    break;
+                case ActionOpCode.SCREEN_FEEDBACK:
+                    Parameters.Add(new ScreenFeedbackParameter(data, currentPosition, OpCode));
                     break;
                 case ActionOpCode.UNKNOWN05:
                 // break
@@ -100,8 +103,6 @@ public class ActionDefinition
                 case ActionOpCode.UNKNOWN0D:
                 //break
                 case ActionOpCode.UNKNOWN0E:
-                //break
-                case ActionOpCode.UNKNOWN0F:
                 //break
                 case ActionOpCode.UNKNOWN10:
                 //break
@@ -186,7 +187,7 @@ public enum ActionOpCode : ushort
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN07,
+    FADE,
 
     /// <summary>
     /// Unknown
@@ -224,9 +225,9 @@ public enum ActionOpCode : ushort
     UNKNOWN0E,
 
     /// <summary>
-    /// Unknown
+    /// Screen feedback effect (capture the framebuffer to a texture and re-render it)
     /// </summary>
-    UNKNOWN0F,
+    SCREEN_FEEDBACK,
 
     /// <summary>
     /// Unknown
@@ -269,14 +270,14 @@ public enum ActionOpCode : ushort
     UNKNOWN17,
 
     /// <summary>
-    /// Unknown
+    /// Sets the mesh index of the zero map (skybox)
     /// </summary>
-    UNKNOWN18,
+    ZERO_MAP_MESH,
 
     /// <summary>
-    /// Unknown
+    /// Sets the transform of the zero map (skybox)
     /// </summary>
-    UNKNOWN19,
+    ZERO_MAP_TRANSFORM,
 }
 
 /// <summary>
@@ -289,6 +290,7 @@ public enum ActionParameterMnemonic
 /// <summary>
 /// A generic action parameter
 /// </summary>
+[JsonDerivedType(typeof(ScreenFeedbackParameter))]
 [JsonDerivedType(typeof(DialogueParameter))]
 [JsonDerivedType(typeof(FadeParameter))]
 [JsonDerivedType(typeof(ModelAnimationParameter))]
@@ -326,17 +328,17 @@ public class ActionParameter
             return _opCode switch
             {
                 ActionOpCode.CAMERA_POSITION or ActionOpCode.CAMERA_LOOK_TO or ActionOpCode.ANIMATION_PATH
-                    or ActionOpCode.UNKNOWN09 or ActionOpCode.UNKNOWN16 or ActionOpCode.UNKNOWN19
+                    or ActionOpCode.UNKNOWN09 or ActionOpCode.UNKNOWN16 or ActionOpCode.ZERO_MAP_TRANSFORM
                     or ActionOpCode.UNKNOWN06 => 0x40,
-                ActionOpCode.PLAY_MODEL_ANIMATION or ActionOpCode.UNKNOWN18 => 0x48,
+                ActionOpCode.PLAY_MODEL_ANIMATION or ActionOpCode.ZERO_MAP_MESH => 0x48,
                 ActionOpCode.UNKNOWN05 or ActionOpCode.UNKNOWN08 or ActionOpCode.UNKNOWN13 or ActionOpCode.UNKNOWN12
                     or ActionOpCode.UNKNOWN17 => 0x2C,
-                ActionOpCode.UNKNOWN07 => 0x28,
+                ActionOpCode.FADE => 0x28,
                 ActionOpCode.UNKNOWN0A or ActionOpCode.UNKNOWN11 => 0x24,
                 ActionOpCode.UNKNOWN0B => 0x4C,
                 ActionOpCode.UNKNOWN0C => 0x38,
                 ActionOpCode.UNKNOWN0D or ActionOpCode.UNKNOWN0E => 0x50,
-                ActionOpCode.UNKNOWN0F => 0x58,
+                ActionOpCode.SCREEN_FEEDBACK => 0x58,
                 ActionOpCode.UNKNOWN10 or ActionOpCode.UNKNOWN15 => 0x20,
                 ActionOpCode.DIALOGUE => 0x250,
                 _ => 0,
@@ -354,10 +356,10 @@ public class ActionParameter
     {
         Address = offset;
         _opCode = opCode;
-        ActionsTableEntryAddress = BitConverter.ToInt32(data.Skip(offset).Take(4).ToArray());
-        StartFrame = BitConverter.ToSingle(data.Skip(offset + 0x04).Take(4).ToArray());
-        EndFrame = BitConverter.ToSingle(data.Skip(offset + 0x08).Take(4).ToArray());
-        Data = data.Skip(offset + 0x0C).Take(Length - 12).ToList();
+        ActionsTableEntryAddress = BitConverter.ToInt32([.. data.Skip(offset).Take(4)]);
+        StartFrame = BitConverter.ToSingle([.. data.Skip(offset + 0x04).Take(4)]);
+        EndFrame = BitConverter.ToSingle([.. data.Skip(offset + 0x08).Take(4)]);
+        Data = [.. data.Skip(offset + 0x0C).Take(Length - 12)];
     }
 
     /// <summary>
