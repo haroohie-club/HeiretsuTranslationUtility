@@ -142,7 +142,7 @@ public enum ActorType : short
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN09 = 9,
+    CROSS_FADE = 9,
     /// <summary>
     /// Unknown
     /// </summary>

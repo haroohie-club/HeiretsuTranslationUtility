@@ -95,6 +95,9 @@ public class ActionDefinition
                 case ActionOpCode.SCREEN_FEEDBACK:
                     Parameters.Add(new ScreenFeedbackParameter(data, currentPosition, OpCode));
                     break;
+                case ActionOpCode.CROSS_FADE:
+                    Parameters.Add(new CrossFadeParam(data, currentPosition, OpCode));
+                    break;
                 case ActionOpCode.DIALOGUE:
                     Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
                     break;
@@ -105,8 +108,6 @@ public class ActionDefinition
                 case ActionOpCode.UNKNOWN08:
                 //break
                 case ActionOpCode.UNKNOWN0A:
-                //break
-                case ActionOpCode.UNKNOWN10:
                 //break
                 case ActionOpCode.UNKNOWN11:
                 //break
@@ -234,7 +235,7 @@ public enum ActionOpCode : ushort
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN10,
+    CROSS_FADE,
 
     /// <summary>
     /// Unknown
@@ -344,7 +345,7 @@ public class ActionParameter
                 ActionOpCode.CAMERA_RANGE => 0x38,
                 ActionOpCode.LIGHT0 or ActionOpCode.LIGHT1 => 0x50,
                 ActionOpCode.SCREEN_FEEDBACK => 0x58,
-                ActionOpCode.UNKNOWN10 or ActionOpCode.UNKNOWN15 => 0x20,
+                ActionOpCode.CROSS_FADE or ActionOpCode.UNKNOWN15 => 0x20,
                 ActionOpCode.DIALOGUE => 0x250,
                 _ => 0,
             };
