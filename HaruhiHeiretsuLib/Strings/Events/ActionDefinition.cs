@@ -88,10 +88,9 @@ public class ActionDefinition
                 case ActionOpCode.CAMERA_RANGE:
                     Parameters.Add(new CameraRangeParameter(data, currentPosition, OpCode));
                     break;
-                case ActionOpCode.LIGHT:
+                case ActionOpCode.LIGHT0:
+                case ActionOpCode.LIGHT1:
                     Parameters.Add(new LightParameter(data, currentPosition, OpCode));
-                    break;
-                case ActionOpCode.UNKNOWN0E:
                     break;
                 case ActionOpCode.SCREEN_FEEDBACK:
                     Parameters.Add(new ScreenFeedbackParameter(data, currentPosition, OpCode));
@@ -220,12 +219,12 @@ public enum ActionOpCode : ushort
     /// <summary>
     /// Unknown
     /// </summary>
-    LIGHT,
+    LIGHT0,
 
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN0E,
+    LIGHT1,
 
     /// <summary>
     /// Screen feedback effect (capture the framebuffer to a texture and re-render it)
@@ -343,7 +342,7 @@ public class ActionParameter
                 ActionOpCode.UNKNOWN0A or ActionOpCode.UNKNOWN11 => 0x24,
                 ActionOpCode.FOG => 0x4C,
                 ActionOpCode.CAMERA_RANGE => 0x38,
-                ActionOpCode.LIGHT or ActionOpCode.UNKNOWN0E => 0x50,
+                ActionOpCode.LIGHT0 or ActionOpCode.LIGHT1 => 0x50,
                 ActionOpCode.SCREEN_FEEDBACK => 0x58,
                 ActionOpCode.UNKNOWN10 or ActionOpCode.UNKNOWN15 => 0x20,
                 ActionOpCode.DIALOGUE => 0x250,
