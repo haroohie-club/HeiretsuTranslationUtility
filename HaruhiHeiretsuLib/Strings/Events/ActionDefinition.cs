@@ -88,6 +88,11 @@ public class ActionDefinition
                 case ActionOpCode.CAMERA_RANGE:
                     Parameters.Add(new CameraRangeParameter(data, currentPosition, OpCode));
                     break;
+                case ActionOpCode.LIGHT:
+                    Parameters.Add(new LightParameter(data, currentPosition, OpCode));
+                    break;
+                case ActionOpCode.UNKNOWN0E:
+                    break;
                 case ActionOpCode.SCREEN_FEEDBACK:
                     Parameters.Add(new ScreenFeedbackParameter(data, currentPosition, OpCode));
                     break;
@@ -101,10 +106,6 @@ public class ActionDefinition
                 case ActionOpCode.UNKNOWN08:
                 //break
                 case ActionOpCode.UNKNOWN0A:
-                //break
-                case ActionOpCode.UNKNOWN0D:
-                //break
-                case ActionOpCode.UNKNOWN0E:
                 //break
                 case ActionOpCode.UNKNOWN10:
                 //break
@@ -219,7 +220,7 @@ public enum ActionOpCode : ushort
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN0D,
+    LIGHT,
 
     /// <summary>
     /// Unknown
@@ -296,6 +297,7 @@ public enum ActionParameterMnemonic
 [JsonDerivedType(typeof(DialogueParameter))]
 [JsonDerivedType(typeof(FadeParameter))]
 [JsonDerivedType(typeof(FogParam))]
+[JsonDerivedType(typeof(LightParameter))]
 [JsonDerivedType(typeof(ModelAnimationParameter))]
 [JsonDerivedType(typeof(ScreenFeedbackParameter))]
 [JsonDerivedType(typeof(SpatialParameter))]
@@ -341,7 +343,7 @@ public class ActionParameter
                 ActionOpCode.UNKNOWN0A or ActionOpCode.UNKNOWN11 => 0x24,
                 ActionOpCode.FOG => 0x4C,
                 ActionOpCode.CAMERA_RANGE => 0x38,
-                ActionOpCode.UNKNOWN0D or ActionOpCode.UNKNOWN0E => 0x50,
+                ActionOpCode.LIGHT or ActionOpCode.UNKNOWN0E => 0x50,
                 ActionOpCode.SCREEN_FEEDBACK => 0x58,
                 ActionOpCode.UNKNOWN10 or ActionOpCode.UNKNOWN15 => 0x20,
                 ActionOpCode.DIALOGUE => 0x250,

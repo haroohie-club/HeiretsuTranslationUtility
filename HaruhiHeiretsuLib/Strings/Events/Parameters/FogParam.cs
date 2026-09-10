@@ -8,25 +8,10 @@ namespace HaruhiHeiretsuLib.Strings.Events.Parameters;
 /// </summary>
 public class FogParam : ActionParameter
 {
-    /// <summary>
-    /// Unknown
-    /// </summary>
-    public int Unknown0C { get; set; }
-
-    /// <summary>
-    /// Unknown
-    /// </summary>
-    public int Unknown10 { get; set; }
-
-    /// <summary>
-    /// Unknown
-    /// </summary>
-    public int Unknown14 { get; set; }
-
-    /// <summary>
-    /// Unknown
-    /// </summary>
-    public int Unknown18 { get; set; }
+    internal int Unknown0C { get; set; }
+    internal int Unknown10 { get; set; }
+    internal int Unknown14 { get; set; }
+    internal int Unknown18 { get; set; }
 
     /// <summary>
     /// Enable fog start distance
