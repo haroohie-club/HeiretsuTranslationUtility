@@ -82,11 +82,14 @@ public class ActionDefinition
                 case ActionOpCode.FADE:
                     Parameters.Add(new FadeParameter(data, currentPosition, OpCode));
                     break;
-                case ActionOpCode.DIALOGUE:
-                    Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
+                case ActionOpCode.CAMERA_RANGE:
+                    Parameters.Add(new CameraRangeParameter(data, currentPosition, OpCode));
                     break;
                 case ActionOpCode.SCREEN_FEEDBACK:
                     Parameters.Add(new ScreenFeedbackParameter(data, currentPosition, OpCode));
+                    break;
+                case ActionOpCode.DIALOGUE:
+                    Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
                     break;
                 case ActionOpCode.UNKNOWN05:
                 // break
@@ -97,8 +100,6 @@ public class ActionDefinition
                 case ActionOpCode.UNKNOWN0A:
                 //break
                 case ActionOpCode.UNKNOWN0B:
-                //break
-                case ActionOpCode.UNKNOWN0C:
                 //break
                 case ActionOpCode.UNKNOWN0D:
                 //break
@@ -212,7 +213,7 @@ public enum ActionOpCode : ushort
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN0C,
+    CAMERA_RANGE,
 
     /// <summary>
     /// Unknown
@@ -290,10 +291,11 @@ public enum ActionParameterMnemonic
 /// <summary>
 /// A generic action parameter
 /// </summary>
-[JsonDerivedType(typeof(ScreenFeedbackParameter))]
+[JsonDerivedType(typeof(CameraRangeParameter))]
 [JsonDerivedType(typeof(DialogueParameter))]
 [JsonDerivedType(typeof(FadeParameter))]
 [JsonDerivedType(typeof(ModelAnimationParameter))]
+[JsonDerivedType(typeof(ScreenFeedbackParameter))]
 [JsonDerivedType(typeof(SpatialParameter))]
 // Variable length
 public class ActionParameter
@@ -336,7 +338,7 @@ public class ActionParameter
                 ActionOpCode.FADE => 0x28,
                 ActionOpCode.UNKNOWN0A or ActionOpCode.UNKNOWN11 => 0x24,
                 ActionOpCode.UNKNOWN0B => 0x4C,
-                ActionOpCode.UNKNOWN0C => 0x38,
+                ActionOpCode.CAMERA_RANGE => 0x38,
                 ActionOpCode.UNKNOWN0D or ActionOpCode.UNKNOWN0E => 0x50,
                 ActionOpCode.SCREEN_FEEDBACK => 0x58,
                 ActionOpCode.UNKNOWN10 or ActionOpCode.UNKNOWN15 => 0x20,
