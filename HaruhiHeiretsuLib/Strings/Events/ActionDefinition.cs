@@ -96,7 +96,7 @@ public class ActionDefinition
                     Parameters.Add(new ScreenFeedbackParameter(data, currentPosition, OpCode));
                     break;
                 case ActionOpCode.CROSS_FADE:
-                    Parameters.Add(new CrossFadeParam(data, currentPosition, OpCode));
+                    Parameters.Add(new CrossFadeParameter(data, currentPosition, OpCode));
                     break;
                 case ActionOpCode.DIALOGUE:
                     Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
@@ -294,6 +294,7 @@ public enum ActionParameterMnemonic
 /// A generic action parameter
 /// </summary>
 [JsonDerivedType(typeof(CameraRangeParameter))]
+[JsonDerivedType(typeof(CrossFadeParameter))]
 [JsonDerivedType(typeof(DialogueParameter))]
 [JsonDerivedType(typeof(FadeParameter))]
 [JsonDerivedType(typeof(FogParam))]
