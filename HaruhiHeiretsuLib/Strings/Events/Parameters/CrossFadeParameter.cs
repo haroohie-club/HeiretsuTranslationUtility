@@ -2,6 +2,9 @@ using HaruhiHeiretsuLib.Util;
 
 namespace HaruhiHeiretsuLib.Strings.Events.Parameters;
 
+/// <summary>
+/// Cross fade
+/// </summary>
 public class CrossFadeParameter : ActionParameter
 {
     /// <summary>

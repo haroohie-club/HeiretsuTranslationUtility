@@ -98,6 +98,10 @@ public class ActionDefinition
                 case ActionOpCode.CROSS_FADE:
                     Parameters.Add(new CrossFadeParameter(data, currentPosition, OpCode));
                     break;
+                case ActionOpCode.SFX_PLAY:
+                case ActionOpCode.UNKNOWN17:
+                    Parameters.Add(new SfxParameter(data, currentPosition, OpCode));
+                    break;
                 case ActionOpCode.DIALOGUE:
                     Parameters.Add(new DialogueParameter(data, currentPosition, OpCode));
                     break;
@@ -110,9 +114,6 @@ public class ActionDefinition
                 case ActionOpCode.UNKNOWN0A:
                 //break
                 case ActionOpCode.UNKNOWN11:
-                //break
-                case ActionOpCode.UNKNOWN12:
-                case ActionOpCode.UNKNOWN17:
                 //break
                 case ActionOpCode.UNKNOWN13:
                 //break
@@ -208,22 +209,22 @@ public enum ActionOpCode : ushort
     UNKNOWN0A,
 
     /// <summary>
-    /// Unknown
+    /// Apply fog
     /// </summary>
     FOG,
 
     /// <summary>
-    /// Unknown
+    /// Apply far clipping & billboard distances
     /// </summary>
     CAMERA_RANGE,
 
     /// <summary>
-    /// Unknown
+    /// Apply changes to light 0
     /// </summary>
     LIGHT0,
 
     /// <summary>
-    /// Unknown
+    /// Apply changes to light 1
     /// </summary>
     LIGHT1,
 
@@ -233,7 +234,7 @@ public enum ActionOpCode : ushort
     SCREEN_FEEDBACK,
 
     /// <summary>
-    /// Unknown
+    /// Cross-fade between two cuts
     /// </summary>
     CROSS_FADE,
 
@@ -245,7 +246,7 @@ public enum ActionOpCode : ushort
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN12,
+    SFX_PLAY,
 
     /// <summary>
     /// Unknown
@@ -301,6 +302,7 @@ public enum ActionParameterMnemonic
 [JsonDerivedType(typeof(LightParameter))]
 [JsonDerivedType(typeof(ModelAnimationParameter))]
 [JsonDerivedType(typeof(ScreenFeedbackParameter))]
+[JsonDerivedType(typeof(SfxParameter))]
 [JsonDerivedType(typeof(SpatialParameter))]
 // Variable length
 public class ActionParameter
@@ -338,7 +340,7 @@ public class ActionParameter
                     or ActionOpCode.UNKNOWN09 or ActionOpCode.UNKNOWN16 or ActionOpCode.ZERO_MAP_TRANSFORM
                     or ActionOpCode.UNKNOWN06 => 0x40,
                 ActionOpCode.PLAY_MODEL_ANIMATION or ActionOpCode.ZERO_MAP_MESH => 0x48,
-                ActionOpCode.UNKNOWN05 or ActionOpCode.UNKNOWN08 or ActionOpCode.UNKNOWN13 or ActionOpCode.UNKNOWN12
+                ActionOpCode.UNKNOWN05 or ActionOpCode.UNKNOWN08 or ActionOpCode.UNKNOWN13 or ActionOpCode.SFX_PLAY
                     or ActionOpCode.UNKNOWN17 => 0x2C,
                 ActionOpCode.FADE => 0x28,
                 ActionOpCode.UNKNOWN0A or ActionOpCode.UNKNOWN11 => 0x24,

@@ -140,7 +140,7 @@ public enum ActorType : short
     /// </summary>
     SCREEN_EFFECT = 8,
     /// <summary>
-    /// Unknown
+    /// Actor for managing cross-fades between scenes
     /// </summary>
     CROSS_FADE = 9,
     /// <summary>
@@ -150,7 +150,7 @@ public enum ActorType : short
     /// <summary>
     /// Unknown
     /// </summary>
-    UNKNOWN11 = 11,
+    SFX_ENGINE = 11,
     /// <summary>
     /// Unknown
     /// </summary>
